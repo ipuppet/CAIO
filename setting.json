@@ -1,0 +1,79 @@
+[
+    {
+        "title": "GENERAL",
+        "items": [
+            {
+                "icon": [
+                    "arrow.2.circlepath",
+                    "#FF9900"
+                ],
+                "title": "UPDATE_HOME_SCREEN_WIDGET_OPTIONS",
+                "type": "script",
+                "key": "updateHomeScreenWidgetOptions",
+                "value": "this.controller.updateHomeScreenWidgetOptions"
+            }
+        ]
+    },
+    {
+        "title": "BACKUP",
+        "items": [
+            {
+                "icon": [
+                    "icloud.and.arrow.up.fill"
+                ],
+                "title": "BACKUP_TO_ICLOUD",
+                "type": "script",
+                "key": "backup",
+                "value": "this.controller.backupToICloud"
+            },
+            {
+                "icon": [
+                    "arrow.clockwise.icloud.fill",
+                    "#FFCC33"
+                ],
+                "title": "RECOVER_FROM_ICLOUD",
+                "type": "script",
+                "key": "recover",
+                "value": "this.controller.recoverFromICloud"
+            }
+        ]
+    },
+    {
+        "title": "ABOUT",
+        "items": [
+            {
+                "icon": [
+                    "/assets/icon/github.com.jpeg",
+                    "white"
+                ],
+                "title": "Github",
+                "type": "info",
+                "key": "github",
+                "value": "https://github.com/ipuppet/EasyWidget"
+            },
+            {
+                "icon": [
+                    "person.fill",
+                    "#FF9900"
+                ],
+                "title": "AUTHOR",
+                "type": "info",
+                "key": "author",
+                "value": [
+                    "ipuppet",
+                    "https://blog.ipuppet.cn"
+                ]
+            },
+            {
+                "icon": [
+                    "book.fill",
+                    "#A569BD"
+                ],
+                "title": "README",
+                "type": "script",
+                "key": "readme",
+                "value": "this.controller.readme"
+            }
+        ]
+    }
+]

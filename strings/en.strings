@@ -1,0 +1,46 @@
+"ALERT_INFO" = "Alert";
+"OK" = "Ok";
+"CANCEL" = "Cancel";
+"CLEAR" = "Clear";
+"BACK" = "Back";
+"SUCCESS" = "Success";
+"ERROR" = "Error";
+"NONE" = "None";
+"FAILED_TO_LOAD_VIEW" = "Faild to load view";
+"VIEW_NOT_PROVIDED" = "The view is not provided";
+
+"CLIPBOARD" = "Clipboard";
+"SEARCH" = "Search";
+"COPY" = "Copy";
+"COPY_SUCCESS" = "Copy success";
+"ACTION" = "Action";
+"PREVIEW" = "Preview";
+
+"CUSTOM" = "Custom";
+"CANNOT_CUSTOM" = "This widget cannot be customized.";
+"SAVE" = "Save";
+"SAVE_SUCCESS" = "Save success";
+"SAVE_ERROR" = "Save failed";
+"DELETE" = "Delete";
+"CONFIRM_DELETE_MSG" = "Are you sure you want to delete?";
+"DELETE_SUCCESS" = "Delete success";
+"DELETE_ERROR" = "Delete failed";
+
+"SETTING" = "Setting";
+
+"GENERAL" = "General";
+"TIPS" = "Tips";
+"PRINT_TIME_CONSUMING" = "Print Time Consuming";
+"UPDATE_HOME_SCREEN_WIDGET_OPTIONS" = "Update Home Screen Widget Options";
+
+"BACKUP" = "Backup";
+"START_BACKUP" = "Start Backup";
+"BACKUP_TO_ICLOUD" = "Backup to iCloud";
+"RECOVER_FROM_ICLOUD" = "Recover from iCloud";
+
+"ADVANCED" = "Advanced";
+
+"ABOUT" = "About";
+"VERSION" = "Version";
+"AUTHOR" = "Author";
+"AT_BOTTOM" = "It's the end~";

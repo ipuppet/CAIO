@@ -1,0 +1,19 @@
+{
+    "info": {
+        "name": "CAE",
+        "url": "https://github.com/ipuppet/CAE",
+        "version": "1.0.0",
+        "author": "ipuppet",
+        "website": "https://blog.ipuppet.cn",
+        "module": false
+    },
+    "settings": {
+        "theme": "auto",
+        "minSDKVer": "2.13.0",
+        "minOSVer": "14.0.0",
+        "idleTimerDisabled": false,
+        "autoKeyboardEnabled": true,
+        "keyboardToolbarEnabled": true,
+        "rotateDisabled": false
+    }
+}

@@ -1,0 +1,14 @@
+"OK" = "好";
+"CANCEL" = "取消";
+"CLEAR" = "清除";
+"BACK" = "返回";
+"ERROR" = "发生错误";
+"SUCCESS" = "成功";
+"INVALID_VALUE" = "非法参数";
+
+"SETTING" = "设置";
+"COLOR" = "颜色";
+"COPY" = "复制";
+"COPY_SUCCESS" = "复制成功";
+
+"VERSION" = "Version";
