@@ -74,6 +74,14 @@ class Storage {
         return this.parse(result)[0]
     }
 
+    getByUUID(uuid) {
+        const result = this.sqlite.query({
+            sql: "SELECT * FROM clipboard WHERE uuid = ?",
+            args: [`${uuid}`]
+        })
+        return this.parse(result)[0]
+    }
+
     search(kw) {
         const result = this.sqlite.query({
             sql: "SELECT * FROM clipboard WHERE text like ?",
@@ -108,6 +116,18 @@ class Storage {
         const result = this.sqlite.update({
             sql: "UPDATE clipboard SET text = ?, prev = ?, next = ? WHERE uuid = ?",
             args: [clipboard.text, clipboard.prev, clipboard.next, clipboard.uuid]
+        })
+        if (result.result) {
+            return true
+        }
+        $console.error(result.error)
+        return false
+    }
+
+    updateText(uuid, text) {
+        const result = this.sqlite.update({
+            sql: "UPDATE clipboard SET text = ? WHERE uuid = ?",
+            args: [text, uuid]
         })
         if (result.result) {
             return true

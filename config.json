@@ -12,7 +12,6 @@
         "minSDKVer": "2.13.0",
         "minOSVer": "14.0.0",
         "idleTimerDisabled": false,
-        "autoKeyboardEnabled": true,
         "keyboardToolbarEnabled": true,
         "rotateDisabled": false
     }

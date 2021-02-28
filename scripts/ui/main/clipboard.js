@@ -23,6 +23,12 @@ class ClipboardUI {
         }
     }
 
+    update(uuid, text, index) {
+        const sender = $("clipboard-list")
+        sender.cell($indexPath(0, index)).get("content").text = text
+        return this.kernel.storage.updateText(uuid, text)
+    }
+
     /**
      * 将from位置的元素移动到to位置的元素前面
      * @param {Number} from 
@@ -283,60 +289,37 @@ class ClipboardUI {
         return sorted.map(data => this.lineData(data, copied))
     }
 
-    getActions() {
-        // TODO Actions
-        const actions = [
-            {
-                title: "Action 1",
-                handler: (data) => {
-                    console.log(data.text)
-                    console.log(data.uuid)
-                }
-            }
+    navButtons() {
+        return [
+            this.kernel.UIKit.navButton("add", "plus.circle", () => {
+                this.editor.push("", text => {
+                    if (text !== "") this.add(text)
+                })
+            }),
+            this.kernel.actionButton(
+                () => this.copied === undefined ? null : this.copied.uuid,
+                () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text,
+                "clipboard"
+            )
         ]
+    }
+
+    getViews() {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
                 const data = {
                     text: item.content.text,
-                    uuid: item.content.info.uuid
+                    uuid: item.content.info.uuid,
+                    index: indexPath.row
                 }
                 handler(data)
             }
         }
-        return actions.map(action => {
-            action.handler = handlerRewrite(action.handler)
-            return action
-        })
-    }
-
-    actionButton() {
-        return this.kernel.UIKit.navButton("add", "bolt.circle", (animate, sender) => {
-            $ui.popover({
-                sourceView: sender,
-                size: $size(320, 200)
-            })
-        })
-    }
-
-    getEditorButtons() {
-        return [
-            this.actionButton()
-        ]
-    }
-
-    getViews() {
         return [
             { // 顶部按钮栏
                 type: "view",
-                views: [
-                    this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                        this.editor.push("", this.getEditorButtons(), text => {
-                            this.add(text)
-                        })
-                    }),
-                    this.actionButton()
-                ],
+                views: this.navButtons(),
                 layout: (make, view) => {
                     make.top.width.equalTo(view.super)
                     make.height.equalTo(40)
@@ -353,7 +336,10 @@ class ClipboardUI {
                     // TODO 长按菜单和拖动排序共存
                     menu: {
                         title: $l10n("ACTION"),
-                        items: this.getActions()
+                        items: this.kernel.getActions("clipboard").map(action => {
+                            action.handler = handlerRewrite(action.handler)
+                            return action
+                        })
                     },
                     // reorder: true, // 拖动排序
                     bgcolor: $color("clear"),
@@ -476,8 +462,8 @@ class ClipboardUI {
                     },
                     didSelect: (sender, indexPath, data) => {
                         const content = data.content
-                        this.editor.push(content.text, this.getEditorButtons(), text => {
-                            console.log(text)
+                        this.editor.push(content.text, text => {
+                            this.update(content.info.uuid, text, indexPath.row)
                         })
                     }
                 }

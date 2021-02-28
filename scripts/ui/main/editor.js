@@ -1,13 +1,18 @@
 class Editor {
     constructor(kernel) {
         this.kernel = kernel
-        this.text = ""
         // custom
         this.backgroundColor = this.kernel.setting.get("editor.backgroundColor")
         this.theme = this.kernel.setting.get("editor.theme")
     }
 
-    push(text, navButtons, callback) {
+    getNavButtons() {
+        return [
+            this.kernel.actionButton(() => this.uuid, () => this.text, "editor")
+        ]
+    }
+
+    push(text = "", callback) {
         this.text = text
         this.kernel.UIKit.push({
             parent: $l10n("CLIPBOARD"),
@@ -28,7 +33,7 @@ class Editor {
                     }
                 }
             ],
-            navButtons: navButtons
+            navButtons: this.getNavButtons()
         })
     }
 }

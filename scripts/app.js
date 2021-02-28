@@ -14,6 +14,8 @@ class AppKernel extends Kernel {
         this.initSettingMethods()
         this.page = this.registerComponent("Page")
         this.menu = this.registerComponent("Menu")
+        // action 路径
+        this.actionPath = "/scripts/action"
     }
 
     uuid() {
@@ -29,8 +31,64 @@ class AppKernel extends Kernel {
         return s.join("")
     }
 
-    updateHomeScreenWidgetOptions() {
+    getActions(type) {
+        const actions = []
+        const fileList = $file.list(this.actionPath)
+        fileList.forEach(item => {
+            const basePath = `${this.actionPath}/${item}/`
+            if ($file.isDirectory(basePath)) {
+                const config = JSON.parse($file.read(basePath + "config.json").string)
+                if (type === config.type)
+                    actions.push({
+                        title: config.name ?? item,
+                        description: config.description,
+                        handler: data => {
+                            const ActionClass = require(basePath + "main.js")
+                            const action = new ActionClass(data, this.kernel)
+                            action.updateListAction = this.update
+                            action.do()
+                        }
+                    })
+            }
+        })
+        return actions
+    }
 
+    actionButton(uuid, text, type = "all") {
+        return this.UIKit.navButton("add", "bolt.circle", (animate, sender) => {
+            const data = {
+                text: text(),
+                uuid: uuid()
+            }
+            $ui.popover({
+                sourceView: sender,
+                size: $size(200, 300),
+                views: [
+                    {
+                        type: "list",
+                        props: {
+                            title: $l10n("ACTION"),
+                            data: this.getActions(type).map(action => {
+                                return {
+                                    type: "label",
+                                    layout: (make, view) => {
+                                        make.centerY.equalTo(view.super)
+                                        make.left.right.inset(15)
+                                    },
+                                    props: {
+                                        text: action.title
+                                    },
+                                    events: {
+                                        tapped: () => action.handler(data)
+                                    }
+                                }
+                            })
+                        },
+                        layout: $layout.fill
+                    }
+                ]
+            })
+        })
     }
 
     /**
@@ -128,13 +186,6 @@ module.exports = {
             const kernel = new AppKernel()
             const Factory = require("./ui/main/factory")
             new Factory(kernel).render()
-            // 监听运行状态
-            $app.listen({
-                pause: () => {
-                    $widget.reloadTimeline()
-                    kernel.updateHomeScreenWidgetOptions()
-                }
-            })
         } else {
             $ui.render({
                 views: [{
