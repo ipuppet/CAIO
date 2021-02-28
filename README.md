@@ -34,11 +34,6 @@ module.exports = TestAction
 ```
 
 父类 `Action` 的属性：
+- `this.config` 配置
 - `this.text` 当前复制的文本或首页列表中长按触发动作菜单的行中的文本
-- `this.uuid` 该文本的uuid
-- `this.fromList` 来源于首页列表中长按
-- `this.fromClipboard` 来源于当前复制的文本
-- `this.from` 来源，其值为 `this.fromList` 或 `this.fromClipboard`
-
-方法：
-- `updateList(text)` 更新列表选中行的内容，只有来源为 `this.fromList` 时生效
+- `this.uuid` 该文本的 `uuid`

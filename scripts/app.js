@@ -44,8 +44,7 @@ class AppKernel extends Kernel {
                         description: config.description,
                         handler: data => {
                             const ActionClass = require(basePath + "main.js")
-                            const action = new ActionClass(data, this.kernel)
-                            action.updateListAction = this.update
+                            const action = new ActionClass(this.kernel, config, data)
                             action.do()
                         }
                     })

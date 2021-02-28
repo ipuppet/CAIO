@@ -310,8 +310,7 @@ class ClipboardUI {
                 const item = sender.object(indexPath)
                 const data = {
                     text: item.content.text,
-                    uuid: item.content.info.uuid,
-                    index: indexPath.row
+                    uuid: item.content.info.uuid
                 }
                 handler(data)
             }
