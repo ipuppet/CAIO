@@ -60,14 +60,6 @@ class AppKernel extends Kernel {
             $ui.alert("Tips")
         }
 
-        this.setting.updateHomeScreenWidgetOptions = animate => {
-            animate.touchHighlightStart()
-            animate.actionStart()
-            this.updateHomeScreenWidgetOptions()
-            animate.actionDone()
-            animate.touchHighlightEnd()
-        }
-
         this.setting.backupToICloud = animate => {
             animate.actionStart()
             $ui.alert({
@@ -124,20 +116,14 @@ module.exports = {
             const kernel = new WidgetKernel()
             const widgetName = $widget.inputValue
             const widget = kernel.widgetInstance(widgetName)
-            if (widget) {
-                widget.render()
-            } else {
-                $widget.setTimeline({
-                    render: ctx => {
-                        return {
-                            type: "text",
-                            props: {
-                                text: "去主程序选择一个Widget，或者参数有误？\n注意，不需要引号"
-                            }
-                        }
+            widget ? widget.render() : $widget.setTimeline({
+                render: () => ({
+                    type: "text",
+                    props: {
+                        text: "去主程序选择一个Widget，或者参数有误？\n注意，不需要引号"
                     }
                 })
-            }
+            })
         } else if ($app.env === $env.app) {
             const kernel = new AppKernel()
             const Factory = require("./ui/main/factory")

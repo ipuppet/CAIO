@@ -2,16 +2,7 @@
     {
         "title": "GENERAL",
         "items": [
-            {
-                "icon": [
-                    "arrow.2.circlepath",
-                    "#FF9900"
-                ],
-                "title": "UPDATE_HOME_SCREEN_WIDGET_OPTIONS",
-                "type": "script",
-                "key": "updateHomeScreenWidgetOptions",
-                "value": "this.controller.updateHomeScreenWidgetOptions"
-            }
+            
         ]
     },
     {

@@ -10,6 +10,8 @@
 "VIEW_NOT_PROVIDED" = "The view is not provided";
 
 "CLIPBOARD" = "Clipboard";
+"CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";
+"BACKUP_AND_REBUILD_DATABASE" = "备份并且重建数据库";
 "SEARCH" = "Search";
 "COPY" = "Copy";
 "COPY_SUCCESS" = "Copy success";
