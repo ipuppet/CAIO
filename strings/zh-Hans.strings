@@ -18,6 +18,10 @@
 "ACTION" = "动作";
 "PREVIEW" = "预览";
 
+"EDITOR" = "编辑器";
+"BACKGROUND_COLOR" = "背景颜色";
+"THEME" = "主题";
+
 "CUSTOM" = "定制";
 "CANNOT_CUSTOM" = "该组件无法定制";
 "SAVE" = "保存";

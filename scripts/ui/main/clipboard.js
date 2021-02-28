@@ -1,7 +1,8 @@
+const Editor = require("./editor")
 class ClipboardUI {
     constructor(kernel) {
         this.kernel = kernel
-        this.screenWidth = $device.info.screen.width
+        this.editor = new Editor(this.kernel)
         // 剪贴板列个性化设置
         this.edges = 15 // 表边距
         this.fontSize = 16 // 字体大小
@@ -15,12 +16,9 @@ class ClipboardUI {
     updateCopied() {
         const searchRes = this.kernel.storage.getByText($clipboard.text)
         this.copied = $cache.get("copied") ?? {}
-        console.log(this.copied)
         if (this.copied.uuid === searchRes?.uuid) {
-            setTimeout(() => {
-                $("clipboard-list").cell($indexPath(0, this.copied.index)).get("copied").hidden = false
-            }, 500)
-        } else {
+            $("clipboard-list").cell($indexPath(0, this.copied.index)).get("copied").hidden = false
+        } else if ($clipboard.text) {
             this.add($clipboard.text)
         }
     }
@@ -220,7 +218,7 @@ class ClipboardUI {
         const text = data.text.length > this.maxLength ? data.text.slice(0, this.maxLength) + "..." : data.text
         const size = $text.sizeThatFits({
             text: text,
-            width: this.screenWidth,
+            width: $device.info.screen.width,
             font: $font(this.fontSize)
         })
         return {
@@ -312,17 +310,32 @@ class ClipboardUI {
         })
     }
 
+    actionButton() {
+        return this.kernel.UIKit.navButton("add", "bolt.circle", (animate, sender) => {
+            $ui.popover({
+                sourceView: sender,
+                size: $size(320, 200)
+            })
+        })
+    }
+
+    getEditorButtons() {
+        return [
+            this.actionButton()
+        ]
+    }
+
     getViews() {
         return [
             { // 顶部按钮栏
                 type: "view",
                 views: [
-                    this.kernel.UIKit.navButton("add", "plus.circle.fill", () => {
-                        $input.text({
-                            placeholder: "Input",
-                            handler: data => this.add(data)
+                    this.kernel.UIKit.navButton("add", "plus.circle", () => {
+                        this.editor.push("", this.getEditorButtons(), text => {
+                            this.add(text)
                         })
-                    })
+                    }),
+                    this.actionButton()
                 ],
                 layout: (make, view) => {
                     make.top.width.equalTo(view.super)
@@ -331,9 +344,18 @@ class ClipboardUI {
             },
             { // 剪切板列表
                 type: "list",
+                layout: (make, view) => {
+                    make.bottom.width.equalTo(view.super)
+                    make.top.equalTo(view.prev.bottom)
+                },
                 props: {
                     id: "clipboard-list",
-                    reorder: true, // 拖动排序
+                    // TODO 长按菜单和拖动排序共存
+                    menu: {
+                        title: $l10n("ACTION"),
+                        items: this.getActions()
+                    },
+                    // reorder: true, // 拖动排序
                     bgcolor: $color("clear"),
                     indicatorInsets: $insets(30, 0, 50, 0),
                     separatorInset: $insets(0, 15, 0, 0),
@@ -368,11 +390,6 @@ class ClipboardUI {
                             }
                         ]
                     },
-                    // TODO 长按菜单和拖动排序共存
-                    /* menu: {
-                        title: $l10n("ACTION"),
-                        items: this.getActions()
-                    }, */
                     header: {
                         type: "view",
                         props: {
@@ -456,11 +473,13 @@ class ClipboardUI {
                     },
                     reorderMoved: (fromIndexPath, toIndexPath) => {
                         this.move(fromIndexPath.row, toIndexPath.row)
+                    },
+                    didSelect: (sender, indexPath, data) => {
+                        const content = data.content
+                        this.editor.push(content.text, this.getEditorButtons(), text => {
+                            console.log(text)
+                        })
                     }
-                },
-                layout: (make, view) => {
-                    make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.prev.bottom)
                 }
             }
         ]

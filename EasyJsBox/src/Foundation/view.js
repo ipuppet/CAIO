@@ -82,9 +82,6 @@ class BaseView {
             events: {
                 disappeared: () => {
                     if (disappeared !== undefined) disappeared()
-                },
-                dealloc: () => {
-                    if (disappeared !== undefined) disappeared()
                 }
             },
             views: [

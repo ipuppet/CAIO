@@ -1,8 +1,31 @@
 [
     {
         "title": "GENERAL",
+        "items": []
+    },
+    {
+        "title": "EDITOR",
         "items": [
-            
+            {
+                "icon": [
+                    "wand.and.stars.inverse",
+                    "#3399FF"
+                ],
+                "title": "BACKGROUND_COLOR",
+                "type": "color",
+                "key": "editor.backgroundColor",
+                "value": "clear"
+            },
+            {
+                "icon": [
+                    "rectangle.split.3x1.fill",
+                    "#FF6633"
+                ],
+                "title": "THEME",
+                "type": "input",
+                "key": "editor.theme",
+                "value": "atom-one-light"
+            }
         ]
     },
     {
