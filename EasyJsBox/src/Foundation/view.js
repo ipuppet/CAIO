@@ -259,8 +259,12 @@ class BaseView {
                         bgcolor: $color("clear")
                     },
                     events: {
-                        tapped: () => {
-                            tapped(actionStart, actionDone, actionCancel)
+                        tapped: sender => {
+                            tapped({
+                                start: actionStart,
+                                done: actionDone,
+                                cancel: actionCancel
+                            }, sender)
                         }
                     },
                     layout: $layout.fill
