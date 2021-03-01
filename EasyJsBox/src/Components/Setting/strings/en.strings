@@ -7,8 +7,14 @@
 "INVALID_VALUE" = "Invalid value";
 
 "SETTING" = "Setting";
+"GENERAL" = "General";
+"ADVANCED" = "Advanced";
+"TIPS" = "Tips";
 "COLOR" = "Color";
 "COPY" = "Copy";
 "COPY_SUCCESS" = "Copy success";
 
+"ABOUT" = "About";
 "VERSION" = "Version";
+"AUTHOR" = "Author";
+"AT_BOTTOM" = "It's the end~";
