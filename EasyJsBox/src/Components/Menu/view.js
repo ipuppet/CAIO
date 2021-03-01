@@ -47,7 +47,7 @@ class View extends BaseView {
      * 菜单视图
      */
     menuItemTemplate() {
-        let views = []
+        const views = []
         for (let i = 0; i < this.dataCenter.get("menus").length; i++) {
             // 整理menus 格式化单个icon和多个icon的menu
             if (typeof this.dataCenter.get("menus")[i].icon !== "object") {
@@ -124,16 +124,16 @@ class View extends BaseView {
                             duration: 0.4,
                             animation: () => {
                                 // 点击的图标
-                                let data = sender.info
-                                let icon = $(data.icon.id)
+                                const data = sender.info
+                                const icon = $(data.icon.id)
                                 icon.image = $image(data.icon.icon[1])
                                 icon.tintColor = $color(data.icon.tintColor[1])
                                 $(data.title.id).textColor = $color(data.title.textColor[1])
                             }
                         })
                         // 之前的图标
-                        let data = $(`${this.dataCenter.get("itemIdPrefix")}${this.selected}`).info
-                        let icon = $(data.icon.id)
+                        const data = $(`${this.dataCenter.get("itemIdPrefix")}${this.selected}`).info
+                        const icon = $(data.icon.id)
                         icon.image = $image(data.icon.icon[0])
                         icon.tintColor = $color(data.icon.tintColor[0])
                         $(data.title.id).textColor = $color(data.title.textColor[0])
@@ -176,8 +176,8 @@ class View extends BaseView {
                     },
                     events: {
                         draw: (view, ctx) => {
-                            let width = view.frame.width
-                            let scale = $device.info.screen.scale
+                            const width = view.frame.width
+                            const scale = $device.info.screen.scale
                             ctx.strokeColor = $color("gray")
                             ctx.setLineWidth(1 / scale)
                             ctx.moveToPoint(0, 0)

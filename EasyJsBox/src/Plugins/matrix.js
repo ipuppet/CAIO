@@ -50,8 +50,8 @@ class Matrix {
 
     scrollTemplate(data, bottomOffset = this.spacing) {
         // 计算尺寸
-        let line = Math.ceil(data.length / this.columns)
-        let height = line * (this.height + this.spacing) + bottomOffset
+        const line = Math.ceil(data.length / this.columns)
+        const height = line * (this.height + this.spacing) + bottomOffset
         return {
             type: "scroll",
             props: {

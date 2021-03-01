@@ -14,11 +14,11 @@ class Palette {
         s = s / 100
         v = v / 100
         let r = 0, g = 0, b = 0
-        let i = parseInt((h / 60) % 6)
-        let f = h / 60 - i
-        let p = v * (1 - s)
-        let q = v * (1 - f * s)
-        let t = v * (1 - (1 - f) * s)
+        const i = parseInt((h / 60) % 6)
+        const f = h / 60 - i
+        const p = v * (1 - s)
+        const q = v * (1 - f * s)
+        const t = v * (1 - (1 - f) * s)
         switch (i) {
             case 0:
                 r = v
@@ -64,9 +64,9 @@ class Palette {
         g = g / 255
         b = b / 255
         let h, s, v
-        let min = Math.min(r, g, b)
-        let max = v = Math.max(r, g, b)
-        let difference = max - min
+        const min = Math.min(r, g, b)
+        const max = v = Math.max(r, g, b)
+        const difference = max - min
         if (max === min) {
             h = 0
         } else {
@@ -94,7 +94,7 @@ class Palette {
     }
 
     static HSV2HEX(h, s, v) {
-        let rgb = Palette.HSV2RGB(h, s, v)
+        const rgb = Palette.HSV2RGB(h, s, v)
         return Palette.RGB2HEX(rgb[0], rgb[1], rgb[2])
     }
 
@@ -145,7 +145,7 @@ class Palette {
             events: {
                 layoutSubviews: () => {
                     const addView = () => {
-                        let paletteContent = $("paletteContent")
+                        const paletteContent = $("paletteContent")
                         if (paletteContent) paletteContent.remove()
                         $("paletteMainView").add({
                             type: "view",
@@ -209,7 +209,7 @@ class Palette {
                             this.hsv[0] = Math.ceil(value * 360)
                             this.updateHSV()
                             // 改变下面两个条的颜色，此时 this.rgb 已经更新
-                            let rgb = $rgb(this.rgb[0], this.rgb[1], this.rgb[2])
+                            const rgb = $rgb(this.rgb[0], this.rgb[1], this.rgb[2])
                             $("hsv-s-gradient").colors = [$color("white"), rgb]
                             $("hsv-v-gradient").colors = [$color("black"), rgb]
                             return this.hsv[0]
@@ -361,7 +361,7 @@ class Palette {
                 bgcolor: bgcolor
             },
             layout: (make, view) => {
-                let width = 200
+                const width = 200
                 make.size.equalTo($size(width, width * 9 / 16))
                 make.centerX.equalTo(view.super)
                 make.top.inset(20)

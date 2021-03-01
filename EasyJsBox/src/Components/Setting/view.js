@@ -524,7 +524,7 @@ class View extends BaseView {
                                         } else {
                                             color = $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor
                                         }
-                                        let navButtons = [
+                                        const navButtons = [
                                             {
                                                 type: "button",
                                                 props: {
@@ -742,7 +742,7 @@ class View extends BaseView {
     }
 
     getView() {
-        const header = this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
+        const header = this.dataCenter.get("secondaryPage") ? {} : this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         const footer = this.dataCenter.get("footer", {
             type: "view",
             props: { height: 130 },
@@ -769,9 +769,9 @@ class View extends BaseView {
     }
 
     getSections() {
-        let sections = []
+        const sections = []
         for (let section of this.controller.struct) {
-            let rows = []
+            const rows = []
             for (let item of section.items) {
                 const value = this.controller.get(item.key)
                 let row = null
@@ -951,7 +951,7 @@ class View extends BaseView {
      * @param {*} events
      */
     defaultList(header, footer, data, events = {}) {
-        const indicatorInsetBottom = this.dataCenter.get("secondaryPage") ? 0 : 50
+        const secondaryPage = this.dataCenter.get("secondaryPage")
         return [
             {
                 type: "view",
@@ -967,19 +967,15 @@ class View extends BaseView {
                             type: "list",
                             props: {
                                 style: 2,
-                                separatorInset: $insets(0, 50, 0, 10),
+                                separatorInset: $insets(0, 50, 0, 10), // 分割线边距
                                 rowHeight: 50,
-                                indicatorInsets: $insets(55, 0, indicatorInsetBottom, 0),
-                                header: this.dataCenter.get("secondaryPage") ? {} : header,
+                                indicatorInsets: $insets(50, 0, secondaryPage ? 0 : 50, 0),
+                                header: header,
                                 footer: footer,
                                 data: data
                             },
-                            events: Object.assign({
+                            events: Object.assign(secondaryPage ? {} : { // 若设置了显示为二级页面则不监听
                                 didScroll: sender => {
-                                    // 若设置了显示为二级页面则关闭动画
-                                    if (this.dataCenter.get("secondaryPage")) {
-                                        return
-                                    }
                                     // 下拉放大字体
                                     if (sender.contentOffset.y <= this.topOffset) {
                                         let size = 35 - sender.contentOffset.y * 0.04
@@ -1025,89 +1021,87 @@ class View extends BaseView {
                             }, events),
                             layout: $layout.fill
                         }]
+                    }
+                ].concat(secondaryPage ? [] : {// 顶部bar，用于显示 设置 字样
+                    type: "view",
+                    props: {
+                        id: header.info.id + "-header",
+                        alpha: 0
                     },
-                    {// 顶部bar，用于显示 设置 字样
-                        type: "view",
-                        props: {
-                            id: header.info.id + "-header",
-                            hidden: this.dataCenter.get("secondaryPage") ? true : false,
-                            alpha: this.dataCenter.get("secondaryPage") ? 1 : 0
+                    layout: (make, view) => {
+                        make.left.top.right.inset(0)
+                        make.bottom.equalTo(view.super.safeAreaTop).offset(45)
+                    },
+                    views: [
+                        {
+                            type: "blur",
+                            props: { style: this.blurStyle },
+                            layout: $layout.fill
                         },
-                        layout: (make, view) => {
-                            make.left.top.right.inset(0)
-                            make.bottom.equalTo(view.super.safeAreaTop).offset(45)
-                        },
-                        views: [
-                            {
-                                type: "blur",
-                                props: { style: this.blurStyle },
-                                layout: $layout.fill
+                        {
+                            type: "canvas",
+                            layout: (make, view) => {
+                                make.top.equalTo(view.prev.bottom)
+                                make.height.equalTo(1 / $device.info.screen.scale)
+                                make.left.right.inset(0)
                             },
-                            {
-                                type: "canvas",
-                                layout: (make, view) => {
-                                    make.top.equalTo(view.prev.bottom)
-                                    make.height.equalTo(1 / $device.info.screen.scale)
-                                    make.left.right.inset(0)
-                                },
-                                events: {
-                                    draw: (view, ctx) => {
-                                        const width = view.frame.width
-                                        const scale = $device.info.screen.scale
-                                        ctx.strokeColor = $color("gray")
-                                        ctx.setLineWidth(1 / scale)
-                                        ctx.moveToPoint(0, 0)
-                                        ctx.addLineToPoint(width, 0)
-                                        ctx.strokePath()
-                                    }
+                            events: {
+                                draw: (view, ctx) => {
+                                    const width = view.frame.width
+                                    const scale = $device.info.screen.scale
+                                    ctx.strokeColor = $color("gray")
+                                    ctx.setLineWidth(1 / scale)
+                                    ctx.moveToPoint(0, 0)
+                                    ctx.addLineToPoint(width, 0)
+                                    ctx.strokePath()
                                 }
-                            },
-                            {
-                                type: "view",
-                                layout: $layout.fill,
-                                views: [
-                                    {
-                                        type: "button",
-                                        props: {
-                                            symbol: "chevron.left",
-                                            tintColor: this.textColor,
-                                            bgcolor: $color("clear"),
-                                            hidden: this.dataCenter.get("secondaryPage") ? false : true
-                                        },
-                                        events: {
-                                            tapped: () => {
-                                                this.dataCenter.get("pop")()
-                                            }
-                                        },
-                                        layout: (make, view) => {
-                                            make.left.inset(10)
-                                            make.size.equalTo(30)
-                                            make.top.equalTo(view.super.safeAreaTop)
-                                            make.bottom.equalTo(view.super)
+                            }
+                        },
+                        {
+                            type: "view",
+                            layout: $layout.fill,
+                            views: [
+                                {
+                                    type: "button",
+                                    props: {
+                                        symbol: "chevron.left",
+                                        tintColor: this.textColor,
+                                        bgcolor: $color("clear"),
+                                        hidden: true
+                                    },
+                                    events: {
+                                        tapped: () => {
+                                            this.dataCenter.get("pop")()
                                         }
                                     },
-                                    {
-                                        type: "label",
-                                        props: {
-                                            id: header.info.id + "-header-title",
-                                            alpha: this.dataCenter.get("secondaryPage") ? 1 : 0,
-                                            text: header.info.title,
-                                            font: $font("bold", 17),
-                                            align: $align.center,
-                                            bgcolor: $color("clear"),
-                                            textColor: this.textColor
-                                        },
-                                        layout: (make, view) => {
-                                            make.left.right.inset(0)
-                                            make.top.equalTo(view.super.safeAreaTop)
-                                            make.bottom.equalTo(view.super)
-                                        }
+                                    layout: (make, view) => {
+                                        make.left.inset(10)
+                                        make.size.equalTo(30)
+                                        make.top.equalTo(view.super.safeAreaTop)
+                                        make.bottom.equalTo(view.super)
                                     }
-                                ]
-                            }
-                        ]
-                    }
-                ],
+                                },
+                                {
+                                    type: "label",
+                                    props: {
+                                        id: header.info.id + "-header-title",
+                                        alpha: 0,
+                                        text: header.info.title,
+                                        font: $font("bold", 17),
+                                        align: $align.center,
+                                        bgcolor: $color("clear"),
+                                        textColor: this.textColor
+                                    },
+                                    layout: (make, view) => {
+                                        make.left.right.inset(0)
+                                        make.top.equalTo(view.super.safeAreaTop)
+                                        make.bottom.equalTo(view.super)
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }),
                 layout: $layout.fill
             }
         ]

@@ -5,6 +5,13 @@ class BaseView {
         this.blurStyle = $blurStyle.thinMaterial
         this.textColor = $color("primaryText", "secondaryText")
         this.linkColor = $color("systemLink")
+        // 本地化
+        this.kernel.l10n("zh-Hans", {
+            "DONE": "完成"
+        })
+        this.kernel.l10n("en", {
+            "DONE": "Done"
+        })
     }
 
     init() { }
@@ -54,25 +61,138 @@ class BaseView {
         }
     }
 
+    pushPageSheet(args) {
+        const navTop = 50,
+            views = args.views,
+            title = args.title !== undefined ? args.title : "",
+            navButtons = args.navButtons !== undefined ? args.navButtons : [],
+            topOffset = args.topOffset !== undefined ? args.topOffset : true,
+            done = args.done !== undefined ? args.done : undefined
+        const UIModalPresentationStyle = {
+            automatic: -2,
+            pageSheet: 1,
+            formSheet: 2,
+            fullScreen: 0,
+            currentContext: 3,
+            custom: 4,
+            overFullScreen: 5,
+            overCurrentContext: 6,
+            popover: 7,
+            none: -1
+        }
+        const { width, height } = $device.info.screen
+        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
+        const PSViewController = $objc("UIViewController").invoke("alloc.init")
+        const PSViewControllerView = PSViewController.$view()
+        {
+            PSViewControllerView.$setBackgroundColor($color("primarySurface"))
+            PSViewControllerView.$addSubview(UIView)
+            PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
+        }
+        const present = () => $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
+        const dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
+        const add = view => PSViewControllerView.jsValue().add(view)
+        add({
+            type: "view",
+            layout: $layout.fill,
+            views: [
+                {
+                    type: "view",
+                    views: views,
+                    layout: topOffset ? (make, view) => {
+                        make.top.equalTo(view.super.safeAreaTop).offset(navTop)
+                        make.bottom.width.equalTo(view.super)
+                    } : $layout.fill
+                },
+                { // nav
+                    type: "view",
+                    props: {
+                        //bgcolor: $color("blue")
+                    },
+                    layout: (make, view) => {
+                        make.height.equalTo(navTop)
+                        make.top.width.equalTo(view.super)
+                    },
+                    views: [
+                        { // blur
+                            type: "blur",
+                            props: { style: this.blurStyle },
+                            layout: $layout.fill
+                        },
+                        { // canvas
+                            type: "canvas",
+                            layout: (make, view) => {
+                                make.top.equalTo(view.prev.bottom)
+                                make.height.equalTo(1 / $device.info.screen.scale)
+                                make.left.right.inset(0)
+                            },
+                            events: {
+                                draw: (view, ctx) => {
+                                    const width = view.frame.width
+                                    const scale = $device.info.screen.scale
+                                    ctx.strokeColor = $color("gray")
+                                    ctx.setLineWidth(1 / scale)
+                                    ctx.moveToPoint(0, 0)
+                                    ctx.addLineToPoint(width, 0)
+                                    ctx.strokePath()
+                                }
+                            }
+                        },
+                        { // 完成按钮
+                            type: "button",
+                            layout: (make, view) => {
+                                make.centerY.height.equalTo(view.super)
+                                make.left.inset(15)
+                            },
+                            props: {
+                                title: $l10n("DONE"),
+                                bgcolor: $color("clear"),
+                                font: $font(16),
+                                titleColor: $color("systemLink")
+                            },
+                            events: {
+                                tapped: () => {
+                                    dismiss()
+                                    if (done) done()
+                                }
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                text: title,
+                                font: $font("bold", 17)
+                            },
+                            layout: (make, view) => {
+                                make.center.equalTo(view.super)
+                            }
+                        }
+                    ].concat(navButtons)
+                }
+            ]
+        })
+        present()
+    }
+
     /**
      * 重新设计$ui.push()
      * @param {Object} args 参数
      * {
-            view: [],
+            views: [],
             title: "",
             parent: "",
             navButtons: [],
-            hasTopOffset: true,
+            topOffset: true, // 这样会导致nav的磨砂效果消失，因为视图不会被nav遮挡
             disappeared: () => { },
         }
      */
     push(args) {
         const navTop = 45,
-            view = args.view,
+            views = args.views,
             title = args.title !== undefined ? args.title : "",
             parent = args.parent !== undefined ? args.parent : $l10n("BACK"),
-            navButtons = args.navButtons !== undefined ? args.navButtons : [{}, {}],
-            hasTopOffset = args.hasTopOffset !== undefined ? args.hasTopOffset : true,
+            navButtons = args.navButtons !== undefined ? args.navButtons : [],
+            topOffset = args.topOffset !== undefined ? args.topOffset : true,
             disappeared = args.disappeared !== undefined ? args.disappeared : undefined
         $ui.push({
             props: {
@@ -87,8 +207,8 @@ class BaseView {
             views: [
                 {
                     type: "view",
-                    views: view,
-                    layout: hasTopOffset ? (make, view) => {
+                    views: views,
+                    layout: topOffset ? (make, view) => {
                         make.top.equalTo(view.super.safeAreaTop).offset(navTop)
                         make.bottom.width.equalTo(view.super)
                     } : $layout.fill
@@ -114,8 +234,8 @@ class BaseView {
                             },
                             events: {
                                 draw: (view, ctx) => {
-                                    let width = view.frame.width
-                                    let scale = $device.info.screen.scale
+                                    const width = view.frame.width
+                                    const scale = $device.info.screen.scale
                                     ctx.strokeColor = $color("gray")
                                     ctx.setLineWidth(1 / scale)
                                     ctx.moveToPoint(0, 0)
@@ -188,7 +308,7 @@ class BaseView {
     navButton(id, symbol, tapped, hidden) {
         const actionStart = () => {
             // 隐藏button，显示spinner
-            let button = $(id)
+            const button = $(id)
             button.alpha = 0
             button.hidden = true
             $("spinner-" + id).alpha = 1
@@ -196,7 +316,7 @@ class BaseView {
 
         const actionDone = (status = true, message = $l10n("ERROR")) => {
             $("spinner-" + id).alpha = 0
-            let button = $(id)
+            const button = $(id)
             button.hidden = false
             if (!status) { // 失败
                 $ui.toast(message)
@@ -237,7 +357,7 @@ class BaseView {
 
         const actionCancel = () => {
             $("spinner-" + id).alpha = 0
-            let button = $(id)
+            const button = $(id)
             button.alpha = 1
             button.hidden = false
         }

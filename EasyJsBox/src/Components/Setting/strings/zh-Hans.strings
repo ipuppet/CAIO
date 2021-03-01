@@ -7,8 +7,14 @@
 "INVALID_VALUE" = "非法参数";
 
 "SETTING" = "设置";
+"GENERAL" = "一般";
+"ADVANCED" = "高级";
+"TIPS" = "小贴士";
 "COLOR" = "颜色";
 "COPY" = "复制";
 "COPY_SUCCESS" = "复制成功";
 
+"ABOUT" = "关于";
 "VERSION" = "Version";
+"AUTHOR" = "作者";
+"AT_BOTTOM" = "已经到底啦~";
