@@ -1,6 +1,6 @@
 const Editor = require("./editor")
 
-class ClipboardUI {
+class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
         this.editor = new Editor(this.kernel)
@@ -547,4 +547,4 @@ class ClipboardUI {
     }
 }
 
-module.exports = ClipboardUI
+module.exports = Clipboard
