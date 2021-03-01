@@ -11,32 +11,29 @@ class ClipboardUI {
         this.textMaxLength = this.kernel.setting.get("clipboard.textMaxLength") // 显示最大长度
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
         // 数据
-        this.readClipboard()
+        this.setCopied()
         this.savedClipboard = this.getSavedClipboard()
         this.reorder = {}
     }
 
+    setCopied(uuid, index) {
+        if (uuid === undefined) {
+            const res = this.kernel.storage.getByMD5($text.MD5($clipboard.text))
+            if (res) this.setCopied(res.uuid)
+        } else {
+            this.copied = {
+                uuid: uuid,
+                index: index
+            }
+        }
+    }
+
     readClipboard() {
         const res = this.kernel.storage.getByMD5($text.MD5($clipboard.text))
-        if (res) {
-            this.setCopied(res.uuid)
+        if (this.copied?.uuid === res?.uuid && res?.uuid !== undefined) {
+            $("clipboard-list").cell($indexPath(0, this.copied.index)).get("copied").hidden = false
         } else if ($clipboard.text) {
             this.add($clipboard.text)
-        }
-    }
-
-    setCopied(uuid, index) {
-        this.copied = {
-            uuid: uuid,
-            index: index
-        }
-    }
-
-    updateCopied() {
-        const searchRes = this.kernel.storage.getByMD5($text.MD5($clipboard.text))
-        this.copied = $cache.get("copied") ?? {}
-        if (this.copied.uuid === searchRes?.uuid) {
-            $("clipboard-list").cell($indexPath(0, this.copied.index)).get("copied").hidden = false
         }
     }
 
@@ -129,7 +126,7 @@ class ClipboardUI {
                 this.savedClipboard.splice(to, 1)
             }
             // 判断 copied 是否变化
-            if (this.copied.index === from) {
+            if (this.copied?.index === from) {
                 if (from < to) to-- // 去除偏移
                 this.setCopied(this.copied.uuid, to)
             }
@@ -139,13 +136,14 @@ class ClipboardUI {
         }
     }
 
-    copy(text, uuid, sender, index) {
+    copy(text, uuid, index) {
         // 复制到剪切板
         $clipboard.text = text
-        if (sender) {
-            // 更新指示器 此时的this.copied是之前被复制的信息
+        const sender = $("clipboard-list")
+        if (index !== undefined) {
+            // 更新指示器 此时的 this.copied 是之前被复制的信息
             this.savedClipboard[index].copied.hidden = false
-            if (this.copied.index !== undefined) {
+            if (this.copied?.index !== undefined) {
                 this.savedClipboard[this.copied.index].copied.hidden = true
                 // 修改列表中的指示器
                 sender.cell($indexPath(0, this.copied.index)).get("copied").hidden = true
@@ -204,14 +202,13 @@ class ClipboardUI {
         const next = sender.cell($indexPath(0, 1))
         if (next) next.get("copied").hidden = true
         // 复制新添加的元素
-        this.copy(text, data.uuid)
+        setTimeout(() => this.copy(text, data.uuid, 0), 300)
     }
 
     delete(uuid, sender, index) {
         // 删除数据库中的值
         this.kernel.storage.beginTransaction()
         this.kernel.storage.delete(uuid)
-        if (this.copied.uuid === uuid) $clipboard.clear()
         // 更改指针
         if (this.savedClipboard[index - 1]) {
             const prevItem = {
@@ -238,6 +235,11 @@ class ClipboardUI {
         this.savedClipboard.splice(index, 1)
         // 删除列表中的行
         sender.delete(index)
+        // 删除剪切板信息
+        if (this.copied.uuid === uuid) {
+            this.setCopied(null)
+            $clipboard.clear()
+        }
     }
 
     lineData(data) {
@@ -494,7 +496,7 @@ class ClipboardUI {
                             color: $color("systemLink"),
                             handler: (sender, indexPath) => {
                                 const data = sender.object(indexPath)
-                                this.copy(data.content.text, data.content.info.uuid, sender, indexPath.row)
+                                this.copy(data.content.text, data.content.info.uuid, indexPath.row)
                             }
                         },
                         { // 删除
@@ -521,11 +523,11 @@ class ClipboardUI {
                 },
                 events: {
                     ready: () => {
-                        this.updateCopied()
+                        this.readClipboard()
                         $app.listen({
                             // 在应用恢复响应后调用
                             resume: () => {
-                                this.updateCopied()
+                                this.readClipboard()
                             }
                         })
                     },
