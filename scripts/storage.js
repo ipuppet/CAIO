@@ -7,7 +7,7 @@ class Storage {
         this.iCloudDb = this.iCloudPath + this.dbName
         this.iCloudAutoDb = this.iCloudPath + "auto.db"
         this.sqlite = $sqlite.open(this.localDb)
-        this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, prev TEXT, next TEXT)")
+        this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
     }
 
     hasBackup() {
@@ -53,6 +53,7 @@ class Storage {
             data.push({
                 uuid: result.result.get("uuid"),
                 text: result.result.get("text"),
+                md5: result.result.get("md5"),
                 prev: result.result.get("prev") ?? null,
                 next: result.result.get("next") ?? null
             })
@@ -82,6 +83,14 @@ class Storage {
         return this.parse(result)[0]
     }
 
+    getByMD5(md5) {
+        const result = this.sqlite.query({
+            sql: "SELECT * FROM clipboard WHERE md5 = ?",
+            args: [`${md5}`]
+        })
+        return this.parse(result)[0]
+    }
+
     search(kw) {
         const result = this.sqlite.query({
             sql: "SELECT * FROM clipboard WHERE text like ?",
@@ -92,8 +101,8 @@ class Storage {
 
     insert(clipboard) {
         const result = this.sqlite.update({
-            sql: "INSERT INTO clipboard (uuid, text, prev, next) values(?, ?, ?, ?)",
-            args: [clipboard.uuid, clipboard.text, clipboard.prev, clipboard.next]
+            sql: "INSERT INTO clipboard (uuid, text, md5, prev, next) values(?, ?, ?, ?, ?)",
+            args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
         })
         if (result.result) {
             if (this.setting.get("backup.autoBackup")) {
@@ -112,10 +121,10 @@ class Storage {
     }
 
     update(clipboard) {
-        if (Object.keys(clipboard).length === 0) return
+        if (Object.keys(clipboard).length !== 4 || typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
-            sql: "UPDATE clipboard SET text = ?, prev = ?, next = ? WHERE uuid = ?",
-            args: [clipboard.text, clipboard.prev, clipboard.next, clipboard.uuid]
+            sql: "UPDATE clipboard SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?",
+            args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
         })
         if (result.result) {
             return true
@@ -125,9 +134,10 @@ class Storage {
     }
 
     updateText(uuid, text) {
+        if (typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
-            sql: "UPDATE clipboard SET text = ? WHERE uuid = ?",
-            args: [text, uuid]
+            sql: "UPDATE clipboard SET text = ?, md5 = ? WHERE uuid = ?",
+            args: [text, $text.MD5(text), uuid]
         })
         if (result.result) {
             return true
