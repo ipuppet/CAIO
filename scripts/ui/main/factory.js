@@ -8,13 +8,26 @@ class Factory extends BaseView {
     }
 
     clipboard() {
-        const ClipboardUI = require("./clipboard")
-        let interfaceUi = new ClipboardUI(this.kernel)
+        const Clipboard = require("./clipboard")
+        const interfaceUi = new Clipboard(this.kernel)
         return this.kernel.page.view.creator(interfaceUi.getViews(), 0)
     }
 
+    // TODO files
+    /* files() {
+        const Files = require("./files")
+        const interfaceUi = new Files(this.kernel)
+        return this.kernel.page.view.creator(interfaceUi.getViews(), 0)
+    } */
+
+    actionManager() {
+        const ActionManager = require("./action-manager")
+        const interfaceUi = new ActionManager(this.kernel)
+        return this.kernel.page.view.creator(interfaceUi.getViews(), 1)
+    }
+
     setting() {
-        return this.kernel.page.view.creator(this.kernel.setting.getView(), 1, false)
+        return this.kernel.page.view.creator(this.kernel.setting.getView(), 2, false)
     }
 
     /**
@@ -23,11 +36,16 @@ class Factory extends BaseView {
     render() {
         this.kernel.render([
             this.clipboard(),
+            this.actionManager(),
             this.setting()
         ], [
             {
-                icon: ["doc.text", "doc.text.fill"],
+                icon: ["doc.on.clipboard", "doc.on.clipboard.fill"],
                 title: $l10n("CLIPBOARD")
+            },
+            {
+                icon: ["command"],
+                title: $l10n("ACTION")
             },
             {
                 icon: "gear",
