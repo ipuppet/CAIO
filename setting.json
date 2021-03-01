@@ -4,6 +4,31 @@
         "items": []
     },
     {
+        "title": "CLIPBOARD",
+        "items": [
+            {
+                "icon": [
+                    "list.bullet",
+                    "#FFCC66"
+                ],
+                "title": "MAX_ITEM_LENGTH",
+                "type": "number",
+                "key": "clipboard.maxItemLength",
+                "value": 100
+            },
+            {
+                "icon": [
+                    "pencil.and.ellipsis.rectangle",
+                    "#CC0099"
+                ],
+                "title": "TEXT_MAX_LENGTH",
+                "type": "number",
+                "key": "clipboard.textMaxLength",
+                "value": 100
+            }
+        ]
+    },
+    {
         "title": "EDITOR",
         "items": [
             {

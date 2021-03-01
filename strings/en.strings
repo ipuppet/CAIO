@@ -9,8 +9,11 @@
 "SEARCH" = "Search";
 "COPY" = "Copy";
 "COPY_SUCCESS" = "Copy success";
+"SORT" = "Sort";
 "ACTION" = "Action";
 "PREVIEW" = "Preview";
+"MAX_ITEM_LENGTH" = "Home page line limit";
+"TEXT_MAX_LENGTH" = "Display character length";
 
 "EDITOR" = "Editor";
 "BACKGROUND_COLOR" = "Background";
