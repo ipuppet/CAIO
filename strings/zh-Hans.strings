@@ -1,10 +1,5 @@
 "ALERT_INFO" = "提示";
-"OK" = "好";
-"CANCEL" = "取消";
-"CLEAR" = "清除";
-"BACK" = "返回";
-"SUCCESS" = "成功";
-"ERROR" = "发生错误";
+
 "NONE" = "什么都没有";
 "FAILED_TO_LOAD_VIEW" = "加载视图失败";
 "VIEW_NOT_PROVIDED" = "未提供该视图";
@@ -32,10 +27,6 @@
 "DELETE_SUCCESS" = "删除成功";
 "DELETE_ERROR" = "删除失败";
 
-"SETTING" = "设置";
-
-"GENERAL" = "一般";
-"TIPS" = "小贴士";
 "PRINT_TIME_CONSUMING" = "打印加载耗时";
 "UPDATE_HOME_SCREEN_WIDGET_OPTIONS" = "更新主屏幕widget参数";
 
@@ -43,10 +34,3 @@
 "START_BACKUP" = "开始备份";
 "BACKUP_TO_ICLOUD" = "备份到iCloud";
 "RECOVER_FROM_ICLOUD" = "从iCloud恢复";
-
-"ADVANCED" = "高级";
-
-"ABOUT" = "关于";
-"VERSION" = "Version";
-"AUTHOR" = "作者";
-"AT_BOTTOM" = "已经到底啦~";

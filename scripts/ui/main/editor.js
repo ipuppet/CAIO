@@ -17,7 +17,7 @@ class Editor {
         this.kernel.UIKit.push({
             parent: $l10n("CLIPBOARD"),
             disappeared: () => { callback(this.text) },
-            view: [
+            views: [
                 {
                     type: "code",
                     layout: $layout.fill,
