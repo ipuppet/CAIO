@@ -79,7 +79,7 @@ class ClipboardUI {
                     next: this.savedClipboard[from].content.info.next
                 }
                 this.kernel.storage.update(fromPrevItem)
-                this.savedClipboard[from - 1] = this.lineData(fromPrevItem, this.copied?.uuid)
+                this.savedClipboard[from - 1] = this.lineData(fromPrevItem)
             }
             if (this.savedClipboard[from + 1]) {
                 const fromNextItem = { // from 位置的下一个元素
@@ -89,7 +89,7 @@ class ClipboardUI {
                     next: this.savedClipboard[from + 1].content.info.next
                 }
                 this.kernel.storage.update(fromNextItem)
-                this.savedClipboard[from + 1] = this.lineData(fromNextItem, this.copied?.uuid)
+                this.savedClipboard[from + 1] = this.lineData(fromNextItem)
             }
             // 在 to 上方插入元素
             if (this.savedClipboard[to - 1]) {
@@ -100,7 +100,7 @@ class ClipboardUI {
                     next: oldFromItem.uuid // 指向即将被移动元素的uuid
                 }
                 this.kernel.storage.update(toPrevItem)
-                this.savedClipboard[to - 1] = this.lineData(toPrevItem, this.copied?.uuid)
+                this.savedClipboard[to - 1] = this.lineData(toPrevItem)
             }
             const toItem = { // 原来 to 位置的元素
                 uuid: oldToItem.uuid,
@@ -117,8 +117,8 @@ class ClipboardUI {
             }
             this.kernel.storage.update(fromItem)
             // 修改内存中的值
-            this.savedClipboard[to] = this.lineData(toItem, this.copied?.uuid)
-            this.savedClipboard[from] = this.lineData(fromItem, this.copied?.uuid)
+            this.savedClipboard[to] = this.lineData(toItem)
+            this.savedClipboard[from] = this.lineData(fromItem)
             // 移动位置
             this.savedClipboard.splice(to, 0, this.savedClipboard[from])
             if (from > to) from++
@@ -191,7 +191,7 @@ class ClipboardUI {
         }
         this.kernel.storage.commit()
         // 格式化数据
-        const lineData = this.lineData(data, data.uuid)
+        const lineData = this.lineData(data)
         // 保存到内存中
         this.savedClipboard.unshift(lineData)
         // 在列表中插入行
