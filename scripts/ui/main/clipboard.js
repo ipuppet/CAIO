@@ -1,9 +1,6 @@
-const Editor = require("./editor")
-
 class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
-        this.editor = new Editor(this.kernel)
         // 剪贴板列个性化设置
         this.edges = 15 // 表边距
         this.fontSize = 16 // 字体大小
@@ -330,7 +327,7 @@ class Clipboard {
     navButtons() {
         return [
             this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                this.editor.push("", text => {
+                this.kernel.editor.push("", text => {
                     if (text !== "") this.add(text)
                 })
             }),
@@ -551,7 +548,7 @@ class Clipboard {
                     },
                     didSelect: (sender, indexPath, data) => {
                         const content = data.content
-                        this.editor.push(content.text, text => {
+                        this.kernel.editor.push(content.text, text => {
                             if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
                         })
                     }

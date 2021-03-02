@@ -1,10 +1,12 @@
 const BaseView = require("../../../EasyJsBox/src/Foundation/view")
+const Editor = require("./editor")
 
 class Factory extends BaseView {
     constructor(kernel) {
         super(kernel)
         // 设置初始页面
         this.kernel.page.controller.setSelectedPage(0)
+        this.kernel.editor = new Editor(this.kernel)
     }
 
     clipboard() {
