@@ -1,5 +1,6 @@
 {
     "icon": "option",
+    "color": "#FF6633",
     "name": "控制台输出",
     "description": "这是个测试 Action"
 }
