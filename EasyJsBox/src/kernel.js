@@ -97,7 +97,7 @@ class Kernel {
     }
 
     /**
-     * 注册组件
+     * 注册插件
      * @param {String} plugin 
      */
     registerPlugin(plugin) {
@@ -110,7 +110,7 @@ class Kernel {
     }
 
     /**
-     * 批量注册组件
+     * 批量注册插件
      * @param {Array} plugins 
      */
     registerPlugins(plugins) {
