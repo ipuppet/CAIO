@@ -3,11 +3,6 @@ class ActionManager {
         this.kernel = kernel
     }
 
-    getActions() {
-
-        return actions
-    }
-
     actionsToData() {
         // 格式化数据供 matrix 使用
         const data = []
@@ -37,6 +32,9 @@ class ActionManager {
     navButtons() {
         return [
             this.kernel.UIKit.navButton("add", "plus.circle", () => {
+                this.kernel.editor.push("", content => {
+                    console.log(content)
+                })
             })
         ]
     }
@@ -48,23 +46,23 @@ class ActionManager {
                 props: {
                     columns: 2,
                     itemHeight: 100,
-                    spacing: 15,
+                    spacing: 20,
                     bgcolor: $color("insetGroupedBackground"),
                     header: {
                         type: "view",
                         props: {
-                            height: 85,
+                            height: 90,
                             clipsToBounds: true
                         },
                         views: [{
                             type: "label",
                             props: {
                                 text: $l10n("ACTION"),
-                                font: $font("bold", 30)
+                                font: $font("bold", 35)
                             },
-                            layout: make => {
-                                make.left.inset(15)
-                                make.top.inset(40)
+                            layout: (make, view) => {
+                                make.left.equalTo(view.super.safeArea).offset(20)
+                                make.top.equalTo(view.super.safeAreaTop).offset(50)
                             }
                         }]
                     },
@@ -115,7 +113,7 @@ class ActionManager {
                 },
                 layout: (make, view) => {
                     make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.super)
+                    make.top.equalTo(view.super.safeArea)
                 }
             },
             { // 顶部按钮栏
@@ -124,7 +122,7 @@ class ActionManager {
                 views: this.navButtons(),
                 layout: (make, view) => {
                     make.top.width.equalTo(view.super.safeArea)
-                    make.height.equalTo(40)
+                    make.height.equalTo(50)
                 }
             }
         ]

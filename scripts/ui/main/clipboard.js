@@ -329,7 +329,7 @@ class Clipboard {
             this.kernel.UIKit.navButton("add", "plus.circle", () => {
                 this.kernel.editor.push("", text => {
                     if (text !== "") this.add(text)
-                })
+                }, $l10n("CLIPBOARD"))
             }),
             this.kernel.actionButton(
                 () => this.copied === undefined ? null : this.copied.uuid,
@@ -406,19 +406,11 @@ class Clipboard {
             }
         }
         return [
-            { // 顶部按钮栏
-                type: "view",
-                views: this.navButtons(),
-                layout: (make, view) => {
-                    make.top.width.equalTo(view.super.safeArea)
-                    make.height.equalTo(40)
-                }
-            },
             { // 剪切板列表
                 type: "list",
                 layout: (make, view) => {
                     make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.prev.bottom)
+                    make.top.equalTo(view.super.safeArea)
                 },
                 props: {
                     id: "clipboard-list",
@@ -467,7 +459,7 @@ class Clipboard {
                     header: {
                         type: "view",
                         props: {
-                            height: 85,
+                            height: 140,
                             clipsToBounds: true
                         },
                         views: [
@@ -475,9 +467,12 @@ class Clipboard {
                                 type: "label",
                                 props: {
                                     text: $l10n("CLIPBOARD"),
-                                    font: $font("bold", 30)
+                                    font: $font("bold", 35)
                                 },
-                                layout: make => make.left.inset(15)
+                                layout: (make, view) => {
+                                    make.left.equalTo(view.super.safeArea).offset(20)
+                                    make.top.equalTo(view.super.safeAreaTop).offset(50)
+                                }
                             },
                             {
                                 type: "input",
@@ -488,7 +483,7 @@ class Clipboard {
                                 layout: (make, view) => {
                                     make.centerX.equalTo(view.super)
                                     make.top.equalTo(view.prev.bottom).offset(10)
-                                    make.left.right.inset(15)
+                                    make.left.right.inset(20)
                                     make.height.equalTo(35)
                                 },
                                 events: {
@@ -550,8 +545,16 @@ class Clipboard {
                         const content = data.content
                         this.kernel.editor.push(content.text, text => {
                             if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
-                        })
+                        }, $l10n("CLIPBOARD"))
                     }
+                }
+            },
+            { // 顶部按钮栏
+                type: "view",
+                views: this.navButtons(),
+                layout: (make, view) => {
+                    make.top.width.equalTo(view.super.safeArea)
+                    make.height.equalTo(50)
                 }
             }
         ]
