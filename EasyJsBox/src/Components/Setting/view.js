@@ -745,6 +745,84 @@ class View extends BaseView {
         }
     }
 
+    createIcon(key, icon, title, events) {
+        const id = `setting-icon-${this.dataCenter.get("name")}-${key}`
+        return {
+            type: "view",
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                cornerRadius: 8,
+                                bgcolor: $color("#000000"),
+                                smoothCorners: true
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(15)
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo($size(30, 30))
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: id,
+                                image: $image(this.controller.get(key)),
+                                icon: $icon(this.controller.get(key).slice(5, this.controller.get(key).indexOf(".")), $color("#ffffff")),
+                                tintColor: $color("#ffffff")
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(20)
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo($size(20, 20))
+                            }
+                        }
+                    ],
+                    events: {
+                        tapped: () => {
+                            $ui.menu({
+                                items: [$l10n("JSBOX_ICON"), $l10n("SF_SYMBOLS"), $l10n("IMAGE_BASE64")],
+                                handler: async (title, idx) => {
+                                    if (idx === 0) {
+                                        const icon = await $ui.selectIcon()
+                                        this.updateSetting(key, icon)
+                                        $(id).icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
+                                        if (events) eval(`(()=>{return ${events}})()`)
+                                    } else if (idx === 1 || idx === 2) {
+                                        $input.text({
+                                            text: "",
+                                            placeholder: title,
+                                            handler: text => {
+                                                if (text === "") {
+                                                    $ui.toast($l10n("INVALID_VALUE"))
+                                                    return
+                                                }
+                                                this.updateSetting(key, text)
+                                                if (idx === 1) $(id).symbol = text
+                                                else $(id).image = $image(text)
+                                                if (events) eval(`(()=>{return ${events}})()`)
+                                            }
+                                        })
+                                    }
+                                }
+                            })
+                        }
+                    },
+                    layout: (make, view) => {
+                        make.right.inset(0)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
     getView() {
         const header = this.dataCenter.get("secondaryPage") ? {} : this.headerTitle(`setting-title-${this.dataCenter.get("name")}`, $l10n("SETTING"))
         const footer = this.dataCenter.get("footer", {
@@ -933,6 +1011,9 @@ class View extends BaseView {
                         break
                     case "input":
                         row = this.createInput(item.key, item.icon, item.title, item.events)
+                        break
+                    case "icon":
+                        row = this.createIcon(item.key, item.icon, item.title, item.events)
                         break
                     default:
                         continue

@@ -14,6 +14,10 @@
 "COPY" = "Copy";
 "COPY_SUCCESS" = "Copy success";
 
+"JSBOX_ICON" = "JSBox in app icon";
+"SF_SYMBOLS" = "SF Symbols";
+"IMAGE_BASE64" = "Image/base64";
+
 "ABOUT" = "About";
 "VERSION" = "Version";
 "AUTHOR" = "Author";

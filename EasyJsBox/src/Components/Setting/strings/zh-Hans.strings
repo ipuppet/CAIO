@@ -14,6 +14,10 @@
 "COPY" = "复制";
 "COPY_SUCCESS" = "复制成功";
 
+"JSBOX_ICON" = "JSBox 内置图标";
+"SF_SYMBOLS" = "SF Symbols";
+"IMAGE_BASE64" = "图片/ base64";
+
 "ABOUT" = "关于";
 "VERSION" = "Version";
 "AUTHOR" = "作者";
