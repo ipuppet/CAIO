@@ -1057,48 +1057,22 @@ class View extends BaseView {
                                 }
                             }
                         },
-                        {
-                            type: "view",
-                            layout: $layout.fill,
-                            views: [
-                                {
-                                    type: "button",
-                                    props: {
-                                        symbol: "chevron.left",
-                                        tintColor: this.textColor,
-                                        bgcolor: $color("clear"),
-                                        hidden: true
-                                    },
-                                    events: {
-                                        tapped: () => {
-                                            this.dataCenter.get("pop")()
-                                        }
-                                    },
-                                    layout: (make, view) => {
-                                        make.left.inset(10)
-                                        make.size.equalTo(30)
-                                        make.top.equalTo(view.super.safeAreaTop)
-                                        make.bottom.equalTo(view.super)
-                                    }
-                                },
-                                {
-                                    type: "label",
-                                    props: {
-                                        id: header.info.id + "-header-title",
-                                        alpha: 0,
-                                        text: header.info.title,
-                                        font: $font("bold", 17),
-                                        align: $align.center,
-                                        bgcolor: $color("clear"),
-                                        textColor: this.textColor
-                                    },
-                                    layout: (make, view) => {
-                                        make.left.right.inset(0)
-                                        make.top.equalTo(view.super.safeAreaTop)
-                                        make.bottom.equalTo(view.super)
-                                    }
-                                }
-                            ]
+                        { // 标题
+                            type: "label",
+                            props: {
+                                id: header.info.id + "-header-title",
+                                alpha: 0,
+                                text: header.info.title,
+                                font: $font("bold", 17),
+                                align: $align.center,
+                                bgcolor: $color("clear"),
+                                textColor: this.textColor
+                            },
+                            layout: (make, view) => {
+                                make.left.right.inset(0)
+                                make.top.equalTo(view.super.safeAreaTop)
+                                make.bottom.equalTo(view.super)
+                            }
                         }
                     ]
                 }),
