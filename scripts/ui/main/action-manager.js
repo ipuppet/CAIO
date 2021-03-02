@@ -1,27 +1,54 @@
+const MainJsTemplate = `const Action = require("../../action.js")
+
+class MyAction extends Action {
+    /**
+     * 系统会调用 do() 方法
+     * 
+     * 可用数据如下：
+     * this.config 配置文件内容
+     * this.text 当前复制的文本或选中的文本亦或者编辑器内的文本
+     * this.uuid 该文本的 uuid
+     */
+    do() {
+        console.log(this.text)
+    }
+}
+
+module.exports = MyAction`
+
 class ActionManager {
     constructor(kernel) {
         this.kernel = kernel
     }
 
-    actionsToData() {
-        // 格式化数据供 matrix 使用
-        const data = []
+    getTypes() {
         const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        type.concat($file.list(this.kernel.actionPath).filter(dir => { // 获取 type.indexOf(dir) > 0 的文件夹名
-            if ($file.isDirectory(this.kernel.actionPath + "/" + dir) && type.indexOf(dir) > 0)
+        return type.concat($file.list(this.kernel.actionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
+            if ($file.isDirectory(this.kernel.actionPath + "/" + dir) && type.indexOf(dir) < 0)
                 return dir
-        })).forEach(type => {
+        }))
+    }
+
+    actionToData(action) {
+        return {
+            name: { text: action.name },
+            icon: action.icon.slice(0, 5) === "icon_"
+                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                : { image: $image(action.icon) },
+            color: { bgcolor: $color(action.color) },
+            info: { info: action }
+        }
+    }
+
+    actionsToData() { // 格式化数据供 matrix 使用
+        const data = []
+        this.getTypes().forEach(type => {
             const section = {
                 title: type, // TODO section 标题
                 items: []
             }
             this.kernel.getActions(type).forEach(action => {
-                section.items.push({
-                    name: { text: action.name },
-                    icon: { symbol: action.icon },
-                    color: { bgcolor: $color(action.color) },
-                    info: { info: action }
-                })
+                section.items.push(this.actionToData(action))
             })
             data.push(section)
         })
@@ -87,8 +114,7 @@ class ActionManager {
         }
     }
 
-    createInput(key, icon, title, events) {
-        const id = `action-input-${key}`
+    createInput(icon, title) {
         return {
             type: "view",
             views: [
@@ -98,9 +124,9 @@ class ActionManager {
                     views: [{
                         type: "label",
                         props: {
-                            id: `${id}-label`,
+                            id: "action-input",
                             color: $color("secondaryText"),
-                            text: this.editingActionInfo[key]
+                            text: this.editingActionInfo.name
                         },
                         layout: (make, view) => {
                             make.right.inset(0)
@@ -109,17 +135,18 @@ class ActionManager {
                         }
                     }],
                     events: {
-                        tapped: async () => {
+                        tapped: () => {
                             $input.text({
-                                text: this.editingActionInfo[key],
+                                text: "",
                                 placeholder: title,
                                 handler: text => {
+                                    text = text.trim()
                                     if (text === "") {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
                                     }
-                                    $(`${id}-label`).text = text
-                                    events(text)
+                                    $("action-input").text = text
+                                    this.editingActionInfo.name = text
                                 }
                             })
                         }
@@ -135,7 +162,7 @@ class ActionManager {
         }
     }
 
-    createColor(key, icon, title, events) {
+    createColor(icon, title) {
         return {
             type: "view",
             views: [
@@ -146,8 +173,8 @@ class ActionManager {
                         {// 颜色预览以及按钮功能
                             type: "view",
                             props: {
-                                id: `action-color-${key}`,
-                                bgcolor: $color(this.controller.get(key)),
+                                id: "action-color",
+                                bgcolor: $color(this.editingActionInfo.color),
                                 circular: true,
                                 borderWidth: 1,
                                 borderColor: $color("#e3e3e3")
@@ -163,8 +190,10 @@ class ActionManager {
                             events: {
                                 tapped: async () => {
                                     const newColor = await $picker.color({ color: $color(this.editingActionInfo.color) })
-                                    $(`action-color-${key}`).bgcolor = newColor
-                                    events(newColor.hexCode)
+                                    $("action-color").bgcolor = newColor
+                                    this.editingActionInfo.color = newColor.hexCode
+                                    // 将下方图标选择框的背景色也更改
+                                    $("action-icon-color").bgcolor = newColor
                                 }
                             },
                             layout: (make, view) => {
@@ -183,50 +212,290 @@ class ActionManager {
         }
     }
 
-    navButtons() {
-        return [
-            this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                this.editingActionInfo = {
-                    name: "",
-                    color: "",
-                    icon: "",
-                    description: "",
-                }
-                const nameInput = this.createInput("name", "pencil.circle", $l10n("NAME"), text => {
-                    this.editingActionInfo.name = text
-                })
-                const createColor = this.createInput("color", "pencil.tip.crop.circle", $l10n("COLOR"), color => {
-                    this.editingActionInfo.color = color
-                })
-                const iconInput = this.createInput("icon", "star.sircel", $l10n("ICON"), icon => {
-                    this.editingActionInfo.icon = icon
-                })
-                this.kernel.UIKit.pushPageSheet({
-                    done: () => {
-                        console.log("done")
-                    },
+    createIcon(icon, title) {
+        return {
+            type: "view",
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
                     views: [
                         {
-                            type: "view",
-                            props: {},
-                            views: [
-                                nameInput, createColor, iconInput
-                            ],
+                            type: "image",
+                            props: {
+                                cornerRadius: 8,
+                                id: "action-icon-color",
+                                bgcolor: $color(this.editingActionInfo.color),
+                                smoothCorners: true
+                            },
                             layout: (make, view) => {
-                                make.height.equalTo(300)
-                                make.width.equalTo(view.super)
+                                make.right.inset(15)
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo($size(30, 30))
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: "action-icon",
+                                image: $image(this.editingActionInfo.icon),
+                                icon: $icon(this.editingActionInfo.icon.slice(5, this.editingActionInfo.icon.indexOf(".")), $color("#ffffff")),
+                                tintColor: $color("#ffffff")
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(20)
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo($size(20, 20))
                             }
                         }
-                    ]
+                    ],
+                    events: {
+                        tapped: () => {
+                            $ui.menu({
+                                items: [$l10n("JSBOX_ICON"), $l10n("SF_SYMBOLS"), $l10n("IMAGE_BASE64")],
+                                handler: async (title, idx) => {
+                                    if (idx === 0) {
+                                        const icon = await $ui.selectIcon()
+                                        $("action-icon").icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
+                                        this.editingActionInfo.icon = icon
+                                    } else if (idx === 1 || idx === 2) {
+                                        $input.text({
+                                            text: "",
+                                            placeholder: title,
+                                            handler: text => {
+                                                text = text.trim()
+                                                if (text === "") {
+                                                    $ui.toast($l10n("INVALID_VALUE"))
+                                                    return
+                                                }
+                                                if (idx === 1) $("action-icon").symbol = text
+                                                else $("action-icon").image = $image(text)
+                                                this.editingActionInfo.icon = text
+                                            }
+                                        })
+                                    }
+                                }
+                            })
+                        }
+                    },
+                    layout: (make, view) => {
+                        make.right.inset(0)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
+    createMenu(icon, title, items, withTitle = true) {
+        const id = `action-menu`
+        return {
+            type: "view",
+            props: { id: `${id}-line` },
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: this.editingActionInfo.type,
+                                color: $color("secondaryText"),
+                                id: id
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.height.equalTo(view.super)
+                            }
+                        }
+                    ],
+                    layout: (make, view) => {
+                        make.right.inset(15)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            events: {
+                tapped: () => {
+                    $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
+                    $ui.menu({
+                        items: items,
+                        handler: (title, idx) => {
+                            this.editingActionInfo.type = title
+                            $(id).text = $l10n(title)
+                        },
+                        finished: () => {
+                            $ui.animate({
+                                duration: 0.2,
+                                animation: () => {
+                                    $(`${id}-line`).bgcolor = $color("clear")
+                                }
+                            })
+                        }
+                    })
+                }
+            },
+            layout: $layout.fill
+        }
+    }
+
+    editActionInfoPageSheet(info, done) {
+        this.editingActionInfo = info ?? {
+            dir: this.kernel.uuid(), // 随机生成文件夹名
+            type: "clipboard",
+            name: "MyAction",
+            color: "#CC00CC",
+            icon: "icon_062.png", // 默认星星图标
+            description: "",
+        }
+        const nameInput = this.createInput(["pencil.circle", "#FF3366"], $l10n("NAME"))
+        const createColor = this.createColor(["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
+        const iconInput = this.createIcon(["star.circle", "#FF9933"], $l10n("ICON"))
+        const typeMenu = this.createMenu(["tag.circle", "#33CC33"], $l10n("TYPE"), this.getTypes())
+        this.kernel.UIKit.pushPageSheet({
+            views: [{
+                type: "list",
+                props: {
+                    bgcolor: $color("insetGroupedBackground"),
+                    style: 2,
+                    separatorInset: $insets(0, 50, 0, 10), // 分割线边距
+                    rowHeight: 50,
+                    data: [nameInput, createColor, iconInput, typeMenu]
+                },
+                layout: $layout.fill
+            }],
+            done: () => {
+                if (done) done(this.editingActionInfo)
+            }
+        })
+    }
+
+    saveActionInfo(info) {
+        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
+        if (!$file.exists(path)) $file.mkdir(path)
+        $file.write({
+            data: $data({
+                "string": JSON.stringify({
+                    name: info.name,
+                    color: info.color,
+                    icon: info.icon,
+                    description: info.description,
                 })
-                // TODO 新建动作
-                // this.edit()
+            }),
+            path: `${path}config.json`
+        })
+    }
+
+    saveMainJs(content, info) {
+        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
+        if (!$file.exists(path)) $file.mkdir(path)
+        $file.write({
+            data: $data({ "string": content }),
+            path: `${path}main.js`
+        })
+    }
+
+    navButtons() {
+        return [
+            this.kernel.UIKit.navButton("add", "plus.circle", (animate, sender) => {
+                const newItem = (title, tapped) => {
+                    return {
+                        type: "label",
+                        layout: (make, view) => {
+                            make.left.right.inset(15)
+                            make.height.equalTo(40)
+                            make.width.equalTo(view.super)
+                            make.top.equalTo(view.prev?.bottom)
+                        },
+                        props: { text: title },
+                        events: {
+                            tapped: () => tapped()
+                        }
+                    }
+                }
+                const popover = $ui.popover({
+                    sourceView: sender,
+                    directions: $popoverDirection.right,
+                    size: $size(200, 80),
+                    views: [{
+                        type: "view",
+                        views: [
+                            newItem($l10n("CREATE_NEW_ACTION"), () => {
+                                this.editActionInfoPageSheet(null, info => {
+                                    this.saveActionInfo(info)
+                                    $("actions").insert({
+                                        indexPath: $indexPath(this.getTypes().indexOf(info.type), 0),
+                                        value: this.actionToData(info)
+                                    })
+                                    popover.dismiss()
+                                    this.kernel.editor.push(MainJsTemplate, content => {
+                                        this.saveMainJs(content, info)
+                                    })
+                                })
+                            }),
+                            { // 分割线
+                                type: "view",
+                                props: { bgcolor: $color("separatorColor") },
+                                layout: (make, view) => {
+                                    make.width.equalTo(view.super)
+                                    make.height.equalTo(0.5)
+                                    make.top.equalTo(view.prev.bottom)
+                                }
+                            },
+                            newItem($l10n("CREATE_NEW_TYPE"), () => {
+                                $input.text({
+                                    text: "",
+                                    placeholder: $l10n("CREATE_NEW_TYPE"),
+                                    handler: text => {
+                                        text = text.trim()
+                                        if (text === "") {
+                                            $ui.toast($l10n("INVALID_VALUE"))
+                                            return
+                                        }
+                                        const path = `${this.kernel.actionPath}${text}`
+                                        if ($file.exists(path)) {
+                                            $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
+                                        } else {
+                                            $file.mkdir()
+                                            $ui.success($l10n("SUCCESS"))
+                                        }
+                                        setTimeout(() => { popover.dismiss() }, 1000)
+                                    }
+                                })
+                            })
+                        ],
+                        layout: $layout.fill
+                    }]
+                })
             })
         ]
     }
 
-    menuItems() {
+    menuItems() { // 卡片长按菜单
         return [
+            { // 编辑信息
+                title: $l10n("EDIT"),
+                handler: (sender, indexPath) => {
+                    const info = sender.object(indexPath).info.info
+                    this.editActionInfoPageSheet(info, info => {
+                        this.saveActionInfo(info)
+                        // 更新视图信息
+                        const view = sender.cell(indexPath)
+                        view.get("info").info = info
+                        view.get("color").bgcolor = $color(info.color)
+                        view.get("name").text = info.name
+                        if (info.icon.slice(0, 5) === "icon_") {
+                            view.get("icon").icon = $icon(info.icon.slice(5, info.icon.indexOf(".")), $color("#ffffff"))
+                        } else {
+                            view.get("icon").image = $image(info.icon)
+                        }
+                    })
+                }
+            },
             { // 删除
                 title: $l10n("DELETE"),
                 destructive: true,
@@ -251,20 +520,12 @@ class ActionManager {
         ]
     }
 
-    edit(info) {
-        if (!info) return
-        const main = $file.read(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`).string
-        this.kernel.editor.push(main, content => {
-            // TODO 编辑
-            console.log(content)
-        })
-    }
-
     getViews() {
         return [
             {
                 type: "matrix",
                 props: {
+                    id: "actions",
                     columns: 2,
                     itemHeight: 100,
                     spacing: 20,
@@ -325,7 +586,15 @@ class ActionManager {
                                     symbol: "ellipsis.circle"
                                 },
                                 events: {
-                                    tapped: sender => this.edit(sender.next.info)
+                                    tapped: sender => {
+                                        const info = sender.next.info
+                                        if (!info) return
+                                        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/main.js`
+                                        const main = $file.read(path).string
+                                        this.kernel.editor.push(main, content => {
+                                            this.saveMainJs(content, info)
+                                        })
+                                    }
                                 },
                                 layout: make => {
                                     make.top.right.inset(10)

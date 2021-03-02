@@ -49,12 +49,12 @@ class AppKernel extends Kernel {
             }
             $ui.popover({
                 sourceView: sender,
+                directions: $popoverDirection.up,
                 size: $size(200, 300),
                 views: [
                     {
                         type: "list",
                         props: {
-                            title: $l10n("ACTION"),
                             data: this.getActions(type).map(action => {
                                 return {
                                     type: "label",

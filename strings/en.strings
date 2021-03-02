@@ -16,11 +16,17 @@
 "TEXT_MAX_LENGTH" = "Display Character Length";
 
 "EDITOR" = "Editor";
+"CREATE_NEW" = "Create New";
+"CREATE_NEW_ACTION" = "Create New Action";
+"CREATE_NEW_TYPE" = "New Category";
+"TYPE_ALREADY_EXISTS" = "This category already exists";
+"EDIT" = "Edit";
+"NAME" = "Name";
+"ICON" = "Icon";
+"TYPE" = "Category";
 "LIGHT_MODE_THEME" = "Light Mode Theme";
 "DARK_MODE_THEME" = "Dark Mode Theme";
 
-"CUSTOM" = "Custom";
-"CANNOT_CUSTOM" = "This widget cannot be customized.";
 "SAVE" = "Save";
 "SAVE_SUCCESS" = "Save success";
 "SAVE_ERROR" = "Save failed";
@@ -28,9 +34,6 @@
 "CONFIRM_DELETE_MSG" = "Are you sure you want to delete?";
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";
-
-"PRINT_TIME_CONSUMING" = "Print Time Consuming";
-"UPDATE_HOME_SCREEN_WIDGET_OPTIONS" = "Update Home Screen Widget Options";
 
 "BACKUP" = "Backup";
 "START_BACKUP" = "Start Backup";
