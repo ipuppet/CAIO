@@ -15,28 +15,28 @@ class AppKernel extends Kernel {
         this.page = this.registerComponent("Page")
         this.menu = this.registerComponent("Menu")
         // action 路径
-        this.actionPath = "/scripts/action"
+        this.actionPath = "/scripts/action/"
     }
 
     getActions(type) {
         const actions = []
-        const fileList = $file.list(this.actionPath)
+        const typePath = `${this.actionPath}/${type}/`
+        const fileList = $file.list(typePath)
         fileList.forEach(item => {
-            const basePath = `${this.actionPath}/${item}/`
+            const basePath = `${typePath}/${item}/`
             if ($file.isDirectory(basePath)) {
                 const config = JSON.parse($file.read(basePath + "config.json").string)
-                if (type === config.type || type === "*")
-                    actions.push({
-                        dir: item,
-                        type: config.type,
-                        title: config.name ?? item,
-                        description: config.description,
-                        handler: data => {
-                            const ActionClass = require(basePath + "main.js")
-                            const action = new ActionClass(this.kernel, config, data)
-                            action.do()
-                        }
-                    })
+                actions.push({
+                    dir: item,
+                    icon: config.icon,
+                    name: config.name ?? item,
+                    description: config.description,
+                    handler: data => {
+                        const ActionClass = require(basePath + "main.js")
+                        const action = new ActionClass(this.kernel, config, data)
+                        action.do()
+                    }
+                })
             }
         })
         return actions
@@ -64,7 +64,7 @@ class AppKernel extends Kernel {
                                         make.left.right.inset(15)
                                     },
                                     props: {
-                                        text: action.title
+                                        text: action.name
                                     },
                                     events: {
                                         tapped: () => action.handler(data)

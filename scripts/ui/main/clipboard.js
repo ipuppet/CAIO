@@ -414,6 +414,7 @@ class Clipboard {
                         title: $l10n("ACTION"),
                         items: this.kernel.getActions("clipboard").map(action => {
                             action.handler = handlerRewrite(action.handler)
+                            action.title = action.name
                             return action
                         })
                     },
