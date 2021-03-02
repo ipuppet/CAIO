@@ -16,8 +16,8 @@
 "TEXT_MAX_LENGTH" = "显示字符长度";
 
 "EDITOR" = "编辑器";
-"BACKGROUND_COLOR" = "背景颜色";
-"THEME" = "主题";
+"LIGHT_MODE_THEME" = "浅色模式主题";
+"DARK_MODE_THEME" = "深色模式主题";
 
 "CUSTOM" = "定制";
 "CANNOT_CUSTOM" = "该组件无法定制";

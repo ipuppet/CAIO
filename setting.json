@@ -29,23 +29,23 @@
         "items": [
             {
                 "icon": [
-                    "wand.and.stars.inverse",
-                    "#3399FF"
+                    "rectangle.split.3x1.fill",
+                    "#FF6633"
                 ],
-                "title": "BACKGROUND_COLOR",
-                "type": "color",
-                "key": "editor.backgroundColor",
-                "value": "clear"
+                "title": "LIGHT_MODE_THEME",
+                "type": "input",
+                "key": "editor.lightTheme",
+                "value": "atom-one-light"
             },
             {
                 "icon": [
                     "rectangle.split.3x1.fill",
                     "#FF6633"
                 ],
-                "title": "THEME",
+                "title": "DARK_MODE_THEME",
                 "type": "input",
-                "key": "editor.theme",
-                "value": "atom-one-light"
+                "key": "editor.darkTheme",
+                "value": "atom-one-dark"
             }
         ]
     },

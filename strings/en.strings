@@ -12,12 +12,12 @@
 "SORT" = "Sort";
 "ACTION" = "Action";
 "PREVIEW" = "Preview";
-"MAX_ITEM_LENGTH" = "Home page line limit";
-"TEXT_MAX_LENGTH" = "Display character length";
+"MAX_ITEM_LENGTH" = "Line Limit";
+"TEXT_MAX_LENGTH" = "Display Character Length";
 
 "EDITOR" = "Editor";
-"BACKGROUND_COLOR" = "Background";
-"THEME" = "Theme";
+"LIGHT_MODE_THEME" = "Light Mode Theme";
+"DARK_MODE_THEME" = "Dark Mode Theme";
 
 "CUSTOM" = "Custom";
 "CANNOT_CUSTOM" = "This widget cannot be customized.";

@@ -2,8 +2,8 @@ class Editor {
     constructor(kernel) {
         this.kernel = kernel
         // custom
-        this.backgroundColor = this.kernel.setting.get("editor.backgroundColor")
-        this.theme = this.kernel.setting.get("editor.theme")
+        this.lightTheme = this.kernel.setting.get("editor.lightTheme")
+        this.darkTheme = this.kernel.setting.get("editor.darkTheme")
     }
 
     navButtons() {
@@ -26,13 +26,16 @@ class Editor {
                     type: "code",
                     layout: $layout.fill,
                     props: {
-                        theme: this.theme,
-                        bgcolor: $color(this.backgroundColor),
+                        theme: $device.isDarkMode ? this.darkTheme : this.lightTheme,
                         text: this.text
                     },
                     events: {
                         changed: sender => {
                             this.text = sender.text
+                        },
+                        themeChanged: (sender, isDarkMode) => {
+                            // 无法动态更改主题
+                            sender.theme = isDarkMode ? this.darkTheme : this.lightTheme
                         }
                     }
                 }
