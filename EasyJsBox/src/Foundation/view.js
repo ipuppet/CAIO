@@ -64,22 +64,12 @@ class BaseView {
     pushPageSheet(args) {
         const navTop = 50,
             views = args.views,
-            title = args.title !== undefined ? args.title : "",
-            navButtons = args.navButtons !== undefined ? args.navButtons : [],
-            topOffset = args.topOffset !== undefined ? args.topOffset : true,
-            done = args.done !== undefined ? args.done : undefined
-        const UIModalPresentationStyle = {
-            automatic: -2,
-            pageSheet: 1,
-            formSheet: 2,
-            fullScreen: 0,
-            currentContext: 3,
-            custom: 4,
-            overFullScreen: 5,
-            overCurrentContext: 6,
-            popover: 7,
-            none: -1
-        }
+            title = args.title ?? "",
+            navButtons = args.navButtons ?? [],
+            topOffset = args.topOffset ?? true,
+            done = args.done,
+            doneText = args.doneText ?? $l10n("DONE")
+        const UIModalPresentationStyle = { pageSheet: 1 }
         const { width, height } = $device.info.screen
         const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
         const PSViewController = $objc("UIViewController").invoke("alloc.init")
@@ -145,7 +135,7 @@ class BaseView {
                                 make.left.inset(15)
                             },
                             props: {
-                                title: $l10n("DONE"),
+                                title: doneText,
                                 bgcolor: $color("clear"),
                                 font: $font(16),
                                 titleColor: $color("systemLink")
@@ -189,11 +179,11 @@ class BaseView {
     push(args) {
         const navTop = 45,
             views = args.views,
-            title = args.title !== undefined ? args.title : "",
-            parent = args.parent !== undefined ? args.parent : $l10n("BACK"),
-            navButtons = args.navButtons !== undefined ? args.navButtons : [],
-            topOffset = args.topOffset !== undefined ? args.topOffset : true,
-            disappeared = args.disappeared !== undefined ? args.disappeared : undefined
+            title = args.title ?? "",
+            parent = args.parent ?? $l10n("BACK"),
+            navButtons = args.navButtons ?? [],
+            topOffset = args.topOffset ?? true,
+            disappeared = args.disappeared
         $ui.push({
             props: {
                 navBarHidden: true,
