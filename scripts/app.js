@@ -26,18 +26,16 @@ class AppKernel extends Kernel {
             const basePath = `${typePath}/${item}/`
             if ($file.isDirectory(basePath)) {
                 const config = JSON.parse($file.read(basePath + "config.json").string)
-                actions.push({
+                actions.push(Object.assign(config, {
                     dir: item,
                     type: type,
-                    icon: config.icon,
                     name: config.name ?? item,
-                    description: config.description,
                     handler: data => {
                         const ActionClass = require(basePath + "main.js")
                         const action = new ActionClass(this.kernel, config, data)
                         action.do()
                     }
-                })
+                }))
             }
         })
         return actions
