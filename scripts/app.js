@@ -20,7 +20,7 @@ class AppKernel extends Kernel {
 
     getActions(type) {
         const actions = []
-        const typePath = `${this.actionPath}/${type}/`
+        const typePath = `${this.actionPath}${type}/`
         const fileList = $file.list(typePath)
         fileList.forEach(item => {
             const basePath = `${typePath}/${item}/`
@@ -28,6 +28,7 @@ class AppKernel extends Kernel {
                 const config = JSON.parse($file.read(basePath + "config.json").string)
                 actions.push({
                     dir: item,
+                    type: type,
                     icon: config.icon,
                     name: config.name ?? item,
                     description: config.description,

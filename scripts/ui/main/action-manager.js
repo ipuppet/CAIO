@@ -18,10 +18,10 @@ class ActionManager {
             this.kernel.getActions(type).forEach(action => {
                 section.items.push({
                     name: {
-                        text: action.name,
-                        info: action
+                        text: action.name
                     },
-                    icon: { symbol: action.icon }
+                    icon: { symbol: action.icon },
+                    info: action
                 })
             })
             data.push(section)
@@ -32,11 +32,15 @@ class ActionManager {
     navButtons() {
         return [
             this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                this.kernel.editor.push("", content => {
-                    console.log(content)
-                })
+                this.edit("")
             })
         ]
+    }
+
+    edit(content, info) {
+        this.kernel.editor.push(content, content => {
+            console.log(content)
+        })
     }
 
     getViews() {
@@ -48,6 +52,31 @@ class ActionManager {
                     itemHeight: 100,
                     spacing: 20,
                     bgcolor: $color("insetGroupedBackground"),
+                    menu: {
+                        items: [
+                            { // 删除
+                                title: $l10n("DELETE"),
+                                destructive: true,
+                                handler: (sender, indexPath) => {
+                                    $ui.alert({
+                                        title: $l10n("CONFIRM_DELETE_MSG"),
+                                        actions: [
+                                            {
+                                                title: $l10n("DELETE"),
+                                                style: $alertActionType.destructive,
+                                                handler: () => {
+                                                    const info = sender.object(indexPath).info
+                                                    $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
+                                                    sender.delete(indexPath)
+                                                }
+                                            },
+                                            { title: $l10n("CANCEL") }
+                                        ]
+                                    })
+                                }
+                            }
+                        ]
+                    },
                     header: {
                         type: "view",
                         props: {
