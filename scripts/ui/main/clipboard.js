@@ -398,7 +398,7 @@ class Clipboard {
                 type: "view",
                 views: this.navButtons(),
                 layout: (make, view) => {
-                    make.top.width.equalTo(view.super)
+                    make.top.width.equalTo(view.super.safeArea)
                     make.height.equalTo(40)
                 }
             },
