@@ -163,7 +163,7 @@ class AppKernel extends Kernel {
         }
 
         this.setting.recoverAction = animate => {
-            // TODO recover Actions
+            // TODO 恢复动作
             $ui.alert("暂未开发")
         }
     }
