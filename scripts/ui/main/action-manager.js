@@ -19,6 +19,7 @@ class ActionManager {
                 section.items.push({
                     name: { text: action.name },
                     icon: { symbol: action.icon },
+                    color: { bgcolor: $color(action.color) },
                     info: { info: action }
                 })
             })
@@ -27,10 +28,197 @@ class ActionManager {
         return data
     }
 
+    createLineLabel(title, icon) {
+        if (!icon[1]) icon[1] = "#00CC00"
+        if (typeof icon[1] !== "object") {
+            icon[1] = [icon[1], icon[1]]
+        }
+        if (typeof icon[0] !== "object") {
+            icon[0] = [icon[0], icon[0]]
+        }
+        return {
+            type: "view",
+            views: [
+                {// icon
+                    type: "view",
+                    props: {
+                        bgcolor: $color(icon[1][0], icon[1][1]),
+                        cornerRadius: 5,
+                        smoothCorners: true
+                    },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                tintColor: $color("white"),
+                                image: $image(icon[0][0], icon[0][1])
+                            },
+                            layout: (make, view) => {
+                                make.center.equalTo(view.super)
+                                make.size.equalTo(20)
+                            }
+                        },
+                    ],
+                    layout: (make, view) => {
+                        make.centerY.equalTo(view.super)
+                        make.size.equalTo(30)
+                        make.left.inset(10)
+                    }
+                },
+                {// title
+                    type: "label",
+                    props: {
+                        text: title,
+                        textColor: this.kernel.UIKit.textColor,
+                        align: $align.left
+                    },
+                    layout: (make, view) => {
+                        make.centerY.equalTo(view.super)
+                        make.height.equalTo(view.super)
+                        make.left.equalTo(view.prev.right).offset(10)
+                    }
+                }
+            ],
+            layout: (make, view) => {
+                make.centerY.equalTo(view.super)
+                make.height.equalTo(view.super)
+                make.left.inset(0)
+            }
+        }
+    }
+
+    createInput(key, icon, title, events) {
+        const id = `action-input-${key}`
+        return {
+            type: "view",
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [{
+                        type: "label",
+                        props: {
+                            id: `${id}-label`,
+                            color: $color("secondaryText"),
+                            text: this.editingActionInfo[key]
+                        },
+                        layout: (make, view) => {
+                            make.right.inset(0)
+                            make.height.equalTo(view.super)
+
+                        }
+                    }],
+                    events: {
+                        tapped: async () => {
+                            $input.text({
+                                text: this.editingActionInfo[key],
+                                placeholder: title,
+                                handler: text => {
+                                    if (text === "") {
+                                        $ui.toast($l10n("INVALID_VALUE"))
+                                        return
+                                    }
+                                    $(`${id}-label`).text = text
+                                    events(text)
+                                }
+                            })
+                        }
+                    },
+                    layout: (make, view) => {
+                        make.right.inset(15)
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
+    createColor(key, icon, title, events) {
+        return {
+            type: "view",
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {// 颜色预览以及按钮功能
+                            type: "view",
+                            props: {
+                                id: `action-color-${key}`,
+                                bgcolor: $color(this.controller.get(key)),
+                                circular: true,
+                                borderWidth: 1,
+                                borderColor: $color("#e3e3e3")
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.right.inset(15)
+                                make.size.equalTo(20)
+                            }
+                        },
+                        { // 用来监听点击事件，增大可点击面积
+                            type: "view",
+                            events: {
+                                tapped: async () => {
+                                    const newColor = await $picker.color({ color: $color(this.editingActionInfo.color) })
+                                    $(`action-color-${key}`).bgcolor = newColor
+                                    events(newColor.hexCode)
+                                }
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.height.width.equalTo(view.super.height)
+                            }
+                        }
+                    ],
+                    layout: (make, view) => {
+                        make.height.equalTo(50)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
     navButtons() {
         return [
             this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                const info = {}
+                this.editingActionInfo = {
+                    name: "",
+                    color: "",
+                    icon: "",
+                    description: "",
+                }
+                const nameInput = this.createInput("name", "pencil.circle", $l10n("NAME"), text => {
+                    this.editingActionInfo.name = text
+                })
+                const createColor = this.createInput("color", "pencil.tip.crop.circle", $l10n("COLOR"), color => {
+                    this.editingActionInfo.color = color
+                })
+                const iconInput = this.createInput("icon", "star.sircel", $l10n("ICON"), icon => {
+                    this.editingActionInfo.icon = icon
+                })
+                this.kernel.UIKit.pushPageSheet({
+                    done: () => {
+                        console.log("done")
+                    },
+                    views: [
+                        {
+                            type: "view",
+                            props: {},
+                            views: [
+                                nameInput, createColor, iconInput
+                            ],
+                            layout: (make, view) => {
+                                make.height.equalTo(300)
+                                make.width.equalTo(view.super)
+                            }
+                        }
+                    ]
+                })
                 // TODO 新建动作
                 // this.edit()
             })
@@ -111,11 +299,24 @@ class ActionManager {
                             {
                                 type: "image",
                                 props: {
-                                    id: "icon"
+                                    id: "color",
+                                    cornerRadius: 8,
+                                    smoothCorners: true
                                 },
                                 layout: make => {
                                     make.top.left.inset(10)
-                                    make.size.equalTo($size(25, 25))
+                                    make.size.equalTo($size(30, 30))
+                                }
+                            },
+                            {
+                                type: "image",
+                                props: {
+                                    id: "icon",
+                                    tintColor: $color("#ffffff"),
+                                },
+                                layout: make => {
+                                    make.top.left.inset(15)
+                                    make.size.equalTo($size(20, 20))
                                 }
                             },
                             {

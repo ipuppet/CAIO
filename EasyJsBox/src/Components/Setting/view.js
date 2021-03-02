@@ -516,7 +516,7 @@ class View extends BaseView {
                                         if (events) eval(`(()=>{return ${events}})()`)
                                         $(`setting-${this.dataCenter.get("name")}-color-${key}`).bgcolor = $color(newColor.hexCode)
                                     } else {
-                                        const Palette = (this.controller.kernel.getPlugin("palette").plugin)
+                                        const Palette = this.controller.kernel.getPlugin("palette").plugin
                                         const palette = new Palette()
                                         let color = this.controller.get(key).trim()
                                         if (typeof color === "string" && color !== "") {
@@ -549,7 +549,11 @@ class View extends BaseView {
                                             }
                                         ]
                                         palette.setRGB(color.components.red, color.components.green, color.components.blue)
-                                        this.push([palette.getView()], $l10n("COLOR"), $l10n("BACK"), navButtons)
+                                        this.push({
+                                            views: [palette.getView()],
+                                            title: $l10n("COLOR"),
+                                            navButtons: navButtons
+                                        })
                                     }
                                 }
                             },
