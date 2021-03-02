@@ -6,7 +6,7 @@ class Editor {
         this.theme = this.kernel.setting.get("editor.theme")
     }
 
-    getNavButtons() {
+    navButtons() {
         return [
             this.kernel.UIKit.navButton("add", "square.and.arrow.up", () => {
                 if (this.text) $share.sheet(this.text)
@@ -37,7 +37,7 @@ class Editor {
                     }
                 }
             ],
-            navButtons: this.getNavButtons()
+            navButtons: this.navButtons()
         })
     }
 }
