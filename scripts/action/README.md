@@ -11,7 +11,7 @@
 
 ### `config.json` 配置项
 
-- `icon` SF Symbols 图标
+- `icon` 图标 可以是 [JSBox 内置图标](https://github.com/cyanzhong/xTeko/tree/master/extension-icons)、SF Symbols图标、base64图片数据和来自 url 的图片
 - `color` 颜色
 - `name` 名称
 - `description` 描述信息
