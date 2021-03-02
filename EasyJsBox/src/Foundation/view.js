@@ -398,10 +398,11 @@ class BaseView {
             ],
             layout: (make, view) => {
                 make.height.equalTo(view.super)
+                make.width.equalTo(40)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
-                    make.right.equalTo(view.prev.left).offset(-20)
+                    make.right.equalTo(view.prev.left)
                 } else {
-                    make.right.inset(20)
+                    make.right.inset(0)
                 }
             }
         }
