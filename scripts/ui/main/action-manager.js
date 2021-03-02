@@ -17,11 +17,9 @@ class ActionManager {
             }
             this.kernel.getActions(type).forEach(action => {
                 section.items.push({
-                    name: {
-                        text: action.name
-                    },
+                    name: { text: action.name },
                     icon: { symbol: action.icon },
-                    info: action
+                    info: { info: action }
                 })
             })
             data.push(section)
@@ -32,13 +30,44 @@ class ActionManager {
     navButtons() {
         return [
             this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                this.edit("")
+                const info = {}
+                // TODO 新建动作
+                // this.edit()
             })
         ]
     }
 
-    edit(content, info) {
-        this.kernel.editor.push(content, content => {
+    menuItems() {
+        return [
+            { // 删除
+                title: $l10n("DELETE"),
+                destructive: true,
+                handler: (sender, indexPath) => {
+                    $ui.alert({
+                        title: $l10n("CONFIRM_DELETE_MSG"),
+                        actions: [
+                            {
+                                title: $l10n("DELETE"),
+                                style: $alertActionType.destructive,
+                                handler: () => {
+                                    const info = sender.object(indexPath).info.info
+                                    $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
+                                    sender.delete(indexPath)
+                                }
+                            },
+                            { title: $l10n("CANCEL") }
+                        ]
+                    })
+                }
+            }
+        ]
+    }
+
+    edit(info) {
+        if (!info) return
+        const main = $file.read(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`).string
+        this.kernel.editor.push(main, content => {
+            // TODO 编辑
             console.log(content)
         })
     }
@@ -52,31 +81,7 @@ class ActionManager {
                     itemHeight: 100,
                     spacing: 20,
                     bgcolor: $color("insetGroupedBackground"),
-                    menu: {
-                        items: [
-                            { // 删除
-                                title: $l10n("DELETE"),
-                                destructive: true,
-                                handler: (sender, indexPath) => {
-                                    $ui.alert({
-                                        title: $l10n("CONFIRM_DELETE_MSG"),
-                                        actions: [
-                                            {
-                                                title: $l10n("DELETE"),
-                                                style: $alertActionType.destructive,
-                                                handler: () => {
-                                                    const info = sender.object(indexPath).info
-                                                    $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
-                                                    sender.delete(indexPath)
-                                                }
-                                            },
-                                            { title: $l10n("CANCEL") }
-                                        ]
-                                    })
-                                }
-                            }
-                        ]
-                    },
+                    menu: { items: this.menuItems() },
                     header: {
                         type: "view",
                         props: {
@@ -119,13 +124,14 @@ class ActionManager {
                                     symbol: "ellipsis.circle"
                                 },
                                 events: {
-                                    tapped: sender => console.log(sender.next.info)
+                                    tapped: sender => this.edit(sender.next.info)
                                 },
                                 layout: make => {
                                     make.top.right.inset(10)
                                     make.size.equalTo($size(25, 25))
                                 }
                             },
+                            { type: "label", props: { id: "info" } }, // 仅用来保存信息
                             {
                                 type: "label",
                                 props: {

@@ -394,7 +394,7 @@ class Clipboard {
         ]
     }
 
-    getViews() {
+    menuItems() {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
@@ -405,6 +405,14 @@ class Clipboard {
                 handler(data)
             }
         }
+        return this.kernel.getActions("clipboard").map(action => {
+            action.handler = handlerRewrite(action.handler)
+            action.title = action.name
+            return action
+        })
+    }
+
+    getViews() {
         return [
             { // 剪切板列表
                 type: "list",
@@ -416,11 +424,7 @@ class Clipboard {
                     id: "clipboard-list",
                     menu: {
                         title: $l10n("ACTION"),
-                        items: this.kernel.getActions("clipboard").map(action => {
-                            action.handler = handlerRewrite(action.handler)
-                            action.title = action.name
-                            return action
-                        })
+                        items: this.menuItems()
                     },
                     bgcolor: $color("clear"),
                     indicatorInsets: $insets(30, 0, 50, 0),
