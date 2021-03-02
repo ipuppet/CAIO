@@ -538,7 +538,7 @@ class Clipboard {
                     didSelect: (sender, indexPath, data) => {
                         const content = data.content
                         this.editor.push(content.text, text => {
-                            this.update(content.info.uuid, text, indexPath.row)
+                            if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
                         })
                     }
                 }

@@ -134,7 +134,7 @@ class Storage {
     }
 
     updateText(uuid, text) {
-        if (typeof clipboard.uuid !== "string") return
+        if (typeof uuid !== "string") return
         const result = this.sqlite.update({
             sql: "UPDATE clipboard SET text = ?, md5 = ? WHERE uuid = ?",
             args: [text, $text.MD5(text), uuid]
