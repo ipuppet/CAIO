@@ -4,7 +4,7 @@ class Factory extends BaseView {
     constructor(kernel) {
         super(kernel)
         // 设置初始页面
-        this.kernel.page.controller.setSelectedPage(1)
+        this.kernel.page.controller.setSelectedPage(0)
     }
 
     clipboard() {

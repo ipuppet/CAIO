@@ -268,12 +268,12 @@ class Clipboard {
         const dataObj = {}
         let length = 0
         let header = null
-        this.kernel.storage.all().forEach(data => {
+        this.kernel.storage.all().forEach(item => {
             // 构建结构
-            dataObj[data.uuid] = data
+            dataObj[item.uuid] = item
             // 寻找头节点
-            if (data.prev === null) {
-                header = data.uuid
+            if (item.prev === null) {
+                header = item.uuid
             }
             // 统计长度
             length++
@@ -310,6 +310,21 @@ class Clipboard {
             sorted.push(p) // 将最后一个元素推入
         }
         return sorted.map(data => this.lineData(data))
+    }
+
+    searchAction(text) {
+        try {
+            if (text === "") {
+                $("clipboard-list").data = this.savedClipboard
+            } else {
+                const res = this.kernel.storage.search(text)
+                if (res && res.length > 0)
+                    $("clipboard-list").data = res.map(data => this.lineData(data))
+            }
+        } catch (error) {
+            $("clipboard-list").data = this.savedClipboard
+            throw error
+        }
     }
 
     navButtons() {
@@ -480,9 +495,7 @@ class Clipboard {
                                     make.height.equalTo(35)
                                 },
                                 events: {
-                                    changed: sender => {
-                                        // TODO 搜索
-                                    }
+                                    changed: sender => this.searchAction(sender.text)
                                 }
                             }
                         ]
