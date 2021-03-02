@@ -2,7 +2,7 @@ class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
         // 剪贴板列个性化设置
-        this.edges = 15 // 表边距
+        this.edges = 20 // 列表边距
         this.fontSize = 16 // 字体大小
         this.maxItemLength = this.kernel.setting.get("clipboard.maxItemLength") // 最大显示行数
         this.textMaxLength = this.kernel.setting.get("clipboard.textMaxLength") // 显示最大长度
@@ -424,7 +424,7 @@ class Clipboard {
                     },
                     bgcolor: $color("clear"),
                     indicatorInsets: $insets(30, 0, 50, 0),
-                    separatorInset: $insets(0, 15, 0, 0),
+                    separatorInset: $insets(0, this.edges, 0, 0),
                     data: this.savedClipboard,
                     template: {
                         props: { bgcolor: $color("clear") },
