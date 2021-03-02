@@ -1,5 +1,5 @@
 {
-    "icon": "plus.circle.fill",
-    "name": "打印内容",
-    "description": ""
+    "icon": "option",
+    "name": "控制台输出",
+    "description": "这是个测试 Action"
 }
