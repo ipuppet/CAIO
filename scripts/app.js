@@ -25,8 +25,10 @@ class AppKernel extends Kernel {
             const basePath = `${this.actionPath}/${item}/`
             if ($file.isDirectory(basePath)) {
                 const config = JSON.parse($file.read(basePath + "config.json").string)
-                if (type === config.type)
+                if (type === config.type || type === "*")
                     actions.push({
+                        dir: item,
+                        type: config.type,
                         title: config.name ?? item,
                         description: config.description,
                         handler: data => {
