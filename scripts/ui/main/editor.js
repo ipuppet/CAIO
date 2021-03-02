@@ -16,10 +16,10 @@ class Editor {
         ]
     }
 
-    push(text = "", callback) {
+    push(text = "", callback, parent) {
         this.text = text
         this.kernel.UIKit.push({
-            parent: $l10n("CLIPBOARD"),
+            parent: parent,
             disappeared: () => { callback(this.text) },
             views: [
                 {
