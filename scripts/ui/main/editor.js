@@ -8,6 +8,9 @@ class Editor {
 
     getNavButtons() {
         return [
+            this.kernel.UIKit.navButton("add", "square.and.arrow.up", () => {
+                $share.sheet(this.text)
+            }),
             this.kernel.actionButton(() => this.uuid, () => this.text, "editor")
         ]
     }
