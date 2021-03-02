@@ -10,20 +10,6 @@ class Storage {
         this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
     }
 
-    hasBackup() {
-        return $file.exists(this.iCloudDb)
-    }
-
-    backupToICloud() {
-        if (!$file.exists(this.iCloudPath)) {
-            $file.mkdir(this.iCloudPath)
-        }
-        return $file.write({
-            data: $data({ path: this.localDb }),
-            path: this.iCloudDb
-        })
-    }
-
     backup(callback) {
         $drive.save({
             data: $data({ path: this.localDb }),
@@ -32,14 +18,12 @@ class Storage {
         })
     }
 
-    recoverFromICloud(data) {
+    recover(data) {
         const result = $file.write({
             data: data,
             path: this.localDb
         })
-        if (result) {
-            this.sqlite = $sqlite.open(this.localDb)
-        }
+        if (result) this.sqlite = $sqlite.open(this.localDb)
         return result
     }
 

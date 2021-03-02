@@ -37,5 +37,4 @@
 
 "BACKUP" = "Backup";
 "START_BACKUP" = "Start Backup";
-"BACKUP_TO_ICLOUD" = "Backup to iCloud";
-"RECOVER_FROM_ICLOUD" = "Recover from iCloud";
+"RECOVER" = "Recover";

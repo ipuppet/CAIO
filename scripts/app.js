@@ -102,7 +102,7 @@ class AppKernel extends Kernel {
             $ui.alert("Tips")
         }
 
-        this.setting.backupToICloud = animate => {
+        this.setting.backupClipboard = animate => {
             animate.actionStart()
             $ui.alert({
                 title: $l10n("BACKUP"),
@@ -111,7 +111,7 @@ class AppKernel extends Kernel {
                     {
                         title: $l10n("OK"),
                         handler: () => {
-                            this.storage.backupToICloud() ? animate.actionDone() : animate.actionCancel()
+                            this.storage.backup(() => animate.actionDone())
                         }
                     },
                     {
@@ -122,13 +122,49 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.recoverFromICloud = animate => {
+        this.setting.recoverClipboard = animate => {
             animate.actionStart()
             $drive.open({
                 handler: data => {
-                    this.storage.recoverFromICloud(data) ? animate.actionDone() : animate.actionCancel()
+                    this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
                 }
             })
+        }
+
+        this.setting.backupAction = animate => {
+            animate.actionStart()
+            // 备份动作
+            $ui.alert({
+                title: $l10n("BACKUP"),
+                message: $l10n("START_BACKUP") + "?",
+                actions: [
+                    {
+                        title: $l10n("OK"),
+                        handler: () => {
+                            $archiver.zip({
+                                directory: this.actionPath,
+                                dest: "/assets/action-backup.zip",
+                                handler: () => {
+                                    $drive.save({
+                                        data: $data({ path: "/assets/action-backup.zip" }),
+                                        name: "action-backup.zip",
+                                        handler: () => animate.actionDone()
+                                    })
+                                }
+                            })
+                        }
+                    },
+                    {
+                        title: $l10n("CANCEL"),
+                        handler: () => { animate.actionCancel() }
+                    }
+                ]
+            })
+        }
+
+        this.setting.recoverAction = animate => {
+            // TODO recover Actions
+            $ui.alert("暂未开发")
         }
     }
 }

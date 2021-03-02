@@ -37,5 +37,4 @@
 
 "BACKUP" = "备份";
 "START_BACKUP" = "开始备份";
-"BACKUP_TO_ICLOUD" = "备份到iCloud";
-"RECOVER_FROM_ICLOUD" = "从iCloud恢复";
+"RECOVER" = "恢复";
