@@ -9,7 +9,8 @@ class Editor {
     getNavButtons() {
         return [
             this.kernel.UIKit.navButton("add", "square.and.arrow.up", () => {
-                $share.sheet(this.text)
+                if (this.text) $share.sheet(this.text)
+                else $ui.warning($l10n("NONE"))
             }),
             this.kernel.actionButton(() => this.uuid, () => this.text, "editor")
         ]
