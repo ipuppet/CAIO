@@ -38,6 +38,9 @@ class Clipboard {
         const sender = $("clipboard-list")
         sender.cell($indexPath(0, index)).get("content").text = text
         this.savedClipboard[index].content.text = text
+        if (uuid === this.copied?.uuid) {
+            $clipboard.text = text
+        }
         return this.kernel.storage.updateText(uuid, text)
     }
 
