@@ -310,7 +310,10 @@ class Clipboard {
             }
             sorted.push(p) // 将最后一个元素推入
         }
-        return sorted.map(data => this.lineData(data))
+        return sorted.map((data, index) => {
+            if (data.uuid === this.copied?.uuid) this.copied.index = index
+            return this.lineData(data)
+        })
     }
 
     searchAction(text) {
@@ -549,11 +552,11 @@ class Clipboard {
                 },
                 events: {
                     ready: () => {
-                        this.readClipboard()
+                        setTimeout(() => this.readClipboard(), 500)
                         $app.listen({
                             // 在应用恢复响应后调用
                             resume: () => {
-                                this.readClipboard()
+                                setTimeout(() => this.readClipboard(), 500)
                             }
                         })
                     },
