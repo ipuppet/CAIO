@@ -38,3 +38,4 @@
 "BACKUP" = "Backup";
 "START_BACKUP" = "Start Backup";
 "RECOVER" = "Recover";
+"FILE_TYPE_ERROR" = "File type does not match";

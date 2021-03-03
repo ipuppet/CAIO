@@ -38,3 +38,4 @@
 "BACKUP" = "备份";
 "START_BACKUP" = "开始备份";
 "RECOVER" = "恢复";
+"FILE_TYPE_ERROR" = "文件类型不符";

@@ -127,7 +127,12 @@ class AppKernel extends Kernel {
             animate.actionStart()
             $drive.open({
                 handler: data => {
-                    this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
+                    if (data.fileName.slice(-2) === "db") {
+                        this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
+                    } else {
+                        $ui.warning($l10n("FILE_TYPE_ERROR"))
+                        animate.actionCancel()
+                    }
                 }
             })
         }
@@ -168,21 +173,26 @@ class AppKernel extends Kernel {
             animate.actionStart()
             $drive.open({
                 handler: data => {
-                    $archiver.unzip({
-                        file: data,
-                        dest: "/assets/action-backup",
-                        handler: () => {
-                            $file.list("/assets/action-backup").forEach(item => {
-                                if ($file.isDirectory("/assets/action-backup/" + item)) {
-                                    $file.copy({
-                                        src: "/assets/action-backup/" + item,
-                                        dst: `${this.actionPath}${item}`
-                                    })
-                                }
-                            })
-                            animate.actionDone()
-                        }
-                    })
+                    if (data.fileName.slice(-3) === "zip") {
+                        $archiver.unzip({
+                            file: data,
+                            dest: "/assets/action-backup",
+                            handler: () => {
+                                $file.list("/assets/action-backup").forEach(item => {
+                                    if ($file.isDirectory("/assets/action-backup/" + item)) {
+                                        $file.copy({
+                                            src: "/assets/action-backup/" + item,
+                                            dst: `${this.actionPath}${item}`
+                                        })
+                                    }
+                                })
+                                animate.actionDone()
+                            }
+                        })
+                    } else {
+                        $ui.warning($l10n("FILE_TYPE_ERROR"))
+                        animate.actionCancel()
+                    }
                 }
             })
         }
