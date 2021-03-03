@@ -37,6 +37,7 @@ class Clipboard {
     update(uuid, text, index) {
         const sender = $("clipboard-list")
         sender.cell($indexPath(0, index)).get("content").text = text
+        this.savedClipboard[index].content.text = text
         return this.kernel.storage.updateText(uuid, text)
     }
 
@@ -558,7 +559,7 @@ class Clipboard {
                         return content.info.height + this.edges * 2 + 1
                     },
                     didSelect: (sender, indexPath, data) => {
-                        const content = data.content
+                        const content = this.savedClipboard[indexPath.row].content
                         this.kernel.editor.push(content.text, text => {
                             if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
                         }, $l10n("CLIPBOARD"))
