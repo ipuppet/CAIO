@@ -21,6 +21,7 @@ class AppKernel extends Kernel {
     getActions(type) {
         const actions = []
         const typePath = `${this.actionPath}${type}/`
+        if (!$file.exists(typePath)) return []
         const fileList = $file.list(typePath)
         fileList.forEach(item => {
             const basePath = `${typePath}/${item}/`
