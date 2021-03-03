@@ -150,6 +150,7 @@ class AppKernel extends Kernel {
                                         name: "action-backup.zip",
                                         handler: () => animate.actionDone()
                                     })
+                                    $file.delete("/assets/action-backup.zip")
                                 }
                             })
                         }
@@ -163,8 +164,26 @@ class AppKernel extends Kernel {
         }
 
         this.setting.recoverAction = animate => {
-            // TODO 恢复动作
-            $ui.alert("暂未开发")
+            animate.actionStart()
+            $drive.open({
+                handler: data => {
+                    $archiver.unzip({
+                        file: data,
+                        dest: "/assets/action-backup",
+                        handler: () => {
+                            $file.list("/assets/action-backup").forEach(item => {
+                                if ($file.isDirectory("/assets/action-backup/" + item)) {
+                                    $file.copy({
+                                        src: "/assets/action-backup/" + item,
+                                        dst: `${this.actionPath}${item}`
+                                    })
+                                }
+                            })
+                            animate.actionDone()
+                        }
+                    })
+                }
+            })
         }
     }
 }
