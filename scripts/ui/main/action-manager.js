@@ -547,9 +547,10 @@ class ActionManager {
                         type: "matrix",
                         props: {
                             id: "actions",
-                            columns: 2,
-                            itemHeight: 100,
+                            autoItemSize: true,
+                            estimatedItemSize: $size(($device.info.screen.width - 60) / 2, 100),
                             spacing: 20,
+                            indicatorInsets: $insets(0, 0, 50, 0),
                             bgcolor: $color("insetGroupedBackground"),
                             menu: { items: this.menuItems() },
                             header: {
@@ -638,17 +639,17 @@ class ActionManager {
                             }
                         },
                         events: {
-                            pulled: sender => {
+                            pulled: animate => {
                                 setTimeout(() => {
                                     $("actions").data = this.actionsToData()
-                                    sender.endRefreshing()
+                                    animate.endRefreshing()
                                 }, 500)
                             },
                             didSelect: (sender, indexPath, data) => {
                                 const info = data.info.info
                                 const ActionClass = require(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`)
                                 const action = new ActionClass(this.kernel, info, {
-                                    text: null,
+                                    text: info.type === "clipboard" ? $clipboard.text : null,
                                     uuid: null
                                 })
                                 action.do()
