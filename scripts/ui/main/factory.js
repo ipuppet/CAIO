@@ -25,7 +25,7 @@ class Factory extends BaseView {
     actionManager() {
         const ActionManager = require("./action-manager")
         const interfaceUi = new ActionManager(this.kernel)
-        return this.kernel.page.view.creator(interfaceUi.getViews(), 1)
+        return this.kernel.page.view.creator(interfaceUi.getViews(), 1, false) // 水平安全距离手动设置，因为需要设置背景色
     }
 
     setting() {

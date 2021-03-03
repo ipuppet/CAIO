@@ -521,13 +521,11 @@ class ActionManager {
     }
 
     getViews() {
-        return [
+        return [ // 水平安全距离手动设置，因为需要设置背景色
             {
                 type: "view",
                 props: { bgcolor: $color("insetGroupedBackground") },
-                layout: (make, view) => {
-                    make.size.equalTo(view.super)
-                },
+                layout: $layout.fill,
                 views: [
                     { // 顶部按钮栏
                         type: "view",
