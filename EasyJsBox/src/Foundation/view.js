@@ -89,10 +89,12 @@ class BaseView {
                 {
                     type: "view",
                     views: views,
-                    layout: topOffset ? (make, view) => {
-                        make.top.equalTo(view.super.safeAreaTop).offset(navTop)
-                        make.bottom.width.equalTo(view.super)
-                    } : $layout.fill
+                    layout: (make, view) => {
+                        if (topOffset) make.top.equalTo(view.super.safeArea).offset(navTop)
+                        else make.top.equalTo(view.super.safeArea)
+                        make.bottom.equalTo(view.super)
+                        make.left.right.equalTo(view.super.safeArea)
+                    }
                 },
                 { // nav
                     type: "view",
@@ -128,36 +130,44 @@ class BaseView {
                                 }
                             }
                         },
-                        { // 完成按钮
-                            type: "button",
+                        { // view
+                            type: "view",
                             layout: (make, view) => {
-                                make.centerY.height.equalTo(view.super)
-                                make.left.inset(15)
+                                make.size.left.top.equalTo(view.super.safeArea)
                             },
-                            props: {
-                                title: doneText,
-                                bgcolor: $color("clear"),
-                                font: $font(16),
-                                titleColor: $color("systemLink")
-                            },
-                            events: {
-                                tapped: () => {
-                                    dismiss()
-                                    if (done) done()
+                            views: [
+                                { // 完成按钮
+                                    type: "button",
+                                    layout: (make, view) => {
+                                        make.centerY.height.equalTo(view.super)
+                                        make.left.inset(15)
+                                    },
+                                    props: {
+                                        title: doneText,
+                                        bgcolor: $color("clear"),
+                                        font: $font(16),
+                                        titleColor: $color("systemLink")
+                                    },
+                                    events: {
+                                        tapped: () => {
+                                            dismiss()
+                                            if (done) done()
+                                        }
+                                    }
+                                },
+                                {
+                                    type: "label",
+                                    props: {
+                                        text: title,
+                                        font: $font("bold", 17)
+                                    },
+                                    layout: (make, view) => {
+                                        make.center.equalTo(view.super)
+                                    }
                                 }
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                text: title,
-                                font: $font("bold", 17)
-                            },
-                            layout: (make, view) => {
-                                make.center.equalTo(view.super)
-                            }
+                            ].concat(navButtons)
                         }
-                    ].concat(navButtons)
+                    ]
                 }
             ]
         })
@@ -183,11 +193,13 @@ class BaseView {
             parent = args.parent ?? $l10n("BACK"),
             navButtons = args.navButtons ?? [],
             topOffset = args.topOffset ?? true,
+            bgcolor = args.bgcolor ?? "primarySurface",
             disappeared = args.disappeared
         $ui.push({
             props: {
                 navBarHidden: true,
-                statusBarStyle: 0
+                statusBarStyle: 0,
+                bgcolor: $color(bgcolor),
             },
             events: {
                 disappeared: () => {
@@ -198,10 +210,12 @@ class BaseView {
                 {
                     type: "view",
                     views: views,
-                    layout: topOffset ? (make, view) => {
-                        make.top.equalTo(view.super.safeAreaTop).offset(navTop)
-                        make.bottom.width.equalTo(view.super)
-                    } : $layout.fill
+                    layout: (make, view) => {
+                        if (topOffset) make.top.equalTo(view.super.safeArea).offset(navTop)
+                        else make.top.equalTo(view.super.safeArea)
+                        make.bottom.equalTo(view.super)
+                        make.left.right.equalTo(view.super.safeArea)
+                    }
                 },
                 {
                     type: "view",
@@ -237,8 +251,7 @@ class BaseView {
                         { // view
                             type: "view",
                             layout: (make, view) => {
-                                make.top.equalTo(view.super.safeAreaTop)
-                                make.bottom.width.equalTo(view.super)
+                                make.size.left.top.equalTo(view.super.safeArea)
                             },
                             views: [
                                 { // 返回按钮
