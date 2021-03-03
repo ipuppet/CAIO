@@ -416,10 +416,6 @@ class Clipboard {
         return [
             { // 剪切板列表
                 type: "list",
-                layout: (make, view) => {
-                    make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.super.safeArea)
-                },
                 props: {
                     id: "clipboard-list",
                     menu: {
@@ -551,10 +547,15 @@ class Clipboard {
                             if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
                         }, $l10n("CLIPBOARD"))
                     }
+                },
+                layout: (make, view) => {
+                    make.bottom.width.equalTo(view.super)
+                    make.top.equalTo(view.super)
                 }
             },
             { // 顶部按钮栏
                 type: "view",
+                props: { bgcolor: $color("primarySurface") },
                 views: this.navButtons(),
                 layout: (make, view) => {
                     make.top.width.equalTo(view.super.safeArea)
