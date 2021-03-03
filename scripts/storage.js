@@ -3,9 +3,6 @@ class Storage {
         this.setting = setting
         this.dbName = "CAE.db"
         this.localDb = "/assets/" + this.dbName
-        this.iCloudPath = "drive://CAE/"
-        this.iCloudDb = this.iCloudPath + this.dbName
-        this.iCloudAutoDb = this.iCloudPath + "auto.db"
         this.sqlite = $sqlite.open(this.localDb)
         this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
     }
@@ -89,15 +86,6 @@ class Storage {
             args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
         })
         if (result.result) {
-            if (this.setting.get("backup.autoBackup")) {
-                if (!$file.exists(this.iCloudPath)) {
-                    $file.mkdir(this.iCloudPath)
-                }
-                $file.write({
-                    data: $data({ path: this.localDb }),
-                    path: this.iCloudAutoDb
-                })
-            }
             return true
         }
         $console.error(result.error)
