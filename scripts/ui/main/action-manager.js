@@ -393,6 +393,7 @@ class ActionManager {
     saveMainJs(content, info) {
         const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
         if (!$file.exists(path)) $file.mkdir(path)
+        if ($text.MD5(content) === $text.MD5($file.read(`${path}main.js`)?.string ?? "")) return
         $file.write({
             data: $data({ "string": content }),
             path: `${path}main.js`
