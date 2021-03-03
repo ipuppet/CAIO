@@ -522,6 +522,16 @@ class ActionManager {
 
     getViews() {
         return [
+            { // 顶部按钮栏
+                type: "view",
+                props: { bgcolor: $color("insetGroupedBackground") },
+                views: this.navButtons(),
+                layout: (make, view) => {
+                    make.top.width.equalTo(view.super)
+                    make.bottom.equalTo(view.super.safeAreaTop).offset(50)
+                    make.left.right.equalTo(view.super.safeArea)
+                }
+            },
             {
                 type: "matrix",
                 props: {
@@ -534,7 +544,7 @@ class ActionManager {
                     header: {
                         type: "view",
                         props: {
-                            height: 90,
+                            height: 40,
                             clipsToBounds: true
                         },
                         views: [{
@@ -544,8 +554,8 @@ class ActionManager {
                                 font: $font("bold", 35)
                             },
                             layout: (make, view) => {
-                                make.left.equalTo(view.super.safeArea).offset(20)
-                                make.top.equalTo(view.super.safeAreaTop).offset(50)
+                                make.left.equalTo(view.super).offset(20)
+                                make.top.equalTo(view.super)
                             }
                         }]
                     },
@@ -617,6 +627,10 @@ class ActionManager {
                     }
                 },
                 events: {
+                    pulled: sender => {
+                        sender.data = this.actionsToData()
+                        sender.endRefreshing()
+                    },
                     didSelect: (sender, indexPath, data) => {
                         const info = data.info.info
                         const ActionClass = require(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`)
@@ -628,17 +642,9 @@ class ActionManager {
                     }
                 },
                 layout: (make, view) => {
-                    make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.super)
-                }
-            },
-            { // 顶部按钮栏
-                type: "view",
-                props: { bgcolor: $color("insetGroupedBackground") },
-                views: this.navButtons(),
-                layout: (make, view) => {
-                    make.top.width.equalTo(view.super.safeArea)
-                    make.height.equalTo(50)
+                    make.bottom.equalTo(view.super)
+                    make.top.equalTo(view.prev.bottom)
+                    make.left.right.equalTo(view.super.safeArea)
                 }
             }
         ]

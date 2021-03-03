@@ -414,6 +414,16 @@ class Clipboard {
 
     getViews() {
         return [
+            { // 顶部按钮栏
+                type: "view",
+                props: { bgcolor: $color("clear") },
+                views: this.navButtons(),
+                layout: (make, view) => {
+                    make.top.width.equalTo(view.super)
+                    make.bottom.equalTo(view.super.safeAreaTop).offset(50)
+                    make.left.right.equalTo(view.super.safeArea)
+                }
+            },
             { // 剪切板列表
                 type: "list",
                 props: {
@@ -459,7 +469,7 @@ class Clipboard {
                     header: {
                         type: "view",
                         props: {
-                            height: 140,
+                            height: 90,
                             clipsToBounds: true
                         },
                         views: [
@@ -470,8 +480,8 @@ class Clipboard {
                                     font: $font("bold", 35)
                                 },
                                 layout: (make, view) => {
-                                    make.left.equalTo(view.super.safeArea).offset(20)
-                                    make.top.equalTo(view.super.safeAreaTop).offset(50)
+                                    make.left.equalTo(view.super).offset(20)
+                                    make.top.equalTo(view.super)
                                 }
                             },
                             {
@@ -549,17 +559,9 @@ class Clipboard {
                     }
                 },
                 layout: (make, view) => {
-                    make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.super)
-                }
-            },
-            { // 顶部按钮栏
-                type: "view",
-                props: { bgcolor: $color("primarySurface") },
-                views: this.navButtons(),
-                layout: (make, view) => {
-                    make.top.width.equalTo(view.super.safeArea)
-                    make.height.equalTo(50)
+                    make.bottom.equalTo(view.super)
+                    make.top.equalTo(view.prev.bottom)
+                    make.left.right.equalTo(view.super.safeArea)
                 }
             }
         ]
