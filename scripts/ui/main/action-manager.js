@@ -635,8 +635,10 @@ class ActionManager {
                 },
                 events: {
                     pulled: sender => {
-                        sender.data = this.actionsToData()
-                        sender.endRefreshing()
+                        setTimeout(() => {
+                            $("actions").data = this.actionsToData()
+                            sender.endRefreshing()
+                        }, 500)
                     },
                     didSelect: (sender, indexPath, data) => {
                         const info = data.info.info
