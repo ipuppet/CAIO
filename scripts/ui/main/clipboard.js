@@ -439,7 +439,7 @@ class Clipboard {
                         title: $l10n("ACTION"),
                         items: this.menuItems()
                     },
-                    indicatorInsets: $insets(30, 0, 50, 0),
+                    indicatorInsets: $insets(0, 0, 50, 0),
                     separatorInset: $insets(0, this.edges, 0, 0),
                     data: this.savedClipboard,
                     template: {
