@@ -525,9 +525,16 @@ class ActionManager {
             { // 顶部按钮栏
                 type: "view",
                 props: { bgcolor: $color("insetGroupedBackground") },
-                views: this.navButtons(),
+                views: [{
+                    type: "view",
+                    views: this.navButtons(),
+                    layout: (make, view) => {
+                        make.top.equalTo(view.super.safeAreaTop)
+                        make.size.equalTo(view.super.safeArea)
+                    }
+                }],
                 layout: (make, view) => {
-                    make.top.width.equalTo(view.super)
+                    make.top.equalTo(view.super)
                     make.bottom.equalTo(view.super.safeAreaTop).offset(50)
                     make.left.right.equalTo(view.super.safeArea)
                 }

@@ -416,10 +416,17 @@ class Clipboard {
         return [
             { // 顶部按钮栏
                 type: "view",
-                props: { bgcolor: $color("clear") },
-                views: this.navButtons(),
+                props: { bgcolor: $color("primarySurface") },
+                views: [{
+                    type: "view",
+                    views: this.navButtons(),
+                    layout: (make, view) => {
+                        make.top.equalTo(view.super.safeAreaTop)
+                        make.size.equalTo(view.super.safeArea)
+                    }
+                }],
                 layout: (make, view) => {
-                    make.top.width.equalTo(view.super)
+                    make.top.equalTo(view.super)
                     make.bottom.equalTo(view.super.safeAreaTop).offset(50)
                     make.left.right.equalTo(view.super.safeArea)
                 }
@@ -432,7 +439,6 @@ class Clipboard {
                         title: $l10n("ACTION"),
                         items: this.menuItems()
                     },
-                    bgcolor: $color("clear"),
                     indicatorInsets: $insets(30, 0, 50, 0),
                     separatorInset: $insets(0, this.edges, 0, 0),
                     data: this.savedClipboard,
