@@ -414,161 +414,168 @@ class Clipboard {
 
     getViews() {
         return [
-            { // 顶部按钮栏
+            {
                 type: "view",
-                props: { bgcolor: $color("primarySurface") },
-                views: [{
-                    type: "view",
-                    views: this.navButtons(),
-                    layout: (make, view) => {
-                        make.top.equalTo(view.super.safeAreaTop)
-                        make.size.equalTo(view.super.safeArea)
-                    }
-                }],
-                layout: (make, view) => {
-                    make.top.equalTo(view.super)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(50)
-                    make.left.right.equalTo(view.super.safeArea)
-                }
-            },
-            { // 剪切板列表
-                type: "list",
-                props: {
-                    id: "clipboard-list",
-                    menu: {
-                        title: $l10n("ACTION"),
-                        items: this.menuItems()
+                props: { bgcolor: $color("insetGroupedBackground") },
+                layout: $layout.fill,
+                views: [
+                    { // 顶部按钮栏
+                        type: "view",
+                        props: { bgcolor: $color("primarySurface") },
+                        views: [{
+                            type: "view",
+                            views: this.navButtons(),
+                            layout: (make, view) => {
+                                make.top.equalTo(view.super.safeAreaTop)
+                                make.size.equalTo(view.super.safeArea)
+                            }
+                        }],
+                        layout: (make, view) => {
+                            make.top.equalTo(view.super)
+                            make.bottom.equalTo(view.super.safeAreaTop).offset(50)
+                            make.left.right.equalTo(view.super.safeArea)
+                        }
                     },
-                    indicatorInsets: $insets(30, 0, 50, 0),
-                    separatorInset: $insets(0, this.edges, 0, 0),
-                    data: this.savedClipboard,
-                    template: {
-                        props: { bgcolor: $color("clear") },
-                        views: [
-                            {
+                    { // 剪切板列表
+                        type: "list",
+                        props: {
+                            id: "clipboard-list",
+                            menu: {
+                                title: $l10n("ACTION"),
+                                items: this.menuItems()
+                            },
+                            indicatorInsets: $insets(30, 0, 50, 0),
+                            separatorInset: $insets(0, this.edges, 0, 0),
+                            data: this.savedClipboard,
+                            template: {
+                                props: { bgcolor: $color("clear") },
+                                views: [
+                                    {
+                                        type: "view",
+                                        props: {
+                                            id: "copied",
+                                            circular: this.copiedIndicatorSize,
+                                            bgcolor: $color("green")
+                                        },
+                                        layout: (make, view) => {
+                                            make.centerY.equalTo(view.super)
+                                            make.size.equalTo(this.copiedIndicatorSize)
+                                            make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                                        }
+                                    },
+                                    {
+                                        type: "label",
+                                        props: {
+                                            id: "content",
+                                            lines: 0,
+                                            font: $font(this.fontSize)
+                                        },
+                                        layout: (make, view) => {
+                                            make.centerY.equalTo(view.super)
+                                            make.edges.inset(this.edges)
+                                        }
+                                    }
+                                ]
+                            },
+                            header: {
                                 type: "view",
                                 props: {
-                                    id: "copied",
-                                    circular: this.copiedIndicatorSize,
-                                    bgcolor: $color("green")
+                                    height: 90,
+                                    clipsToBounds: true
                                 },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.size.equalTo(this.copiedIndicatorSize)
-                                    make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                }
-                            },
-                            {
-                                type: "label",
-                                props: {
-                                    id: "content",
-                                    lines: 0,
-                                    font: $font(this.fontSize)
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.edges.inset(this.edges)
-                                }
-                            }
-                        ]
-                    },
-                    header: {
-                        type: "view",
-                        props: {
-                            height: 90,
-                            clipsToBounds: true
-                        },
-                        views: [
-                            {
-                                type: "label",
-                                props: {
-                                    text: $l10n("CLIPBOARD"),
-                                    font: $font("bold", 35)
-                                },
-                                layout: (make, view) => {
-                                    make.left.equalTo(view.super).offset(20)
-                                    make.top.equalTo(view.super)
-                                }
-                            },
-                            {
-                                type: "input",
-                                props: {
-                                    type: $kbType.search,
-                                    placeholder: $l10n("SEARCH")
-                                },
-                                layout: (make, view) => {
-                                    make.centerX.equalTo(view.super)
-                                    make.top.equalTo(view.prev.bottom).offset(10)
-                                    make.left.right.inset(20)
-                                    make.height.equalTo(35)
-                                },
-                                events: {
-                                    changed: sender => this.searchAction(sender.text)
-                                }
-                            }
-                        ]
-                    },
-                    footer: { // 防止list被菜单遮挡
-                        type: "view",
-                        props: { height: 50 }
-                    },
-                    actions: [
-                        { // 复制
-                            title: $l10n("COPY"),
-                            color: $color("systemLink"),
-                            handler: (sender, indexPath) => {
-                                const data = sender.object(indexPath)
-                                this.copy(data.content.text, data.content.info.uuid, indexPath.row)
-                            }
-                        },
-                        { // 删除
-                            title: $l10n("DELETE"),
-                            color: $color("red"),
-                            handler: (sender, indexPath) => {
-                                $ui.alert({
-                                    title: $l10n("CONFIRM_DELETE_MSG"),
-                                    actions: [
-                                        {
-                                            title: $l10n("DELETE"),
-                                            style: $alertActionType.destructive,
-                                            handler: () => {
-                                                const data = sender.object(indexPath)
-                                                this.delete(data.content.info.uuid, sender, indexPath.row)
-                                            }
+                                views: [
+                                    {
+                                        type: "label",
+                                        props: {
+                                            text: $l10n("CLIPBOARD"),
+                                            font: $font("bold", 35)
                                         },
-                                        { title: $l10n("CANCEL") }
-                                    ]
-                                })
-                            }
-                        }
-                    ]
-                },
-                events: {
-                    ready: () => {
-                        this.readClipboard()
-                        $app.listen({
-                            // 在应用恢复响应后调用
-                            resume: () => {
+                                        layout: (make, view) => {
+                                            make.left.equalTo(view.super).offset(20)
+                                            make.top.equalTo(view.super)
+                                        }
+                                    },
+                                    {
+                                        type: "input",
+                                        props: {
+                                            type: $kbType.search,
+                                            placeholder: $l10n("SEARCH")
+                                        },
+                                        layout: (make, view) => {
+                                            make.centerX.equalTo(view.super)
+                                            make.top.equalTo(view.prev.bottom).offset(10)
+                                            make.left.right.inset(20)
+                                            make.height.equalTo(35)
+                                        },
+                                        events: {
+                                            changed: sender => this.searchAction(sender.text)
+                                        }
+                                    }
+                                ]
+                            },
+                            footer: { // 防止list被菜单遮挡
+                                type: "view",
+                                props: { height: 50 }
+                            },
+                            actions: [
+                                { // 复制
+                                    title: $l10n("COPY"),
+                                    color: $color("systemLink"),
+                                    handler: (sender, indexPath) => {
+                                        const data = sender.object(indexPath)
+                                        this.copy(data.content.text, data.content.info.uuid, indexPath.row)
+                                    }
+                                },
+                                { // 删除
+                                    title: $l10n("DELETE"),
+                                    color: $color("red"),
+                                    handler: (sender, indexPath) => {
+                                        $ui.alert({
+                                            title: $l10n("CONFIRM_DELETE_MSG"),
+                                            actions: [
+                                                {
+                                                    title: $l10n("DELETE"),
+                                                    style: $alertActionType.destructive,
+                                                    handler: () => {
+                                                        const data = sender.object(indexPath)
+                                                        this.delete(data.content.info.uuid, sender, indexPath.row)
+                                                    }
+                                                },
+                                                { title: $l10n("CANCEL") }
+                                            ]
+                                        })
+                                    }
+                                }
+                            ]
+                        },
+                        events: {
+                            ready: () => {
                                 this.readClipboard()
+                                $app.listen({
+                                    // 在应用恢复响应后调用
+                                    resume: () => {
+                                        this.readClipboard()
+                                    }
+                                })
+                            },
+                            rowHeight: (sender, indexPath) => {
+                                const content = sender.object(indexPath).content
+                                return content.info.height + this.edges * 2 + 1
+                            },
+                            didSelect: (sender, indexPath, data) => {
+                                const content = data.content
+                                this.kernel.editor.push(content.text, text => {
+                                    if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
+                                }, $l10n("CLIPBOARD"))
                             }
-                        })
-                    },
-                    rowHeight: (sender, indexPath) => {
-                        const content = sender.object(indexPath).content
-                        return content.info.height + this.edges * 2 + 1
-                    },
-                    didSelect: (sender, indexPath, data) => {
-                        const content = data.content
-                        this.kernel.editor.push(content.text, text => {
-                            if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
-                        }, $l10n("CLIPBOARD"))
+                        },
+                        layout: (make, view) => {
+                            make.bottom.equalTo(view.super)
+                            make.top.equalTo(view.prev.bottom)
+                            make.left.right.equalTo(view.super.safeArea)
+                        }
                     }
-                },
-                layout: (make, view) => {
-                    make.bottom.equalTo(view.super)
-                    make.top.equalTo(view.prev.bottom)
-                    make.left.right.equalTo(view.super.safeArea)
-                }
+                ]
             }
         ]
     }

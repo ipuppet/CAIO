@@ -522,139 +522,147 @@ class ActionManager {
 
     getViews() {
         return [
-            { // 顶部按钮栏
+            {
                 type: "view",
                 props: { bgcolor: $color("insetGroupedBackground") },
-                views: [{
-                    type: "view",
-                    views: this.navButtons(),
-                    layout: (make, view) => {
-                        make.top.equalTo(view.super.safeAreaTop)
-                        make.size.equalTo(view.super.safeArea)
-                    }
-                }],
                 layout: (make, view) => {
-                    make.top.equalTo(view.super)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(50)
-                    make.left.right.equalTo(view.super.safeArea)
-                }
-            },
-            {
-                type: "matrix",
-                props: {
-                    id: "actions",
-                    columns: 2,
-                    itemHeight: 100,
-                    spacing: 20,
-                    bgcolor: $color("insetGroupedBackground"),
-                    menu: { items: this.menuItems() },
-                    header: {
+                    make.size.equalTo(view.super)
+                },
+                views: [
+                    { // 顶部按钮栏
                         type: "view",
-                        props: {
-                            height: 40,
-                            clipsToBounds: true
-                        },
                         views: [{
-                            type: "label",
-                            props: {
-                                text: $l10n("ACTION"),
-                                font: $font("bold", 35)
-                            },
+                            type: "view",
+                            views: this.navButtons(),
                             layout: (make, view) => {
-                                make.left.equalTo(view.super).offset(20)
-                                make.top.equalTo(view.super)
+                                make.top.equalTo(view.super.safeAreaTop)
+                                make.size.equalTo(view.super.safeArea)
                             }
-                        }]
+                        }],
+                        layout: (make, view) => {
+                            make.top.equalTo(view.super)
+                            make.bottom.equalTo(view.super.safeAreaTop).offset(50)
+                            make.left.right.equalTo(view.super.safeArea)
+                        }
                     },
-                    data: this.actionsToData(),
-                    template: {
+                    {
+                        type: "matrix",
                         props: {
-                            smoothCorners: true,
-                            cornerRadius: 10,
-                            bgcolor: $color("#ffffff", "#242424")
-                        },
-                        views: [
-                            {
-                                type: "image",
+                            id: "actions",
+                            columns: 2,
+                            itemHeight: 100,
+                            spacing: 20,
+                            bgcolor: $color("insetGroupedBackground"),
+                            menu: { items: this.menuItems() },
+                            header: {
+                                type: "view",
                                 props: {
-                                    id: "color",
-                                    cornerRadius: 8,
-                                    smoothCorners: true
+                                    height: 40,
+                                    clipsToBounds: true
                                 },
-                                layout: make => {
-                                    make.top.left.inset(10)
-                                    make.size.equalTo($size(30, 30))
-                                }
-                            },
-                            {
-                                type: "image",
-                                props: {
-                                    id: "icon",
-                                    tintColor: $color("#ffffff"),
-                                },
-                                layout: make => {
-                                    make.top.left.inset(15)
-                                    make.size.equalTo($size(20, 20))
-                                }
-                            },
-                            {
-                                type: "image",
-                                props: {
-                                    symbol: "ellipsis.circle"
-                                },
-                                events: {
-                                    tapped: sender => {
-                                        const info = sender.next.info
-                                        if (!info) return
-                                        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/main.js`
-                                        const main = $file.read(path).string
-                                        this.kernel.editor.push(main, content => {
-                                            this.saveMainJs(content, info)
-                                        })
+                                views: [{
+                                    type: "label",
+                                    props: {
+                                        text: $l10n("ACTION"),
+                                        font: $font("bold", 35)
+                                    },
+                                    layout: (make, view) => {
+                                        make.left.equalTo(view.super).offset(20)
+                                        make.top.equalTo(view.super)
                                     }
-                                },
-                                layout: make => {
-                                    make.top.right.inset(10)
-                                    make.size.equalTo($size(25, 25))
-                                }
+                                }]
                             },
-                            { type: "label", props: { id: "info" } }, // 仅用来保存信息
-                            {
-                                type: "label",
+                            data: this.actionsToData(),
+                            template: {
                                 props: {
-                                    id: "name",
-                                    font: $font(16)
+                                    smoothCorners: true,
+                                    cornerRadius: 10,
+                                    bgcolor: $color("#ffffff", "#242424")
                                 },
-                                layout: (make, view) => {
-                                    make.bottom.left.inset(10)
-                                    make.width.equalTo(view.super)
-                                }
+                                views: [
+                                    {
+                                        type: "image",
+                                        props: {
+                                            id: "color",
+                                            cornerRadius: 8,
+                                            smoothCorners: true
+                                        },
+                                        layout: make => {
+                                            make.top.left.inset(10)
+                                            make.size.equalTo($size(30, 30))
+                                        }
+                                    },
+                                    {
+                                        type: "image",
+                                        props: {
+                                            id: "icon",
+                                            tintColor: $color("#ffffff"),
+                                        },
+                                        layout: make => {
+                                            make.top.left.inset(15)
+                                            make.size.equalTo($size(20, 20))
+                                        }
+                                    },
+                                    {
+                                        type: "image",
+                                        props: {
+                                            symbol: "ellipsis.circle"
+                                        },
+                                        events: {
+                                            tapped: sender => {
+                                                const info = sender.next.info
+                                                if (!info) return
+                                                const path = `${this.kernel.actionPath}${info.type}/${info.dir}/main.js`
+                                                const main = $file.read(path).string
+                                                this.kernel.editor.push(main, content => {
+                                                    this.saveMainJs(content, info)
+                                                })
+                                            }
+                                        },
+                                        layout: make => {
+                                            make.top.right.inset(10)
+                                            make.size.equalTo($size(25, 25))
+                                        }
+                                    },
+                                    { type: "label", props: { id: "info" } }, // 仅用来保存信息
+                                    {
+                                        type: "label",
+                                        props: {
+                                            id: "name",
+                                            font: $font(16)
+                                        },
+                                        layout: (make, view) => {
+                                            make.bottom.left.inset(10)
+                                            make.width.equalTo(view.super)
+                                        }
+                                    }
+                                ]
                             }
-                        ]
+                        },
+                        events: {
+                            pulled: sender => {
+                                setTimeout(() => {
+                                    $("actions").data = this.actionsToData()
+                                    sender.endRefreshing()
+                                }, 500)
+                            },
+                            didSelect: (sender, indexPath, data) => {
+                                const info = data.info.info
+                                const ActionClass = require(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`)
+                                const action = new ActionClass(this.kernel, info, {
+                                    text: null,
+                                    uuid: null
+                                })
+                                action.do()
+                            }
+                        },
+                        layout: (make, view) => {
+                            make.bottom.equalTo(view.super)
+                            make.top.equalTo(view.prev.bottom)
+                            make.left.right.equalTo(view.super.safeArea)
+                        }
                     }
-                },
-                events: {
-                    pulled: sender => {
-                        setTimeout(() => {
-                            $("actions").data = this.actionsToData()
-                            sender.endRefreshing()
-                        }, 500)
-                    },
-                    didSelect: (sender, indexPath, data) => {
-                        const info = data.info.info
-                        const ActionClass = require(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`)
-                        const action = new ActionClass(this.kernel, info, {
-                            text: null,
-                            uuid: null
-                        })
-                        action.do()
-                    }
-                },
-                layout: (make, view) => {
-                    make.bottom.equalTo(view.super)
-                    make.top.equalTo(view.prev.bottom)
-                    make.left.right.equalTo(view.super.safeArea)
-                }
+                ]
             }
         ]
     }
