@@ -554,7 +554,7 @@ class ActionManager {
                         props: {
                             smoothCorners: true,
                             cornerRadius: 10,
-                            bgcolor: $color("#ffffff")
+                            bgcolor: $color("#ffffff", "#242424")
                         },
                         views: [
                             {
@@ -618,7 +618,7 @@ class ActionManager {
                 },
                 layout: (make, view) => {
                     make.bottom.width.equalTo(view.super)
-                    make.top.equalTo(view.super.safeArea)
+                    make.top.equalTo(view.super)
                 }
             },
             { // 顶部按钮栏
