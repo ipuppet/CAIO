@@ -616,6 +616,17 @@ class ActionManager {
                         ]
                     }
                 },
+                events: {
+                    didSelect: (sender, indexPath, data) => {
+                        const info = data.info.info
+                        const ActionClass = require(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`)
+                        const action = new ActionClass(this.kernel, info, {
+                            text: null,
+                            uuid: null
+                        })
+                        action.do()
+                    }
+                },
                 layout: (make, view) => {
                     make.bottom.width.equalTo(view.super)
                     make.top.equalTo(view.super)
