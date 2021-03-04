@@ -186,6 +186,7 @@ class AppKernel extends Kernel {
                                         })
                                     }
                                 })
+                                $file.delete("/assets/action-backup")
                                 animate.actionDone()
                             }
                         })
