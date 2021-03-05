@@ -12,7 +12,10 @@ class Editor {
                 if (this.text) $share.sheet(this.text)
                 else $ui.warning($l10n("NONE"))
             }),
-            this.kernel.getActionButton(() => this.uuid, () => this.text, "editor")
+            this.kernel.getActionButton({
+                text: () => this.text,
+                selectedRange: () => $("editor").selectedRange
+            }, "editor")
         ]
     }
 
@@ -26,17 +29,18 @@ class Editor {
                     type: "code",
                     layout: $layout.fill,
                     props: {
+                        id: "editor",
                         theme: $device.isDarkMode ? this.darkTheme : this.lightTheme,
                         text: this.text
                     },
                     events: {
-                        changed: sender => {
+                        didChange: sender => {
                             this.text = sender.text
                         },
-                        themeChanged: (sender, isDarkMode) => {
+                        /* themeChanged: (sender, isDarkMode) => {
                             // TODO 无法动态更改主题
                             sender.theme = isDarkMode ? this.darkTheme : this.lightTheme
-                        }
+                        } */
                     }
                 }
             ],

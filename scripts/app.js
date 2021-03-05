@@ -64,12 +64,19 @@ class AppKernel extends Kernel {
         return actions
     }
 
-    getActionButton(uuid, text, type = "all") {
+    getActionButton(get, type = "all") {
         return this.UIKit.navButton("add", "bolt.circle", (animate, sender) => {
-            const data = {
-                text: text(),
-                uuid: uuid()
-            }
+            const data = { text: get.text() }
+            const defaultData = Object.keys(data)
+            Object.keys(get).map(item => {
+                if (defaultData.indexOf(item) === -1) {
+                    if (typeof get[item] === "function") {
+                        data[item] = get[item]()
+                    } else {
+                        data[item] = get[item]
+                    }
+                }
+            })
             $ui.popover({
                 sourceView: sender,
                 directions: $popoverDirection.up,
