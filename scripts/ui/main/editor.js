@@ -12,7 +12,7 @@ class Editor {
                 if (this.text) $share.sheet(this.text)
                 else $ui.warning($l10n("NONE"))
             }),
-            this.kernel.actionButton(() => this.uuid, () => this.text, "editor")
+            this.kernel.getActionButton(() => this.uuid, () => this.text, "editor")
         ]
     }
 

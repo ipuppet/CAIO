@@ -14,16 +14,24 @@ class AppKernel extends Kernel {
         this.initSettingMethods()
         this.page = this.registerComponent("Page")
         this.menu = this.registerComponent("Menu")
-        // action 路径
+        // action 相关路径
         this.actionPath = "/scripts/action/"
+        this.actionOrderFile = "order.json"
+    }
+
+    getActionTypes() {
+        const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
+        return type.concat($file.list(this.actionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
+            if ($file.isDirectory(this.actionPath + "/" + dir) && type.indexOf(dir) < 0)
+                return dir
+        }))
     }
 
     getActions(type) {
         const actions = []
         const typePath = `${this.actionPath}${type}/`
         if (!$file.exists(typePath)) return []
-        const fileList = $file.list(typePath)
-        fileList.forEach(item => {
+        const pushAction = item => {
             const basePath = `${typePath}/${item}/`
             if ($file.isDirectory(basePath)) {
                 const config = JSON.parse($file.read(basePath + "config.json").string)
@@ -38,11 +46,19 @@ class AppKernel extends Kernel {
                     }
                 }))
             }
+        }
+        // push 有顺序的 Action
+        const order = $file.read(typePath + this.actionOrderFile) ?? []
+        order.forEach(item => pushAction(item))
+        // push 剩下的 Action
+        $file.list(typePath).forEach(item => {
+            if (order.indexOf(item) === -1)
+                pushAction(item)
         })
         return actions
     }
 
-    actionButton(uuid, text, type = "all") {
+    getActionButton(uuid, text, type = "all") {
         return this.UIKit.navButton("add", "bolt.circle", (animate, sender) => {
             const data = {
                 text: text(),

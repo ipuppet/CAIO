@@ -348,7 +348,7 @@ class Clipboard {
                     if (text !== "") this.add(text)
                 }, $l10n("CLIPBOARD"))
             }),
-            this.kernel.actionButton(
+            this.kernel.getActionButton(
                 () => this.copied === undefined ? null : this.copied.uuid,
                 () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text,
                 "clipboard"
