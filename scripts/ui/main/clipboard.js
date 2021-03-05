@@ -353,7 +353,7 @@ class Clipboard {
                 () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text,
                 "clipboard"
             ),
-            this.kernel.UIKit.navButton("add", "arrow.up.arrow.down.circle", (animate, sender) => {
+            this.kernel.UIKit.navButton("reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
                 $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,

@@ -558,7 +558,7 @@ class ActionManager {
                     }]
                 })
             }),
-            this.kernel.UIKit.navButton("add", "book.circle", () => {
+            this.kernel.UIKit.navButton("doc", "book.circle", () => {
                 const content = $file.read("/scripts/action/README.md").string
                 this.kernel.UIKit.pushPageSheet({
                     views: [{
@@ -570,7 +570,7 @@ class ActionManager {
                     }]
                 })
             }),
-            this.kernel.UIKit.navButton("add", "arrow.up.arrow.down.circle", (animate, sender) => {
+            this.kernel.UIKit.navButton("reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
                 $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,
