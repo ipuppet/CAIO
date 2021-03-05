@@ -384,7 +384,6 @@ class Clipboard {
                                     this.reorder.from = indexPath.row
                                 },
                                 reorderMoved: (fromIndexPath, toIndexPath) => {
-                                    //this.move(fromIndexPath.row, toIndexPath.row)
                                     this.reorder.to = toIndexPath.row
                                 },
                                 reorderFinished: () => {
