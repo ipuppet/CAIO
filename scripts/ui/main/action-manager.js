@@ -21,14 +21,6 @@ class ActionManager {
         this.kernel = kernel
     }
 
-    getTypes() {
-        const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        return type.concat($file.list(this.kernel.actionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
-            if ($file.isDirectory(this.kernel.actionPath + "/" + dir) && type.indexOf(dir) < 0)
-                return dir
-        }))
-    }
-
     actionToData(action) {
         return {
             name: { text: action.name },
@@ -42,7 +34,7 @@ class ActionManager {
 
     actionsToData() { // 格式化数据供 matrix 使用
         const data = []
-        this.getTypes().forEach(type => {
+        this.kernel.getActionTypes().forEach(type => {
             const section = {
                 title: type, // TODO section 标题
                 items: []
@@ -355,7 +347,7 @@ class ActionManager {
         const nameInput = this.createInput(["pencil.circle", "#FF3366"], $l10n("NAME"))
         const createColor = this.createColor(["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
         const iconInput = this.createIcon(["star.circle", "#FF9933"], $l10n("ICON"))
-        const typeMenu = this.createMenu(["tag.circle", "#33CC33"], $l10n("TYPE"), this.getTypes())
+        const typeMenu = this.createMenu(["tag.circle", "#33CC33"], $l10n("TYPE"), this.kernel.getActionTypes())
         this.kernel.UIKit.pushPageSheet({
             views: [{
                 type: "list",
@@ -379,11 +371,11 @@ class ActionManager {
         if (!$file.exists(path)) $file.mkdir(path)
         $file.write({
             data: $data({
-                "string": JSON.stringify({
-                    name: info.name,
-                    color: info.color,
+                string: JSON.stringify({
                     icon: info.icon,
-                    description: info.description,
+                    color: info.color,
+                    name: info.name,
+                    description: info.description
                 })
             }),
             path: `${path}config.json`
@@ -398,6 +390,60 @@ class ActionManager {
             data: $data({ "string": content }),
             path: `${path}main.js`
         })
+    }
+
+    saveOrder(type, order) {
+        $file.write({
+            data: $data({ string: JSON.stringify(order) }),
+            path: `${this.kernel.actionPath}${type}/${this.kernel.actionOrderFile}`
+        })
+    }
+
+    move(from, to, data) {
+        if (from.section === to.section && from.row === to.row) return
+        // 处理 data 数据
+        data = data.map(section => {
+            section.rows = section.rows.map(item => item.info.info)
+            return section
+        })
+        const fromSection = data[from.section],
+            toSection = data[to.section]
+        const getOrder = section => {
+            const order = []
+            data[section].rows.forEach(item => order.push(item.dir))
+            return order
+        }
+        const updateUI = (insertFirst = true, type) => {
+            const sender = $("actions")
+            const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
+            if (insertFirst) {
+                sender.insert({
+                    indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
+                    value: toData
+                })
+                sender.delete(from)
+            } else {
+                sender.delete(from)
+                sender.insert({
+                    indexPath: to,
+                    value: toData
+                })
+            }
+        }
+        // 判断是否跨 section
+        if (from.section === to.section) {
+            this.saveOrder(fromSection.title, getOrder(from.section))
+        } else { // 跨 section 则同时移动 Action 目录
+            this.saveOrder(fromSection.title, getOrder(from.section))
+            this.saveOrder(toSection.title, getOrder(to.section))
+            $file.move({
+                src: `${this.kernel.actionPath}${fromSection.title}/${toSection.rows[to.row].dir}`,
+                dst: `${this.kernel.actionPath}${toSection.title}/${toSection.rows[to.row].dir}`
+            })
+        }
+        // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
+        updateUI(from.rom < to.rom, toSection.title)
+
     }
 
     navButtons() {
@@ -429,7 +475,7 @@ class ActionManager {
                                 this.editActionInfoPageSheet(null, info => {
                                     this.saveActionInfo(info)
                                     $("actions").insert({
-                                        indexPath: $indexPath(this.getTypes().indexOf(info.type), 0),
+                                        indexPath: $indexPath(this.kernel.getActionTypes().indexOf(info.type), 0),
                                         value: this.actionToData(info)
                                     })
                                     popover.dismiss()
@@ -483,6 +529,122 @@ class ActionManager {
                             make.size.equalTo(view.super)
                         }
                     }]
+                })
+            }),
+            this.kernel.UIKit.navButton("add", "arrow.up.arrow.down.circle", (animate, sender) => {
+                $ui.popover({
+                    sourceView: sender,
+                    directions: $popoverDirection.up,
+                    size: $size(200, 300),
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: $l10n("SORT"),
+                                color: $color("secondaryText"),
+                                font: $font(14)
+                            },
+                            layout: (make, view) => {
+                                make.top.equalTo(view.super.safeArea).offset(0)
+                                make.height.equalTo(40)
+                                make.left.inset(20)
+                            }
+                        },
+                        { // canvas
+                            type: "canvas",
+                            layout: (make, view) => {
+                                make.top.equalTo(view.prev.bottom)
+                                make.height.equalTo(1 / $device.info.screen.scale)
+                                make.left.right.inset(0)
+                            },
+                            events: {
+                                draw: (view, ctx) => {
+                                    ctx.strokeColor = $color("separatorColor")
+                                    ctx.setLineWidth(1)
+                                    ctx.moveToPoint(0, 0)
+                                    ctx.addLineToPoint(view.frame.width, 0)
+                                    ctx.strokePath()
+                                }
+                            }
+                        },
+                        {
+                            type: "list",
+                            layout: (make, view) => {
+                                make.width.equalTo(view.super)
+                                make.top.equalTo(view.prev.bottom)
+                                make.bottom.inset(0)
+                            },
+                            props: {
+                                reorder: true,
+                                bgcolor: $color("clear"),
+                                rowHeight: 60,
+                                data: this.actionsToData().map(section => {
+                                    return {
+                                        title: section.title,
+                                        rows: section.items
+                                    }
+                                }),
+                                template: {
+                                    props: { bgcolor: $color("clear") },
+                                    views: [
+                                        {
+                                            type: "image",
+                                            props: {
+                                                id: "color",
+                                                cornerRadius: 8,
+                                                smoothCorners: true
+                                            },
+                                            layout: (make, view) => {
+                                                make.centerY.equalTo(view.super)
+                                                make.left.inset(15)
+                                                make.size.equalTo($size(30, 30))
+                                            }
+                                        },
+                                        {
+                                            type: "image",
+                                            props: {
+                                                id: "icon",
+                                                tintColor: $color("#ffffff"),
+                                            },
+                                            layout: (make, view) => {
+                                                make.centerY.equalTo(view.super)
+                                                make.left.inset(20)
+                                                make.size.equalTo($size(20, 20))
+                                            }
+                                        },
+                                        {
+                                            type: "label",
+                                            props: {
+                                                id: "name",
+                                                lines: 1,
+                                                font: $font(16)
+                                            },
+                                            layout: (make, view) => {
+                                                make.height.equalTo(30)
+                                                make.centerY.equalTo(view.super)
+                                                make.left.equalTo(view.prev.right).offset(15)
+                                            }
+                                        },
+                                        { type: "label", props: { id: "info" } }
+                                    ]
+                                }
+                            },
+                            events: {
+                                reorderBegan: indexPath => {
+                                    if (this.reorder === undefined) this.reorder = {}
+                                    this.reorder.from = indexPath
+                                    this.reorder.to = undefined
+                                },
+                                reorderMoved: (fromIndexPath, toIndexPath) => {
+                                    this.reorder.to = toIndexPath
+                                },
+                                reorderFinished: data => {
+                                    if (this.reorder.to === undefined) return
+                                    this.move(this.reorder.from, this.reorder.to, data)
+                                }
+                            }
+                        }
+                    ]
                 })
             })
         ]
