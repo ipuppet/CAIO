@@ -4,8 +4,6 @@ class Clipboard {
         // 剪贴板列个性化设置
         this.edges = 20 // 列表边距
         this.fontSize = 16 // 字体大小
-        this.maxItemLength = this.kernel.setting.get("clipboard.maxItemLength") // 最大显示行数
-        this.textMaxLength = this.kernel.setting.get("clipboard.textMaxLength") // 显示最大长度
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
         // 数据
         this.setCopied()
@@ -254,7 +252,9 @@ class Clipboard {
     }
 
     lineData(data) {
-        const text = data.text.length > this.textMaxLength ? data.text.slice(0, this.textMaxLength) + "..." : data.text
+        // 显示最大长度
+        const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
+        const text = data.text.length > textMaxLength ? data.text.slice(0, textMaxLength) + "..." : data.text
         const size = $text.sizeThatFits({
             text: text,
             width: $device.info.screen.width,
@@ -293,7 +293,7 @@ class Clipboard {
         const sorted = []
         if (length > 0) {
             let p = dataObj[header]
-            let maxLoop = this.maxItemLength // 控制显示行数
+            let maxLoop = this.kernel.setting.get("clipboard.maxItemLength") // 控制显示行数
             while (p.next !== null && maxLoop > 0) {
                 maxLoop--
                 sorted.push(p)

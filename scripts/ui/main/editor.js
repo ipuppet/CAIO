@@ -1,10 +1,6 @@
 class Editor {
     constructor(kernel) {
         this.kernel = kernel
-        // custom
-        this.lightTheme = this.kernel.setting.get("editor.lightTheme")
-        this.darkTheme = this.kernel.setting.get("editor.darkTheme")
-        this.lineNumbers = this.kernel.setting.get("editor.lineNumbers")
     }
 
     navButtons() {
@@ -35,8 +31,8 @@ class Editor {
                     layout: $layout.fill,
                     props: {
                         id: "editor",
-                        lineNumbers: this.lineNumbers,
-                        theme: $device.isDarkMode ? this.darkTheme : this.lightTheme,
+                        lineNumbers: this.kernel.setting.get("editor.lineNumbers"), // 放在此处动态获取设置的更改
+                        theme: $device.isDarkMode ? this.kernel.setting.get("editor.darkTheme") : this.kernel.setting.get("editor.lightTheme"),
                         text: this.text
                     },
                     events: {
@@ -45,7 +41,7 @@ class Editor {
                         },
                         /* themeChanged: (sender, isDarkMode) => {
                             // TODO 无法动态更改主题
-                            sender.theme = isDarkMode ? this.darkTheme : this.lightTheme
+                            sender.theme = isDarkMode ? this.kernel.setting.get("editor.darkTheme") : this.kernel.setting.get("editor.lightTheme")
                         } */
                     }
                 }
