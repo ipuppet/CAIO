@@ -3,7 +3,7 @@ class Action {
         this.kernel = kernel
         this.config = config
         this.text = data.text
-        this.uuid = data.uuid
+        this.selectedRange = data.selectedRange
     }
 }
 
