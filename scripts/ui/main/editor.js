@@ -34,7 +34,7 @@ class Editor {
                             this.text = sender.text
                         },
                         themeChanged: (sender, isDarkMode) => {
-                            // 无法动态更改主题
+                            // TODO 无法动态更改主题
                             sender.theme = isDarkMode ? this.darkTheme : this.lightTheme
                         }
                     }
