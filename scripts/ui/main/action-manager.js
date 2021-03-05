@@ -335,6 +335,30 @@ class ActionManager {
         }
     }
 
+    createText() {
+        return {
+            type: "view",
+            views: [
+                {
+                    type: "text",
+                    props: {
+                        id: "action-text",
+                        color: $color("secondaryText"),
+                        text: this.editingActionInfo.description
+                    },
+                    layout: make => make.edges.inset(10),
+                    events: {
+                        changed: text => {
+                            console.log(text)
+                            this.editingActionInfo.description = text
+                        }
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
     editActionInfoPageSheet(info, done) {
         this.editingActionInfo = info ?? {
             dir: this.kernel.uuid(), // 随机生成文件夹名
@@ -348,6 +372,13 @@ class ActionManager {
         const createColor = this.createColor(["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
         const iconInput = this.createIcon(["star.circle", "#FF9933"], $l10n("ICON"))
         const typeMenu = this.createMenu(["tag.circle", "#33CC33"], $l10n("TYPE"), this.kernel.getActionTypes())
+        const description = this.createText()
+        const data = [
+            { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
+            { title: $l10n("DESCRIPTION"), rows: [description] },
+        ]
+        // 只有新建时才可选择类型
+        if (!info) data[0].rows = data[0].rows.concat(typeMenu)
         this.kernel.UIKit.pushPageSheet({
             views: [{
                 type: "list",
@@ -355,10 +386,12 @@ class ActionManager {
                     bgcolor: $color("insetGroupedBackground"),
                     style: 2,
                     separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                    rowHeight: 50,
-                    data: [nameInput, createColor, iconInput, typeMenu]
+                    data: data
                 },
-                layout: $layout.fill
+                layout: $layout.fill,
+                events: {
+                    rowHeight: (sender, indexPath) => indexPath.section === 1 ? 120 : 50
+                }
             }],
             done: () => {
                 if (done) done(this.editingActionInfo)
@@ -479,6 +512,7 @@ class ActionManager {
                                         value: this.actionToData(info)
                                     })
                                     popover.dismiss()
+                                    // TODO 检查为什么 require 后面多了一个参数
                                     this.kernel.editor.push(MainJsTemplate, content => {
                                         this.saveMainJs(content, info)
                                     })
@@ -578,6 +612,8 @@ class ActionManager {
                                 reorder: true,
                                 bgcolor: $color("clear"),
                                 rowHeight: 60,
+                                sectionTitleHeight: 30,
+                                stickyHeader: true,
                                 data: this.actionsToData().map(section => {
                                     return {
                                         title: section.title,
