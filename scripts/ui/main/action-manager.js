@@ -745,8 +745,8 @@ class ActionManager {
                         type: "matrix",
                         props: {
                             id: "actions",
-                            autoItemSize: true,
-                            estimatedItemSize: $size(($device.info.screen.width - 60) / 2, 100),
+                            columns: 2,
+                            itemHeight: 100,
                             spacing: 20,
                             indicatorInsets: $insets(0, 0, 50, 0),
                             bgcolor: $color("insetGroupedBackground"),
@@ -768,6 +768,10 @@ class ActionManager {
                                         make.top.equalTo(view.super)
                                     }
                                 }]
+                            },
+                            footer: { // 防止被菜单遮挡
+                                type: "view",
+                                props: { height: 50 }
                             },
                             data: this.actionsToData(),
                             template: {
