@@ -14,7 +14,11 @@ class Editor {
             }),
             this.kernel.getActionButton({
                 text: () => this.text,
-                selectedRange: () => $("editor").selectedRange
+                selectedRange: () => $("editor").selectedRange,
+                selectedText: () => {
+                    const range = $("editor").selectedRange
+                    return this.text.slice(range.location, range.location + range.length)
+                }
             }, "editor")
         ]
     }
