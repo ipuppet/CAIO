@@ -26,6 +26,7 @@
 "ICON" = "图标";
 "TYPE" = "分类";
 "DESCRIPTION" = "描述";
+"SHOW_LINE_NUMBER" = "显示行号";
 "LIGHT_MODE_THEME" = "浅色模式主题";
 "DARK_MODE_THEME" = "深色模式主题";
 

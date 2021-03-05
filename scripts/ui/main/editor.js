@@ -4,6 +4,7 @@ class Editor {
         // custom
         this.lightTheme = this.kernel.setting.get("editor.lightTheme")
         this.darkTheme = this.kernel.setting.get("editor.darkTheme")
+        this.lineNumbers = this.kernel.setting.get("editor.lineNumbers")
     }
 
     navButtons() {
@@ -34,6 +35,7 @@ class Editor {
                     layout: $layout.fill,
                     props: {
                         id: "editor",
+                        lineNumbers: this.lineNumbers,
                         theme: $device.isDarkMode ? this.darkTheme : this.lightTheme,
                         text: this.text
                     },

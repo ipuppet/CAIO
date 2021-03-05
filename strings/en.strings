@@ -26,6 +26,7 @@
 "ICON" = "Icon";
 "TYPE" = "Category";
 "DESCRIPTION" = "Description";
+"SHOW_LINE_NUMBER" = "Show line number";
 "LIGHT_MODE_THEME" = "Light Mode Theme";
 "DARK_MODE_THEME" = "Dark Mode Theme";
 

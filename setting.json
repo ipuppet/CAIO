@@ -4,7 +4,7 @@
         "items": [
             {
                 "icon": [
-                    "list.bullet",
+                    "text.alignleft",
                     "#FFCC66"
                 ],
                 "title": "MAX_ITEM_LENGTH",
@@ -48,7 +48,17 @@
         "items": [
             {
                 "icon": [
-                    "rectangle.split.3x1.fill",
+                    "list.number",
+                    "#6699CC"
+                ],
+                "title": "SHOW_LINE_NUMBER",
+                "type": "switch",
+                "key": "editor.lineNumbers",
+                "value": false
+            },
+            {
+                "icon": [
+                    "wand.and.stars",
                     "#FF6633"
                 ],
                 "title": "LIGHT_MODE_THEME",
@@ -58,7 +68,7 @@
             },
             {
                 "icon": [
-                    "rectangle.split.3x1.fill",
+                    "wand.and.stars",
                     "#FF6633"
                 ],
                 "title": "DARK_MODE_THEME",
