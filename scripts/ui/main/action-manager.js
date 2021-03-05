@@ -499,7 +499,6 @@ class ActionManager {
                                         value: this.actionToData(info)
                                     })
                                     popover.dismiss()
-                                    // TODO 检查为什么 require 后面多了一个参数
                                     const MainJsTemplate = $file.read(`${this.kernel.actionPath}template.js`).string
                                     this.kernel.editor.push(MainJsTemplate, content => {
                                         this.saveMainJs(content, info)
