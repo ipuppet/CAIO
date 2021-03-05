@@ -382,6 +382,7 @@ class Clipboard {
                                     // 用于纠正 rowHeight 高度计算
                                     this.reorder.content = this.savedClipboard[indexPath.row].content
                                     this.reorder.from = indexPath.row
+                                    this.reorder.to = undefined
                                 },
                                 reorderMoved: (fromIndexPath, toIndexPath) => {
                                     this.reorder.to = toIndexPath.row
