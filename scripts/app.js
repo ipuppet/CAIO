@@ -27,6 +27,13 @@ class AppKernel extends Kernel {
         }))
     }
 
+    getActionOrder(type) {
+        const path = `${this.actionPath}${type}/${this.actionOrderFile}`
+        if ($file.exists(`${this.actionPath}${type}/${this.actionOrderFile}`))
+            return JSON.parse($file.read(`${this.actionPath}${type}/${this.actionOrderFile}`).string)
+        else return []
+    }
+
     getActions(type) {
         const actions = []
         const typePath = `${this.actionPath}${type}/`
@@ -48,7 +55,7 @@ class AppKernel extends Kernel {
             }
         }
         // push 有顺序的 Action
-        const order = $file.read(typePath + this.actionOrderFile) ?? []
+        const order = this.getActionOrder(type)
         order.forEach(item => pushAction(item))
         // push 剩下的 Action
         $file.list(typePath).forEach(item => {
