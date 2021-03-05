@@ -29,8 +29,7 @@ class AppKernel extends Kernel {
 
     getActionOrder(type) {
         const path = `${this.actionPath}${type}/${this.actionOrderFile}`
-        if ($file.exists(`${this.actionPath}${type}/${this.actionOrderFile}`))
-            return JSON.parse($file.read(`${this.actionPath}${type}/${this.actionOrderFile}`).string)
+        if ($file.exists(path)) return JSON.parse($file.read(path).string)
         else return []
     }
 
