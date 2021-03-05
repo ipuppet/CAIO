@@ -68,68 +68,97 @@ class Clipboard {
                 uuid: this.savedClipboard[to].content.info.uuid,
                 text: this.savedClipboard[to].content.text
             }
-            // 删除元素
-            if (this.savedClipboard[from - 1]) {
-                const fromPrevItem = { // from 位置的上一个元素
-                    uuid: this.savedClipboard[from - 1].content.info.uuid,
-                    text: this.savedClipboard[from - 1].content.text,
-                    prev: this.savedClipboard[from - 1].content.info.prev,
-                    next: this.savedClipboard[from].content.info.next
+            { // 删除元素
+                if (this.savedClipboard[from - 1]) {
+                    const fromPrevItem = { // from 位置的上一个元素
+                        uuid: this.savedClipboard[from - 1].content.info.uuid,
+                        text: this.savedClipboard[from - 1].content.text,
+                        prev: this.savedClipboard[from - 1].content.info.prev,
+                        next: this.savedClipboard[from].content.info.next
+                    }
+                    this.kernel.storage.update(fromPrevItem)
+                    this.savedClipboard[from - 1] = this.lineData(fromPrevItem)
                 }
-                this.kernel.storage.update(fromPrevItem)
-                this.savedClipboard[from - 1] = this.lineData(fromPrevItem)
-            }
-            if (this.savedClipboard[from + 1]) {
-                const fromNextItem = { // from 位置的下一个元素
-                    uuid: this.savedClipboard[from + 1].content.info.uuid,
-                    text: this.savedClipboard[from + 1].content.text,
-                    prev: this.savedClipboard[from].content.info.prev,
-                    next: this.savedClipboard[from + 1].content.info.next
+                if (this.savedClipboard[from + 1]) {
+                    const fromNextItem = { // from 位置的下一个元素
+                        uuid: this.savedClipboard[from + 1].content.info.uuid,
+                        text: this.savedClipboard[from + 1].content.text,
+                        prev: this.savedClipboard[from].content.info.prev,
+                        next: this.savedClipboard[from + 1].content.info.next
+                    }
+                    this.kernel.storage.update(fromNextItem)
+                    this.savedClipboard[from + 1] = this.lineData(fromNextItem)
                 }
-                this.kernel.storage.update(fromNextItem)
-                this.savedClipboard[from + 1] = this.lineData(fromNextItem)
             }
-            // 在 to 上方插入元素
-            if (this.savedClipboard[to - 1]) {
-                const toPrevItem = { // 原来 to 位置的上一个元素
-                    uuid: this.savedClipboard[to - 1].content.info.uuid,
-                    text: this.savedClipboard[to - 1].content.text,
-                    prev: this.savedClipboard[to - 1].content.info.prev,
-                    next: oldFromItem.uuid // 指向即将被移动元素的uuid
+            { // 在 to 上方插入元素
+                if (this.savedClipboard[to - 1]) {
+                    const toPrevItem = { // 原来 to 位置的上一个元素
+                        uuid: this.savedClipboard[to - 1].content.info.uuid,
+                        text: this.savedClipboard[to - 1].content.text,
+                        prev: this.savedClipboard[to - 1].content.info.prev,
+                        next: oldFromItem.uuid // 指向即将被移动元素的uuid
+                    }
+                    this.kernel.storage.update(toPrevItem)
+                    this.savedClipboard[to - 1] = this.lineData(toPrevItem)
                 }
-                this.kernel.storage.update(toPrevItem)
-                this.savedClipboard[to - 1] = this.lineData(toPrevItem)
+                const toItem = { // 原来 to 位置的元素
+                    uuid: oldToItem.uuid,
+                    text: oldToItem.text,
+                    prev: oldFromItem.uuid, // 指向即将被移动的元素
+                    next: this.savedClipboard[to].content.info.next // 前面的代码可能更改此值，因为 from 上下的元素可能就是 to
+                }
+                this.kernel.storage.update(toItem)
+                const fromItem = { // 被移动元素
+                    uuid: oldFromItem.uuid,
+                    text: oldFromItem.text,
+                    prev: this.savedClipboard[to].content.info.prev, // 前面的代码可能更改此值，因为 from 上下的元素可能就是 to
+                    next: oldToItem.uuid
+                }
+                this.kernel.storage.update(fromItem)
+                // 修改内存中的值
+                this.savedClipboard[to] = this.lineData(toItem)
+                this.savedClipboard[from] = this.lineData(fromItem)
             }
-            const toItem = { // 原来 to 位置的元素
-                uuid: oldToItem.uuid,
-                text: oldToItem.text,
-                prev: oldFromItem.uuid, // 指向即将被移动的元素
-                next: this.savedClipboard[to].content.info.next // 前面的代码可能更改此值，因为 from 上下的元素可能就是 to
+            { // 移动位置
+                this.savedClipboard.splice(to, 0, this.savedClipboard[from])
+                this.savedClipboard.splice(from > to ? from + 1 : from, 1)
+                this.kernel.storage.commit()
+                // 去掉补位元素
+                if (this.savedClipboard[to].content.info.uuid === null) {
+                    this.savedClipboard.splice(to, 1)
+                }
             }
-            this.kernel.storage.update(toItem)
-            const fromItem = { // 被移动元素
-                uuid: oldFromItem.uuid,
-                text: oldFromItem.text,
-                prev: this.savedClipboard[to].content.info.prev, // 前面的代码可能更改此值，因为 from 上下的元素可能就是 to
-                next: oldToItem.uuid
-            }
-            this.kernel.storage.update(fromItem)
-            // 修改内存中的值
-            this.savedClipboard[to] = this.lineData(toItem)
-            this.savedClipboard[from] = this.lineData(fromItem)
-            // 移动位置
-            this.savedClipboard.splice(to, 0, this.savedClipboard[from])
-            if (from > to) from++
-            this.savedClipboard.splice(from, 1)
-            this.kernel.storage.commit()
-            // 去掉补位元素
-            if (this.savedClipboard[to].content.info.uuid === null) {
-                this.savedClipboard.splice(to, 1)
-            }
-            // 判断 copied 是否变化
-            if (this.copied?.index === from) {
-                if (from < to) to-- // 去除偏移
-                this.setCopied(this.copied.uuid, to)
+            { // 操作 UI
+                // 去除偏移
+                const _to = from < to ? to - 1 : to
+                const sender = $("clipboard-list")
+                if (this.copied.index === from) { // 被移动的行是被复制的行
+                    // 显示 _to 指示器
+                    this.savedClipboard[_to].copied.hidden = false
+                    // 更新 this.copied
+                    this.setCopied(this.copied.uuid, _to)
+                } else if (
+                    this.copied.index > from && this.copied.index < _to
+                    || this.copied.index < from && this.copied.index > _to
+                    || this.copied.index === _to
+                ) { // 被复制的行介于 from 和 _to 之间或等于 _to
+                    // 从上往下移动则 -1 否则 +1
+                    this.setCopied(this.copied.uuid, from < _to ? this.copied.index - 1 : this.copied.index + 1)
+                }
+                // 移动列表
+                if (from < _to) { // 从上往下移动
+                    sender.insert({
+                        indexPath: $indexPath(0, to),
+                        value: this.savedClipboard[_to]
+                    })
+                    sender.delete(from)
+                } else { // 从下往上移动
+                    sender.delete(from)
+                    sender.insert({
+                        indexPath: $indexPath(0, to),
+                        value: this.savedClipboard[to]
+                    })
+                }
             }
         } catch (error) {
             this.kernel.storage.rollback()
@@ -140,26 +169,7 @@ class Clipboard {
     copy(text, uuid, index) {
         // 复制到剪切板
         $clipboard.text = text
-        const sender = $("clipboard-list")
         if (index !== undefined) {
-            // 更新指示器 此时的 this.copied 是之前被复制的信息
-            this.savedClipboard[index].copied.hidden = false
-            if (this.copied?.index !== undefined) {
-                this.savedClipboard[this.copied.index].copied.hidden = true
-                // 修改列表中的指示器
-                sender.cell($indexPath(0, this.copied.index)).get("copied").hidden = true
-            }
-            if (index !== 0) {
-                // 移动行
-                sender.delete(index)
-                sender.insert({
-                    indexPath: $indexPath(0, 0),
-                    value: this.savedClipboard[index]
-                })
-            } else {
-                // 显示指示器
-                sender.cell($indexPath(0, index)).get("copied").hidden = false
-            }
             // 将被复制的行移动到最前端
             this.move(index, 0)
         }
@@ -343,13 +353,49 @@ class Clipboard {
                 () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text,
                 "clipboard"
             ),
-            this.kernel.UIKit.navButton("add", "arrow.up.arrow.down.circle", () => {
-                this.kernel.UIKit.pushPageSheet({
-                    title: $l10n("SORT"),
+            this.kernel.UIKit.navButton("add", "arrow.up.arrow.down.circle", (animate, sender) => {
+                $ui.popover({
+                    sourceView: sender,
+                    directions: $popoverDirection.up,
+                    size: $size(200, 300),
                     views: [
                         {
+                            type: "label",
+                            props: {
+                                text: $l10n("SORT"),
+                                color: $color("secondaryText"),
+                                font: $font(14)
+                            },
+                            layout: (make, view) => {
+                                make.top.equalTo(view.super.safeArea).offset(0)
+                                make.height.equalTo(40)
+                                make.left.inset(20)
+                            }
+                        },
+                        { // canvas
+                            type: "canvas",
+                            layout: (make, view) => {
+                                make.top.equalTo(view.prev.bottom)
+                                make.height.equalTo(1 / $device.info.screen.scale)
+                                make.left.right.inset(0)
+                            },
+                            events: {
+                                draw: (view, ctx) => {
+                                    ctx.strokeColor = $color("separatorColor")
+                                    ctx.setLineWidth(1)
+                                    ctx.moveToPoint(0, 0)
+                                    ctx.addLineToPoint(view.frame.width, 0)
+                                    ctx.strokePath()
+                                }
+                            }
+                        },
+                        {
                             type: "list",
-                            layout: $layout.fill,
+                            layout: (make, view) => {
+                                make.width.equalTo(view.super)
+                                make.top.equalTo(view.prev.bottom)
+                                make.bottom.inset(0)
+                            },
                             props: {
                                 id: "clipboard-list-sort",
                                 reorder: true,
@@ -358,6 +404,19 @@ class Clipboard {
                                 template: {
                                     props: { bgcolor: $color("clear") },
                                     views: [
+                                        {
+                                            type: "view",
+                                            props: {
+                                                id: "copied",
+                                                circular: this.copiedIndicatorSize,
+                                                bgcolor: $color("green")
+                                            },
+                                            layout: (make, view) => {
+                                                make.centerY.equalTo(view.super)
+                                                make.size.equalTo(this.copiedIndicatorSize)
+                                                make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2)
+                                            }
+                                        },
                                         {
                                             type: "label",
                                             props: {
@@ -390,7 +449,6 @@ class Clipboard {
                                 reorderFinished: () => {
                                     if (this.reorder.to === undefined) return
                                     this.move(this.reorder.from, this.reorder.to)
-                                    $("clipboard-list").data = this.savedClipboard
                                 }
                             }
                         }
