@@ -21,9 +21,11 @@
 "CREATE_NEW_TYPE" = "New Category";
 "TYPE_ALREADY_EXISTS" = "This category already exists";
 "EDIT" = "Edit";
+"INFORMATION" = "Information";
 "NAME" = "Name";
 "ICON" = "Icon";
 "TYPE" = "Category";
+"DESCRIPTION" = "Description";
 "LIGHT_MODE_THEME" = "Light Mode Theme";
 "DARK_MODE_THEME" = "Dark Mode Theme";
 

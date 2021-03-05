@@ -21,9 +21,11 @@
 "CREATE_NEW_TYPE" = "新建分类";
 "TYPE_ALREADY_EXISTS" = "该类别已经存在";
 "EDIT" = "编辑";
+"INFORMATION" = "信息";
 "NAME" = "名称";
 "ICON" = "图标";
 "TYPE" = "分类";
+"DESCRIPTION" = "描述";
 "LIGHT_MODE_THEME" = "浅色模式主题";
 "DARK_MODE_THEME" = "深色模式主题";
 
