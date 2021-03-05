@@ -335,7 +335,7 @@ class ActionManager {
         }
     }
 
-    createText() {
+    createText(editingOffset) {
         return {
             type: "view",
             views: [
@@ -344,13 +344,17 @@ class ActionManager {
                     props: {
                         id: "action-text",
                         color: $color("secondaryText"),
-                        text: this.editingActionInfo.description
+                        text: this.editingActionInfo.description,
+                        insets: $insets(10, 10, 10, 10)
                     },
-                    layout: make => make.edges.inset(10),
+                    layout: $layout.fill,
                     events: {
-                        changed: text => {
-                            console.log(text)
-                            this.editingActionInfo.description = text
+                        tapped: sender => {
+                            $("actionInfoPageSheetList").scrollToOffset($point(0, editingOffset))
+                            setTimeout(() => sender.focus(), 200)
+                        },
+                        didChange: sender => {
+                            this.editingActionInfo.description = sender.text
                         }
                     }
                 }
@@ -372,7 +376,7 @@ class ActionManager {
         const createColor = this.createColor(["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
         const iconInput = this.createIcon(["star.circle", "#FF9933"], $l10n("ICON"))
         const typeMenu = this.createMenu(["tag.circle", "#33CC33"], $l10n("TYPE"), this.kernel.getActionTypes())
-        const description = this.createText()
+        const description = this.createText(info ? 230 : 280)
         const data = [
             { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
             { title: $l10n("DESCRIPTION"), rows: [description] },
@@ -383,6 +387,7 @@ class ActionManager {
             views: [{
                 type: "list",
                 props: {
+                    id: "actionInfoPageSheetList",
                     bgcolor: $color("insetGroupedBackground"),
                     style: 2,
                     separatorInset: $insets(0, 50, 0, 10), // 分割线边距
