@@ -472,6 +472,18 @@ class ActionManager {
                         layout: $layout.fill
                     }]
                 })
+            }),
+            this.kernel.UIKit.navButton("add", "book.circle", () => {
+                const content = $file.read("/scripts/action/README.md").string
+                this.kernel.UIKit.pushPageSheet({
+                    views: [{
+                        type: "markdown",
+                        props: { content: content },
+                        layout: (make, view) => {
+                            make.size.equalTo(view.super)
+                        }
+                    }]
+                })
             })
         ]
     }
