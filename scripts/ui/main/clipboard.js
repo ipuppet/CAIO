@@ -389,7 +389,6 @@ class Clipboard {
                                 },
                                 reorderFinished: () => {
                                     if (this.reorder.to === undefined) return
-                                    console.log(`Reorder: ${this.reorder.from} -> ${this.reorder.to}`)
                                     this.move(this.reorder.from, this.reorder.to)
                                     $("clipboard-list").data = this.savedClipboard
                                 }
