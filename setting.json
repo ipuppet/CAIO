@@ -113,7 +113,10 @@
                 "title": "Github",
                 "type": "info",
                 "key": "github",
-                "value": "https://github.com/ipuppet/CAE"
+                "value": [
+                    "ipuppet/CAE",
+                    "https://github.com/ipuppet/CAE"
+                ]
             },
             {
                 "icon": [
@@ -125,7 +128,7 @@
                 "key": "author",
                 "value": [
                     "ipuppet",
-                    "https://blog.ipuppet.cn"
+                    "https://blog.ipuppet.top"
                 ]
             },
             {
