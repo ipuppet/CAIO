@@ -264,7 +264,7 @@ module.exports = {
             })
         } else if ($app.env === $env.app) {
             const kernel = new AppKernel()
-            const Factory = require("./ui/main/factory")
+            const Factory = require("./ui/factory")
             new Factory(kernel).render()
         } else {
             $ui.render({
