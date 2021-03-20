@@ -167,11 +167,20 @@ class Clipboard {
     copy(text, uuid, index) {
         // 复制到剪切板
         $clipboard.text = text
+        const sender = $("clipboard-list")
+        // 隐藏旧指示器
+        const copied = sender.cell($indexPath(0, this.copied.index))
+        if (copied) copied.get("copied").hidden = true
+        // 将被复制的行移动到最前端
         if (index !== undefined) {
-            // 将被复制的行移动到最前端
             this.move(index, 0)
+            // 显示新指示器
+            sender.scrollToOffset($point(0, 0))
+            setTimeout(() => {
+                sender.cell($indexPath(0, 0)).get("copied").hidden = false
+            }, 350)
         }
-        // 写入缓存
+        // 写入缓存，将忽略 this.move 对 this.copied 产生的影响
         this.setCopied(uuid, 0) // 手动排序后索引更改
     }
 
@@ -201,24 +210,15 @@ class Clipboard {
          * 格式化数据
          */
         const lineData = this.lineData(data)
-        // 强制显示指示器
-        lineData.copied.hidden = false
-        // 保存到内存中
-        this.savedClipboard.unshift(lineData)
-        /**
-         * 处理 UI
-         */
-        const sender = $("clipboard-list")
-        // 隐藏旧指示器
-        const copied = sender.cell($indexPath(0, this.copied.index))
-        if (copied) copied.get("copied").hidden = true
+        lineData.copied.hidden = false // 强制显示指示器
+        this.savedClipboard.unshift(lineData) // 保存到内存中
+        // 复制新添加的元素
+        this.copy(text, data.uuid)
         // 在列表中插入行
-        sender.insert({
+        $("clipboard-list").insert({
             indexPath: $indexPath(0, 0),
             value: lineData
         })
-        // 复制新添加的元素
-        this.copy(text, data.uuid)
     }
 
     delete(uuid, sender, index) {
