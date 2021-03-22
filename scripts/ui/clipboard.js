@@ -1,6 +1,7 @@
 class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
+        this.listId = "clipboard-list"
         // 剪贴板列个性化设置
         this.edges = 20 // 列表边距
         this.fontSize = 16 // 字体大小
@@ -27,19 +28,19 @@ class Clipboard {
     readClipboard() {
         if ($cache.get("clipboard.copied"))
             this.copied = $cache.get("clipboard.copied")
-        $("clipboard-list").data = this.getSavedClipboard()
+        $(this.listId).data = this.getSavedClipboard()
         const md5 = $text.MD5($clipboard.text)
         const res = this.kernel.storage.getByMD5(md5)
         if (this.copied?.uuid === res?.uuid && res?.uuid !== undefined) {
-            $("clipboard-list").cell($indexPath(0, this.copied?.index)).get("copied").hidden = false
+            $(this.listId).cell($indexPath(0, this.copied?.index)).get("copied").hidden = false
         } else if ($clipboard.text) {
-            if (res.md5 !== md5)
+            if (res?.md5 !== md5)
                 this.add($clipboard.text)
         }
     }
 
     update(uuid, text, index) {
-        const sender = $("clipboard-list")
+        const sender = $(this.listId)
         sender.cell($indexPath(0, index)).get("content").text = text
         this.savedClipboard[index].content.text = text
         if (uuid === this.copied?.uuid) {
@@ -135,7 +136,7 @@ class Clipboard {
             { // 操作 UI
                 // 去除偏移
                 const _to = from < to ? to - 1 : to
-                const sender = $("clipboard-list")
+                const sender = $(this.listId)
                 if (this.copied.index === from) { // 被移动的行是被复制的行
                     // 显示 _to 指示器
                     this.savedClipboard[_to].copied.hidden = false
@@ -173,7 +174,7 @@ class Clipboard {
     copy(text, uuid, index) {
         // 复制到剪切板
         $clipboard.text = text
-        const sender = $("clipboard-list")
+        const sender = $(this.listId)
         // 隐藏旧指示器
         const copied = sender.cell($indexPath(0, this.copied?.index))
         if (copied) copied.get("copied").hidden = true
@@ -223,7 +224,7 @@ class Clipboard {
         // 复制新添加的元素
         this.copy(text, data.uuid)
         // 在列表中插入行
-        $("clipboard-list").insert({
+        $(this.listId).insert({
             indexPath: $indexPath(0, 0),
             value: lineData
         })
@@ -346,14 +347,14 @@ class Clipboard {
     searchAction(text) {
         try {
             if (text === "") {
-                $("clipboard-list").data = this.savedClipboard
+                $(this.listId).data = this.savedClipboard
             } else {
                 const res = this.kernel.storage.search(text)
                 if (res && res.length > 0)
-                    $("clipboard-list").data = res.map(data => this.lineData(data))
+                    $(this.listId).data = res.map(data => this.lineData(data))
             }
         } catch (error) {
-            $("clipboard-list").data = this.savedClipboard
+            $(this.listId).data = this.savedClipboard
             throw error
         }
     }
@@ -513,7 +514,7 @@ class Clipboard {
             { // 剪切板列表
                 type: "list",
                 props: {
-                    id: "clipboard-list",
+                    id: this.listId,
                     menu: {
                         title: $l10n("ACTION"),
                         items: this.menuItems()

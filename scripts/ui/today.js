@@ -3,6 +3,7 @@ const Clipboard = require("./clipboard")
 class Today extends Clipboard {
     constructor(kernel) {
         super(kernel)
+        this.listId = "today-clipboard-list"
         // 剪贴板列个性化设置
         this.left_right = 20 // 列表边距
         this.top_bottom = 10 // 列表边距
@@ -33,7 +34,7 @@ class Today extends Clipboard {
             { // 剪切板列表
                 type: "list",
                 props: Object.assign({
-                    id: "clipboard-list",
+                    id: this.listId,
                     menu: {
                         title: $l10n("ACTION"),
                         items: this.menuItems()
