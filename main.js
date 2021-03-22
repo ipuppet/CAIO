@@ -1,18 +1,4 @@
-const { VERSION } = require("../EasyJsBox/src/kernel")
-// Check Framework
-const SHARED_PATH = "shared://EasyJsBox"
-if ($file.exists(SHARED_PATH)) {
-    const SHARED_VERSION = eval($file.read(`${SHARED_PATH}/src/kernel.js`)?.string)?.VERSION
-    if (SHARED_VERSION !== VERSION || VERSION === undefined) {
-        $file.delete("/EasyJsBox")
-        $file.copy({
-            src: SHARED_PATH,
-            dst: "/EasyJsBox"
-        })
-    }
-    const app = require("./scripts/app")
-    app.run()
-} else {
+function requireEasyJsBox() {
     $ui.alert({
         title: "Error",
         message: "Cannot find EasyJsBox.\nOpen EasyJsBoxInstaller?",
@@ -29,31 +15,51 @@ if ($file.exists(SHARED_PATH)) {
                         }
                     })
                     if (!hasEasyJsBoxInstaller) {
-                        $ui.alert({
-                            title: "Error",
-                            message: "Cannot find EasyJsBoxInstaller.",
-                            actions: [
-                                { title: "Cancel" },
-                                {
-                                    title: "Install",
-                                    handler: () => {
-                                        const links = {
-                                            Github: "https://github.com/ipuppet/EasyJsBoxInstaller/releases/latest",
-                                            Erots: "jsbox://run?name=Erots&q=show&objectId=6055b974986e9365f49e9feb",
-                                        }
-                                        $ui.menu({
-                                            items: Object.keys(links),
-                                            handler: title => {
-                                                $app.openURL(links[title])
-                                            }
-                                        })
-                                    }
-                                }
-                            ]
-                        })
+                        requireEasyJsBoxInstaller()
                     }
                 }
             }
         ]
     })
+}
+
+function requireEasyJsBoxInstaller() {
+    $ui.alert({
+        title: "Error",
+        message: "Cannot find EasyJsBoxInstaller.",
+        actions: [
+            { title: "Cancel" },
+            {
+                title: "Install",
+                handler: () => {
+                    const links = {
+                        Github: "https://github.com/ipuppet/EasyJsBoxInstaller/releases/latest",
+                        Erots: "jsbox://run?name=Erots&q=show&objectId=6055b974986e9365f49e9feb",
+                    }
+                    $ui.menu({
+                        items: Object.keys(links),
+                        handler: title => {
+                            $app.openURL(links[title])
+                        }
+                    })
+                }
+            }
+        ]
+    })
+}
+
+// Check Framework
+let initEasyJsBox = require("../EasyJsBox/src/kernel").init
+if (typeof initEasyJsBox !== "function") {
+    const SHARED_PATH = "shared://EasyJsBox"
+    initEasyJsBox = eval($file.read(`${SHARED_PATH}/src/kernel.js`)?.string)?.init
+}
+if (typeof initEasyJsBox !== "function") {
+    requireEasyJsBox()
+} else {
+    // init
+    initEasyJsBox()
+    // run app
+    const app = require("./scripts/app")
+    app.run()
 }
