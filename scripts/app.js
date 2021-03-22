@@ -266,6 +266,10 @@ module.exports = {
             const kernel = new AppKernel()
             const Factory = require("./ui/factory")
             new Factory(kernel).render()
+        } else if ($app.env === $env.today) {
+            const kernel = new AppKernel()
+            const Today = require("./ui/today")
+            new Today(kernel).render()
         } else {
             $ui.render({
                 views: [{

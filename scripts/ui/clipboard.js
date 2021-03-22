@@ -20,15 +20,21 @@ class Clipboard {
                 uuid: uuid,
                 index: index
             }
+            $cache.set("clipboard.copied", this.copied)
         }
     }
 
     readClipboard() {
-        const res = this.kernel.storage.getByMD5($text.MD5($clipboard.text))
+        if ($cache.get("clipboard.copied"))
+            this.copied = $cache.get("clipboard.copied")
+        $("clipboard-list").data = this.getSavedClipboard()
+        const md5 = $text.MD5($clipboard.text)
+        const res = this.kernel.storage.getByMD5(md5)
         if (this.copied?.uuid === res?.uuid && res?.uuid !== undefined) {
-            $("clipboard-list").cell($indexPath(0, this.copied.index)).get("copied").hidden = false
+            $("clipboard-list").cell($indexPath(0, this.copied?.index)).get("copied").hidden = false
         } else if ($clipboard.text) {
-            this.add($clipboard.text)
+            if (res.md5 !== md5)
+                this.add($clipboard.text)
         }
     }
 
@@ -169,7 +175,7 @@ class Clipboard {
         $clipboard.text = text
         const sender = $("clipboard-list")
         // 隐藏旧指示器
-        const copied = sender.cell($indexPath(0, this.copied.index))
+        const copied = sender.cell($indexPath(0, this.copied?.index))
         if (copied) copied.get("copied").hidden = true
         // 将被复制的行移动到最前端
         if (index !== undefined) {
@@ -185,6 +191,8 @@ class Clipboard {
     }
 
     add(text) {
+        text = text.trim()
+        if (text === "") return
         // 元数据
         const data = {
             uuid: this.kernel.uuid(),
@@ -328,7 +336,9 @@ class Clipboard {
             sorted.push(p) // 将最后一个元素推入
         }
         return sorted.map((data, index) => {
-            if (data.uuid === this.copied?.uuid) this.copied.index = index
+            if (data.uuid === this.copied?.uuid) {
+                this.setCopied(data.uuid, index)
+            }
             return this.lineData(data)
         })
     }

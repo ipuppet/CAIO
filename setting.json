@@ -103,6 +103,20 @@
         ]
     },
     {
+        "title": "TODAY",
+        "items": [
+            {
+                "icon": [
+                    "paperplane.fill"
+                ],
+                "title": "DISPLAY_NAV",
+                "type": "switch",
+                "key": "today.displayNav",
+                "value": true
+            }
+        ]
+    },
+    {
         "title": "ABOUT",
         "items": [
             {

@@ -42,3 +42,6 @@
 "START_BACKUP" = "开始备份";
 "RECOVER" = "恢复";
 "FILE_TYPE_ERROR" = "文件类型不符";
+
+"TODAY" = "Today小组件";
+"DISPLAY_NAV" = "显示标题栏";
