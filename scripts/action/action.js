@@ -19,7 +19,7 @@ class Action {
         }
      */
     push(args) {
-        this.kernel.pushPageSheet(args)
+        this.kernel.UIKit.pushPageSheet(args)
     }
 }
 
