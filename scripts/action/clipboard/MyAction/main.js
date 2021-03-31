@@ -6,6 +6,7 @@ class MyAction extends Action {
      */
     do() {
         console.log(this.text)
+        $ui.alert(this.text)
     }
 }
 
