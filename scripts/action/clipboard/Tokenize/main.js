@@ -64,12 +64,14 @@ class MyAction extends Action {
                         this.selected.sort().forEach(i => {
                             result.push(this.results[i])
                         })
-                        const text = result.join("")
-                        $clipboard.text = text
-                        $ui.alert({
-                            title: "完成",
-                            message: `已复制内容：${text}`
-                        })
+                        if (result.length > 0) {
+                            const text = result.join("")
+                            $clipboard.text = text
+                            $ui.alert({
+                                title: "完成",
+                                message: `已复制内容：${text}`
+                            })
+                        }
                     }
                 })
             }
