@@ -77,7 +77,7 @@ class AppKernel extends Kernel {
                     }
                 }
             })
-            $ui.popover({
+            const popover = $ui.popover({
                 sourceView: sender,
                 directions: $popoverDirection.up,
                 size: $size(200, 300),
@@ -96,7 +96,10 @@ class AppKernel extends Kernel {
                                         text: action.name
                                     },
                                     events: {
-                                        tapped: () => action.handler(data)
+                                        tapped: () => {
+                                            popover.dismiss()
+                                            setTimeout(() => action.handler(data), 500)
+                                        }
                                     }
                                 }
                             })
