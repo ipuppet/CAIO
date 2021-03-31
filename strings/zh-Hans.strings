@@ -8,6 +8,7 @@
 "BACKUP_AND_REBUILD_DATABASE" = "备份并且重建数据库";
 "SEARCH" = "搜索";
 "COPY" = "复制";
+"COPIED" = "已复制";
 "COPY_SUCCESS" = "复制成功";
 "SORT" = "排序";
 "ACTION" = "动作";

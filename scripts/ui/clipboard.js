@@ -6,10 +6,25 @@ class Clipboard {
         this.edges = 20 // 列表边距
         this.fontSize = 16 // 字体大小
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
+        // 检查是否携带URL scheme
+        this.checkUrlScheme()
         // 数据
         this.setCopied()
         this.savedClipboard = this.getSavedClipboard()
         this.reorder = {}
+    }
+
+    checkUrlScheme() {
+        if ($context.query["copy"]) {
+            const content = this.kernel.storage.getByUUID($context.query["copy"])
+            $clipboard.text = content.text
+            /* setTimeout(() => {
+                this.readClipboard()
+                $ui.success($l10n("COPIED"))
+            }, 500) */
+        } else if ($context.query["add"]) {
+            this.addView()
+        }
     }
 
     setCopied(uuid, index) {
@@ -19,7 +34,8 @@ class Clipboard {
         } else {
             this.copied = {
                 uuid: uuid,
-                index: index
+                index: index,
+                preIndex: this.copied?.index
             }
             $cache.set("clipboard.copied", this.copied)
         }
@@ -230,6 +246,12 @@ class Clipboard {
         })
     }
 
+    addView() {
+        this.edit("", text => {
+            if (text !== "") this.add(text)
+        })
+    }
+
     delete(uuid, sender, index) {
         // 删除数据库中的值
         this.kernel.storage.beginTransaction()
@@ -359,13 +381,15 @@ class Clipboard {
         }
     }
 
+    edit(text, callback) {
+        this.kernel.editor.push(text, text => {
+            callback(text)
+        }, $l10n("CLIPBOARD"))
+    }
+
     navButtons() {
         return [
-            this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                this.kernel.editor.push("", text => {
-                    if (text !== "") this.add(text)
-                }, $l10n("CLIPBOARD"))
-            }),
+            this.kernel.UIKit.navButton("add", "plus.circle", () => this.addView()),
             this.kernel.getActionButton({
                 text: () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text
             }, "clipboard"),
@@ -625,11 +649,11 @@ class Clipboard {
                 },
                 events: {
                     ready: () => {
-                        setTimeout(() => this.readClipboard(), 500)
+                        setTimeout(() => { this.readClipboard() }, 500)
                         $app.listen({
                             // 在应用恢复响应后调用
                             resume: () => {
-                                setTimeout(() => this.readClipboard(), 500)
+                                setTimeout(() => { this.readClipboard() }, 500)
                             }
                         })
                     },
@@ -639,9 +663,9 @@ class Clipboard {
                     },
                     didSelect: (sender, indexPath, data) => {
                         const content = this.savedClipboard[indexPath.row].content
-                        this.kernel.editor.push(content.text, text => {
+                        this.edit(content.text, text => {
                             if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
-                        }, $l10n("CLIPBOARD"))
+                        })
                     }
                 },
                 layout: (make, view) => {

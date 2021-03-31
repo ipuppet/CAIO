@@ -1,6 +1,5 @@
 class Storage {
-    constructor(setting) {
-        this.setting = setting
+    constructor() {
         this.dbName = "CAE.db"
         this.localDb = "/assets/" + this.dbName
         this.sqlite = $sqlite.open(this.localDb)

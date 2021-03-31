@@ -4,7 +4,6 @@ class Setting {
         this.widget = widget
         // 初始化
         this.init()
-        this.settingUrlScheme = `jsbox://run?name=${this.kernel.name}&widget=${this.widget}`
         this.family = {
             small: 0,
             medium: 1,

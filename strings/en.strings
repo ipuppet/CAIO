@@ -8,6 +8,7 @@
 "BACKUP_AND_REBUILD_DATABASE" = "Backup and rebuild the database";
 "SEARCH" = "Search";
 "COPY" = "Copy";
+"COPIED" = "Copied";
 "COPY_SUCCESS" = "Copy success";
 "SORT" = "Sort";
 "ACTION" = "Action";

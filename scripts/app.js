@@ -9,7 +9,7 @@ class AppKernel extends Kernel {
         this.settingComponent = this.registerComponent("Setting")
         this.setting = this.settingComponent.controller
         // Storage
-        this.storage = new Storage(this.setting)
+        this.storage = new Storage()
         // 初始话设置中的方法
         this.initSettingMethods()
         this.page = this.registerComponent("Page")
@@ -236,12 +236,13 @@ class WidgetKernel extends Kernel {
         // 小组件根目录
         this.widgetRootPath = "/scripts/widget"
         this.widgetAssetsPath = "/assets/widget"
+        this.storage = new Storage()
     }
 
-    widgetInstance(widget, that) {
+    widgetInstance(widget) {
         if ($file.exists(`${this.widgetRootPath}/${widget}/index.js`)) {
             const { Widget } = require(`./widget/${widget}/index.js`)
-            return new Widget(that)
+            return new Widget(this)
         } else {
             return false
         }
@@ -252,7 +253,7 @@ module.exports = {
     run: () => {
         if ($app.env === $env.widget) {
             const kernel = new WidgetKernel()
-            const widgetName = $widget.inputValue
+            const widgetName = $widget.inputValue ?? "Clipboard"
             const widget = kernel.widgetInstance(widgetName)
             widget ? widget.render() : $widget.setTimeline({
                 render: () => ({
