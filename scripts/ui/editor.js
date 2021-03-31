@@ -20,14 +20,14 @@ class Editor {
         ]
     }
 
-    push(text = "", callback, parent, navButtons = []) {
+    push(text = "", callback, parent, navButtons = [], type = "text") {
         this.text = text
         this.kernel.UIKit.push({
             parent: parent,
             disappeared: () => { callback(this.text) },
             views: [
                 {
-                    type: "code",
+                    type: type,
                     layout: $layout.fill,
                     props: {
                         id: "editor",

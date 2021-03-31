@@ -409,7 +409,7 @@ class ActionManager {
                     }]
                 })
             })
-        ])
+        ], "code")
     }
 
     saveActionInfo(info) {
