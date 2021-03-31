@@ -1,0 +1,6 @@
+{
+    "icon": "pencil.and.ellipsis.rectangle",
+    "color": "#0099FF",
+    "name": "分词复制",
+    "description": "将文本分词处理后复制"
+}
