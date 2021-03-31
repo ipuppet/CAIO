@@ -386,6 +386,32 @@ class ActionManager {
         })
     }
 
+    editActionMainJs(text = "", info) {
+        this.kernel.editor.push(text, content => {
+            const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
+            if (!$file.exists(path)) $file.mkdir(path)
+            if ($text.MD5(content) === $text.MD5($file.read(`${path}main.js`)?.string ?? "")) return
+            $file.write({
+                data: $data({ "string": content }),
+                path: `${path}main.js`
+            })
+        }, null, [
+            this.kernel.UIKit.navButton("doc", "book.circle", () => {
+                // 保存文件
+                const content = $file.read("/scripts/action/README.md").string
+                this.kernel.UIKit.pushPageSheet({
+                    views: [{
+                        type: "markdown",
+                        props: { content: content },
+                        layout: (make, view) => {
+                            make.size.equalTo(view.super)
+                        }
+                    }]
+                })
+            })
+        ])
+    }
+
     saveActionInfo(info) {
         const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
         if (!$file.exists(path)) $file.mkdir(path)
@@ -399,16 +425,6 @@ class ActionManager {
                 })
             }),
             path: `${path}config.json`
-        })
-    }
-
-    saveMainJs(content, info) {
-        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
-        if (!$file.exists(path)) $file.mkdir(path)
-        if ($text.MD5(content) === $text.MD5($file.read(`${path}main.js`)?.string ?? "")) return
-        $file.write({
-            data: $data({ "string": content }),
-            path: `${path}main.js`
         })
     }
 
@@ -500,9 +516,7 @@ class ActionManager {
                                     })
                                     popover.dismiss()
                                     const MainJsTemplate = $file.read(`${this.kernel.actionPath}template.js`).string
-                                    this.kernel.editor.push(MainJsTemplate, content => {
-                                        this.saveMainJs(content, info)
-                                    })
+                                    this.editActionMainJs(MainJsTemplate)
                                 })
                             }),
                             { // 分割线
@@ -537,18 +551,6 @@ class ActionManager {
                             })
                         ],
                         layout: $layout.fill
-                    }]
-                })
-            }),
-            this.kernel.UIKit.navButton("doc", "book.circle", () => {
-                const content = $file.read("/scripts/action/README.md").string
-                this.kernel.UIKit.pushPageSheet({
-                    views: [{
-                        type: "markdown",
-                        props: { content: content },
-                        layout: (make, view) => {
-                            make.size.equalTo(view.super)
-                        }
                     }]
                 })
             }),
@@ -815,9 +817,7 @@ class ActionManager {
                                                 if (!info) return
                                                 const path = `${this.kernel.actionPath}${info.type}/${info.dir}/main.js`
                                                 const main = $file.read(path).string
-                                                this.kernel.editor.push(main, content => {
-                                                    this.saveMainJs(content, info)
-                                                })
+                                                this.editActionMainJs(main, info)
                                             }
                                         },
                                         layout: make => {

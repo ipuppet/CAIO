@@ -20,7 +20,7 @@ class Editor {
         ]
     }
 
-    push(text = "", callback, parent) {
+    push(text = "", callback, parent, navButtons = []) {
         this.text = text
         this.kernel.UIKit.push({
             parent: parent,
@@ -46,7 +46,7 @@ class Editor {
                     }
                 }
             ],
-            navButtons: this.navButtons()
+            navButtons: this.navButtons().concat(navButtons)
         })
     }
 }
