@@ -2,7 +2,7 @@
 
 > Clipboard And Editor
 
-暂时无桌面小组件
+支持桌面小组件和通知中心小组件
 
 ## Action
 
