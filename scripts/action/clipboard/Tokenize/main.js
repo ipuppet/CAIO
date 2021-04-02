@@ -33,6 +33,7 @@ class MyAction extends Action {
                         props: {
                             id: "label",
                             font: $font(fontSize),
+                            lines: 1,
                             textColor: color.text.normal
                         },
                         layout: make => {
