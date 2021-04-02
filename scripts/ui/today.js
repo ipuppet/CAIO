@@ -9,10 +9,6 @@ class Today extends Clipboard {
         this.top_bottom = 10 // 列表边距
         this.fontSize = 14 // 字体大小
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
-        // 数据
-        this.setCopied()
-        this.savedClipboard = this.getSavedClipboard()
-        this.reorder = {}
     }
 
     navButtons() {
@@ -40,7 +36,7 @@ class Today extends Clipboard {
                         items: this.menuItems()
                     },
                     indicatorInsets: $insets(0, 0, 50, 0),
-                    separatorInset: $insets(0, this.left_right, 0, 0),
+                    separatorInset: $insets(0, this.left_right, 0, this.left_right),
                     data: this.savedClipboard,
                     template: {
                         props: { bgcolor: $color("clear") },
@@ -121,7 +117,7 @@ class Today extends Clipboard {
                         return content.info.height + this.top_bottom * 2 + 1
                     },
                     didSelect: (sender, indexPath, data) => {
-                        this.copy(data.content.text, data.content.info.uuid, indexPath.row)
+                        this.copy(data.content.text, data.content.info.uuid, indexPath.row, false)
                     }
                 },
                 layout: $layout.fill
