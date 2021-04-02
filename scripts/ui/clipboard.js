@@ -57,7 +57,7 @@ class Clipboard {
     }
 
     readClipboard() {
-        if ($cache.get("clipboard.copied")) // 只更新 uuid
+        if ($cache.get("clipboard.copied") && this.copied) // 只更新 uuid
             this.copied.uuid = $cache.get("clipboard.copied").uuid
         const md5 = $text.MD5($clipboard.text)
         const res = this.kernel.storage.getByMD5(md5)
