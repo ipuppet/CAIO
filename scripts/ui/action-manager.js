@@ -450,17 +450,17 @@ class ActionManager {
             return order
         }
         const updateUI = (insertFirst = true, type) => {
-            const sender = $("actions")
+            const actionsView = $("actions")
             const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
             if (insertFirst) {
-                sender.insert({
+                actionsView.insert({
                     indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
                     value: toData
                 })
-                sender.delete(from)
+                actionsView.delete(from)
             } else {
-                sender.delete(from)
-                sender.insert({
+                actionsView.delete(from)
+                actionsView.insert({
                     indexPath: to,
                     value: toData
                 })
