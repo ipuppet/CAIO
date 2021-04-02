@@ -36,6 +36,10 @@ class Editor {
                         text: this.text
                     },
                     events: {
+                        ready: sender => {
+                            if (this.text === "") // 自动弹出键盘
+                                setTimeout(() => sender.focus(), 500)
+                        },
                         didChange: sender => {
                             this.text = sender.text
                         },
