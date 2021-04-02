@@ -1,6 +1,69 @@
 const Action = require("../../action.js")
 
 class MyAction extends Action {
+    getView() {
+        const color = {
+            background: {
+                normal: $color("#E7F2FF", "#E7F2FF"),
+                highlight: $color("##074FF", "#BBDAFF")
+            },
+            text: {
+                normal: $color("##074FF", "##074FF"),
+                highlight: $color("#FFFFFF", "#ADADAD")
+            }
+        }
+        const fontSize = 16
+        const edges = 10
+        return {
+            type: "matrix",
+            layout: $layout.fill,
+            props: {
+                spacing: 10,
+                data: this.results.map(item => ({ label: { text: item } })),
+                template: {
+                    type: "view",
+                    props: {
+                        bgcolor: color.background.normal,
+                        cornerRadius: 5,
+                        smoothCorners: true
+                    },
+                    layout: $layout.fill,
+                    views: [{
+                        type: "label",
+                        props: {
+                            id: "label",
+                            font: $font(fontSize),
+                            textColor: color.text.normal
+                        },
+                        layout: make => {
+                            make.edges.inset(edges)
+                        }
+                    }]
+                }
+            },
+            events: {
+                highlighted: () => { },
+                itemSize: (sender, indexPath) => {
+                    const width = fontSize * this.results[indexPath.item].length + 1
+                    if (this.maxtrixItemHeight === undefined)
+                        this.maxtrixItemHeight = fontSize + edges * 2
+                    return $size(width + edges * 2, this.maxtrixItemHeight)
+                },
+                didSelect: (sender, indexPath) => {
+                    const index = this.selected.indexOf(indexPath.item)
+                    if (index === -1) {
+                        this.selected.push(indexPath.item)
+                        sender.cell(indexPath).bgcolor = color.background.highlight
+                        sender.cell(indexPath).get("label").textColor = color.text.highlight
+                    } else {
+                        this.selected.splice(index, 1)
+                        sender.cell(indexPath).bgcolor = color.background.normal
+                        sender.cell(indexPath).get("label").textColor = color.text.normal
+                    }
+                }
+            }
+        }
+    }
     /**
      * 系统会调用 do() 方法
      */
@@ -12,53 +75,7 @@ class MyAction extends Action {
             handler: results => {
                 this.results = results
                 this.push({
-                    views: [{
-                        type: "view",
-                        layout: make => {
-                            make.top.inset(10)
-                            make.bottom.right.left.inset(0)
-                        },
-                        views: results.map((item, index) => {
-                            return {
-                                type: "view",
-                                props: {
-                                    bgcolor: $color("#E7F2FF"),
-                                    cornerRadius: 5,
-                                    smoothCorners: true,
-                                    id: index
-                                },
-                                layout: (make, view) => {
-                                    if (view.prev) {
-                                        make.left.equalTo(view.prev.right).offset(10)
-                                    } else {
-                                        make.left.inset(10)
-                                    }
-                                },
-                                views: [{
-                                    type: "label",
-                                    props: {
-                                        text: item,
-                                        color: $color("##074FF")
-                                    },
-                                    layout: make => {
-                                        make.edges.inset(5)
-                                    }
-                                }],
-                                events: {
-                                    tapped: sender => {
-                                        const index = this.selected.indexOf(sender.id)
-                                        if (index === -1) {
-                                            this.selected.push(sender.id)
-                                            sender.bgcolor = $color("#BBDAFF")
-                                        } else {
-                                            this.selected.splice(index, 1)
-                                            sender.bgcolor = $color("#E7F2FF")
-                                        }
-                                    }
-                                }
-                            }
-                        })
-                    }],
+                    views: [this.getView()],
                     done: () => {
                         const result = []
                         this.selected.sort().forEach(i => {
