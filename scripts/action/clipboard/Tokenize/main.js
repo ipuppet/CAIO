@@ -18,27 +18,20 @@ class MyAction extends Action {
             type: "matrix",
             layout: $layout.fill,
             props: {
-                spacing: 10,
+                spacing: edges,
                 data: this.results.map(item => ({ label: { text: item } })),
                 template: {
-                    type: "view",
-                    props: {
-                        bgcolor: color.background.normal,
-                        cornerRadius: 5,
-                        smoothCorners: true
-                    },
-                    layout: $layout.fill,
                     views: [{
                         type: "label",
                         props: {
                             id: "label",
+                            align: $align.center,
+                            cornerRadius: edges,
+                            bgcolor: color.background.normal,
                             font: $font(fontSize),
-                            lines: 1,
                             textColor: color.text.normal
                         },
-                        layout: make => {
-                            make.edges.inset(edges)
-                        }
+                        layout: $layout.fill
                     }]
                 }
             },
@@ -52,14 +45,15 @@ class MyAction extends Action {
                 },
                 didSelect: (sender, indexPath) => {
                     const index = this.selected.indexOf(indexPath.item)
+                    const label = sender.cell(indexPath).get("label")
                     if (index === -1) {
                         this.selected.push(indexPath.item)
-                        sender.cell(indexPath).bgcolor = color.background.highlight
-                        sender.cell(indexPath).get("label").textColor = color.text.highlight
+                        label.bgcolor = color.background.highlight
+                        label.textColor = color.text.highlight
                     } else {
                         this.selected.splice(index, 1)
-                        sender.cell(indexPath).bgcolor = color.background.normal
-                        sender.cell(indexPath).get("label").textColor = color.text.normal
+                        label.bgcolor = color.background.normal
+                        label.textColor = color.text.normal
                     }
                 }
             }
