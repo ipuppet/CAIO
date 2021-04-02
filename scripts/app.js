@@ -83,7 +83,26 @@ class AppKernel extends Kernel {
                 size: $size(200, 300),
                 views: [
                     {
+                        type: "label",
+                        props: {
+                            text: $l10n("ACTION"),
+                            color: $color("secondaryText"),
+                            font: $font(14)
+                        },
+                        layout: (make, view) => {
+                            make.top.equalTo(view.super.safeArea).offset(0)
+                            make.height.equalTo(40)
+                            make.left.inset(20)
+                        }
+                    },
+                    this.UIKit.underline(),
+                    {
                         type: "list",
+                        layout: (make, view) => {
+                            make.width.equalTo(view.super)
+                            make.top.equalTo(view.prev.bottom)
+                            make.bottom.inset(0)
+                        },
                         props: {
                             data: this.getActions(type).map(action => {
                                 return {
@@ -103,8 +122,7 @@ class AppKernel extends Kernel {
                                     }
                                 }
                             })
-                        },
-                        layout: $layout.fill
+                        }
                     }
                 ]
             })

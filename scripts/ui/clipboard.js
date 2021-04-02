@@ -435,23 +435,7 @@ class Clipboard {
                                 make.left.inset(20)
                             }
                         },
-                        { // canvas
-                            type: "canvas",
-                            layout: (make, view) => {
-                                make.top.equalTo(view.prev.bottom)
-                                make.height.equalTo(1 / $device.info.screen.scale)
-                                make.left.right.inset(0)
-                            },
-                            events: {
-                                draw: (view, ctx) => {
-                                    ctx.strokeColor = $color("separatorColor")
-                                    ctx.setLineWidth(1)
-                                    ctx.moveToPoint(0, 0)
-                                    ctx.addLineToPoint(view.frame.width, 0)
-                                    ctx.strokePath()
-                                }
-                            }
-                        },
+                        this.kernel.UIKit.underline(),
                         {
                             type: "list",
                             layout: (make, view) => {
@@ -484,7 +468,7 @@ class Clipboard {
                                             type: "label",
                                             props: {
                                                 id: "content",
-                                                lines: 0,
+                                                lines: 1,
                                                 font: $font(this.fontSize)
                                             },
                                             layout: (make, view) => {
@@ -497,8 +481,7 @@ class Clipboard {
                             },
                             events: {
                                 rowHeight: (sender, indexPath) => {
-                                    const content = sender.object(indexPath).content ?? this.reorder.content
-                                    return content.info.height + this.fontSize * 1.5
+                                    return this.fontSize + this.edgesForSort
                                 },
                                 reorderBegan: indexPath => {
                                     // 用于纠正 rowHeight 高度计算

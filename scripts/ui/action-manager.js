@@ -573,23 +573,7 @@ class ActionManager {
                                 make.left.inset(20)
                             }
                         },
-                        { // canvas
-                            type: "canvas",
-                            layout: (make, view) => {
-                                make.top.equalTo(view.prev.bottom)
-                                make.height.equalTo(1 / $device.info.screen.scale)
-                                make.left.right.inset(0)
-                            },
-                            events: {
-                                draw: (view, ctx) => {
-                                    ctx.strokeColor = $color("separatorColor")
-                                    ctx.setLineWidth(1)
-                                    ctx.moveToPoint(0, 0)
-                                    ctx.addLineToPoint(view.frame.width, 0)
-                                    ctx.strokePath()
-                                }
-                            }
-                        },
+                        this.kernel.UIKit.underline(),
                         {
                             type: "list",
                             layout: (make, view) => {
