@@ -1,4 +1,4 @@
-# CAE
+# CAIO
 
 > Clipboard And Editor
 
@@ -19,4 +19,4 @@
 
 > 点击复制，长按触发动作。
 
-目前该功能存在一些问题，请尽量避免在 JSBox 运行 CAE 时使用 Today Widget
+目前该功能存在一些问题，请尽量避免在 JSBox 运行 CAIO 时使用 Today Widget

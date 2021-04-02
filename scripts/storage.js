@@ -1,6 +1,6 @@
 class Storage {
     constructor() {
-        this.dbName = "CAE.db"
+        this.dbName = "CAIO.db"
         this.localDb = "/assets/" + this.dbName
         this.sqlite = $sqlite.open(this.localDb)
         this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
