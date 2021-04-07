@@ -719,6 +719,7 @@ class ActionManager {
                             layout: (make, view) => {
                                 make.top.equalTo(view.super.safeAreaTop)
                                 make.size.equalTo(view.super.safeArea)
+                                make.right.inset(10)
                             }
                         }],
                         layout: (make, view) => {

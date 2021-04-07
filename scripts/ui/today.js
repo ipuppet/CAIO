@@ -21,6 +21,12 @@ class Today extends Clipboard {
                         if (text !== "") this.add(text)
                     }
                 })
+            }),
+            // 手动读取剪切板
+            this.kernel.UIKit.navButton("readClipboard", "square.and.arrow.down.on.square", animate => {
+                animate.start()
+                this.readClipboard(true)
+                animate.done()
             })
         ]
     }

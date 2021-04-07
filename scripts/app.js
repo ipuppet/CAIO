@@ -19,6 +19,10 @@ class AppKernel extends Kernel {
         this.actionOrderFile = "order.json"
     }
 
+    print(message) {
+        console.log(message)
+    }
+
     getActionTypes() {
         const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
         return type.concat($file.list(this.actionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名

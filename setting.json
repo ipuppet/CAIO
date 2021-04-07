@@ -24,6 +24,16 @@
             },
             {
                 "icon": [
+                    "square.and.arrow.down.on.square",
+                    "#FF6633"
+                ],
+                "title": "AUTO_SAVE",
+                "type": "switch",
+                "key": "clipboard.autoSave",
+                "value": true
+            },
+            {
+                "icon": [
                     "icloud.and.arrow.up.fill"
                 ],
                 "title": "BACKUP",
