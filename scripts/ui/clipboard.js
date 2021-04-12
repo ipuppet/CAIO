@@ -490,7 +490,17 @@ class Clipboard {
                                                 }
                                             }
                                         ]
-                                    }
+                                    },
+                                    actions: [
+                                        { // 删除
+                                            title: "delete",
+                                            handler: (sender, indexPath) => {
+                                                const listView = $(this.listId)
+                                                const data = listView.object(indexPath)
+                                                this.delete(data.content.info.uuid, listView, indexPath.row)
+                                            }
+                                        }
+                                    ]
                                 },
                                 events: {
                                     rowHeight: (sender, indexPath) => {
