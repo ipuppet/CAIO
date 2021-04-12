@@ -1,6 +1,7 @@
 class ActionManager {
     constructor(kernel) {
         this.kernel = kernel
+        this.matrixId = "actions"
     }
 
     actionToData(action) {
@@ -450,7 +451,7 @@ class ActionManager {
             return order
         }
         const updateUI = (insertFirst = true, type) => {
-            const actionsView = $("actions")
+            const actionsView = $(this.matrixId)
             const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
             if (insertFirst) {
                 actionsView.insert({
@@ -510,7 +511,7 @@ class ActionManager {
                             newItem($l10n("CREATE_NEW_ACTION"), () => {
                                 this.editActionInfoPageSheet(null, info => {
                                     this.saveActionInfo(info)
-                                    $("actions").insert({
+                                    $(this.matrixId).insert({
                                         indexPath: $indexPath(this.kernel.getActionTypes().indexOf(info.type), 0),
                                         value: this.actionToData(info)
                                     })
@@ -636,7 +637,18 @@ class ActionManager {
                                         },
                                         { type: "label", props: { id: "info" } }
                                     ]
-                                }
+                                },
+                                actions: [
+                                    { // 删除
+                                        title: "delete",
+                                        handler: (sender, indexPath) => {
+                                            const matrixView = $(this.matrixId)
+                                            const info = matrixView.object(indexPath).info.info
+                                            this.delete(info)
+                                            matrixView.delete(indexPath)
+                                        }
+                                    }
+                                ]
                             },
                             events: {
                                 reorderBegan: indexPath => {
@@ -657,6 +669,10 @@ class ActionManager {
                 })
             })
         ]
+    }
+
+    delete(info) {
+        $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
     }
 
     menuItems() { // 卡片长按菜单
@@ -691,8 +707,7 @@ class ActionManager {
                                 title: $l10n("DELETE"),
                                 style: $alertActionType.destructive,
                                 handler: () => {
-                                    const info = sender.object(indexPath).info.info
-                                    $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
+                                    this.delete(sender.object(indexPath).info.info)
                                     sender.delete(indexPath)
                                 }
                             },
@@ -731,7 +746,7 @@ class ActionManager {
                     {
                         type: "matrix",
                         props: {
-                            id: "actions",
+                            id: this.matrixId,
                             columns: 2,
                             itemHeight: 100,
                             spacing: 20,
@@ -828,7 +843,7 @@ class ActionManager {
                         events: {
                             pulled: animate => {
                                 setTimeout(() => {
-                                    $("actions").data = this.actionsToData()
+                                    $(this.matrixId).data = this.actionsToData()
                                     animate.endRefreshing()
                                 }, 500)
                             },
