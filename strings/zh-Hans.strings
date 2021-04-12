@@ -13,7 +13,7 @@
 "SORT" = "排序";
 "ACTION" = "动作";
 "PREVIEW" = "预览";
-"MAX_ITEM_LENGTH" = "首页行数限制";
+"MAX_ITEM_LENGTH" = "行数限制";
 "TEXT_MAX_LENGTH" = "显示字符长度";
 "AUTO_SAVE" = "自动保存";
 
