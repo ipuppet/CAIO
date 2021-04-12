@@ -20,7 +20,7 @@
                 "title": "TEXT_MAX_LENGTH",
                 "type": "number",
                 "key": "clipboard.textMaxLength",
-                "value": 100
+                "value": 25
             },
             {
                 "icon": [
