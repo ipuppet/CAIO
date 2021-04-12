@@ -29,8 +29,10 @@ class Clipboard {
     }
 
     initCopied() {
-        const res = this.kernel.storage.getByMD5($text.MD5($clipboard.text))
-        if (res) this.setCopied(res.uuid, 0, false)
+        if (this.kernel.setting.get("clipboard.autoSave")) {
+            const res = this.kernel.storage.getByMD5($text.MD5($clipboard.text))
+            if (res) this.setCopied(res.uuid, 0, false)
+        }
     }
 
     setCopied(uuid, index, isUpdateIndicator = true) {
