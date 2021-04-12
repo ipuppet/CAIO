@@ -280,7 +280,7 @@ class Clipboard {
         })
     }
 
-    delete(uuid, sender, index) {
+    delete(uuid, index) {
         // 删除数据库中的值
         this.kernel.storage.beginTransaction()
         this.kernel.storage.delete(uuid)
@@ -309,7 +309,6 @@ class Clipboard {
         // 删除内存中的值
         this.savedClipboard.splice(index, 1)
         // 删除列表中的行
-        sender.delete(index)
         // 删除剪切板信息
         if (this.copied?.uuid === uuid) {
             this.setCopied(null)
@@ -497,7 +496,8 @@ class Clipboard {
                                             handler: (sender, indexPath) => {
                                                 const listView = $(this.listId)
                                                 const data = listView.object(indexPath)
-                                                this.delete(data.content.info.uuid, listView, indexPath.row)
+                                                this.delete(data.content.info.uuid, indexPath.row)
+                                                listView.delete(indexPath)
                                             }
                                         }
                                     ]
@@ -688,7 +688,8 @@ class Clipboard {
                                             style: $alertActionType.destructive,
                                             handler: () => {
                                                 const data = sender.object(indexPath)
-                                                this.delete(data.content.info.uuid, sender, indexPath.row)
+                                                this.delete(data.content.info.uuid, indexPath.row)
+                                                sender.delete(indexPath)
                                             }
                                         },
                                         { title: $l10n("CANCEL") }
