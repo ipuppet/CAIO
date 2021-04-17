@@ -181,6 +181,10 @@ class AppKernel extends Kernel {
             animate.actionStart()
             $drive.open({
                 handler: data => {
+                    if (data === undefined) {
+                        animate.actionCancel()
+                        return
+                    }
                     if (data.fileName.slice(-2) === "db") {
                         this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
                     } else {
@@ -227,6 +231,10 @@ class AppKernel extends Kernel {
             animate.actionStart()
             $drive.open({
                 handler: data => {
+                    if (data === undefined) {
+                        animate.actionCancel()
+                        return
+                    }
                     if (data.fileName.slice(-3) === "zip") {
                         $archiver.unzip({
                             file: data,
