@@ -22,7 +22,7 @@
 "CREATE_NEW_ACTION" = "新建动作";
 "CREATE_NEW_TYPE" = "新建分类";
 "TYPE_ALREADY_EXISTS" = "该类别已经存在";
-"EDIT" = "编辑";
+"EDIT_DETAILS" = "编辑信息";
 "INFORMATION" = "信息";
 "NAME" = "名称";
 "ICON" = "图标";

@@ -22,7 +22,7 @@
 "CREATE_NEW_ACTION" = "Create New Action";
 "CREATE_NEW_TYPE" = "New Category";
 "TYPE_ALREADY_EXISTS" = "This category already exists";
-"EDIT" = "Edit";
+"EDIT_DETAILS" = "Edit Details";
 "INFORMATION" = "Information";
 "NAME" = "Name";
 "ICON" = "Icon";

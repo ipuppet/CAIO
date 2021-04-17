@@ -678,7 +678,7 @@ class ActionManager {
     menuItems() { // 卡片长按菜单
         return [
             { // 编辑信息
-                title: $l10n("EDIT"),
+                title: $l10n("EDIT_DETAILS"),
                 handler: (sender, indexPath) => {
                     const info = sender.object(indexPath).info.info
                     this.editActionInfoPageSheet(info, info => {
