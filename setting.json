@@ -1,114 +1,152 @@
 [
     {
-        "title": "CLIPBOARD",
         "items": [
             {
                 "icon": [
-                    "text.alignleft",
+                    "doc.on.clipboard",
                     "#FFCC66"
                 ],
-                "title": "MAX_ITEM_LENGTH",
-                "type": "number",
-                "key": "clipboard.maxItemLength",
-                "value": 100
+                "type": "child",
+                "title": "CLIPBOARD",
+                "key": "clipboard",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "text.alignleft",
+                                    "#FFCC66"
+                                ],
+                                "title": "MAX_ITEM_LENGTH",
+                                "type": "number",
+                                "key": "clipboard.maxItemLength",
+                                "value": 100
+                            },
+                            {
+                                "icon": [
+                                    "pencil.and.ellipsis.rectangle",
+                                    "#CC0099"
+                                ],
+                                "title": "TEXT_MAX_LENGTH",
+                                "type": "number",
+                                "key": "clipboard.textMaxLength",
+                                "value": 25
+                            },
+                            {
+                                "icon": [
+                                    "square.and.arrow.down.on.square",
+                                    "#FF6633"
+                                ],
+                                "title": "AUTO_SAVE",
+                                "type": "switch",
+                                "key": "clipboard.autoSave",
+                                "value": true
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "icloud.and.arrow.up.fill"
+                                ],
+                                "title": "BACKUP",
+                                "type": "script",
+                                "key": "clipboard.backup",
+                                "value": "this.controller.backupClipboard"
+                            },
+                            {
+                                "icon": [
+                                    "arrow.clockwise.icloud.fill",
+                                    "#FFCC33"
+                                ],
+                                "title": "RECOVER",
+                                "type": "script",
+                                "key": "clipboard.recover",
+                                "value": "this.controller.recoverClipboard"
+                            }
+                        ]
+                    }
+                ]
             },
             {
                 "icon": [
-                    "pencil.and.ellipsis.rectangle",
+                    "pencil.circle",
                     "#CC0099"
                 ],
-                "title": "TEXT_MAX_LENGTH",
-                "type": "number",
-                "key": "clipboard.textMaxLength",
-                "value": 25
+                "type": "child",
+                "title": "EDITOR",
+                "key": "editor",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "list.number",
+                                    "#6699CC"
+                                ],
+                                "title": "SHOW_LINE_NUMBER",
+                                "type": "switch",
+                                "key": "editor.lineNumbers",
+                                "value": false
+                            },
+                            {
+                                "icon": [
+                                    "wand.and.stars",
+                                    "#FF6633"
+                                ],
+                                "title": "LIGHT_MODE_THEME",
+                                "type": "input",
+                                "key": "editor.lightTheme",
+                                "value": "atom-one-light"
+                            },
+                            {
+                                "icon": [
+                                    "wand.and.stars",
+                                    "#FF6633"
+                                ],
+                                "title": "DARK_MODE_THEME",
+                                "type": "input",
+                                "key": "editor.darkTheme",
+                                "value": "atom-one-dark"
+                            }
+                        ]
+                    }
+                ]
             },
             {
                 "icon": [
-                    "square.and.arrow.down.on.square",
+                    "bolt.circle",
                     "#FF6633"
                 ],
-                "title": "AUTO_SAVE",
-                "type": "switch",
-                "key": "clipboard.autoSave",
-                "value": true
-            },
-            {
-                "icon": [
-                    "icloud.and.arrow.up.fill"
-                ],
-                "title": "BACKUP",
-                "type": "script",
-                "key": "clipboard.backup",
-                "value": "this.controller.backupClipboard"
-            },
-            {
-                "icon": [
-                    "arrow.clockwise.icloud.fill",
-                    "#FFCC33"
-                ],
-                "title": "RECOVER",
-                "type": "script",
-                "key": "clipboard.recover",
-                "value": "this.controller.recoverClipboard"
-            }
-        ]
-    },
-    {
-        "title": "EDITOR",
-        "items": [
-            {
-                "icon": [
-                    "list.number",
-                    "#6699CC"
-                ],
-                "title": "SHOW_LINE_NUMBER",
-                "type": "switch",
-                "key": "editor.lineNumbers",
-                "value": false
-            },
-            {
-                "icon": [
-                    "wand.and.stars",
-                    "#FF6633"
-                ],
-                "title": "LIGHT_MODE_THEME",
-                "type": "input",
-                "key": "editor.lightTheme",
-                "value": "atom-one-light"
-            },
-            {
-                "icon": [
-                    "wand.and.stars",
-                    "#FF6633"
-                ],
-                "title": "DARK_MODE_THEME",
-                "type": "input",
-                "key": "editor.darkTheme",
-                "value": "atom-one-dark"
-            }
-        ]
-    },
-    {
-        "title": "ACTION",
-        "items": [
-            {
-                "icon": [
-                    "icloud.and.arrow.up.fill"
-                ],
-                "title": "BACKUP",
-                "type": "script",
-                "key": "action.backup",
-                "value": "this.controller.backupAction"
-            },
-            {
-                "icon": [
-                    "arrow.clockwise.icloud.fill",
-                    "#FFCC33"
-                ],
-                "title": "RECOVER",
-                "type": "script",
-                "key": "action.recover",
-                "value": "this.controller.recoverAction"
+                "type": "child",
+                "title": "ACTION",
+                "key": "action",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "icloud.and.arrow.up.fill"
+                                ],
+                                "title": "BACKUP",
+                                "type": "script",
+                                "key": "action.backup",
+                                "value": "this.controller.backupAction"
+                            },
+                            {
+                                "icon": [
+                                    "arrow.clockwise.icloud.fill",
+                                    "#FFCC33"
+                                ],
+                                "title": "RECOVER",
+                                "type": "script",
+                                "key": "action.recover",
+                                "value": "this.controller.recoverAction"
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },
