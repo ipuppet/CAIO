@@ -53,7 +53,7 @@
                                 "title": "AUTO_SYNC",
                                 "type": "switch",
                                 "key": "clipboard.autoSync",
-                                "value": true
+                                "value": false
                             },
                             {
                                 "icon": [
