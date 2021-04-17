@@ -87,8 +87,10 @@ class Clipboard {
     }
 
     update(uuid, text, index) {
-        $(this.listId).cell($indexPath(0, index)).get("content").text = text
-        this.savedClipboard[index].content.text = text
+        const info = $(this.listId).cell($indexPath(0, index)).get("content").info
+        const lineData = this.lineData(Object.assign(info, { text, text }), info.uuid === this.copied?.uuid)
+        this.savedClipboard[index] = lineData
+        $(this.listId).data = this.savedClipboard
         if (uuid === this.copied?.uuid) {
             $clipboard.text = text
         }
@@ -113,17 +115,17 @@ class Clipboard {
         try {
             const oldFromItem = {
                 uuid: this.savedClipboard[from].content.info.uuid,
-                text: this.savedClipboard[from].content.text
+                text: this.savedClipboard[from].content.info.text
             }
             const oldToItem = {
                 uuid: this.savedClipboard[to].content.info.uuid,
-                text: this.savedClipboard[to].content.text
+                text: this.savedClipboard[to].content.info.text
             }
             { // 删除元素
                 if (this.savedClipboard[from - 1]) {
                     const fromPrevItem = { // from 位置的上一个元素
                         uuid: this.savedClipboard[from - 1].content.info.uuid,
-                        text: this.savedClipboard[from - 1].content.text,
+                        text: this.savedClipboard[from - 1].content.info.text,
                         prev: this.savedClipboard[from - 1].content.info.prev,
                         next: this.savedClipboard[from].content.info.next
                     }
@@ -133,7 +135,7 @@ class Clipboard {
                 if (this.savedClipboard[from + 1]) {
                     const fromNextItem = { // from 位置的下一个元素
                         uuid: this.savedClipboard[from + 1].content.info.uuid,
-                        text: this.savedClipboard[from + 1].content.text,
+                        text: this.savedClipboard[from + 1].content.info.text,
                         prev: this.savedClipboard[from].content.info.prev,
                         next: this.savedClipboard[from + 1].content.info.next
                     }
@@ -145,7 +147,7 @@ class Clipboard {
                 if (this.savedClipboard[to - 1]) {
                     const toPrevItem = { // 原来 to 位置的上一个元素
                         uuid: this.savedClipboard[to - 1].content.info.uuid,
-                        text: this.savedClipboard[to - 1].content.text,
+                        text: this.savedClipboard[to - 1].content.info.text,
                         prev: this.savedClipboard[to - 1].content.info.prev,
                         next: oldFromItem.uuid // 指向即将被移动元素的uuid
                     }
@@ -251,7 +253,7 @@ class Clipboard {
             // 更改指针
             this.kernel.storage.update({
                 uuid: this.savedClipboard[0].content.info.uuid,
-                text: this.savedClipboard[0].content.text,
+                text: this.savedClipboard[0].content.info.text,
                 prev: data.uuid,
                 next: this.savedClipboard[0].content.info.next
             })
@@ -288,7 +290,7 @@ class Clipboard {
         if (this.savedClipboard[index - 1]) {
             const prevItem = {
                 uuid: this.savedClipboard[index - 1].content.info.uuid,
-                text: this.savedClipboard[index - 1].content.text,
+                text: this.savedClipboard[index - 1].content.info.text,
                 prev: this.savedClipboard[index - 1].content.info.prev,
                 next: this.savedClipboard[index].content.info.next // next 指向被删除元素的 next
             }
@@ -298,7 +300,7 @@ class Clipboard {
         if (this.savedClipboard[index + 1]) {
             const nextItem = {
                 uuid: this.savedClipboard[index + 1].content.info.uuid,
-                text: this.savedClipboard[index + 1].content.text,
+                text: this.savedClipboard[index + 1].content.info.text,
                 prev: this.savedClipboard[index].content.info.prev, // prev 指向被删除元素的 prev
                 next: this.savedClipboard[index + 1].content.info.next
             }
@@ -315,10 +317,14 @@ class Clipboard {
         }
     }
 
-    lineData(data, indicator = false) {
+    sliceText(text) {
         // 显示最大长度
         const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
-        const text = data.text.length > textMaxLength ? data.text.slice(0, textMaxLength) + "..." : data.text
+        return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
+    }
+
+    lineData(data, indicator = false) {
+        const text = this.sliceText(data.text)
         const size = $text.sizeThatFits({
             text: text,
             width: $device.info.screen.width,
@@ -328,6 +334,7 @@ class Clipboard {
             content: {
                 text: text,
                 info: {
+                    text: data.text,
                     uuid: data.uuid,
                     md5: data.md5,
                     height: size.height,
@@ -533,7 +540,7 @@ class Clipboard {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
                 const data = {
-                    text: item.content.text,
+                    text: item.content.info.text,
                     uuid: item.content.info.uuid
                 }
                 handler(data)
@@ -673,7 +680,7 @@ class Clipboard {
                             color: $color("systemLink"),
                             handler: (sender, indexPath) => {
                                 const data = sender.object(indexPath)
-                                this.copy(data.content.text, data.content.info.uuid, indexPath.row)
+                                this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
                             }
                         },
                         { // 删除
@@ -714,9 +721,10 @@ class Clipboard {
                         return content.info.height + this.edges * 2 + 1
                     },
                     didSelect: (sender, indexPath, data) => {
-                        const content = this.savedClipboard[indexPath.row].content
-                        this.edit(content.text, text => {
-                            if (content.info.md5 !== $text.MD5(text)) this.update(content.info.uuid, text, indexPath.row)
+                        const content = data.content
+                        this.edit(content.info.text, text => {
+                            if (content.info.md5 !== $text.MD5(text))
+                                this.update(content.info.uuid, text, indexPath.row)
                         })
                     }
                 },
