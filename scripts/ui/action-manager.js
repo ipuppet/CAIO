@@ -264,7 +264,7 @@ class ActionManager {
         }
     }
 
-    createMenu(icon, title, items, withTitle = true) {
+    createMenu(icon, title, items) {
         const id = `action-menu`
         return {
             type: "view",
@@ -326,7 +326,8 @@ class ActionManager {
                     type: "text",
                     props: {
                         id: "action-text",
-                        color: $color("secondaryText"),
+                        textColor: $color("#000000", "secondaryText"),
+                        bgcolor: $color("systemBackground"),
                         text: this.editingActionInfo.description,
                         insets: $insets(10, 10, 10, 10)
                     },
