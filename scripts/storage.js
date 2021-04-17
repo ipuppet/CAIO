@@ -39,8 +39,8 @@ class Storage {
         return result
     }
 
-    upload() {
-        if (this.all().length === 0 || !this.sync) return
+    upload(manual) {
+        if ((this.all().length === 0 || !this.sync) && !manual) return
         $cache.set("sync.date", Date.now())
         $file.write({
             data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
@@ -51,8 +51,7 @@ class Storage {
         $archiver.zip({ directory: this.tempPath, dest: this.iCloudZipFile })
     }
 
-    async syncByiCloud() {
-        $cache.set("sync.date", Date.now())
+    async syncByiCloud(manual = false, callback) {
         const data = await $file.download(this.iCloudZipFile)
         if (data !== undefined) {
             const success = await $archiver.unzip({ file: data, dest: this.tempPath })
@@ -63,17 +62,18 @@ class Storage {
             if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
                 $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
                 $file.write({ data: $data({ path: this.tempSyncInfoFile }), path: this.syncInfoFile })
+                // Update
+                $sqlite.close(this.sqlite)
+                this.sqlite = $sqlite.open(this.localDb)
+                $app.notify({
+                    name: "syncByiCloud",
+                    object: { status: true }
+                })
             } else {
-                this.upload()
+                this.upload(manual)
             }
-        } else this.upload()
-        // Update
-        $sqlite.close(this.sqlite)
-        this.sqlite = $sqlite.open(this.localDb)
-        $app.notify({
-            name: "syncByiCloud",
-            object: { status: true }
-        })
+        } else this.upload(manual)
+        callback()
     }
 
     parse(result) {
