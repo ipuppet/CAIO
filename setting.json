@@ -48,6 +48,29 @@
                         "items": [
                             {
                                 "icon": [
+                                    "arrow.2.circlepath"
+                                ],
+                                "title": "AUTO_SYNC",
+                                "type": "switch",
+                                "key": "clipboard.autoSync",
+                                "value": true
+                            },
+                            {
+                                "icon": [
+                                    "arrow.2.circlepath",
+                                    "#FFCC66"
+                                ],
+                                "title": "SYNC_NOW",
+                                "type": "script",
+                                "key": "clipboard.sync",
+                                "value": "this.controller.sync"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
                                     "icloud.and.arrow.up.fill"
                                 ],
                                 "title": "BACKUP",

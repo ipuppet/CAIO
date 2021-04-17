@@ -1,9 +1,25 @@
 class Storage {
-    constructor() {
+    constructor(sync = false) {
+        this.sync = sync
         this.dbName = "CAIO.db"
-        this.localDb = "/assets/" + this.dbName
+        this.localDb = `/assets/${this.dbName}`
+        this.iCloudPath = "drive://CAIO"
+        this.iCloudZipFile = `${this.iCloudPath}/CAIO.zip`
+        this.syncInfoFile = "/assets/sync.json"
+        this.tempPath = "/assets/temp"
+        this.tempSyncInfoFile = `${this.tempPath}/sync.json`
+        this.tempDbFile = `${this.tempPath}/${this.dbName}`
+        this.init()
+        if (this.sync) this.syncByiCloud()
+    }
+
+    init() {
+        // 初始化表
         this.sqlite = $sqlite.open(this.localDb)
         this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
+        // 初始化目录
+        if (!$file.exists(this.tempPath)) $file.mkdir(this.tempPath)
+        if (!$file.exists(this.iCloudPath)) $file.mkdir(this.iCloudPath)
     }
 
     backup(callback) {
@@ -21,6 +37,43 @@ class Storage {
         })
         if (result) this.sqlite = $sqlite.open(this.localDb)
         return result
+    }
+
+    upload() {
+        if (this.all().length === 0 || !this.sync) return
+        $cache.set("sync.date", Date.now())
+        $file.write({
+            data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
+            path: this.syncInfoFile
+        })
+        $file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile })
+        $file.copy({ src: this.localDb, dst: this.tempDbFile })
+        $archiver.zip({ directory: this.tempPath, dest: this.iCloudZipFile })
+    }
+
+    async syncByiCloud() {
+        $cache.set("sync.date", Date.now())
+        const data = await $file.download(this.iCloudZipFile)
+        if (data !== undefined) {
+            const success = await $archiver.unzip({ file: data, dest: this.tempPath })
+            if (!success) return
+            const syncInfoLocal = $file.exists(this.syncInfoFile) ?
+                JSON.parse($file.read(this.syncInfoFile).string) : {}
+            const syncInfoIcloud = JSON.parse($file.read(this.tempSyncInfoFile).string)
+            if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
+                $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
+                $file.write({ data: $data({ path: this.tempSyncInfoFile }), path: this.syncInfoFile })
+            } else {
+                this.upload()
+            }
+        } else this.upload()
+        // Update
+        $sqlite.close(this.sqlite)
+        this.sqlite = $sqlite.open(this.localDb)
+        $app.notify({
+            name: "syncByiCloud",
+            object: { status: true }
+        })
     }
 
     parse(result) {
@@ -85,6 +138,7 @@ class Storage {
             args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
         })
         if (result.result) {
+            this.upload()
             return true
         }
         $console.error(result.error)
@@ -98,6 +152,7 @@ class Storage {
             args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
         })
         if (result.result) {
+            this.upload()
             return true
         }
         $console.error(result.error)
@@ -111,6 +166,7 @@ class Storage {
             args: [text, $text.MD5(text), uuid]
         })
         if (result.result) {
+            this.upload()
             return true
         }
         $console.error(result.error)
@@ -123,6 +179,7 @@ class Storage {
             args: [uuid]
         })
         if (result.result) {
+            this.upload()
             return true
         }
         $console.error(result.error)
@@ -135,6 +192,7 @@ class Storage {
 
     commit() {
         this.sqlite.commit()
+        this.upload()
     }
 
     rollback() {

@@ -17,6 +17,7 @@
 "TEXT_MAX_LENGTH" = "显示字符长度";
 "AUTO_SAVE" = "自动保存";
 "AUTO_SYNC" = "自动同步";
+"SYNC_NOW" = "立即同步";
 
 "EDITOR" = "编辑器";
 "CREATE_NEW" = "新建";

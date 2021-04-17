@@ -9,7 +9,7 @@ class AppKernel extends Kernel {
         this.settingComponent = this.registerComponent("Setting")
         this.setting = this.settingComponent.controller
         // Storage
-        this.storage = new Storage()
+        this.storage = new Storage(this.setting.get("clipboard.autoSync"))
         // 初始话设置中的方法
         this.initSettingMethods()
         this.page = this.registerComponent("Page")
@@ -258,6 +258,12 @@ class AppKernel extends Kernel {
                     }
                 }
             })
+        }
+
+        this.setting.sync = animate => {
+            animate.actionStart()
+            this.storage.syncByiCloud()
+            animate.actionDone()
         }
     }
 }

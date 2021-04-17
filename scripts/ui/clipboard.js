@@ -13,6 +13,15 @@ class Clipboard {
         this.initCopied()
         this.savedClipboard = this.getSavedClipboard()
         this.reorder = {}
+        $app.listen({
+            syncByiCloud: object => {
+                if (object.status) {
+                    this.savedClipboard = this.getSavedClipboard()
+                    const view = $(this.listId)
+                    if (view) view.data = this.savedClipboard
+                }
+            }
+        })
     }
 
     checkUrlScheme() {

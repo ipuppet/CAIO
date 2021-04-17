@@ -17,6 +17,7 @@
 "TEXT_MAX_LENGTH" = "Display Character Length";
 "AUTO_SAVE" = "Auto Save";
 "AUTO_SYNC" = "Auto Sync";
+"SYNC_NOW" = "Sync Now";
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";
