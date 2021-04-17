@@ -13,7 +13,6 @@ class Clipboard {
         this.initCopied()
         this.savedClipboard = this.getSavedClipboard()
         this.reorder = {}
-        // TODO this.syncByiCloud()
     }
 
     checkUrlScheme() {
@@ -71,51 +70,6 @@ class Clipboard {
             } else if ($clipboard.text) {
                 if (res?.md5 !== md5) this.add($clipboard.text)
             }
-        }
-    }
-
-    async syncByiCloud() {
-        const iCloudPath = "drive://CAIO"
-        const iCloudZipFile = `${iCloudPath}/CAIO.zip`
-        const syncInfoFile = "/assets/sync.json"
-        const data = await $file.download(iCloudZipFile)
-        const temp = "/assets/temp"
-        if (!$file.exists(temp)) $file.mkdir(temp)
-        const tempSyncInfoFile = `${temp}/sync.json`
-        const tempDbFile = `${temp}/${this.kernel.storage.dbName}`
-        const upload = () => {
-            this.kernel.print("Upload Data.")
-            if (!$file.exists(iCloudPath)) $file.mkdir(iCloudPath)
-            $file.write({
-                data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
-                path: syncInfoFile
-            })
-            $file.copy({ src: syncInfoFile, dst: tempSyncInfoFile })
-            $file.copy({ src: this.kernel.storage.localDb, dst: tempDbFile })
-            $archiver.zip({ directory: temp, dest: iCloudZipFile })
-        }
-        if (data === undefined) {
-            upload()
-        } else {
-            $archiver.unzip({
-                file: data,
-                dest: temp,
-                handler: success => {
-                    if (!success) return
-                    const syncInfoLocal = JSON.parse($file.read(syncInfoFile).string)
-                    const syncInfoIcloud = JSON.parse($file.read(tempSyncInfoFile).string)
-                    if (syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
-                        $file.move({ // 备份
-                            src: this.kernel.storage.localDb,
-                            dst: `${this.kernel.storage.localDb}.backup`
-                        })
-                        $file.write({ data: tempDbFile, path: this.kernel.storage.localDb })
-                        $file.write({ data: tempSyncInfoFile, path: syncInfoFile })
-                    } else {
-                        upload()
-                    }
-                }
-            })
         }
     }
 
