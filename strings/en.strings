@@ -16,6 +16,7 @@
 "MAX_ITEM_LENGTH" = "Line Limit";
 "TEXT_MAX_LENGTH" = "Display Character Length";
 "AUTO_SAVE" = "Auto Save";
+"AUTO_SYNC" = "Auto Sync";
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";
