@@ -170,25 +170,33 @@
                         ]
                     }
                 ]
-            }
-        ]
-    },
-    {
-        "title": "TODAY",
-        "items": [
+            },
             {
                 "icon": [
-                    "paperplane.fill"
+                    "rectangle.3.offgrid.fill"
                 ],
-                "title": "DISPLAY_NAV",
-                "type": "switch",
-                "key": "today.displayNav",
-                "value": true
+                "type": "child",
+                "title": "TODAY",
+                "key": "today",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "paperplane.fill"
+                                ],
+                                "title": "DISPLAY_NAV",
+                                "type": "switch",
+                                "key": "today.displayNav",
+                                "value": true
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },
     {
-        "title": "ABOUT",
         "items": [
             {
                 "icon": [
