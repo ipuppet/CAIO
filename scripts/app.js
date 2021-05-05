@@ -262,7 +262,7 @@ class AppKernel extends Kernel {
 
         this.setting.sync = animate => {
             animate.actionStart()
-            this.storage.syncByiCloud(true, () => animate.actionDone())
+            setTimeout(() => this.storage.syncByiCloud(true, () => animate.actionDone()), 200)
         }
     }
 }
