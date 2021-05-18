@@ -19,10 +19,6 @@ class AppKernel extends Kernel {
         this.actionOrderFile = "order.json"
     }
 
-    print(message) {
-        console.log(message)
-    }
-
     getActionTypes() {
         const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
         return type.concat($file.list(this.actionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
@@ -207,14 +203,14 @@ class AppKernel extends Kernel {
                         handler: () => {
                             $archiver.zip({
                                 directory: this.actionPath,
-                                dest: "/assets/action-backup.zip",
+                                dest: "/storage/action-backup.zip",
                                 handler: () => {
                                     $drive.save({
-                                        data: $data({ path: "/assets/action-backup.zip" }),
+                                        data: $data({ path: "/storage/action-backup.zip" }),
                                         name: "action-backup.zip",
                                         handler: () => animate.actionDone()
                                     })
-                                    $file.delete("/assets/action-backup.zip")
+                                    $file.delete("/storage/action-backup.zip")
                                 }
                             })
                         }
@@ -238,17 +234,17 @@ class AppKernel extends Kernel {
                     if (data.fileName.slice(-3) === "zip") {
                         $archiver.unzip({
                             file: data,
-                            dest: "/assets/action-backup",
+                            dest: "/storage/action-backup",
                             handler: () => {
-                                $file.list("/assets/action-backup").forEach(item => {
-                                    if ($file.isDirectory("/assets/action-backup/" + item)) {
+                                $file.list("/storage/action-backup").forEach(item => {
+                                    if ($file.isDirectory("/storage/action-backup/" + item)) {
                                         $file.copy({
-                                            src: "/assets/action-backup/" + item,
+                                            src: "/storage/action-backup/" + item,
                                             dst: `${this.actionPath}${item}`
                                         })
                                     }
                                 })
-                                $file.delete("/assets/action-backup")
+                                $file.delete("/storage/action-backup")
                                 animate.actionDone()
                             }
                         })
@@ -273,7 +269,7 @@ class WidgetKernel extends Kernel {
         this.inWidgetEnv = true
         // 小组件根目录
         this.widgetRootPath = "/scripts/widget"
-        this.widgetAssetsPath = "/assets/widget"
+        this.widgetDataPath = "/storage/widget"
         this.storage = new Storage()
     }
 
