@@ -56,7 +56,6 @@ class Storage {
     upload(manual) {
         if (this.all().length === 0) return
         if (!this.sync && !manual) return
-        $cache.set("sync.date", Date.now())
         $file.write({
             data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
             path: this.syncInfoFile
