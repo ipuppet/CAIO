@@ -14,13 +14,6 @@ class Factory {
         return this.kernel.page.view.creator(interfaceUi.getViews(), 0)
     }
 
-    // TODO files
-    /* files() {
-        const Files = require("./files")
-        const interfaceUi = new Files(this.kernel)
-        return this.kernel.page.view.creator(interfaceUi.getViews(), 0)
-    } */
-
     actionManager() {
         const ActionManager = require("./action-manager")
         const interfaceUi = new ActionManager(this.kernel)
