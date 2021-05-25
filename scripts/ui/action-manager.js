@@ -383,6 +383,7 @@ class ActionManager {
                 }
             }],
             done: () => {
+                this.saveActionInfo(this.editingActionInfo)
                 if (done) done(this.editingActionInfo)
             }
         })
@@ -390,16 +391,9 @@ class ActionManager {
 
     editActionMainJs(text = "", info) {
         this.kernel.editor.push(text, content => {
-            const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
-            if (!$file.exists(path)) $file.mkdir(path)
-            if ($text.MD5(content) === $text.MD5($file.read(`${path}main.js`)?.string ?? "")) return
-            $file.write({
-                data: $data({ "string": content }),
-                path: `${path}main.js`
-            })
+            this.saveMainJs(info, content)
         }, null, [
             this.kernel.UIKit.navButton("doc", "book.circle", () => {
-                // 保存文件
                 const content = $file.read("/scripts/action/README.md").string
                 this.kernel.UIKit.pushPageSheet({
                     views: [{
@@ -427,6 +421,30 @@ class ActionManager {
                 })
             }),
             path: `${path}config.json`
+        })
+        this.saveToUserAction(info)
+    }
+
+    saveMainJs(info, content) {
+        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
+        const mainJsPath = `${path}main.js`
+        if (!$file.exists(path)) $file.mkdir(path)
+        if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
+        $file.write({
+            data: $data({ "string": content }),
+            path: mainJsPath
+        })
+        this.saveToUserAction(info)
+    }
+
+    saveToUserAction(info) {
+        const userActionPath = `${this.kernel.userActionPath}${info.type}/${info.dir}/`
+        if (!$file.exists(userActionPath)) {
+            $file.mkdir(userActionPath)
+        }
+        $file.copy({
+            src: `${this.kernel.actionPath}${info.type}/${info.dir}/`,
+            dst: userActionPath
         })
     }
 
@@ -511,14 +529,13 @@ class ActionManager {
                         views: [
                             newItem($l10n("CREATE_NEW_ACTION"), () => {
                                 this.editActionInfoPageSheet(null, info => {
-                                    this.saveActionInfo(info)
                                     $(this.matrixId).insert({
                                         indexPath: $indexPath(this.kernel.getActionTypes().indexOf(info.type), 0),
                                         value: this.actionToData(info)
                                     })
                                     popover.dismiss()
                                     const MainJsTemplate = $file.read(`${this.kernel.actionPath}template.js`).string
-                                    this.editActionMainJs(MainJsTemplate)
+                                    this.editActionMainJs(MainJsTemplate, info)
                                 })
                             }),
                             { // 分割线
@@ -674,6 +691,7 @@ class ActionManager {
 
     delete(info) {
         $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
+        $file.delete(`${this.kernel.userActionPath}${info.type}/${info.dir}`)
     }
 
     menuItems() { // 卡片长按菜单
@@ -683,7 +701,6 @@ class ActionManager {
                 handler: (sender, indexPath) => {
                     const info = sender.object(indexPath).info.info
                     this.editActionInfoPageSheet(info, info => {
-                        this.saveActionInfo(info)
                         // 更新视图信息
                         const view = sender.cell(indexPath)
                         view.get("info").info = info

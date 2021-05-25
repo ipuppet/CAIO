@@ -17,6 +17,26 @@ class AppKernel extends Kernel {
         // action 相关路径
         this.actionPath = "/scripts/action/"
         this.actionOrderFile = "order.json"
+        this.userActionPath = "/storage/user_action/"
+        this.checkUserAction()
+    }
+
+    checkUserAction() {
+        if ($file.exists(this.userActionPath)) {
+            $file.list(this.userActionPath).forEach(type => {
+                $file.list(`${this.userActionPath}${type}`).forEach(item => {
+                    if (!$file.exists(`${this.actionPath}${type}/${item}/main.js`)) {
+                        if (!$file.exists(`${this.actionPath}${type}`)) {
+                            $file.mkdir(`${this.actionPath}${type}`)
+                        }
+                        $file.copy({
+                            src: `${this.userActionPath}${type}/${item}`,
+                            dst: `${this.actionPath}${type}/${item}`
+                        })
+                    }
+                })
+            })
+        }
     }
 
     getActionTypes() {
