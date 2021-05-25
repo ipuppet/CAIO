@@ -32,7 +32,7 @@ class Editor {
                     props: {
                         id: "editor",
                         lineNumbers: this.kernel.setting.get("editor.lineNumbers"), // 放在此处动态获取设置的更改
-                        theme: $device.isDarkMode ? this.kernel.setting.get("editor.darkTheme") : this.kernel.setting.get("editor.lightTheme"),
+                        theme: this.kernel.setting.get($device.isDarkMode ? "editor.darkTheme" : "editor.lightTheme"),
                         text: this.text
                     },
                     events: {
@@ -42,11 +42,7 @@ class Editor {
                         },
                         didChange: sender => {
                             this.text = sender.text
-                        },
-                        /* themeChanged: (sender, isDarkMode) => {
-                            // TODO 无法动态更改主题
-                            sender.theme = isDarkMode ? this.kernel.setting.get("editor.darkTheme") : this.kernel.setting.get("editor.lightTheme")
-                        } */
+                        }
                     }
                 }
             ],
