@@ -55,4 +55,12 @@ module.exports = MyAction
     }
   */
 push(args): void;
+
+/**
+ * 获取所有剪切板数据
+ * @returns Array
+ */
+getAllContent() {
+    return this.kernel.storage.all()
+}
 ```

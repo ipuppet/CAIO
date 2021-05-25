@@ -21,6 +21,14 @@ class Action {
     push(args) {
         this.kernel.UIKit.pushPageSheet(args)
     }
+
+    /**
+     * 获取所有剪切板数据
+     * @returns Array
+     */
+    getAllContent() {
+        return this.kernel.storage.all().map(item => item.text)
+    }
 }
 
 module.exports = Action
