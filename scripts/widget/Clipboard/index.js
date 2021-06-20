@@ -1,7 +1,7 @@
 const Widget = require("../widget")
 const { Setting } = require("./setting")
 
-class PictureWidget extends Widget {
+class ClipboardWidget extends Widget {
     constructor(kernel) {
         super(kernel, new Setting(kernel))
         this.baseUrlScheme = `jsbox://run?name=${this.kernel.name}&widget=${this.widget}`
@@ -244,5 +244,5 @@ class PictureWidget extends Widget {
 }
 
 module.exports = {
-    Widget: PictureWidget
+    Widget: ClipboardWidget
 }
