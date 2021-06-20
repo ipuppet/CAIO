@@ -6,6 +6,7 @@
 "CLIPBOARD" = "Clipboard";
 "CLIPBOARD_STRUCTURE_ERROR" = "Clipboard data structure is abnormal";
 "BACKUP_AND_REBUILD_DATABASE" = "Backup and rebuild the database";
+"EDIT" = "Edit";
 "SEARCH" = "Search";
 "COPY" = "Copy";
 "COPIED" = "Copied";

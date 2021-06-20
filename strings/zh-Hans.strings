@@ -6,6 +6,7 @@
 "CLIPBOARD" = "剪切板";
 "CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";
 "BACKUP_AND_REBUILD_DATABASE" = "备份并且重建数据库";
+"EDIT" = "编辑";
 "SEARCH" = "搜索";
 "COPY" = "复制";
 "COPIED" = "已复制";

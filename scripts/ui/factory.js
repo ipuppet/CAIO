@@ -11,7 +11,7 @@ class Factory {
     clipboard() {
         const Clipboard = require("./clipboard")
         const interfaceUi = new Clipboard(this.kernel)
-        return this.kernel.page.view.creator(interfaceUi.getViews(), 0)
+        return this.kernel.page.view.creator(interfaceUi.getViews(), 0, true)
     }
 
     actionManager() {
@@ -36,6 +36,7 @@ class Factory {
             {
                 icon: ["doc.on.clipboard", "doc.on.clipboard.fill"],
                 title: $l10n("CLIPBOARD")
+
             },
             {
                 icon: ["command"],

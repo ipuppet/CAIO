@@ -288,7 +288,7 @@ class Clipboard {
     getAddTextView() {
         this.edit("", text => {
             if (text !== "") this.add(text)
-        })
+        }, $l10n("CREATE_NEW"))
     }
 
     delete(uuid, index) {
@@ -423,10 +423,10 @@ class Clipboard {
         }
     }
 
-    edit(text, callback) {
+    edit(text, callback, title) {
         this.kernel.editor.push(text, text => {
             callback(text)
-        }, $l10n("CLIPBOARD"))
+        }, $l10n("CLIPBOARD"), title)
     }
 
     navButtons() {
@@ -734,7 +734,7 @@ class Clipboard {
                         this.edit(content.info.text, text => {
                             if (content.info.md5 !== $text.MD5(text))
                                 this.update(content.info.uuid, text, indexPath.row)
-                        })
+                        }, $l10n("EDIT"))
                     }
                 },
                 layout: (make, view) => {
