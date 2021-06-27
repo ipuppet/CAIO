@@ -4,7 +4,6 @@ const Storage = require("./storage")
 class AppKernel extends Kernel {
     constructor() {
         super()
-        //this.UIKit.disableLargeTitle()
         this.query = $context.query
         // 注册组件
         this.settingComponent = this.registerComponent("Setting")
