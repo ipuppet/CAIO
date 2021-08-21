@@ -6,7 +6,7 @@ class MyAction extends Action {
     }
 
     do() {
-        const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\.\-\?\=\&])*\s?/ig
+        const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/ig
         const text = this.text ?? ""
         const url = text.match(regex, text) ?? []
         if (url.length > 1) {
