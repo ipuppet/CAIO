@@ -18,8 +18,11 @@ class ActionManager {
     actionsToData() { // 格式化数据供 matrix 使用
         const data = []
         this.kernel.getActionTypes().forEach(type => {
+            const typeUpperCase = type.toUpperCase()
+            const l10n = $l10n(typeUpperCase)
+            const title = l10n === typeUpperCase ? type : l10n
             const section = {
-                title: type, // TODO section 标题
+                title: title, // TODO section 标题
                 items: []
             }
             this.kernel.getActions(type).forEach(action => {
