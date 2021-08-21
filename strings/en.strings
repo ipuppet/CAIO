@@ -2,6 +2,7 @@
 "NONE" = "None";
 "FAILED_TO_LOAD_VIEW" = "Faild to load view";
 "VIEW_NOT_PROVIDED" = "The view is not provided";
+"UNCATEGORIZED" = "Uncategorized";
 
 "CLIPBOARD" = "Clipboard";
 "CLIPBOARD_STRUCTURE_ERROR" = "Clipboard data structure is abnormal";

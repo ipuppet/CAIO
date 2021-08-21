@@ -2,6 +2,7 @@
 "NONE" = "什么都没有";
 "FAILED_TO_LOAD_VIEW" = "加载视图失败";
 "VIEW_NOT_PROVIDED" = "未提供该视图";
+"UNCATEGORIZED" = "未分类";
 
 "CLIPBOARD" = "剪切板";
 "CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";
