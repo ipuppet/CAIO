@@ -693,7 +693,7 @@ class Clipboard {
                             }
                         },
                         { // 删除
-                            title: $l10n("DELETE"),
+                            title: " " + $l10n("DELETE") + " ", // 防止JSBox自动更改成默认的删除操作
                             color: $color("red"),
                             handler: (sender, indexPath) => {
                                 $ui.alert({
