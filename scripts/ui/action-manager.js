@@ -395,7 +395,7 @@ class ActionManager {
     editActionMainJs(text = "", info) {
         this.kernel.editor.push(text, content => {
             this.saveMainJs(info, content)
-        }, null, [
+        }, $l10n("ACTION"), info.name, [
             this.kernel.UIKit.navButton("doc", "book.circle", () => {
                 const content = $file.read("/scripts/action/README.md").string
                 this.kernel.UIKit.pushPageSheet({
