@@ -176,8 +176,8 @@
                     "rectangle.3.offgrid.fill"
                 ],
                 "type": "child",
-                "title": "TODAY",
-                "key": "today",
+                "title": "TODAY&KEYBOARD",
+                "key": "mini",
                 "children": [
                     {
                         "items": [
@@ -187,7 +187,7 @@
                                 ],
                                 "title": "DISPLAY_NAV",
                                 "type": "switch",
-                                "key": "today.displayNav",
+                                "key": "mini.displayNav",
                                 "value": true
                             }
                         ]

@@ -1,9 +1,9 @@
 const Clipboard = require("./clipboard")
 
-class Today extends Clipboard {
+class Mini extends Clipboard {
     constructor(kernel) {
         super(kernel)
-        this.listId = "today-clipboard-list"
+        this.listId = "mini-clipboard-list"
         // 剪贴板列个性化设置
         this.left_right = 20 // 列表边距
         this.top_bottom = 10 // 列表边距
@@ -12,10 +12,16 @@ class Today extends Clipboard {
     }
 
     navButtons() {
-        return [
-            {
-                symbol: "plus.circle",
-                handle: () => {
+        if (!this.largeTitle) this.largeTitle = this.kernel.UIKit.getLargeTitle()
+        let buttons = [
+            // 手动读取剪切板
+            this.largeTitle.navButton("mini-reade", "square.and.arrow.down.on.square", () => {
+                this.readClipboard(true)
+            })
+        ]
+        if ($app.env === $env.today) {
+            buttons.unshift(
+                this.largeTitle.navButton("mini-add", "plus.circle", () => {
                     $input.text({
                         placeholder: "",
                         text: "",
@@ -23,14 +29,12 @@ class Today extends Clipboard {
                             if (text !== "") this.add(text)
                         }
                     })
-                }
-            },
-            // 手动读取剪切板
-            {
-                symbol: "square.and.arrow.down.on.square",
-                handle: () => this.readClipboard(true)
-            }
-        ]
+                })
+            )
+        } else if ($app.env === $env.keyboard) {
+            // TODO keyboard buttons
+        }
+        return buttons
     }
 
     getViews() {
@@ -76,11 +80,11 @@ class Today extends Clipboard {
                             }
                         ]
                     }
-                }, !this.kernel.setting.get("today.displayNav") ? {} : {
+                }, !this.kernel.setting.get("mini.displayNav") ? {} : {
                     header: { // 顶部按钮栏
                         type: "view",
                         props: {
-                            height: 30,
+                            height: $app.env === $env.today ? 30 : 50,
                             clipsToBounds: true
                         },
                         views: [{
@@ -102,6 +106,7 @@ class Today extends Clipboard {
                                     type: "view",
                                     views: this.navButtons(),
                                     layout: (make, view) => {
+                                        make.right.equalTo(view.super).offset(-this.left_right + 10)
                                         make.size.equalTo(view.super)
                                         make.centerY.equalTo(view.super).offset(-5)
                                     }
@@ -125,7 +130,11 @@ class Today extends Clipboard {
                         return content.info.height + this.top_bottom * 2 + 1
                     },
                     didSelect: (sender, indexPath, data) => {
-                        this.copy(data.content.text, data.content.info.uuid, indexPath.row, false)
+                        if ($app.env === $env.today) {
+                            this.copy(data.content.text, data.content.info.uuid, indexPath.row, false)
+                        } else if ($app.env === $env.keyboard) {
+                            $keyboard.insert(data.content.text)
+                        }
                     }
                 },
                 layout: $layout.fill
@@ -140,4 +149,4 @@ class Today extends Clipboard {
     }
 }
 
-module.exports = Today
+module.exports = Mini

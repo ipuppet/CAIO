@@ -9,20 +9,6 @@ class Storage {
         this.tempPath = "/storage/temp"
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
-        // TODO 兼容旧数据，于未来删除
-        if ($file.exists(`/assets/${this.dbName}`)) {
-            $file.move({
-                src: `/assets/${this.dbName}`,
-                dst: this.localDb
-            })
-        }
-        if($file.exists("/assets/sync.json")){
-            $file.move({
-                src: "/assets/sync.json",
-                dst: "/storage/sync.json"
-            })
-        }
-        // end
         this.init()
         if (this.sync) this.syncByiCloud()
     }
