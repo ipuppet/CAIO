@@ -85,7 +85,8 @@ class AppKernel extends Kernel {
     }
 
     getActionButton(get, type = "all") {
-        return this.UIKit.navButton("add", "bolt.circle", (animate, sender) => {
+        if (!this.largeTitle) this.largeTitle = this.UIKit.getLargeTitle()
+        return this.largeTitle.navButton("add", "bolt.circle", (animate, sender) => {
             const data = { text: get.text() }
             const defaultData = Object.keys(data)
             Object.keys(get).map(item => {
@@ -164,7 +165,10 @@ class AppKernel extends Kernel {
                         make.size.equalTo(view.super)
                     }
                 }],
-                title: $l10n("README")
+                title: $l10n("README"),
+                navButtons: [
+                    {}
+                ]
             })
         }
 

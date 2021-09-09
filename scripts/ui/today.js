@@ -13,21 +13,23 @@ class Today extends Clipboard {
 
     navButtons() {
         return [
-            this.kernel.UIKit.navButton("add", "plus.circle", () => {
-                $input.text({
-                    placeholder: "",
-                    text: "",
-                    handler: text => {
-                        if (text !== "") this.add(text)
-                    }
-                })
-            }),
+            {
+                symbol: "plus.circle",
+                handle: () => {
+                    $input.text({
+                        placeholder: "",
+                        text: "",
+                        handler: text => {
+                            if (text !== "") this.add(text)
+                        }
+                    })
+                }
+            },
             // 手动读取剪切板
-            this.kernel.UIKit.navButton("readClipboard", "square.and.arrow.down.on.square", animate => {
-                animate.start()
-                this.readClipboard(true)
-                animate.done()
-            })
+            {
+                symbol: "square.and.arrow.down.on.square",
+                handle: () => this.readClipboard(true)
+            }
         ]
     }
 

@@ -7,6 +7,7 @@ class Clipboard {
         this.edgesForSort = 20 // 列表边距
         this.fontSize = 16 // 字体大小
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
+        this.initLargeTitle()
         // 检查是否携带URL scheme
         this.checkUrlScheme()
         // 数据
@@ -22,6 +23,123 @@ class Clipboard {
                 }
             }
         })
+    }
+
+    initLargeTitle() {
+        this.largeTitle = this.kernel.UIKit.getLargeTitle("clipboard-large-title", $l10n("CLIPBOARD"))
+        this.largeTitle.setBackgroundColor($color("primarySurface"))
+        this.largeTitle.setLeftButtons([
+            this.largeTitle.navButton("clipboard-reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
+                $ui.popover({
+                    sourceView: sender,
+                    directions: $popoverDirection.up,
+                    size: $size(200, 300),
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: $l10n("SORT"),
+                                color: $color("secondaryText"),
+                                font: $font(14)
+                            },
+                            layout: (make, view) => {
+                                make.top.equalTo(view.super.safeArea).offset(0)
+                                make.height.equalTo(40)
+                                make.left.inset(20)
+                            }
+                        },
+                        this.kernel.UIKit.underline(),
+                        {
+                            type: "list",
+                            layout: (make, view) => {
+                                make.width.equalTo(view.super)
+                                make.top.equalTo(view.prev.bottom)
+                                make.bottom.inset(0)
+                            },
+                            props: {
+                                id: "clipboard-list-sort",
+                                reorder: true,
+                                bgcolor: $color("clear"),
+                                data: this.savedClipboard,
+                                template: {
+                                    props: { bgcolor: $color("clear") },
+                                    views: [
+                                        {
+                                            type: "view",
+                                            props: {
+                                                id: "copied",
+                                                circular: this.copiedIndicatorSize,
+                                                bgcolor: $color("green")
+                                            },
+                                            layout: (make, view) => {
+                                                make.centerY.equalTo(view.super)
+                                                make.size.equalTo(this.copiedIndicatorSize)
+                                                make.left.inset(this.edgesForSort / 2 - this.copiedIndicatorSize / 2)
+                                            }
+                                        },
+                                        {
+                                            type: "label",
+                                            props: {
+                                                id: "content",
+                                                lines: 1,
+                                                font: $font(this.fontSize)
+                                            },
+                                            layout: (make, view) => {
+                                                make.centerY.equalTo(view.super)
+                                                make.left.right.inset(this.edgesForSort)
+                                            }
+                                        }
+                                    ]
+                                },
+                                actions: [
+                                    { // 删除
+                                        title: "delete",
+                                        handler: (sender, indexPath) => {
+                                            const listView = $(this.listId)
+                                            const data = listView.object(indexPath)
+                                            this.delete(data.content.info.uuid, indexPath.row)
+                                            listView.delete(indexPath)
+                                        }
+                                    }
+                                ]
+                            },
+                            events: {
+                                rowHeight: (sender, indexPath) => {
+                                    return this.fontSize + this.edgesForSort
+                                },
+                                reorderBegan: indexPath => {
+                                    // 用于纠正 rowHeight 高度计算
+                                    this.reorder.content = this.savedClipboard[indexPath.row].content
+                                    this.reorder.from = indexPath.row
+                                    this.reorder.to = undefined
+                                },
+                                reorderMoved: (fromIndexPath, toIndexPath) => {
+                                    this.reorder.to = toIndexPath.row
+                                },
+                                reorderFinished: () => {
+                                    if (this.reorder.to === undefined) return
+                                    this.move(this.reorder.from, this.reorder.to)
+                                }
+                            }
+                        }
+                    ]
+                })
+            }, false, false),
+            // 手动读取剪切板
+            this.largeTitle.navButton("clipboard-readClipboard", "square.and.arrow.down.on.square", animate => {
+                animate.start()
+                this.readClipboard(true)
+                animate.done()
+            }, false, false)
+        ])
+        this.largeTitle.setRightButtons(
+            [
+                this.largeTitle.navButton("clipboard-add", "plus.circle", () => this.getAddTextView()),
+                this.kernel.getActionButton({
+                    text: () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text
+                }, "clipboard")
+            ]
+        )
     }
 
     checkUrlScheme() {
@@ -429,121 +547,6 @@ class Clipboard {
         }, $l10n("CLIPBOARD"), title)
     }
 
-    navButtons() {
-        return [
-            [
-                // 手动读取剪切板
-                this.kernel.UIKit.navButton("readClipboard", "square.and.arrow.down.on.square", animate => {
-                    animate.start()
-                    this.readClipboard(true)
-                    animate.done()
-                }, false, false)
-            ],
-            [
-                this.kernel.UIKit.navButton("add", "plus.circle", () => this.getAddTextView()),
-                this.kernel.getActionButton({
-                    text: () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text
-                }, "clipboard"),
-                this.kernel.UIKit.navButton("reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
-                    $ui.popover({
-                        sourceView: sender,
-                        directions: $popoverDirection.up,
-                        size: $size(200, 300),
-                        views: [
-                            {
-                                type: "label",
-                                props: {
-                                    text: $l10n("SORT"),
-                                    color: $color("secondaryText"),
-                                    font: $font(14)
-                                },
-                                layout: (make, view) => {
-                                    make.top.equalTo(view.super.safeArea).offset(0)
-                                    make.height.equalTo(40)
-                                    make.left.inset(20)
-                                }
-                            },
-                            this.kernel.UIKit.underline(),
-                            {
-                                type: "list",
-                                layout: (make, view) => {
-                                    make.width.equalTo(view.super)
-                                    make.top.equalTo(view.prev.bottom)
-                                    make.bottom.inset(0)
-                                },
-                                props: {
-                                    id: "clipboard-list-sort",
-                                    reorder: true,
-                                    bgcolor: $color("clear"),
-                                    data: this.savedClipboard,
-                                    template: {
-                                        props: { bgcolor: $color("clear") },
-                                        views: [
-                                            {
-                                                type: "view",
-                                                props: {
-                                                    id: "copied",
-                                                    circular: this.copiedIndicatorSize,
-                                                    bgcolor: $color("green")
-                                                },
-                                                layout: (make, view) => {
-                                                    make.centerY.equalTo(view.super)
-                                                    make.size.equalTo(this.copiedIndicatorSize)
-                                                    make.left.inset(this.edgesForSort / 2 - this.copiedIndicatorSize / 2)
-                                                }
-                                            },
-                                            {
-                                                type: "label",
-                                                props: {
-                                                    id: "content",
-                                                    lines: 1,
-                                                    font: $font(this.fontSize)
-                                                },
-                                                layout: (make, view) => {
-                                                    make.centerY.equalTo(view.super)
-                                                    make.left.right.inset(this.edgesForSort)
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    actions: [
-                                        { // 删除
-                                            title: "delete",
-                                            handler: (sender, indexPath) => {
-                                                const listView = $(this.listId)
-                                                const data = listView.object(indexPath)
-                                                this.delete(data.content.info.uuid, indexPath.row)
-                                                listView.delete(indexPath)
-                                            }
-                                        }
-                                    ]
-                                },
-                                events: {
-                                    rowHeight: (sender, indexPath) => {
-                                        return this.fontSize + this.edgesForSort
-                                    },
-                                    reorderBegan: indexPath => {
-                                        // 用于纠正 rowHeight 高度计算
-                                        this.reorder.content = this.savedClipboard[indexPath.row].content
-                                        this.reorder.from = indexPath.row
-                                        this.reorder.to = undefined
-                                    },
-                                    reorderMoved: (fromIndexPath, toIndexPath) => {
-                                        this.reorder.to = toIndexPath.row
-                                    },
-                                    reorderFinished: () => {
-                                        if (this.reorder.to === undefined) return
-                                        this.move(this.reorder.from, this.reorder.to)
-                                    }
-                                }
-                            }
-                        ]
-                    })
-                })
-            ]
-        ]
-    }
-
     menuItems() {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
@@ -563,45 +566,7 @@ class Clipboard {
     }
 
     getViews() {
-        const navButtons = this.navButtons()
         return [ // 水平安全距离由 EasyJsBox 提供
-            { // 顶部按钮栏
-                type: "view",
-                props: { bgcolor: $color("primarySurface") },
-                views: [{
-                    type: "view",
-                    views: [
-                        { // 左侧按钮
-                            type: "view",
-                            views: navButtons[0],
-                            layout: (make, view) => {
-                                make.height.equalTo(view.super)
-                                make.left.inset(10)
-                                const length = navButtons.length
-                                make.width.equalTo(length * 60)
-                            }
-                        },
-                        { // 右侧按钮
-                            type: "view",
-                            views: navButtons[1],
-                            layout: (make, view) => {
-                                make.height.equalTo(view.super)
-                                make.right.inset(10)
-                                make.left.equalTo(view.prev.right)
-                            }
-                        }
-                    ],
-                    layout: (make, view) => {
-                        make.top.equalTo(view.super.safeAreaTop)
-                        make.size.equalTo(view.super.safeArea)
-                    }
-                }],
-                layout: (make, view) => {
-                    make.top.equalTo(view.super)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(50)
-                    make.left.right.equalTo(view.super.safeArea)
-                }
-            },
             { // 剪切板列表
                 type: "list",
                 props: {
@@ -610,7 +575,7 @@ class Clipboard {
                         title: $l10n("ACTION"),
                         items: this.menuItems()
                     },
-                    indicatorInsets: $insets(0, 0, 50, 0),
+                    indicatorInsets: $insets(50, 0, 50, 0),
                     separatorInset: $insets(0, this.edges, 0, 0),
                     data: this.savedClipboard,
                     template: {
@@ -646,21 +611,11 @@ class Clipboard {
                     header: {
                         type: "view",
                         props: {
-                            height: 90,
+                            height: 140,
                             clipsToBounds: true
                         },
                         views: [
-                            {
-                                type: "label",
-                                props: {
-                                    text: $l10n("CLIPBOARD"),
-                                    font: $font("bold", 35)
-                                },
-                                layout: (make, view) => {
-                                    make.left.equalTo(view.super).offset(20)
-                                    make.top.equalTo(view.super)
-                                }
-                            },
+                            this.largeTitle.headerTitle(),
                             {
                                 type: "input",
                                 props: {
@@ -668,8 +623,7 @@ class Clipboard {
                                     placeholder: $l10n("SEARCH")
                                 },
                                 layout: (make, view) => {
-                                    make.centerX.equalTo(view.super)
-                                    make.top.equalTo(view.prev.bottom).offset(10)
+                                    make.top.equalTo(view.prev.bottom).offset(100)
                                     make.left.right.inset(20)
                                     make.height.equalTo(35)
                                 },
@@ -735,14 +689,15 @@ class Clipboard {
                             if (content.info.md5 !== $text.MD5(text))
                                 this.update(content.info.uuid, text, indexPath.row)
                         }, $l10n("EDIT"))
-                    }
+                    },
+                    didScroll: sender => this.largeTitle.scrollAction(sender)
                 },
                 layout: (make, view) => {
                     make.bottom.equalTo(view.super)
-                    make.top.equalTo(view.prev.bottom)
-                    make.left.right.equalTo(view.super.safeArea)
+                    make.top.left.right.equalTo(view.super.safeArea)
                 }
-            }
+            },
+            this.largeTitle.navBarView()
         ]
     }
 }

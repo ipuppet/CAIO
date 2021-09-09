@@ -5,10 +5,13 @@ class Editor {
 
     navButtons() {
         return [
-            this.kernel.UIKit.navButton("add", "square.and.arrow.up", () => {
-                if (this.text) $share.sheet(this.text)
-                else $ui.warning($l10n("NONE"))
-            }),
+            {
+                symbol: "square.and.arrow.up",
+                handler: () => {
+                    if (this.text) $share.sheet(this.text)
+                    else $ui.warning($l10n("NONE"))
+                }
+            },
             this.kernel.getActionButton({
                 text: () => this.text,
                 selectedRange: () => $("editor").selectedRange,
