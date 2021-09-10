@@ -855,8 +855,7 @@ class ActionManager {
                         },
                         layout: (make, view) => {
                             make.bottom.equalTo(view.super)
-                            make.top.equalTo(view.super.safeAreaTop)
-                            make.left.right.equalTo(view.super.safeArea)
+                            make.top.left.right.equalTo(view.super.safeArea)
                         }
                     },
                     this.largeTitle.navBarView()
