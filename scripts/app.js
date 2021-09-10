@@ -165,10 +165,7 @@ class AppKernel extends Kernel {
                         make.size.equalTo(view.super)
                     }
                 }],
-                title: $l10n("README"),
-                navButtons: [
-                    {}
-                ]
+                title: $l10n("README")
             })
         }
 
