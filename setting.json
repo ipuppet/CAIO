@@ -73,20 +73,20 @@
                                 "icon": [
                                     "icloud.and.arrow.up.fill"
                                 ],
-                                "title": "BACKUP",
+                                "title": "EXPORT",
                                 "type": "script",
-                                "key": "clipboard.backup",
-                                "value": "this.controller.backupClipboard"
+                                "key": "clipboard.export",
+                                "value": "this.controller.exportClipboard"
                             },
                             {
                                 "icon": [
                                     "arrow.clockwise.icloud.fill",
                                     "#FFCC33"
                                 ],
-                                "title": "RECOVER",
+                                "title": "IMPORT",
                                 "type": "script",
-                                "key": "clipboard.recover",
-                                "value": "this.controller.recoverClipboard"
+                                "key": "clipboard.import",
+                                "value": "this.controller.importClipboard"
                             }
                         ]
                     }
@@ -152,20 +152,20 @@
                                 "icon": [
                                     "icloud.and.arrow.up.fill"
                                 ],
-                                "title": "BACKUP",
+                                "title": "EXPORT",
                                 "type": "script",
-                                "key": "action.backup",
-                                "value": "this.controller.backupAction"
+                                "key": "action.export",
+                                "value": "this.controller.exportAction"
                             },
                             {
                                 "icon": [
                                     "arrow.clockwise.icloud.fill",
                                     "#FFCC33"
                                 ],
-                                "title": "RECOVER",
+                                "title": "IMPORT",
                                 "type": "script",
-                                "key": "action.recover",
-                                "value": "this.controller.recoverAction"
+                                "key": "action.import",
+                                "value": "this.controller.importAction"
                             }
                         ]
                     }

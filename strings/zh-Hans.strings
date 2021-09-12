@@ -44,10 +44,10 @@
 "DELETE_SUCCESS" = "删除成功";
 "DELETE_ERROR" = "删除失败";
 
-"BACKUP" = "备份";
-"START_BACKUP" = "开始备份";
-"RECOVER" = "恢复";
+"EXPORT" = "导出";
+"IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";
+"OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
 
 "TODAY&KEYBOARD" = "通知中心和键盘";
 "DISPLAY_NAV" = "显示标题栏";

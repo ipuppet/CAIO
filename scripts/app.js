@@ -19,6 +19,7 @@ class AppKernel extends Kernel {
         this.actionOrderFile = "order.json"
         this.userActionPath = "/storage/user_action/"
         this.checkUserAction()
+        this.actionExport
     }
 
     checkUserAction() {
@@ -174,77 +175,78 @@ class AppKernel extends Kernel {
             $ui.alert("Tips")
         }
 
-        this.setting.backupClipboard = animate => {
+        this.setting.exportClipboard = animate => {
             animate.actionStart()
-            $ui.alert({
-                title: $l10n("BACKUP"),
-                message: $l10n("START_BACKUP") + "?",
-                actions: [
-                    {
-                        title: $l10n("OK"),
-                        handler: () => {
-                            this.storage.backup(() => animate.actionDone())
-                        }
-                    },
-                    {
-                        title: $l10n("CANCEL"),
-                        handler: () => { animate.actionCancel() }
-                    }
-                ]
-            })
-        }
-
-        this.setting.recoverClipboard = animate => {
-            animate.actionStart()
-            $drive.open({
-                handler: data => {
-                    if (data === undefined) {
-                        animate.actionCancel()
-                        return
-                    }
-                    if (data.fileName.slice(-2) === "db") {
-                        this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
-                    } else {
-                        $ui.warning($l10n("FILE_TYPE_ERROR"))
-                        animate.actionCancel()
-                    }
+            this.storage.export(success => {
+                if (success) {
+                    animate.actionDone()
+                } else {
+                    animate.actionCancel()
                 }
             })
         }
 
-        this.setting.backupAction = animate => {
+        this.setting.importClipboard = animate => {
             animate.actionStart()
-            // 备份动作
             $ui.alert({
-                title: $l10n("BACKUP"),
-                message: $l10n("START_BACKUP") + "?",
+                title: $l10n("ALERT_INFO"),
+                message: $l10n("OVERWRITE_ALERT"),
                 actions: [
                     {
                         title: $l10n("OK"),
                         handler: () => {
-                            $archiver.zip({
-                                directory: this.actionPath,
-                                dest: "/storage/action-backup.zip",
-                                handler: () => {
-                                    $drive.save({
-                                        data: $data({ path: "/storage/action-backup.zip" }),
-                                        name: "action-backup.zip",
-                                        handler: () => animate.actionDone()
-                                    })
-                                    $file.delete("/storage/action-backup.zip")
+                            $drive.open({
+                                handler: data => {
+                                    if (data === undefined) {
+                                        animate.actionCancel()
+                                        return
+                                    }
+                                    if (data.fileName.slice(-2) === "db") {
+                                        this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
+                                    } else {
+                                        $ui.warning($l10n("FILE_TYPE_ERROR"))
+                                        animate.actionCancel()
+                                    }
                                 }
                             })
                         }
                     },
                     {
                         title: $l10n("CANCEL"),
-                        handler: () => { animate.actionCancel() }
+                        handler: () => animate.actionCancel()
                     }
                 ]
             })
         }
 
-        this.setting.recoverAction = animate => {
+        this.setting.exportAction = animate => {
+            animate.actionStart()
+            // 备份动作
+            const fileName = "actions.zip"
+            const tempPath = `/storage/${fileName}`
+            $archiver.zip({
+                directory: this.actionPath,
+                dest: tempPath,
+                handler: () => {
+                    $share.sheet({
+                        items: [{
+                            name: fileName,
+                            data: $data({ path: tempPath })
+                        }],
+                        handler: success => {
+                            if (success) {
+                                animate.actionDone()
+                            } else {
+                                animate.actionCancel()
+                            }
+                            $file.delete(tempPath)
+                        }
+                    })
+                }
+            })
+        }
+
+        this.setting.importAction = animate => {
             animate.actionStart()
             $drive.open({
                 handler: data => {
@@ -253,19 +255,20 @@ class AppKernel extends Kernel {
                         return
                     }
                     if (data.fileName.slice(-3) === "zip") {
+                        const path = "/storage/action_import"
                         $archiver.unzip({
                             file: data,
-                            dest: "/storage/action-backup",
+                            dest: path,
                             handler: () => {
-                                $file.list("/storage/action-backup").forEach(item => {
-                                    if ($file.isDirectory("/storage/action-backup/" + item)) {
+                                $file.list(path).forEach(item => {
+                                    if ($file.isDirectory(`${path}/${item}`)) {
                                         $file.copy({
-                                            src: "/storage/action-backup/" + item,
+                                            src: `${path}/${item}`,
                                             dst: `${this.actionPath}${item}`
                                         })
                                     }
                                 })
-                                $file.delete("/storage/action-backup")
+                                $file.delete(path)
                                 animate.actionDone()
                             }
                         })

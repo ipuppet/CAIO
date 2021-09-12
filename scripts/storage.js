@@ -22,15 +22,17 @@ class Storage {
         if (!$file.exists(this.iCloudPath)) $file.mkdir(this.iCloudPath)
     }
 
-    backup(callback) {
-        $drive.save({
-            data: $data({ path: this.localDb }),
-            name: this.dbName,
+    export(callback) {
+        $share.sheet({
+            items: [{
+                name: this.dbName,
+                data: $data({ path: this.localDb })
+            }],
             handler: callback
         })
     }
 
-    recover(data) {
+    import(data) {
         const result = $file.write({
             data: data,
             path: this.localDb
