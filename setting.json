@@ -71,7 +71,7 @@
                         "items": [
                             {
                                 "icon": [
-                                    "icloud.and.arrow.up.fill"
+                                    "square.and.arrow.up"
                                 ],
                                 "title": "EXPORT",
                                 "type": "script",
@@ -80,7 +80,7 @@
                             },
                             {
                                 "icon": [
-                                    "arrow.clockwise.icloud.fill",
+                                    "square.and.arrow.down",
                                     "#FFCC33"
                                 ],
                                 "title": "IMPORT",
@@ -150,7 +150,7 @@
                         "items": [
                             {
                                 "icon": [
-                                    "icloud.and.arrow.up.fill"
+                                    "square.and.arrow.up"
                                 ],
                                 "title": "EXPORT",
                                 "type": "script",
@@ -159,7 +159,7 @@
                             },
                             {
                                 "icon": [
-                                    "arrow.clockwise.icloud.fill",
+                                    "square.and.arrow.down",
                                     "#FFCC33"
                                 ],
                                 "title": "IMPORT",
