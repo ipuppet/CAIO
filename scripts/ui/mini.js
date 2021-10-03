@@ -131,9 +131,9 @@ class Mini extends Clipboard {
                     },
                     didSelect: (sender, indexPath, data) => {
                         if ($app.env === $env.today) {
-                            this.copy(data.content.text, data.content.info.uuid, indexPath.row, false)
+                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row, false)
                         } else if ($app.env === $env.keyboard) {
-                            $keyboard.insert(data.content.text)
+                            $keyboard.insert(data.content.info.text)
                         }
                     }
                 },
