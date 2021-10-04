@@ -5,13 +5,6 @@ class Editor {
 
     navButtons() {
         return [
-            {
-                symbol: "square.and.arrow.up",
-                handler: () => {
-                    if (this.text) $share.sheet(this.text)
-                    else $ui.warning($l10n("NONE"))
-                }
-            },
             this.kernel.getActionButton({
                 text: () => this.text,
                 selectedRange: () => $("editor").selectedRange,
@@ -23,7 +16,16 @@ class Editor {
         ]
     }
 
-    push(text = "", callback, parent, title, navButtons = [], type = "text") {
+    /**
+     * 
+     * @param {*} text 
+     * @param {*} callback 
+     * @param {*} parent 
+     * @param {*} title 
+     * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 this.kernel.editor.text
+     * @param {*} type 
+     */
+    push(text = "", callback, parent, title, navButtons, type = "text") {
         this.text = text
         this.kernel.UIKit.push({
             title: title,

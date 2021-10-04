@@ -588,21 +588,18 @@ class ActionManager {
         this.kernel.editor.push(text, content => {
             this.saveMainJs(info, content)
         }, $l10n("ACTION"), info.name, [
-            {
-                symbol: "book.circle",
-                handler: () => {
-                    const content = $file.read("/scripts/action/README.md").string
-                    this.kernel.UIKit.pushPageSheet({
-                        views: [{
-                            type: "markdown",
-                            props: { content: content },
-                            layout: (make, view) => {
-                                make.size.equalTo(view.super)
-                            }
-                        }]
-                    })
-                }
-            }
+            this.kernel.largeTitle.navButton("docs", "book.circle", () => {
+                const content = $file.read("/scripts/action/README.md").string
+                this.kernel.UIKit.pushPageSheet({
+                    views: [{
+                        type: "markdown",
+                        props: { content: content },
+                        layout: (make, view) => {
+                            make.size.equalTo(view.super)
+                        }
+                    }]
+                })
+            })
         ], "code")
     }
 

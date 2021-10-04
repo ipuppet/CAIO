@@ -19,7 +19,8 @@ class AppKernel extends Kernel {
         this.actionOrderFile = "order.json"
         this.userActionPath = "/storage/user_action/"
         this.checkUserAction()
-        this.actionExport
+        // largeTitle
+        this.largeTitle = this.UIKit.getLargeTitle()
     }
 
     checkUserAction() {
@@ -86,7 +87,6 @@ class AppKernel extends Kernel {
     }
 
     getActionButton(get, type = "all") {
-        if (!this.largeTitle) this.largeTitle = this.UIKit.getLargeTitle()
         return this.largeTitle.navButton("add", "bolt.circle", (animate, sender) => {
             const data = { text: get.text() }
             const defaultData = Object.keys(data)

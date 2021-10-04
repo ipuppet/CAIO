@@ -406,7 +406,7 @@ class Clipboard {
     getAddTextView() {
         this.edit("", text => {
             if (text !== "") this.add(text)
-        }, $l10n("CREATE_NEW"))
+        })
     }
 
     delete(uuid, index) {
@@ -541,10 +541,24 @@ class Clipboard {
         }
     }
 
-    edit(text, callback, title) {
+    edit(text, callback) {
         this.kernel.editor.push(text, text => {
             callback(text)
-        }, $l10n("CLIPBOARD"), title)
+        }, $l10n("CLIPBOARD"), "", [
+            this.kernel.largeTitle.navButton("share", "square.and.arrow.up", () => {
+                if (this.kernel.editor.text) {
+                    $share.sheet(this.kernel.editor.text)
+                } else {
+                    $ui.warning($l10n("NONE"))
+                }
+            }),
+            this.kernel.largeTitle.navButton("copy", "doc.on.clipboard", () => {
+                if (this.kernel.editor.text) {
+                    $clipboard.text = this.kernel.editor.text
+                    $ui.success($l10n("COPIED"))
+                }
+            }),
+        ])
     }
 
     menuItems() {
@@ -688,7 +702,7 @@ class Clipboard {
                         this.edit(content.info.text, text => {
                             if (content.info.md5 !== $text.MD5(text))
                                 this.update(content.info.uuid, text, indexPath.row)
-                        }, $l10n("EDIT"))
+                        })
                     },
                     didScroll: sender => this.largeTitle.scrollAction(sender)
                 },
