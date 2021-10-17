@@ -1,6 +1,6 @@
 # Action
 
-所有 `Action` 保存在 `scripts/action` 目录下，按照文件夹分类
+所有 `Action` 保存在 `storage/user_action` 目录下，按照文件夹分类
 
 `Action` 结构如下：
 
@@ -19,7 +19,7 @@
 ### `main.js` 入口文件
 
 ```js
-const Action = require("../../action.js")
+const Action = require("/scripts/action/action.js")
 
 class MyAction extends Action {
     /**
@@ -54,7 +54,7 @@ module.exports = MyAction
         doneText: args.doneText ?? $l10n("DONE") // 左上角文本
     }
   */
-push(args): void;
+push(args): void
 
 /**
  * 获取所有剪切板数据
