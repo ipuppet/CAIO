@@ -8,7 +8,7 @@
 
 ## Action
 
-> 编写方式详见 `scrtips/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。
+> 编写方式详见 `scripts/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。
 
 ### 不同环境中 `Action` 数据区别
 
