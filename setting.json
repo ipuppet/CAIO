@@ -150,6 +150,20 @@
                         "items": [
                             {
                                 "icon": [
+                                    "bolt.circle",
+                                    "#FF6633"
+                                ],
+                                "title": "IMPORT_EXAMPLE_ACTION",
+                                "type": "script",
+                                "key": "action.importExampleAction",
+                                "value": "this.controller.importExampleAction"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
                                     "square.and.arrow.up"
                                 ],
                                 "title": "EXPORT",

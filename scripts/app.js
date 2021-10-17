@@ -23,41 +23,48 @@ class AppKernel extends Kernel {
         this.largeTitle = this.UIKit.getLargeTitle()
     }
 
-    checkUserAction() {
-        if ($file.exists(this.userActionPath)) {
-            $file.list(this.userActionPath).forEach(type => {
-                $file.list(`${this.userActionPath}${type}`).forEach(item => {
-                    if (!$file.exists(`${this.actionPath}${type}/${item}/main.js`)) {
-                        if (!$file.exists(`${this.actionPath}${type}`)) {
-                            $file.mkdir(`${this.actionPath}${type}`)
-                        }
+    importExampleAction() {
+        $file.list(this.actionPath).forEach(type => {
+            const actionTypePath = `${this.actionPath}${type}`
+            if ($file.isDirectory(actionTypePath)) {
+                const userActionTypePath = `${this.userActionPath}${type}`
+                $file.list(actionTypePath).forEach(item => {
+                    if (!$file.exists(`${userActionTypePath}/${item}/main.js`)) {
+                        $file.mkdir(userActionTypePath)
                         $file.copy({
-                            src: `${this.userActionPath}${type}/${item}`,
-                            dst: `${this.actionPath}${type}/${item}`
+                            src: `${actionTypePath}/${item}`,
+                            dst: `${userActionTypePath}/${item}`
                         })
                     }
                 })
-            })
+            }
+        })
+    }
+
+    checkUserAction() {
+        if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
+            $file.mkdir(this.userActionPath)
+            this.importExampleAction()
         }
     }
 
     getActionTypes() {
         const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        return type.concat($file.list(this.actionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
-            if ($file.isDirectory(this.actionPath + "/" + dir) && type.indexOf(dir) < 0)
+        return type.concat($file.list(this.userActionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
+            if ($file.isDirectory(this.userActionPath + "/" + dir) && type.indexOf(dir) < 0)
                 return dir
         }))
     }
 
     getActionOrder(type) {
-        const path = `${this.actionPath}${type}/${this.actionOrderFile}`
+        const path = `${this.userActionPath}${type}/${this.actionOrderFile}`
         if ($file.exists(path)) return JSON.parse($file.read(path).string)
         else return []
     }
 
     getActions(type) {
         const actions = []
-        const typePath = `${this.actionPath}${type}/`
+        const typePath = `${this.userActionPath}${type}/`
         if (!$file.exists(typePath)) return []
         const pushAction = item => {
             const basePath = `${typePath}/${item}/`
@@ -225,7 +232,7 @@ class AppKernel extends Kernel {
             const fileName = "actions.zip"
             const tempPath = `/storage/${fileName}`
             $archiver.zip({
-                directory: this.actionPath,
+                directory: this.userActionPath,
                 dest: tempPath,
                 handler: () => {
                     $share.sheet({
@@ -264,7 +271,7 @@ class AppKernel extends Kernel {
                                     if ($file.isDirectory(`${path}/${item}`)) {
                                         $file.copy({
                                             src: `${path}/${item}`,
-                                            dst: `${this.actionPath}${item}`
+                                            dst: `${this.userActionPath}${item}`
                                         })
                                     }
                                 })
@@ -283,6 +290,12 @@ class AppKernel extends Kernel {
         this.setting.sync = animate => {
             animate.actionStart()
             setTimeout(() => this.storage.syncByiCloud(true, () => animate.actionDone()), 200)
+        }
+
+        this.setting.importExampleAction = animate => {
+            animate.actionStart()
+            this.importExampleAction
+            animate.actionDone()
         }
     }
 }

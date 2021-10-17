@@ -44,6 +44,7 @@
 "DELETE_SUCCESS" = "删除成功";
 "DELETE_ERROR" = "删除失败";
 
+"IMPORT_EXAMPLE_ACTION" = "导入示例动作";
 "EXPORT" = "导出";
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";

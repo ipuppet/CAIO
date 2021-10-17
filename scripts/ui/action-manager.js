@@ -61,7 +61,7 @@ class ActionManager {
                                             $ui.toast($l10n("INVALID_VALUE"))
                                             return
                                         }
-                                        const path = `${this.kernel.actionPath}${text}`
+                                        const path = `${this.kernel.userActionPath}${text}`
                                         if ($file.exists(path)) {
                                             $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
                                         } else {
@@ -604,7 +604,7 @@ class ActionManager {
     }
 
     saveActionInfo(info) {
-        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
+        const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/`
         if (!$file.exists(path)) $file.mkdir(path)
         $file.write({
             data: $data({
@@ -617,11 +617,10 @@ class ActionManager {
             }),
             path: `${path}config.json`
         })
-        this.saveToUserAction(info)
     }
 
     saveMainJs(info, content) {
-        const path = `${this.kernel.actionPath}${info.type}/${info.dir}/`
+        const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/`
         const mainJsPath = `${path}main.js`
         if (!$file.exists(path)) $file.mkdir(path)
         if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
@@ -629,24 +628,12 @@ class ActionManager {
             data: $data({ "string": content }),
             path: mainJsPath
         })
-        this.saveToUserAction(info)
-    }
-
-    saveToUserAction(info) {
-        const userActionPath = `${this.kernel.userActionPath}${info.type}/${info.dir}/`
-        if (!$file.exists(userActionPath)) {
-            $file.mkdir(userActionPath)
-        }
-        $file.copy({
-            src: `${this.kernel.actionPath}${info.type}/${info.dir}/`,
-            dst: userActionPath
-        })
     }
 
     saveOrder(type, order) {
         $file.write({
             data: $data({ string: JSON.stringify(order) }),
-            path: `${this.kernel.actionPath}${type}/${this.kernel.actionOrderFile}`
+            path: `${this.kernel.userActionPath}${type}/${this.kernel.actionOrderFile}`
         })
     }
 
@@ -688,8 +675,8 @@ class ActionManager {
             this.saveOrder(fromSection.title, getOrder(from.section))
             this.saveOrder(toSection.title, getOrder(to.section))
             $file.move({
-                src: `${this.kernel.actionPath}${fromSection.title}/${toSection.rows[to.row].dir}`,
-                dst: `${this.kernel.actionPath}${toSection.title}/${toSection.rows[to.row].dir}`
+                src: `${this.kernel.userActionPath}${fromSection.title}/${toSection.rows[to.row].dir}`,
+                dst: `${this.kernel.userActionPath}${toSection.title}/${toSection.rows[to.row].dir}`
             })
         }
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
@@ -698,7 +685,6 @@ class ActionManager {
     }
 
     delete(info) {
-        $file.delete(`${this.kernel.actionPath}${info.type}/${info.dir}`)
         $file.delete(`${this.kernel.userActionPath}${info.type}/${info.dir}`)
     }
 
@@ -807,7 +793,7 @@ class ActionManager {
                                             tapped: sender => {
                                                 const info = sender.next.info
                                                 if (!info) return
-                                                const path = `${this.kernel.actionPath}${info.type}/${info.dir}/main.js`
+                                                const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`
                                                 const main = $file.read(path).string
                                                 this.editActionMainJs(main, info)
                                             }
@@ -841,7 +827,7 @@ class ActionManager {
                             },
                             didSelect: (sender, indexPath, data) => {
                                 const info = data.info.info
-                                const ActionClass = require(`${this.kernel.actionPath}${info.type}/${info.dir}/main.js`)
+                                const ActionClass = require(`${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`)
                                 const action = new ActionClass(this.kernel, info, {
                                     text: info.type === "clipboard" ? $clipboard.text : null,
                                     uuid: null

@@ -44,6 +44,7 @@
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";
 
+"IMPORT_EXAMPLE_ACTION" = "Import example actions";
 "EXPORT" = "Export";
 "IMPORT" = "Import";
 "FILE_TYPE_ERROR" = "File type does not match";
