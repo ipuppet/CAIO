@@ -294,7 +294,7 @@ class AppKernel extends Kernel {
 
         this.setting.importExampleAction = animate => {
             animate.actionStart()
-            this.importExampleAction
+            this.importExampleAction()
             animate.actionDone()
         }
     }
