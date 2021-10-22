@@ -2,7 +2,7 @@ const Action = require("/scripts/action/action.js")
 
 class MyAction extends Action {
     openUrl(url) {
-        $app.openURL(url)
+        $app.openURL(url.trim())
     }
 
     do() {
