@@ -19,8 +19,8 @@ class AppKernel extends Kernel {
         this.actionOrderFile = "order.json"
         this.userActionPath = "/storage/user_action/"
         this.checkUserAction()
-        // largeTitle
-        this.largeTitle = this.UIKit.getLargeTitle()
+        // largeTitle 用于生成navButton，避免重复创建对象
+        this.largeTitle = this.registerComponent("large-title", "kernel.large-title")
     }
 
     importExampleAction() {
@@ -94,7 +94,7 @@ class AppKernel extends Kernel {
     }
 
     getActionButton(get, type = "all") {
-        return this.largeTitle.navButton("add", "bolt.circle", (animate, sender) => {
+        return this.largeTitle.view.navButton("add", "bolt.circle", (animate, sender) => {
             const data = { text: get.text() }
             const defaultData = Object.keys(data)
             Object.keys(get).map(item => {

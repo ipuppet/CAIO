@@ -6,9 +6,13 @@ class ActionManager {
     }
 
     initLargeTitle() {
-        this.largeTitle = this.kernel.UIKit.getLargeTitle("action-large-title", $l10n("ACTION"))
-        this.largeTitle.setRightButtons([
-            this.largeTitle.navButton("action-add", "plus.circle", (animate, sender) => {
+        this.largeTitle = this.kernel.registerComponent("large-title", {
+            name: "action-large-title",
+            id: "action-large-title",
+            title: $l10n("ACTION")
+        })
+        this.largeTitle.controller.setRightButtons([
+            this.largeTitle.view.navButton("action-add", "plus.circle", (animate, sender) => {
                 const newItem = (title, tapped) => {
                     return {
                         type: "label",
@@ -77,7 +81,7 @@ class ActionManager {
                     }]
                 })
             }),
-            this.largeTitle.navButton("action-reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
+            this.largeTitle.view.navButton("action-reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
                 $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,
@@ -588,7 +592,7 @@ class ActionManager {
         this.kernel.editor.push(text, content => {
             this.saveMainJs(info, content)
         }, $l10n("ACTION"), info.name, [
-            this.kernel.largeTitle.navButton("docs", "book.circle", () => {
+            this.largeTitle.view.navButton("docs", "book.circle", () => {
                 const content = $file.read("/scripts/action/README.md").string
                 this.kernel.UIKit.pushPageSheet({
                     views: [{
@@ -748,7 +752,7 @@ class ActionManager {
                             indicatorInsets: $insets(50, 0, 50, 0),
                             bgcolor: $color("insetGroupedBackground"),
                             menu: { items: this.menuItems() },
-                            header: this.largeTitle.headerTitle(),
+                            header: this.largeTitle.view.headerTitle(),
                             footer: { // 防止被菜单遮挡
                                 type: "view",
                                 props: { height: 50 }
@@ -834,14 +838,14 @@ class ActionManager {
                                 })
                                 action.do()
                             },
-                            didScroll: sender => this.largeTitle.scrollAction(sender)
+                            didScroll: sender => this.largeTitle.view.scrollAction(sender)
                         },
                         layout: (make, view) => {
                             make.bottom.equalTo(view.super)
                             make.top.left.right.equalTo(view.super.safeArea)
                         }
                     },
-                    this.largeTitle.navBarView()
+                    this.largeTitle.view.navBarView()
                 ]
             }
         ]

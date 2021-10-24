@@ -26,10 +26,14 @@ class Clipboard {
     }
 
     initLargeTitle() {
-        this.largeTitle = this.kernel.UIKit.getLargeTitle("clipboard-large-title", $l10n("CLIPBOARD"))
-        this.largeTitle.setBackgroundColor($color("primarySurface"))
-        this.largeTitle.setLeftButtons([
-            this.largeTitle.navButton("clipboard-reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
+        this.largeTitle = this.kernel.registerComponent("large-title", {
+            name: "clipboard-large-title",
+            id: "clipboard-large-title",
+            title: $l10n("CLIPBOARD"),
+            backgroundColor: $color("primarySurface")
+        })
+        this.largeTitle.controller.setLeftButtons([
+            this.largeTitle.view.navButton("clipboard-reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
                 $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,
@@ -126,15 +130,15 @@ class Clipboard {
                 })
             }, false, false),
             // 手动读取剪切板
-            this.largeTitle.navButton("clipboard-readClipboard", "square.and.arrow.down.on.square", animate => {
+            this.largeTitle.view.navButton("clipboard-readClipboard", "square.and.arrow.down.on.square", animate => {
                 animate.start()
                 this.readClipboard(true)
                 animate.done()
             }, false, false)
         ])
-        this.largeTitle.setRightButtons(
+        this.largeTitle.controller.setRightButtons(
             [
-                this.largeTitle.navButton("clipboard-add", "plus.circle", () => this.getAddTextView()),
+                this.largeTitle.view.navButton("clipboard-add", "plus.circle", () => this.getAddTextView()),
                 this.kernel.getActionButton({
                     text: () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text
                 }, "clipboard")
@@ -545,14 +549,14 @@ class Clipboard {
         this.kernel.editor.push(text, text => {
             callback(text)
         }, $l10n("CLIPBOARD"), "", [
-            this.kernel.largeTitle.navButton("share", "square.and.arrow.up", () => {
+            this.largeTitle.view.navButton("share", "square.and.arrow.up", () => {
                 if (this.kernel.editor.text) {
                     $share.sheet(this.kernel.editor.text)
                 } else {
                     $ui.warning($l10n("NONE"))
                 }
             }),
-            this.kernel.largeTitle.navButton("copy", "doc.on.clipboard", () => {
+            this.largeTitle.view.navButton("copy", "doc.on.clipboard", () => {
                 if (this.kernel.editor.text) {
                     $clipboard.text = this.kernel.editor.text
                     $ui.success($l10n("COPIED"))
@@ -629,7 +633,7 @@ class Clipboard {
                             clipsToBounds: true
                         },
                         views: [
-                            this.largeTitle.headerTitle(),
+                            this.largeTitle.view.headerTitle(),
                             {
                                 type: "input",
                                 props: {
@@ -704,14 +708,14 @@ class Clipboard {
                                 this.update(content.info.uuid, text, indexPath.row)
                         })
                     },
-                    didScroll: sender => this.largeTitle.scrollAction(sender)
+                    didScroll: sender => this.largeTitle.view.scrollAction(sender)
                 },
                 layout: (make, view) => {
                     make.bottom.equalTo(view.super)
                     make.top.left.right.equalTo(view.super.safeArea)
                 }
             },
-            this.largeTitle.navBarView()
+            this.largeTitle.view.navBarView()
         ]
     }
 }

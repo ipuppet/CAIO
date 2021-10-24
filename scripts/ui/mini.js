@@ -12,16 +12,17 @@ class Mini extends Clipboard {
     }
 
     navButtons() {
-        if (!this.largeTitle) this.largeTitle = this.kernel.UIKit.getLargeTitle()
+        if (!this.largeTitle)
+            this.largeTitle = this.registerComponent("large-title", "kernel.mini.large-title")
         let buttons = [
             // 手动读取剪切板
-            this.largeTitle.navButton("mini-reade", "square.and.arrow.down.on.square", () => {
+            this.largeTitle.view.navButton("mini-reade", "square.and.arrow.down.on.square", () => {
                 this.readClipboard(true)
             })
         ]
         if ($app.env === $env.today) {
             buttons.unshift(
-                this.largeTitle.navButton("mini-add", "plus.circle", () => {
+                this.largeTitle.view.navButton("mini-add", "plus.circle", () => {
                     $input.text({
                         placeholder: "",
                         text: "",
