@@ -300,32 +300,19 @@ class AppKernel extends Kernel {
     }
 }
 
-class WidgetKernel extends Kernel {
-    constructor() {
-        super()
-        this.inWidgetEnv = true
-        // 小组件根目录
-        this.widgetRootPath = "/scripts/widget"
-        this.widgetDataPath = "/storage/widget"
-        this.storage = new Storage()
-    }
-
-    widgetInstance(widget) {
-        if ($file.exists(`${this.widgetRootPath}/${widget}/index.js`)) {
-            const { Widget } = require(`./widget/${widget}/index.js`)
-            return new Widget(this)
-        } else {
-            return false
-        }
-    }
-}
-
 module.exports = {
     run: () => {
         if ($app.env === $env.widget) {
-            const kernel = new WidgetKernel()
+            function widgetInstance(widget) {
+                if ($file.exists(`/scripts/widget/${widget}.js`)) {
+                    const { Widget } = require(`./widget/${widget}.js`)
+                    return new Widget(new AppKernel())
+                } else {
+                    return false
+                }
+            }
             const widgetName = $widget.inputValue ?? "Clipboard"
-            const widget = kernel.widgetInstance(widgetName)
+            const widget = widgetInstance(widgetName)
             widget ? widget.render() : $widget.setTimeline({
                 render: () => ({
                     type: "text",

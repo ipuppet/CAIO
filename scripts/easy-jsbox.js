@@ -662,6 +662,12 @@ class BarButtonItem extends View {
     }
 }
 
+class SearchBarView extends View {
+    constructor(args) {
+        super(args)
+    }
+}
+
 class NavigationItem {
     constructor() {
         this.rightButtons = []
