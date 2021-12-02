@@ -405,8 +405,9 @@ class ActionManager {
     editActionMainJs(text = "", info) {
         this.kernel.editor.push(text, content => {
             this.saveMainJs(info, content)
-        }, $l10n("ACTION"), info.name, [
-            this.largeTitle.view.navButton("docs", "book.circle", () => {
+        }, $l10n("ACTION"), info.name, [{
+            symbol: "book.circle",
+            tapped: () => {
                 const content = $file.read("/scripts/action/README.md").string
                 this.kernel.UIKit.pushPageSheet({
                     views: [{
@@ -417,8 +418,8 @@ class ActionManager {
                         }
                     }]
                 })
-            })
-        ], "code")
+            }
+        }], "code")
     }
 
     saveActionInfo(info) {
@@ -572,6 +573,7 @@ class ActionManager {
                                 }
                             }
                         }
+                        // TODO Pull-Down
                         const popover = $ui.popover({
                             sourceView: sender,
                             directions: $popoverDirection.right,
@@ -610,10 +612,10 @@ class ActionManager {
                                                     return
                                                 }
                                                 const path = `${this.kernel.userActionPath}${text}`
-                                                if ($file.exists(path)) {
+                                                if ($file.isDirectory(path)) {
                                                     $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
                                                 } else {
-                                                    $file.mkdir()
+                                                    $file.mkdir(path)
                                                     $ui.success($l10n("SUCCESS"))
                                                 }
                                                 setTimeout(() => { popover.dismiss() }, 1000)
