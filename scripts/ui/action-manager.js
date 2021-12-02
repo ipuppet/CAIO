@@ -409,15 +409,17 @@ class ActionManager {
             symbol: "book.circle",
             tapped: () => {
                 const content = $file.read("/scripts/action/README.md").string
-                this.kernel.UIKit.pushPageSheet({
-                    views: [{
+                const sheet = new Sheet()
+                sheet
+                    .setView({
                         type: "markdown",
                         props: { content: content },
                         layout: (make, view) => {
                             make.size.equalTo(view.super)
                         }
-                    }]
-                })
+                    })
+                    .init()
+                    .present()
             }
         }], "code")
     }
