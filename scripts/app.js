@@ -1,26 +1,24 @@
-const { Kernel, VERSION } = require("../EasyJsBox/src/kernel")
+const {
+    Kernel,
+    Setting
+} = require("./easy-jsbox")
 const Storage = require("./storage")
 
 class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
-        // 注册组件
-        this.settingComponent = this.registerComponent("Setting")
-        this.setting = this.settingComponent.controller
+        // 初始话设置
+        this.setting = new Setting()
+        this.setting.loadConfig()
+        this.initSettingMethods()
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"))
-        // 初始话设置中的方法
-        this.initSettingMethods()
-        this.page = this.registerComponent("Page")
-        this.menu = this.registerComponent("Menu")
         // action 相关路径
         this.actionPath = "/scripts/action/"
         this.actionOrderFile = "order.json"
         this.userActionPath = "/storage/user_action/"
         this.checkUserAction()
-        // largeTitle 用于生成navButton，避免重复创建对象
-        this.largeTitle = this.registerComponent("large-title", "kernel.large-title")
     }
 
     importExampleAction() {
@@ -94,75 +92,79 @@ class AppKernel extends Kernel {
     }
 
     getActionButton(get, type = "all") {
-        return this.largeTitle.view.navButton("add", "bolt.circle", (animate, sender) => {
-            const data = { text: get.text() }
-            const defaultData = Object.keys(data)
-            Object.keys(get).map(item => {
-                if (defaultData.indexOf(item) === -1) {
-                    if (typeof get[item] === "function") {
-                        data[item] = get[item]()
-                    } else {
-                        data[item] = get[item]
-                    }
-                }
-            })
-            const popover = $ui.popover({
-                sourceView: sender,
-                directions: $popoverDirection.up,
-                size: $size(200, 300),
-                views: [
-                    {
-                        type: "label",
-                        props: {
-                            text: $l10n("ACTION"),
-                            color: $color("secondaryText"),
-                            font: $font(14)
-                        },
-                        layout: (make, view) => {
-                            make.top.equalTo(view.super.safeArea).offset(0)
-                            make.height.equalTo(40)
-                            make.left.inset(20)
+        return {
+            symbol: "bolt.circle",
+            tapped: (animate, sender) => {
+                const data = { text: get.text() }
+                const defaultData = Object.keys(data)
+                Object.keys(get).map(item => {
+                    if (defaultData.indexOf(item) === -1) {
+                        if (typeof get[item] === "function") {
+                            data[item] = get[item]()
+                        } else {
+                            data[item] = get[item]
                         }
-                    },
-                    this.UIKit.underline(),
-                    {
-                        type: "list",
-                        layout: (make, view) => {
-                            make.width.equalTo(view.super)
-                            make.top.equalTo(view.prev.bottom)
-                            make.bottom.inset(0)
+                    }
+                })
+                // TODO Pull-Down
+                const popover = $ui.popover({
+                    sourceView: sender,
+                    directions: $popoverDirection.up,
+                    size: $size(200, 300),
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: $l10n("ACTION"),
+                                color: $color("secondaryText"),
+                                font: $font(14)
+                            },
+                            layout: (make, view) => {
+                                make.top.equalTo(view.super.safeArea).offset(0)
+                                make.height.equalTo(40)
+                                make.left.inset(20)
+                            }
                         },
-                        props: {
-                            data: this.getActions(type).map(action => {
-                                return {
-                                    type: "label",
-                                    layout: (make, view) => {
-                                        make.centerY.equalTo(view.super)
-                                        make.left.right.inset(15)
-                                    },
-                                    props: {
-                                        text: action.name
-                                    },
-                                    events: {
-                                        tapped: () => {
-                                            popover.dismiss()
-                                            setTimeout(() => action.handler(data), 500)
+                        this.UIKit.underline(),
+                        {
+                            type: "list",
+                            layout: (make, view) => {
+                                make.width.equalTo(view.super)
+                                make.top.equalTo(view.prev.bottom)
+                                make.bottom.inset(0)
+                            },
+                            props: {
+                                data: this.getActions(type).map(action => {
+                                    return {
+                                        type: "label",
+                                        layout: (make, view) => {
+                                            make.centerY.equalTo(view.super)
+                                            make.left.right.inset(15)
+                                        },
+                                        props: {
+                                            text: action.name
+                                        },
+                                        events: {
+                                            tapped: () => {
+                                                popover.dismiss()
+                                                setTimeout(() => action.handler(data), 500)
+                                            }
                                         }
                                     }
-                                }
-                            })
+                                })
+                            }
                         }
-                    }
-                ]
-            })
-        })
+                    ]
+                })
+            }
+        }
     }
 
     /**
      * 注入设置中的脚本类型方法
      */
     initSettingMethods() {
-        this.setting.readme = animate => {
+        this.setting.method.readme = animate => {
             animate.touchHighlight()
             const content = $file.read("/README.md").string
             this.UIKit.pushPageSheet({
@@ -177,12 +179,12 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.tips = animate => {
+        this.setting.method.tips = animate => {
             animate.touchHighlight()
             $ui.alert("Tips")
         }
 
-        this.setting.exportClipboard = animate => {
+        this.setting.method.exportClipboard = animate => {
             animate.actionStart()
             this.storage.export(success => {
                 if (success) {
@@ -193,7 +195,7 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.importClipboard = animate => {
+        this.setting.method.importClipboard = animate => {
             animate.actionStart()
             $ui.alert({
                 title: $l10n("ALERT_INFO"),
@@ -226,7 +228,7 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.exportAction = animate => {
+        this.setting.method.exportAction = animate => {
             animate.actionStart()
             // 备份动作
             const fileName = "actions.zip"
@@ -253,7 +255,7 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.importAction = animate => {
+        this.setting.method.importAction = animate => {
             animate.actionStart()
             $drive.open({
                 handler: data => {
@@ -287,12 +289,12 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.sync = animate => {
+        this.setting.method.sync = animate => {
             animate.actionStart()
             setTimeout(() => this.storage.syncByiCloud(true, () => animate.actionDone()), 200)
         }
 
-        this.setting.importExampleAction = animate => {
+        this.setting.method.importExampleAction = animate => {
             animate.actionStart()
             this.importExampleAction()
             animate.actionDone()
