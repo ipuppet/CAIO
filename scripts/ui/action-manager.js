@@ -1,4 +1,7 @@
-const { PageController } = require("../easy-jsbox")
+const {
+    PageController,
+    Sheet
+} = require("../easy-jsbox")
 
 class ActionManager {
     constructor(kernel) {
@@ -375,8 +378,9 @@ class ActionManager {
         ]
         // 只有新建时才可选择类型
         if (!info) data[0].rows = data[0].rows.concat(typeMenu)
-        this.kernel.UIKit.pushPageSheet({
-            views: [{
+        const sheet = new Sheet()
+        sheet
+            .setView({
                 type: "list",
                 props: {
                     id: "actionInfoPageSheetList",
@@ -389,12 +393,13 @@ class ActionManager {
                 events: {
                     rowHeight: (sender, indexPath) => indexPath.section === 1 ? 120 : 50
                 }
-            }],
-            done: () => {
+            })
+            .addNavBar("", () => {
                 this.saveActionInfo(this.editingActionInfo)
                 if (done) done(this.editingActionInfo)
-            }
-        })
+            }, "Done")
+            .init()
+            .present()
     }
 
     editActionMainJs(text = "", info) {

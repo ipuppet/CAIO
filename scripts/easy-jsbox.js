@@ -288,6 +288,86 @@ class ContainerView extends View {
     }
 }
 
+class Sheet extends View {
+    init() {
+        const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
+        const { width, height } = $device.info.screen
+        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
+        const PSViewController = $objc("UIViewController").invoke("alloc.init")
+        const PSViewControllerView = PSViewController.$view()
+        PSViewControllerView.$setBackgroundColor($color("primarySurface"))
+        PSViewControllerView.$addSubview(UIView)
+        PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
+        this._present = () => {
+            PSViewControllerView.jsValue().add(this.view)
+            $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
+        }
+        this._dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
+        return this
+    }
+
+    /**
+     * 设置 view
+     * @param {Object} view 视图对象
+     * @returns this
+     */
+    setView(view = {}) {
+        if (typeof view !== "object") throw "The type of the parameter `view` must be object."
+        this.view = view
+        return this
+    }
+
+    /**
+     * 为 view 添加一个 navBar
+     * @param {String} title 标题
+     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
+     * @param {String} btnText 按钮显示的文字，默认为 "Done"
+     * @returns this
+     */
+    addNavBar(title, callback, btnText = "Done") {
+        if (this.view === undefined) throw "Please call setView(view) first."
+        const pageController = new PageController()
+        pageController.navigationItem.addPopButton("", { // 返回按钮
+            type: "button",
+            props: {
+                bgcolor: $color("clear"),
+                tintColor: UIKit.linkColor,
+                title: btnText,
+                titleColor: UIKit.linkColor,
+                font: $font("bold", 16)
+            },
+            layout: (make, view) => {
+                make.left.inset(15)
+                make.centerY.equalTo(view.super)
+            },
+            events: {
+                tapped: () => {
+                    this.dismiss()
+                    if (typeof callback === "function") callback()
+                }
+            }
+        }).setTitle(title)
+        pageController.navigationController.navigationBar.prefersLargeTitles = false
+        pageController.setView(this.view)
+        this.view = pageController.getPage().definition
+        return this
+    }
+
+    /**
+     * 弹出 Sheet
+     */
+    present() {
+        this._present()
+    }
+
+    /**
+     * 关闭 Sheet
+     */
+    dismiss() {
+        this._dismiss()
+    }
+}
+
 class NavigationBar extends View {
     constructor(args) {
         super(args)
@@ -766,103 +846,20 @@ class NavigationController extends Controller {
     }
 }
 
-class Sheet extends View {
-    init() {
-        const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
-        const { width, height } = $device.info.screen
-        const UIView = $objc("UIView").invoke("initWithFrame", $rect(0, 0, width, height))
-        const PSViewController = $objc("UIViewController").invoke("alloc.init")
-        const PSViewControllerView = PSViewController.$view()
-        PSViewControllerView.$setBackgroundColor($color("primarySurface"))
-        PSViewControllerView.$addSubview(UIView)
-        PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
-        this._present = () => {
-            PSViewControllerView.jsValue().add(this.view)
-            $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
-        }
-        this._dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
-        return this
-    }
-
-    /**
-     * 设置 view
-     * @param {Object} view 视图对象
-     * @returns this
-     */
-    setView(view = {}) {
-        if (typeof view !== "object") throw "The type of the parameter `view` must be object."
-        this.view = view
-        return this
-    }
-
-    /**
-     * 为 view 添加一个 navBar
-     * @param {String} title 标题
-     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
-     * @param {String} btnText 按钮显示的文字，默认为 "Done"
-     * @returns this
-     */
-    addNavBar(title, callback, btnText = "Done") {
-        if (this.view === undefined) throw "Please call setView(view) first."
-        const navigatorView = new NavigationView()
-        navigatorView.navigationItem.addPopButton("", { // 返回按钮
-            type: "button",
-            props: {
-                bgcolor: $color("clear"),
-                tintColor: UIKit.linkColor,
-                title: btnText,
-                titleColor: UIKit.linkColor,
-                font: $font("bold", 16)
-            },
-            layout: (make, view) => {
-                make.left.inset(15)
-                make.centerY.equalTo(view.super)
-            },
-            events: {
-                tapped: () => {
-                    this.dismiss()
-                    if (typeof callback === "function") callback()
-                }
-            }
-        }).setTitle(title)
-        navigatorView.navigationItem.prefersLargeTitles = false
-        navigatorView.setView(this.view)
-        this.view = navigatorView.getView()
-        return this
-    }
-
-    /**
-     * 弹出 Sheet
-     */
-    present() {
-        this._present()
-    }
-
-    /**
-     * 关闭 Sheet
-     */
-    dismiss() {
-        this._dismiss()
-    }
-}
-
 class PageView extends ContainerView {
     constructor(args = {}) {
         super(args)
-        if (args.status === true) this.setActiveStatus()
-    }
-
-    setActiveStatus() {
-        this.status = true
-        return this
+        this.activeStatus = true
     }
 
     show() {
         $(this.props.id).hidden = false
+        this.activeStatus = true
     }
 
     hide() {
         $(this.props.id).hidden = true
+        this.activeStatus = false
     }
 
     setHorizontalSafeArea(bool) {
@@ -882,7 +879,7 @@ class PageView extends ContainerView {
     getView() {
         this.layout = this._layout
         this.props.clipsToBounds = true
-        this.props.hidden = !this.status
+        this.props.hidden = !this.activeStatus
         return super.getView()
     }
 }
@@ -911,12 +908,19 @@ class PageController extends Controller {
         return this
     }
 
-    initPage(height) {
+    initPage(heightOffset = 0) {
         if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
-        this.view.events.didScroll = sender => this.navigationController.scrollAction(sender)
+        const oldScrollAction = this.view.events.didScroll
+        this.view.events.didScroll = sender => {
+            this.navigationController.scrollAction(sender)
+            if (typeof oldScrollAction === "function") oldScrollAction(sender)
+        }
         if (!this.view.props.header) this.view.props.header = {}
         this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-            height: height !== undefined ? height : this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            height: (this.navigationController.navigationBar.prefersLargeTitles
+                && this.navigationItem.largeTitleDisplayMode !== NavigationItem.NavigationItemLargeTitleDisplayModeNever
+                ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
+                : this.navigationController.navigationBar.navigationBarNormalHeight) - UIKit.statusBarHeight + heightOffset
         })
         this.page = PageView.createByViews([
             this.view,
@@ -940,12 +944,9 @@ class TabBarCellView extends ContainerView {
         this.props.id = this.id
         this.setIcon(args.icon)
         this.setTitle(args.title)
-        if (args.status === true) this.setActiveStatus()
-    }
-
-    setActiveStatus() {
-        this.status = true
-        return this
+        if (args.activeStatus !== undefined) {
+            this.activeStatus = args.activeStatus
+        }
     }
 
     setIcon(icon) {
@@ -967,12 +968,14 @@ class TabBarCellView extends ContainerView {
         $(`${this.props.id}-icon`).image = $image(this.icon[1])
         $(`${this.props.id}-icon`).tintColor = $color("systemLink")
         $(`${this.props.id}-title`).textColor = $color("systemLink")
+        this.activeStatus = true
     }
 
     inactive() {
         $(`${this.props.id}-icon`).image = $image(this.icon[0])
         $(`${this.props.id}-icon`).tintColor = $color("lightGray")
         $(`${this.props.id}-title`).textColor = $color("lightGray")
+        this.activeStatus = false
     }
 
     getView() {
@@ -981,9 +984,9 @@ class TabBarCellView extends ContainerView {
                 type: "image",
                 props: {
                     id: `${this.props.id}-icon`,
-                    image: $image(this.status ? this.icon[1] : this.icon[0]),
+                    image: $image(this.activeStatus ? this.icon[1] : this.icon[0]),
                     bgcolor: $color("clear"),
-                    tintColor: $color(this.status ? "systemLink" : "lightGray")
+                    tintColor: $color(this.activeStatus ? "systemLink" : "lightGray")
                 },
                 layout: (make, view) => {
                     make.centerX.equalTo(view.super)
@@ -997,7 +1000,7 @@ class TabBarCellView extends ContainerView {
                     id: `${this.props.id}-title`,
                     text: this.title,
                     font: $font(10),
-                    textColor: $color(this.status ? "systemLink" : "lightGray")
+                    textColor: $color(this.activeStatus ? "systemLink" : "lightGray")
                 },
                 layout: (make, view) => {
                     make.centerX.equalTo(view.prev)
@@ -1034,7 +1037,7 @@ class TabBarController extends Controller {
         } else {
             this.pages[key] = PageView.createByViews(page)
         }
-        if (this.selected === key) this.pages[key].setActiveStatus()
+        if (this.selected !== key) this.pages[key].activeStatus = false
         return this
     }
 
@@ -1064,7 +1067,7 @@ class TabBarController extends Controller {
                 props: { info: { key } },
                 icon: cell.icon,
                 title: cell.title,
-                status: this.selected === key
+                activeStatus: this.selected === key
             })
         }
         this.cells[key] = cell
@@ -1125,6 +1128,45 @@ class TabBarController extends Controller {
             ]
         }
         return ContainerView.createByViews(this.pageViews().concat(tabBarView))
+    }
+}
+
+class Kernel {
+    constructor() {
+        this.startTime = Date.now()
+        this.path = {
+            root: ROOT_PATH,
+            shared: SHARED_PATH
+        }
+        this.version = VERSION
+        this.name = $addin.current.name
+        this.UIKit = new UIKit()
+        this.UIKit.setTitle(this.name)
+    }
+
+    uuid() {
+        return uuid()
+    }
+
+    l10n(language, content) {
+        l10n(language, content)
+    }
+
+    debug(print) {
+        this.debugMode = true
+        if (typeof print === "function") {
+            this.debugPrint = print
+        }
+        this.print("You are running EasyJsBox in debug mode.")
+    }
+
+    print(message) {
+        if (!this.debugMode) return
+        if (typeof this.debugPrint === "function") {
+            this.debugPrint(message)
+        } else {
+            console.log(message)
+        }
     }
 }
 
@@ -2132,16 +2174,12 @@ class Setting extends Controller {
                     setTimeout(() => {
                         const pageController = new PageController()
                         pageController.navigationController.navigationBar.prefersLargeTitles = false
-
                         pageController
                             .setView(this.getListView(children))
                             .navigationItem
                             .setTitle(title)
                             .addPopButton()
-                        pageController
-                            .initPage(pageController.navigationController.navigationBar.navigationBarNormalHeight)
-                            .page
-                            .setActiveStatus()
+                        pageController.initPage(30)
                         this.viewController.push(pageController)
                     })
                 }
@@ -2264,51 +2302,12 @@ class Setting extends Controller {
                 .navigationItem
                 .setTitle($l10n("SETTING"))
             pageController
-                .initPage()
+                .initPage(10)
                 .page
                 .setProp("bgcolor", $color("insetGroupedBackground"))
             this.viewController.setRootPageController(pageController)
         }
         return this.viewController.getRootPageController().getPage()
-    }
-}
-
-class Kernel {
-    constructor() {
-        this.startTime = Date.now()
-        this.path = {
-            root: ROOT_PATH,
-            shared: SHARED_PATH
-        }
-        this.version = VERSION
-        this.name = $addin.current.name
-        this.UIKit = new UIKit()
-        this.UIKit.setTitle(this.name)
-    }
-
-    uuid() {
-        return uuid()
-    }
-
-    l10n(language, content) {
-        l10n(language, content)
-    }
-
-    debug(print) {
-        this.debugMode = true
-        if (typeof print === "function") {
-            this.debugPrint = print
-        }
-        this.print("You are running EasyJsBox in debug mode.")
-    }
-
-    print(message) {
-        if (!this.debugMode) return
-        if (typeof this.debugPrint === "function") {
-            this.debugPrint(message)
-        } else {
-            console.log(message)
-        }
     }
 }
 
@@ -2358,7 +2357,12 @@ module.exports = {
     init,
     isOutdated,
     // class
+    UIKit,
+    ViewController,
+    ContainerView,
     Sheet,
+    NavigationBar,
+    BarButtonItem,
     NavigationItem,
     NavigationController,
     PageView,
