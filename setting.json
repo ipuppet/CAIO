@@ -63,7 +63,7 @@
                                 "title": "SYNC_NOW",
                                 "type": "script",
                                 "key": "clipboard.sync",
-                                "value": "this.controller.sync"
+                                "value": "this.method.sync"
                             }
                         ]
                     },
@@ -76,7 +76,7 @@
                                 "title": "EXPORT",
                                 "type": "script",
                                 "key": "clipboard.export",
-                                "value": "this.controller.exportClipboard"
+                                "value": "this.method.exportClipboard"
                             },
                             {
                                 "icon": [
@@ -86,7 +86,7 @@
                                 "title": "IMPORT",
                                 "type": "script",
                                 "key": "clipboard.import",
-                                "value": "this.controller.importClipboard"
+                                "value": "this.method.importClipboard"
                             }
                         ]
                     }
@@ -156,7 +156,7 @@
                                 "title": "IMPORT_EXAMPLE_ACTION",
                                 "type": "script",
                                 "key": "action.importExampleAction",
-                                "value": "this.controller.importExampleAction"
+                                "value": "this.method.importExampleAction"
                             }
                         ]
                     },
@@ -169,7 +169,7 @@
                                 "title": "EXPORT",
                                 "type": "script",
                                 "key": "action.export",
-                                "value": "this.controller.exportAction"
+                                "value": "this.method.exportAction"
                             },
                             {
                                 "icon": [
@@ -179,7 +179,7 @@
                                 "title": "IMPORT",
                                 "type": "script",
                                 "key": "action.import",
-                                "value": "this.controller.importAction"
+                                "value": "this.method.importAction"
                             }
                         ]
                     }
@@ -259,7 +259,7 @@
                 "title": "README",
                 "type": "script",
                 "key": "readme",
-                "value": "this.controller.readme"
+                "value": "this.method.readme"
             }
         ]
     }

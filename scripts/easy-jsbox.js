@@ -59,6 +59,7 @@ class View {
         // 属性
         this.id = uuid()
         this.props = args.props ?? {}
+        this.props.id = this.id
         this.views = args.views ?? []
         this.events = args.events ?? {}
         this.layout = args.layout ?? $layout.fill
@@ -113,7 +114,7 @@ class UIKit {
     }
 
     static get align() {
-        return { left: 0, right: 1 }
+        return { left: 0, right: 1, top: 2, bottom: 3 }
     }
 
     static get textColor() {
@@ -124,13 +125,17 @@ class UIKit {
         return $color("systemLink")
     }
 
-    static underline(props = {}) {
+    static separatorLine(props = {}, align = UIKit.align.bottom) {
         return { // canvas
             type: "canvas",
             props: props,
             layout: (make, view) => {
                 if (view.prev === undefined) return false
-                make.top.equalTo(view.prev.bottom)
+                if (align === UIKit.align.bottom) {
+                    make.top.equalTo(view.prev.bottom)
+                } else {
+                    make.top.equalTo(view.prev.top)
+                }
                 make.height.equalTo(1 / $device.info.screen.scale)
                 make.left.right.inset(0)
             },
@@ -146,12 +151,13 @@ class UIKit {
         }
     }
 
-    static blurBox(props = {}) {
+    static blurBox(props = {}, views = []) {
         return {
             type: "blur",
             props: Object.assign({
                 style: $blurStyle.thinMaterial
             }, props),
+            views: views,
             layout: $layout.fill
         }
     }
@@ -272,7 +278,6 @@ class ContainerView extends View {
     }
 
     getView() {
-        this.props.id = this.id
         return {
             type: "view",
             props: this.props,
@@ -379,7 +384,7 @@ class NavigationBar extends View {
                     hidden: isHideBackground,
                     id: this.id + "-background"
                 }),
-                UIKit.underline({
+                UIKit.separatorLine({
                     id: this.id + "-underline",
                     alpha: isHideBackground ? 0 : 1
                 }),
@@ -750,7 +755,7 @@ class NavigationController extends Controller {
             }
         } else {
             // 下拉放大字体
-            if (sender.contentOffset.y <= -10) {
+            if (sender.contentOffset.y <= -10 - UIKit.statusBarHeight) {
                 let size = this.navigationBar.largeTitleFontSize - sender.contentOffset.y * 0.04
                 if (size > titleSizeMax) size = titleSizeMax
                 this.selector.largeTitleView.font = $font("bold", size)
@@ -844,7 +849,6 @@ class Sheet extends View {
 class PageView extends ContainerView {
     constructor(args = {}) {
         super(args)
-        this.props.id = this.id
         if (args.status === true) this.setActiveStatus()
     }
 
@@ -1105,43 +1109,19 @@ class TabBarController extends Controller {
                 make.bottom.equalTo(view.super)
             },
             views: [
-                {
-                    type: "blur",
+                UIKit.blurBox({}, [{
+                    type: "stack",
+                    layout: $layout.fillSafeArea,
                     props: {
-                        style: this.blurStyle
-                    },
-                    layout: $layout.fill,
-                    views: [{
-                        type: "stack",
-                        layout: $layout.fillSafeArea,
-                        props: {
-                            axis: $stackViewAxis.horizontal,
-                            distribution: $stackViewDistribution.fillEqually,
-                            spacing: 0,
-                            bgcolor: $color("primarySurface"),
-                            stack: {
-                                views: this.cellViews()
-                            }
-                        }
-                    }]
-                },
-                {// 菜单栏上方灰色横线
-                    type: "canvas",
-                    layout: (make, view) => {
-                        make.top.equalTo(view.prev.top)
-                        make.height.equalTo(1 / $device.info.screen.scale)
-                        make.left.right.inset(0)
-                    },
-                    events: {
-                        draw: (view, ctx) => {
-                            ctx.strokeColor = $color("gray")
-                            ctx.setLineWidth(1 / $device.info.screen.scale)
-                            ctx.moveToPoint(0, 0)
-                            ctx.addLineToPoint(view.frame.width, 0)
-                            ctx.strokePath()
+                        axis: $stackViewAxis.horizontal,
+                        distribution: $stackViewDistribution.fillEqually,
+                        spacing: 0,
+                        stack: {
+                            views: this.cellViews()
                         }
                     }
-                }
+                }]),
+                UIKit.separatorLine({}, UIKit.align.top)
             ]
         }
         return ContainerView.createByViews(this.pageViews().concat(tabBarView))
