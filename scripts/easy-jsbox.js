@@ -1286,7 +1286,6 @@ class Setting extends Controller {
     }
 
     set(key, value) {
-        this.print("Controller", "set", `${key}->${value}`)
         this.setting[key] = value
         $file.write({
             data: $data({ string: JSON.stringify(this.setting) }),
@@ -1307,11 +1306,6 @@ class Setting extends Controller {
         return typeof color === "string"
             ? $color(color)
             : $rgba(color.red, color.green, color.blue, color.alpha)
-    }
-
-    print(className, funcName, message) {
-        // TODO print
-        console.log(`Components[${this.name}] ${className}::${funcName} ${message}`)
     }
 
     _touchHighlightStart(id) {
