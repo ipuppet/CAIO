@@ -1,6 +1,8 @@
 const {
     UIKit,
-    PageController
+    PageController,
+    SearchBar,
+    SearchBarController
 } = require("../easy-jsbox")
 
 class Clipboard {
@@ -473,9 +475,11 @@ class Clipboard {
     }
 
     getPageView() {
+        const searchBar = new SearchBar()
         const pageController = new PageController()
         pageController.navigationItem
             .setTitle($l10n("CLIPBOARD"))
+            .setTitleView(searchBar)
             .setRightButtons([
                 {
                     symbol: "plus.circle",
@@ -632,32 +636,6 @@ class Clipboard {
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.edges.inset(this.edges)
-                            }
-                        }
-                    ]
-                },
-                header: {
-                    type: "view",
-                    props: {
-                        height: 150,
-                        clipsToBounds: true
-                    },
-                    views: [
-                        // TODO search 
-                        {
-                            type: "input",
-                            props: {
-                                type: $kbType.search,
-                                placeholder: $l10n("SEARCH")
-                            },
-                            layout: (make, view) => {
-                                //make.top.equalTo(view.prev.bottom).offset(15)
-                                make.top.equalTo(view.super).offset(15)
-                                make.left.right.inset(20)
-                                make.height.equalTo(35)
-                            },
-                            events: {
-                                changed: sender => this.searchAction(sender.text)
                             }
                         }
                     ]
