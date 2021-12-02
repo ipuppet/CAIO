@@ -1,4 +1,6 @@
 const {
+    UIKit,
+    Sheet,
     Kernel,
     Setting
 } = require("./easy-jsbox")
@@ -125,7 +127,7 @@ class AppKernel extends Kernel {
                                 make.left.inset(20)
                             }
                         },
-                        this.UIKit.underline(),
+                        UIKit.separatorLine(),
                         {
                             type: "list",
                             layout: (make, view) => {
@@ -167,21 +169,17 @@ class AppKernel extends Kernel {
         this.setting.method.readme = animate => {
             animate.touchHighlight()
             const content = $file.read("/README.md").string
-            this.UIKit.pushPageSheet({
-                views: [{
+            const sheet = new Sheet()
+            sheet
+                .setView({
                     type: "markdown",
                     props: { content: content },
                     layout: (make, view) => {
                         make.size.equalTo(view.super)
                     }
-                }],
-                title: $l10n("README")
-            })
-        }
-
-        this.setting.method.tips = animate => {
-            animate.touchHighlight()
-            $ui.alert("Tips")
+                })
+                .init()
+                .present()
         }
 
         this.setting.method.exportClipboard = animate => {

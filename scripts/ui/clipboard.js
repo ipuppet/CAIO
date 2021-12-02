@@ -1,4 +1,7 @@
-const { PageController } = require("../easy-jsbox")
+const {
+    UIKit,
+    PageController
+} = require("../easy-jsbox")
 
 class Clipboard {
     constructor(kernel) {
@@ -429,19 +432,25 @@ class Clipboard {
         this.kernel.editor.push(text, text => {
             callback(text)
         }, $l10n("CLIPBOARD"), "", [
-            this.largeTitle.view.navButton("share", "square.and.arrow.up", () => {
-                if (this.kernel.editor.text) {
-                    $share.sheet(this.kernel.editor.text)
-                } else {
-                    $ui.warning($l10n("NONE"))
+            {
+                symbol: "square.and.arrow.up",
+                tapped: () => {
+                    if (this.kernel.editor.text) {
+                        $share.sheet(this.kernel.editor.text)
+                    } else {
+                        $ui.warning($l10n("NONE"))
+                    }
                 }
-            }),
-            this.largeTitle.view.navButton("copy", "doc.on.clipboard", () => {
-                if (this.kernel.editor.text) {
-                    $clipboard.text = this.kernel.editor.text
-                    $ui.success($l10n("COPIED"))
+            },
+            {
+                symbol: "doc.on.clipboard",
+                tapped: () => {
+                    if (this.kernel.editor.text) {
+                        $clipboard.text = this.kernel.editor.text
+                        $ui.success($l10n("COPIED"))
+                    }
                 }
-            }),
+            }
         ])
     }
 
@@ -498,7 +507,7 @@ class Clipboard {
                                         make.left.inset(20)
                                     }
                                 },
-                                this.kernel.UIKit.underline(),
+                                UIKit.separatorLine(),
                                 {
                                     type: "list",
                                     layout: (make, view) => {

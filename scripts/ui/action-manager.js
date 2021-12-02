@@ -1,4 +1,5 @@
 const {
+    UIKit,
     PageController,
     Sheet
 } = require("../easy-jsbox")
@@ -651,7 +652,7 @@ class ActionManager {
                                         make.left.inset(20)
                                     }
                                 },
-                                this.kernel.UIKit.underline(),
+                                UIKit.separatorLine(),
                                 {
                                     type: "list",
                                     layout: (make, view) => {
