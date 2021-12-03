@@ -2,6 +2,13 @@ const VERSION = "1.0.0"
 const ROOT_PATH = "/script/easy-jsbox.js" // JSBox path, not nodejs
 const SHARED_PATH = "shared://EasyJsBox"
 
+class ValidationError extends Error {
+    constructor(parameter, type) {
+        super(`The type of the parameter '${parameter}' must be '${type}'`)
+        this.name = "ValidationError"
+    }
+}
+
 function l10n(language, content) {
     if (typeof content === "string") {
         const strings = {}
@@ -290,6 +297,20 @@ class ContainerView extends View {
     }
 }
 
+class SheetAddNavBarError extends Error {
+    constructor() {
+        super("Please call setView(view) first.")
+        this.name = "SheetAddNavBarError"
+    }
+}
+
+class SheetViewTypeError extends ValidationError {
+    constructor(parameter, type) {
+        super(parameter, type)
+        this.name = "SheetViewTypeError"
+    }
+}
+
 class Sheet extends View {
     init() {
         const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
@@ -314,7 +335,7 @@ class Sheet extends View {
      * @returns this
      */
     setView(view = {}) {
-        if (typeof view !== "object") throw "The type of the parameter `view` must be object."
+        if (typeof view !== "object") throw new SheetViewTypeError("view", "object")
         this.view = view
         return this
     }
@@ -327,7 +348,7 @@ class Sheet extends View {
      * @returns this
      */
     addNavBar(title, callback, btnText = "Done") {
-        if (this.view === undefined) throw "Please call setView(view) first."
+        if (this.view === undefined) throw new SheetAddNavBarError()
         const pageController = new PageController()
         pageController.navigationItem
             .addPopButton("", { // 返回按钮
@@ -494,7 +515,7 @@ class NavigationBar extends View {
                     },
                     layout: (make, view) => {
                         make.left.right.inset(0)
-                        make.height.equalTo(17)
+                        make.height.equalTo(20)
                         make.centerY.equalTo(view.super.safeArea)
                     }
                 }
@@ -1024,6 +1045,13 @@ class PageView extends ContainerView {
     }
 }
 
+class PageControllerViewTypeError extends ValidationError {
+    constructor(parameter, type) {
+        super(parameter, type)
+        this.name = "PageControllerViewTypeError"
+    }
+}
+
 /**
  * events:
  * - onChange(from, to)
@@ -1050,7 +1078,24 @@ class PageController extends Controller {
 
     initPage() {
         if (this.navigationController.navigationBar.prefersLargeTitles) {
-            if (typeof this.view !== "object") throw "The type of the parameter `view` must be object."
+            if (typeof this.view !== "object") throw new PageControllerViewTypeError("view", "object")
+            // 计算偏移高度
+            let height = this.navigationItem.largeTitleHeightOffset
+            if (this.navigationItem.titleView) {
+                height += this.navigationItem.titleView.height
+            }
+            if (this.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever) {
+                height += this.navigationController.navigationBar.navigationBarNormalHeight
+            } else {
+                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            }
+            // 修饰视图顶部偏移
+            if (!this.view.props.header) this.view.props.header = {}
+            this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
+                height: height
+            })
+            // 重写布局
+            // 滚动视图（有 header 属性）
             const scrollView = [
                 "list",
                 "matrix"
@@ -1058,35 +1103,22 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    let height = this.navigationController.navigationBar.isAddStatusBarHeight
-                        ? this.navigationController.navigationBar.navigationBarNormalHeight + UIKit.statusBarHeight
-                        : this.navigationController.navigationBar.navigationBarNormalHeight
-                    if (this.navigationItem.titleView) {
-                        height += this.navigationItem.titleView.height
+                    if (this.navigationController.navigationBar.isAddStatusBarHeight) {
+                        height += UIKit.statusBarHeight
                     }
                     make.top.equalTo(height)
                 }
             } else {
-                // 修饰视图
                 this.view.layout = $layout.fill
-                if (!this.view.events) this.view.events = {}
-                const oldScrollAction = this.view.events.didScroll
-                this.view.events.didScroll = sender => {
-                    this.navigationController.scrollAction(sender.contentOffset.y)
-                    if (typeof oldScrollAction === "function") oldScrollAction(sender.contentOffset.y)
-                }
-                if (!this.view.props.header) this.view.props.header = {}
-                let height = (this.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeNever
-                    ? this.navigationController.navigationBar.navigationBarLargeTitleHeight
-                    : this.navigationController.navigationBar.navigationBarNormalHeight)
-                    + this.navigationItem.largeTitleHeightOffset
-                if (this.navigationItem.titleView) {
-                    height += this.navigationItem.titleView.height
-                }
-                this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-                    height: height
-                })
             }
+            // 重写滚动事件
+            if (!this.view.events) this.view.events = {}
+            const oldScrollAction = this.view.events.didScroll
+            this.view.events.didScroll = sender => {
+                this.navigationController.scrollAction(sender.contentOffset.y)
+                if (typeof oldScrollAction === "function") oldScrollAction(sender.contentOffset.y)
+            }
+            // 初始化 PageView
             this.page = PageView.createByViews([
                 this.view,
                 this.navigationController.navigationBar.getLargeTitleView(),
