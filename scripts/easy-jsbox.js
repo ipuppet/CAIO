@@ -444,7 +444,7 @@ class NavigationBar extends View {
                 layout: (make, view) => {
                     make.left.equalTo(view.super.safeArea).offset(15)
                     make.height.equalTo(this.largeTitleFontSize + 5)
-                    make.top.equalTo(view.super).offset(this.largeTitleTopOffset)
+                    make.top.equalTo(view.super.safeArea).offset(this.largeTitleTopOffset)
                 }
             } : {}
     }
@@ -767,7 +767,7 @@ class NavigationItem {
         this.leftButtons = []
         this.hasbutton = false
         this.largeTitleDisplayMode = NavigationItem.LargeTitleDisplayModeAutomatic
-        this.largeTitleHeightOffset = 0
+        this.largeTitleHeightOffset = 20
     }
 
     static get LargeTitleDisplayModeAutomatic() {
@@ -1103,9 +1103,6 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    if (this.navigationController.navigationBar.isAddStatusBarHeight) {
-                        height += UIKit.statusBarHeight
-                    }
                     make.top.equalTo(height)
                 }
             } else {
