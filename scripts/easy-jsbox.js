@@ -400,8 +400,8 @@ class NavigationBar extends View {
     constructor(args) {
         super(args)
         this.prefersLargeTitles = true
-        this.navigationBarNormalHeight = 44
-        this.navigationBarLargeTitleHeight = 96
+        this.navigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
+        this.navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
         this.largeTitleFontSize = 34
         this.largeTitleTopOffset = this.navigationBarNormalHeight
         this.isAddStatusBarHeight = true
