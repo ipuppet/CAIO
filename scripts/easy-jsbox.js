@@ -1338,6 +1338,13 @@ class Kernel {
     }
 }
 
+class SettingLoadConfigError extends Error {
+    constructor() {
+        super("Call loadConfig() first.")
+        this.name = "SettingLoadConfigError"
+    }
+}
+
 /**
  * events:
  * - onSet(key, value)
@@ -1363,6 +1370,12 @@ class Setting extends Controller {
         this.viewController = new ViewController()
         // 用于存放 script 类型用到的方法
         this.method = {}
+        this.loadConfigStatus = false
+    }
+
+    _checkLoadConfigError() {
+        if (!this.loadConfigStatus)
+            throw new SettingLoadConfigError()
     }
 
     /**
@@ -1396,10 +1409,12 @@ class Setting extends Controller {
             return setting
         }
         this.setting = setValue(this.structure)
+        this.loadConfigStatus = true
         return this
     }
 
     hasSectionTitle(structure) {
+        this._checkLoadConfigError()
         return structure[0]["title"] ? true : false
     }
 
@@ -1496,6 +1511,7 @@ class Setting extends Controller {
     }
 
     set(key, value) {
+        this._checkLoadConfigError()
         this.setting[key] = value
         $file.write({
             data: $data({ string: JSON.stringify(this.setting) }),
@@ -1506,6 +1522,7 @@ class Setting extends Controller {
     }
 
     get(key, _default = null) {
+        this._checkLoadConfigError()
         if (Object.prototype.hasOwnProperty.call(this.setting, key))
             return this.setting[key]
         else
