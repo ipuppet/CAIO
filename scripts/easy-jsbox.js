@@ -190,7 +190,9 @@ class UIKit {
     }
 
     setTitle(title) {
-        $ui.title = title
+        if (!this.jsboxNavHidden) {
+            $ui.title = title
+        }
         this.title = title
     }
 
