@@ -1,8 +1,7 @@
 const {
     UIKit,
     PageController,
-    SearchBar,
-    SearchBarController
+    SearchBar
 } = require("../easy-jsbox")
 
 class Clipboard {
