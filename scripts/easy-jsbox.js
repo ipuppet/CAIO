@@ -405,6 +405,7 @@ class NavigationBar extends View {
         this.largeTitleFontSize = 34
         this.largeTitleTopOffset = this.navigationBarNormalHeight
         this.isAddStatusBarHeight = true
+        this.contentViewHeightOffset = 10
     }
 
     withoutStatusBarHeight() {
@@ -422,6 +423,11 @@ class NavigationBar extends View {
 
     setPrefersLargeTitles(bool) {
         this.prefersLargeTitles = bool
+        return this
+    }
+
+    setContentViewHeightOffset(offset) {
+        this.contentViewHeightOffset = offset
         return this
     }
 
@@ -797,11 +803,6 @@ class NavigationItem {
         return this
     }
 
-    setLargeTitleHeightOffset(offset) {
-        this.largeTitleHeightOffset = offset
-        return this
-    }
-
     setBackgroundColor(backgroundColor) {
         this.backgroundColor = backgroundColor
         return this
@@ -1080,7 +1081,7 @@ class PageController extends Controller {
         if (this.navigationController.navigationBar.prefersLargeTitles) {
             if (typeof this.view !== "object") throw new PageControllerViewTypeError("view", "object")
             // 计算偏移高度
-            let height = this.navigationItem.largeTitleHeightOffset
+            let height = this.navigationController.navigationBar.contentViewHeightOffset
             if (this.navigationItem.titleView) {
                 height += this.navigationItem.titleView.height
             }
@@ -2395,7 +2396,7 @@ class Setting extends Controller {
                             .setTitle(title)
                             .addPopButton()
                             .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
-                            .setLargeTitleHeightOffset(30)
+                        pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
                         this.viewController.push(pageController)
                     })
                 }
@@ -2517,7 +2518,8 @@ class Setting extends Controller {
                 .setView(this.getListView(this.structure))
                 .navigationItem
                 .setTitle($l10n("SETTING"))
-                .setLargeTitleHeightOffset(10)
+            if (this.hasSectionTitle(this.structure))
+                pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
             pageController
                 .initPage()
                 .page

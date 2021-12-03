@@ -748,6 +748,7 @@ class ActionManager {
                     }
                 }
             ])
+        pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
         pageController.setView({
             type: "matrix",
             props: {
