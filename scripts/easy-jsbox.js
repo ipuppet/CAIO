@@ -117,7 +117,7 @@ class UIKit {
     }
 
     static get statusBarHeight() {
-        return $device.isIphoneX ? 44 : 20
+        return $objc("UIApplication").$sharedApplication().$statusBarFrame().height
     }
 
     static get align() {
@@ -749,21 +749,32 @@ class SearchBarController extends Controller {
 
     hide() {
         this.updateSelector()
-        this.selector.input.hidden = true
+        this.selector.input.updateLayout(make => {
+            make.height.equalTo(0)
+        })
     }
 
     show() {
         this.updateSelector()
-        this.selector.input.hidden = false
+        this.selector.input.updateLayout(make => {
+            make.height.equalTo(this.searchBar.height)
+        })
     }
 
     scrollAction(contentOffset) {
         this.updateSelector()
+        // 调整大小
         let height = this.searchBar.height - contentOffset
         height = height > 0 ? (height > this.searchBar.height ? this.searchBar.height : height) : 0
         this.selector.input.updateLayout(make => {
             make.height.equalTo(height)
         })
+        // 隐藏内容
+        if (contentOffset > 0) {
+            this.selector.input.placeholder = ""
+        } else {
+            this.selector.input.placeholder = this.searchBar.placeholder
+        }
     }
 }
 
@@ -938,10 +949,10 @@ class NavigationController extends Controller {
         const titleSizeMax = 40 // 下拉放大字体最大值
         // 标题跟随
         this.selector.largeTitleView.updateLayout((make, view) => {
-            make.top.equalTo(view.super).offset(this.navigationBar.largeTitleTopOffset - contentOffset)
+            make.top.equalTo(view.super).offset(this.navigationBar.largeTitleTopOffset - contentOffset + UIKit.statusBarHeight)
         })
-        if (contentOffset > -1 * UIKit.statusBarHeight) {
-            if (contentOffset > this.topScrollTrigger - UIKit.statusBarHeight) {
+        if (contentOffset > 0) {
+            if (contentOffset > this.topScrollTrigger) {
                 $ui.animate({
                     duration: 0.2,
                     animation: () => {
@@ -961,8 +972,8 @@ class NavigationController extends Controller {
             }
         } else {
             // 下拉放大字体
-            if (contentOffset <= -10 - UIKit.statusBarHeight) {
-                let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
+            if (contentOffset <= -10) {
+                let size = this.navigationBar.largeTitleFontSize - (contentOffset) * 0.04
                 if (size > titleSizeMax) size = titleSizeMax
                 this.selector.largeTitleView.font = $font("bold", size)
             }
@@ -970,9 +981,9 @@ class NavigationController extends Controller {
     }
 
     _navigationBarScrollAction(contentOffset) {
-        if (contentOffset > -1 * UIKit.statusBarHeight) {
+        if (contentOffset > 0) {
             this.selector.backgroundView.hidden = false
-            if (contentOffset > this.topScrollTrigger - UIKit.statusBarHeight) {
+            if (contentOffset > this.topScrollTrigger) {
                 $ui.animate({
                     duration: 0.2,
                     animation: () => {
@@ -986,7 +997,7 @@ class NavigationController extends Controller {
             }
         } else {
             // 隐藏背景
-            if (contentOffset > -10 - UIKit.statusBarHeight) {
+            if (contentOffset > -10) {
                 this.selector.backgroundView.hidden = true
             }
         }
@@ -996,15 +1007,16 @@ class NavigationController extends Controller {
         if (!this.navigationBar.prefersLargeTitles) return
         if (this.navigationBar?.navigationItem.largeTitleDisplayMode !== NavigationItem.LargeTitleDisplayModeAutomatic) return
         this.updateSelector()
-        this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffset + UIKit.statusBarHeight)
+        let contentOffsetWithStatusBarHeight = contentOffset + UIKit.statusBarHeight
+        this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffsetWithStatusBarHeight)
         // 在 titleView 折叠前锁住主要视图
-        const height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
-        if (contentOffset + UIKit.statusBarHeight > 0) {
-            contentOffset -= height
-            if (contentOffset + UIKit.statusBarHeight < 0) contentOffset = 0 - UIKit.statusBarHeight
+        if (contentOffsetWithStatusBarHeight > 0) {
+            const height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+            contentOffsetWithStatusBarHeight -= height
+            if (contentOffsetWithStatusBarHeight < 0) contentOffsetWithStatusBarHeight = 0
         }
-        this._largeTitleScrollAction(contentOffset)
-        this._navigationBarScrollAction(contentOffset)
+        this._largeTitleScrollAction(contentOffsetWithStatusBarHeight)
+        this._navigationBarScrollAction(contentOffsetWithStatusBarHeight)
     }
 }
 
@@ -1104,6 +1116,8 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
+                    if (this.navigationController.navigationBar.isAddStatusBarHeight)
+                        height += UIKit.statusBarHeight
                     make.top.equalTo(height)
                 }
             } else {
