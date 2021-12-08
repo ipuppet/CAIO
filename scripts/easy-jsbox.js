@@ -568,6 +568,11 @@ class BarButtonItem extends View {
         return this
     }
 
+    setMenu(menu) {
+        this.menu = menu
+        return this
+    }
+
     setAlign(align) {
         this.align = align
         return this
@@ -639,6 +644,7 @@ class BarButtonItem extends View {
                         id: this.id,
                         tintColor: UIKit.textColor,
                         symbol: this.symbol,
+                        menu: this.menu,
                         title: this.title,
                         titleColor: UIKit.textColor,
                         contentEdgeInsets: $insets(0, 0, 0, 0),
@@ -820,36 +826,38 @@ class NavigationItem {
     }
 
     setRightButtons(buttons) {
-        buttons.forEach(button => this.addRightButton(button.symbol, button.title, button.tapped))
+        buttons.forEach(button => this.addRightButton(button.symbol, button.title, button.tapped, button.menu))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
     setLeftButtons(buttons) {
-        buttons.forEach(button => this.addLeftButton(button.symbol, button.title, button.tapped))
+        buttons.forEach(button => this.addLeftButton(button.symbol, button.title, button.tapped, button.menu))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
-    addRightButton(symbol, title, tapped) {
+    addRightButton(symbol, title, tapped, menu) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvent("tapped", tapped)
             .setAlign(UIKit.align.right)
             .setSymbol(symbol)
             .setTitle(title)
+            .setMenu(menu)
         this.rightButtons.push(barButtonItem.definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
-    addLeftButton(symbol, title, tapped) {
+    addLeftButton(symbol, title, tapped, menu) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvent("tapped", tapped)
             .setAlign(UIKit.align.left)
             .setSymbol(symbol)
             .setTitle(title)
+            .setMenu(menu)
         this.leftButtons.push(barButtonItem.definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
