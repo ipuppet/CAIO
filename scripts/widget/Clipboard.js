@@ -1,9 +1,6 @@
-const Widget = require("../widget")
-const { Setting } = require("./setting")
-
-class ClipboardWidget extends Widget {
+class ClipboardWidget {
     constructor(kernel) {
-        super(kernel, new Setting(kernel))
+        this.kernel = kernel
         this.baseUrlScheme = `jsbox://run?name=${this.kernel.name}&widget=${this.widget}`
         this.urlScheme = {
             add: `${this.baseUrlScheme}&add=1`,
@@ -207,6 +204,10 @@ class ClipboardWidget extends Widget {
         }
     }
 
+    view4x4(clipboardList) {
+        return this.view2x2(clipboardList)
+    }
+
     render() {
         const nowDate = Date.now()
         const expireDate = new Date(nowDate + 1000 * 60 * 10)// 每十分钟切换
@@ -236,13 +237,10 @@ class ClipboardWidget extends Widget {
                     default:
                         view = this.view2x2()
                 }
-                this.printTimeConsuming()
                 return view
             }
         })
     }
 }
 
-module.exports = {
-    Widget: ClipboardWidget
-}
+module.exports = { Widget: ClipboardWidget }

@@ -1,26 +1,38 @@
-const { Kernel, VERSION } = require("../EasyJsBox/src/kernel")
+const {
+    UIKit,
+    Sheet,
+    Kernel,
+    Setting
+} = require("./easy-jsbox")
 const Storage = require("./storage")
 
 class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
-        // 注册组件
-        this.settingComponent = this.registerComponent("Setting")
-        this.setting = this.settingComponent.controller
+        // 初始化必要路径
+        if (!$file.exists("storage")) $file.mkdir("storage")
+        // 初始话设置
+        this.setting = new Setting()
+        this.setting.loadConfig()
+        this.initSettingMethods()
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"))
-        // 初始话设置中的方法
-        this.initSettingMethods()
-        this.page = this.registerComponent("Page")
-        this.menu = this.registerComponent("Menu")
         // action 相关路径
-        this.actionPath = "/scripts/action/"
+        this.actionPath = "scripts/action/"
         this.actionOrderFile = "order.json"
-        this.userActionPath = "/storage/user_action/"
+        this.userActionPath = "storage/user_action/"
         this.checkUserAction()
-        // largeTitle 用于生成navButton，避免重复创建对象
-        this.largeTitle = this.registerComponent("large-title", "kernel.large-title")
+        // 用来存储被美化的 Action 分类名称
+        this.typeNameMap = {}
+        // 检查更新
+        this.checkUpdate(content => {
+            $file.write({
+                data: $data({ string: content }),
+                path: "scripts/easy-jsbox.js"
+            })
+            $ui.toast("The framework has been updated.")
+        })
     }
 
     importExampleAction() {
@@ -62,6 +74,16 @@ class AppKernel extends Kernel {
         else return []
     }
 
+    getActionHandler(type, name, basePath) {
+        if (!basePath) basePath = `${this.userActionPath}${type}/${name}/`
+        const config = JSON.parse($file.read(basePath + "config.json").string)
+        return data => {
+            const ActionClass = require(basePath + "main.js")
+            const action = new ActionClass(this, config, data)
+            action.do()
+        }
+    }
+
     getActions(type) {
         const actions = []
         const typePath = `${this.userActionPath}${type}/`
@@ -74,11 +96,7 @@ class AppKernel extends Kernel {
                     dir: item,
                     type: type,
                     name: config.name ?? item,
-                    handler: data => {
-                        const ActionClass = require(basePath + "main.js")
-                        const action = new ActionClass(this, config, data)
-                        action.do()
-                    }
+                    icon: config.icon
                 }))
             }
         }
@@ -93,96 +111,172 @@ class AppKernel extends Kernel {
         return actions
     }
 
-    getActionButton(get, type = "all") {
-        return this.largeTitle.view.navButton("add", "bolt.circle", (animate, sender) => {
-            const data = { text: get.text() }
-            const defaultData = Object.keys(data)
-            Object.keys(get).map(item => {
-                if (defaultData.indexOf(item) === -1) {
-                    if (typeof get[item] === "function") {
-                        data[item] = get[item]()
-                    } else {
-                        data[item] = get[item]
-                    }
-                }
+    actionToData(action) {
+        return {
+            name: { text: action.name },
+            icon: action.icon.slice(0, 5) === "icon_"
+                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                : { image: $image(action.icon) },
+            color: { bgcolor: $color(action.color) },
+            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
+        }
+    }
+
+    getTypeName(type) {
+        const typeUpperCase = type.toUpperCase()
+        const l10n = $l10n(typeUpperCase)
+        const name = l10n === typeUpperCase ? type : l10n
+        this.typeNameMap[name] = type
+        return name
+    }
+
+    getTypeDir(name) {
+        return this.typeNameMap[name] ?? name
+    }
+
+    getActionListView(title, props = {}, events = {}) {
+        const data = []
+        this.getActionTypes().forEach(type => {
+            const section = {
+                title: this.getTypeName(type),
+                rows: []
+            }
+            this.getActions(type).forEach(action => {
+                section.rows.push(this.actionToData(action))
             })
-            const popover = $ui.popover({
-                sourceView: sender,
-                directions: $popoverDirection.up,
-                size: $size(200, 300),
-                views: [
-                    {
+            data.push(section)
+        })
+        return {
+            type: "list",
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super)
+                make.bottom.inset(0)
+            },
+            events: events,
+            props: Object.assign({
+                reorder: false,
+                bgcolor: $color("clear"),
+                rowHeight: 60,
+                sectionTitleHeight: 30,
+                stickyHeader: true,
+                header: {
+                    type: "view",
+                    props: { height: 25 },
+                    views: [{
                         type: "label",
                         props: {
-                            text: $l10n("ACTION"),
+                            text: title,
                             color: $color("secondaryText"),
                             font: $font(14)
                         },
                         layout: (make, view) => {
-                            make.top.equalTo(view.super.safeArea).offset(0)
-                            make.height.equalTo(40)
-                            make.left.inset(20)
+                            make.top.equalTo(view.super.safeArea).offset(10)
+                            make.height.equalTo(30)
+                            make.left.inset(15)
                         }
-                    },
-                    this.UIKit.underline(),
-                    {
-                        type: "list",
-                        layout: (make, view) => {
-                            make.width.equalTo(view.super)
-                            make.top.equalTo(view.prev.bottom)
-                            make.bottom.inset(0)
+                    }, UIKit.separatorLine()]
+                },
+                data: data,
+                template: {
+                    props: { bgcolor: $color("clear") },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: "color",
+                                cornerRadius: 8,
+                                smoothCorners: true
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.inset(15)
+                                make.size.equalTo($size(30, 30))
+                            }
                         },
-                        props: {
-                            data: this.getActions(type).map(action => {
-                                return {
-                                    type: "label",
-                                    layout: (make, view) => {
-                                        make.centerY.equalTo(view.super)
-                                        make.left.right.inset(15)
-                                    },
-                                    props: {
-                                        text: action.name
-                                    },
-                                    events: {
-                                        tapped: () => {
-                                            popover.dismiss()
-                                            setTimeout(() => action.handler(data), 500)
-                                        }
-                                    }
-                                }
-                            })
+                        {
+                            type: "image",
+                            props: {
+                                id: "icon",
+                                tintColor: $color("#ffffff"),
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.inset(20)
+                                make.size.equalTo($size(20, 20))
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                lines: 1,
+                                font: $font(16)
+                            },
+                            layout: (make, view) => {
+                                make.height.equalTo(30)
+                                make.centerY.equalTo(view.super)
+                                make.left.equalTo(view.prev.right).offset(15)
+                            }
+                        },
+                        { type: "label", props: { id: "info" } }
+                    ]
+                }
+            }, props)
+        }
+    }
+
+    getActionButton(getDataObject) {
+        return {
+            symbol: "bolt.circle",
+            tapped: (animate, sender) => {
+                const content = { text: getDataObject.text() }
+                const defaultData = Object.keys(content)
+                Object.keys(getDataObject).map(item => {
+                    if (defaultData.indexOf(item) === -1) {
+                        if (typeof getDataObject[item] === "function") {
+                            content[item] = getDataObject[item]()
+                        } else {
+                            content[item] = getDataObject[item]
                         }
                     }
-                ]
-            })
-        })
+                })
+                const popover = $ui.popover({
+                    sourceView: sender,
+                    directions: $popoverDirection.up,
+                    size: $size(200, 300),
+                    views: [this.getActionListView($l10n("ACTION"), {}, {
+                        didSelect: (sender, indexPath, data) => {
+                            popover.dismiss()
+                            const action = this.getActionHandler(data.info.info.type, data.info.info.dir)
+                            setTimeout(() => action(content), 500)
+                        }
+                    })]
+                })
+            }
+        }
     }
 
     /**
      * 注入设置中的脚本类型方法
      */
     initSettingMethods() {
-        this.setting.readme = animate => {
+        this.setting.method.readme = animate => {
             animate.touchHighlight()
             const content = $file.read("/README.md").string
-            this.UIKit.pushPageSheet({
-                views: [{
+            const sheet = new Sheet()
+            sheet
+                .setView({
                     type: "markdown",
                     props: { content: content },
                     layout: (make, view) => {
                         make.size.equalTo(view.super)
                     }
-                }],
-                title: $l10n("README")
-            })
+                })
+                .init()
+                .present()
         }
 
-        this.setting.tips = animate => {
-            animate.touchHighlight()
-            $ui.alert("Tips")
-        }
-
-        this.setting.exportClipboard = animate => {
+        this.setting.method.exportClipboard = animate => {
             animate.actionStart()
             this.storage.export(success => {
                 if (success) {
@@ -193,7 +287,7 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.importClipboard = animate => {
+        this.setting.method.importClipboard = animate => {
             animate.actionStart()
             $ui.alert({
                 title: $l10n("ALERT_INFO"),
@@ -226,7 +320,7 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.exportAction = animate => {
+        this.setting.method.exportAction = animate => {
             animate.actionStart()
             // 备份动作
             const fileName = "actions.zip"
@@ -253,7 +347,7 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.importAction = animate => {
+        this.setting.method.importAction = animate => {
             animate.actionStart()
             $drive.open({
                 handler: data => {
@@ -287,12 +381,12 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.sync = animate => {
+        this.setting.method.sync = animate => {
             animate.actionStart()
             setTimeout(() => this.storage.syncByiCloud(true, () => animate.actionDone()), 200)
         }
 
-        this.setting.importExampleAction = animate => {
+        this.setting.method.importExampleAction = animate => {
             animate.actionStart()
             this.importExampleAction()
             animate.actionDone()
@@ -300,32 +394,19 @@ class AppKernel extends Kernel {
     }
 }
 
-class WidgetKernel extends Kernel {
-    constructor() {
-        super()
-        this.inWidgetEnv = true
-        // 小组件根目录
-        this.widgetRootPath = "/scripts/widget"
-        this.widgetDataPath = "/storage/widget"
-        this.storage = new Storage()
-    }
-
-    widgetInstance(widget) {
-        if ($file.exists(`${this.widgetRootPath}/${widget}/index.js`)) {
-            const { Widget } = require(`./widget/${widget}/index.js`)
-            return new Widget(this)
-        } else {
-            return false
-        }
-    }
-}
-
 module.exports = {
     run: () => {
         if ($app.env === $env.widget) {
-            const kernel = new WidgetKernel()
+            function widgetInstance(widget) {
+                if ($file.exists(`/scripts/widget/${widget}.js`)) {
+                    const { Widget } = require(`./widget/${widget}.js`)
+                    return new Widget(new AppKernel())
+                } else {
+                    return false
+                }
+            }
             const widgetName = $widget.inputValue ?? "Clipboard"
-            const widget = kernel.widgetInstance(widgetName)
+            const widget = widgetInstance(widgetName)
             widget ? widget.render() : $widget.setTimeline({
                 render: () => ({
                     type: "text",
@@ -334,14 +415,14 @@ module.exports = {
                     }
                 })
             })
-        } else if ($app.env === $env.app) {
-            const kernel = new AppKernel()
-            const Factory = require("./ui/factory")
-            new Factory(kernel).render()
         } else if ($app.env === $env.today || $app.env === $env.keyboard) {
             const kernel = new AppKernel()
             const Today = require("./ui/mini")
             new Today(kernel).render()
+        } else if ($app.env === $env.app) {
+            const kernel = new AppKernel()
+            const Factory = require("./ui/factory")
+            new Factory(kernel).render()
         } else {
             $ui.render({
                 views: [{

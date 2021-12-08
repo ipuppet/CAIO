@@ -1,52 +1,52 @@
+const { TabBarController } = require("../easy-jsbox")
 const Editor = require("./editor")
 
 class Factory {
     constructor(kernel) {
         this.kernel = kernel
-        // 设置初始页面
-        this.kernel.page.controller.setSelectedPage(0)
         this.kernel.editor = new Editor(this.kernel)
+        this.tabBarController = new TabBarController()
     }
 
     clipboard() {
         const Clipboard = require("./clipboard")
         const interfaceUi = new Clipboard(this.kernel)
-        return this.kernel.page.view.creator(interfaceUi.getViews(), 0, true)
+        return interfaceUi.getPageView()
     }
 
     actionManager() {
         const ActionManager = require("./action-manager")
         const interfaceUi = new ActionManager(this.kernel)
-        return this.kernel.page.view.creator(interfaceUi.getViews(), 1, false) // 水平安全距离手动设置，因为需要设置背景色
+        return interfaceUi.getPageView()
     }
 
     setting() {
-        return this.kernel.page.view.creator(this.kernel.setting.getView(), 2, false)
+        return this.kernel.setting.getPageView()
     }
 
     /**
      * 渲染页面
      */
     render() {
-        this.kernel.render([
-            this.clipboard(),
-            this.actionManager(),
-            this.setting()
-        ], [
-            {
+        this.tabBarController.setPages({
+            clipboard: this.clipboard(),
+            actionManager: this.actionManager(),
+            setting: this.setting()
+        }).setCells({
+            clipboard: {
                 icon: ["doc.on.clipboard", "doc.on.clipboard.fill"],
                 title: $l10n("CLIPBOARD")
-
             },
-            {
-                icon: ["command"],
+            actionManager: {
+                icon: "command",
                 title: $l10n("ACTION")
             },
-            {
+            setting: {
                 icon: "gear",
                 title: $l10n("SETTING")
             }
-        ])()
+        })
+        this.kernel.UIRender(this.tabBarController.generateView().definition)
     }
 }
 

@@ -2,11 +2,11 @@ class Storage {
     constructor(sync = false) {
         this.sync = sync
         this.dbName = "CAIO.db"
-        this.localDb = `/storage/${this.dbName}`
+        this.localDb = `storage/${this.dbName}`
         this.iCloudPath = "drive://CAIO"
         this.iCloudZipFile = `${this.iCloudPath}/CAIO.zip`
-        this.syncInfoFile = "/storage/sync.json"
-        this.tempPath = "/storage/temp"
+        this.syncInfoFile = "storage/sync.json"
+        this.tempPath = "storage/temp"
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.init()

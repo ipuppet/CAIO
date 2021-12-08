@@ -1,228 +1,23 @@
+const {
+    PageController,
+    Sheet
+} = require("../easy-jsbox")
+
 class ActionManager {
     constructor(kernel) {
         this.kernel = kernel
         this.matrixId = "actions"
-        this.initLargeTitle()
-    }
-
-    initLargeTitle() {
-        this.largeTitle = this.kernel.registerComponent("large-title", {
-            name: "action-large-title",
-            id: "action-large-title",
-            title: $l10n("ACTION")
-        })
-        this.largeTitle.controller.setRightButtons([
-            this.largeTitle.view.navButton("action-add", "plus.circle", (animate, sender) => {
-                const newItem = (title, tapped) => {
-                    return {
-                        type: "label",
-                        layout: (make, view) => {
-                            make.left.right.inset(15)
-                            make.height.equalTo(40)
-                            make.width.equalTo(view.super)
-                            make.top.equalTo(view.prev?.bottom)
-                        },
-                        props: { text: title },
-                        events: {
-                            tapped: () => tapped()
-                        }
-                    }
-                }
-                const popover = $ui.popover({
-                    sourceView: sender,
-                    directions: $popoverDirection.right,
-                    size: $size(200, 80),
-                    views: [{
-                        type: "view",
-                        views: [
-                            newItem($l10n("CREATE_NEW_ACTION"), () => {
-                                this.editActionInfoPageSheet(null, info => {
-                                    $(this.matrixId).insert({
-                                        indexPath: $indexPath(this.kernel.getActionTypes().indexOf(info.type), 0),
-                                        value: this.actionToData(info)
-                                    })
-                                    popover.dismiss()
-                                    const MainJsTemplate = $file.read(`${this.kernel.actionPath}template.js`).string
-                                    this.editActionMainJs(MainJsTemplate, info)
-                                })
-                            }),
-                            { // 分割线
-                                type: "view",
-                                props: { bgcolor: $color("separatorColor") },
-                                layout: (make, view) => {
-                                    make.width.equalTo(view.super)
-                                    make.height.equalTo(0.5)
-                                    make.top.equalTo(view.prev.bottom)
-                                }
-                            },
-                            newItem($l10n("CREATE_NEW_TYPE"), () => {
-                                $input.text({
-                                    text: "",
-                                    placeholder: $l10n("CREATE_NEW_TYPE"),
-                                    handler: text => {
-                                        text = text.trim()
-                                        if (text === "") {
-                                            $ui.toast($l10n("INVALID_VALUE"))
-                                            return
-                                        }
-                                        const path = `${this.kernel.userActionPath}${text}`
-                                        if ($file.exists(path)) {
-                                            $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
-                                        } else {
-                                            $file.mkdir()
-                                            $ui.success($l10n("SUCCESS"))
-                                        }
-                                        setTimeout(() => { popover.dismiss() }, 1000)
-                                    }
-                                })
-                            })
-                        ],
-                        layout: $layout.fill
-                    }]
-                })
-            }),
-            this.largeTitle.view.navButton("action-reorder", "arrow.up.arrow.down.circle", (animate, sender) => {
-                $ui.popover({
-                    sourceView: sender,
-                    directions: $popoverDirection.up,
-                    size: $size(200, 300),
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                text: $l10n("SORT"),
-                                color: $color("secondaryText"),
-                                font: $font(14)
-                            },
-                            layout: (make, view) => {
-                                make.top.equalTo(view.super.safeArea).offset(0)
-                                make.height.equalTo(40)
-                                make.left.inset(20)
-                            }
-                        },
-                        this.kernel.UIKit.underline(),
-                        {
-                            type: "list",
-                            layout: (make, view) => {
-                                make.width.equalTo(view.super)
-                                make.top.equalTo(view.prev.bottom)
-                                make.bottom.inset(0)
-                            },
-                            props: {
-                                reorder: true,
-                                bgcolor: $color("clear"),
-                                rowHeight: 60,
-                                sectionTitleHeight: 30,
-                                stickyHeader: true,
-                                data: this.actionsToData().map(section => {
-                                    return {
-                                        title: section.title,
-                                        rows: section.items
-                                    }
-                                }),
-                                template: {
-                                    props: { bgcolor: $color("clear") },
-                                    views: [
-                                        {
-                                            type: "image",
-                                            props: {
-                                                id: "color",
-                                                cornerRadius: 8,
-                                                smoothCorners: true
-                                            },
-                                            layout: (make, view) => {
-                                                make.centerY.equalTo(view.super)
-                                                make.left.inset(15)
-                                                make.size.equalTo($size(30, 30))
-                                            }
-                                        },
-                                        {
-                                            type: "image",
-                                            props: {
-                                                id: "icon",
-                                                tintColor: $color("#ffffff"),
-                                            },
-                                            layout: (make, view) => {
-                                                make.centerY.equalTo(view.super)
-                                                make.left.inset(20)
-                                                make.size.equalTo($size(20, 20))
-                                            }
-                                        },
-                                        {
-                                            type: "label",
-                                            props: {
-                                                id: "name",
-                                                lines: 1,
-                                                font: $font(16)
-                                            },
-                                            layout: (make, view) => {
-                                                make.height.equalTo(30)
-                                                make.centerY.equalTo(view.super)
-                                                make.left.equalTo(view.prev.right).offset(15)
-                                            }
-                                        },
-                                        { type: "label", props: { id: "info" } }
-                                    ]
-                                },
-                                actions: [
-                                    { // 删除
-                                        title: "delete",
-                                        handler: (sender, indexPath) => {
-                                            const matrixView = $(this.matrixId)
-                                            const info = matrixView.object(indexPath).info.info
-                                            this.delete(info)
-                                            matrixView.delete(indexPath)
-                                        }
-                                    }
-                                ]
-                            },
-                            events: {
-                                reorderBegan: indexPath => {
-                                    if (this.reorder === undefined) this.reorder = {}
-                                    this.reorder.from = indexPath
-                                    this.reorder.to = undefined
-                                },
-                                reorderMoved: (fromIndexPath, toIndexPath) => {
-                                    this.reorder.to = toIndexPath
-                                },
-                                reorderFinished: data => {
-                                    if (this.reorder.to === undefined) return
-                                    this.move(this.reorder.from, this.reorder.to, data)
-                                }
-                            }
-                        }
-                    ]
-                })
-            })
-        ])
-    }
-
-    actionToData(action) {
-        return {
-            name: { text: action.name },
-            icon: action.icon.slice(0, 5) === "icon_"
-                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                : { image: $image(action.icon) },
-            color: { bgcolor: $color(action.color) },
-            info: { info: action }
-        }
-    }
-
-    getTypeName(type) {
-        const typeUpperCase = type.toUpperCase()
-        const l10n = $l10n(typeUpperCase)
-        return l10n === typeUpperCase ? type : l10n
     }
 
     actionsToData() { // 格式化数据供 matrix 使用
         const data = []
         this.kernel.getActionTypes().forEach(type => {
             const section = {
-                title: this.getTypeName(type), // TODO section 标题
+                title: this.kernel.getTypeName(type), // TODO section 标题
                 items: []
             }
             this.kernel.getActions(type).forEach(action => {
-                section.items.push(this.actionToData(action))
+                section.items.push(this.kernel.actionToData(action))
             })
             data.push(section)
         })
@@ -566,8 +361,9 @@ class ActionManager {
         ]
         // 只有新建时才可选择类型
         if (!info) data[0].rows = data[0].rows.concat(typeMenu)
-        this.kernel.UIKit.pushPageSheet({
-            views: [{
+        const sheet = new Sheet()
+        sheet
+            .setView({
                 type: "list",
                 props: {
                     id: "actionInfoPageSheetList",
@@ -580,31 +376,35 @@ class ActionManager {
                 events: {
                     rowHeight: (sender, indexPath) => indexPath.section === 1 ? 120 : 50
                 }
-            }],
-            done: () => {
+            })
+            .addNavBar("", () => {
                 this.saveActionInfo(this.editingActionInfo)
                 if (done) done(this.editingActionInfo)
-            }
-        })
+            }, "Done")
+            .init()
+            .present()
     }
 
     editActionMainJs(text = "", info) {
         this.kernel.editor.push(text, content => {
             this.saveMainJs(info, content)
-        }, $l10n("ACTION"), info.name, [
-            this.largeTitle.view.navButton("docs", "book.circle", () => {
+        }, $l10n("ACTION"), info.name, [{
+            symbol: "book.circle",
+            tapped: () => {
                 const content = $file.read("/scripts/action/README.md").string
-                this.kernel.UIKit.pushPageSheet({
-                    views: [{
+                const sheet = new Sheet()
+                sheet
+                    .setView({
                         type: "markdown",
                         props: { content: content },
                         layout: (make, view) => {
                             make.size.equalTo(view.super)
                         }
-                    }]
-                })
-            })
-        ], "code")
+                    })
+                    .init()
+                    .present()
+            }
+        }], "code")
     }
 
     saveActionInfo(info) {
@@ -657,7 +457,7 @@ class ActionManager {
         }
         const updateUI = (insertFirst = true, type) => {
             const actionsView = $(this.matrixId)
-            const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
+            const toData = this.kernel.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
             if (insertFirst) {
                 actionsView.insert({
                     indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
@@ -672,19 +472,21 @@ class ActionManager {
                 })
             }
         }
+        const fromType = this.kernel.getTypeDir(fromSection.title)
+        const toType = this.kernel.getTypeDir(toSection.title)
         // 判断是否跨 section
         if (from.section === to.section) {
-            this.saveOrder(fromSection.title, getOrder(from.section))
+            this.saveOrder(fromType, getOrder(from.section))
         } else { // 跨 section 则同时移动 Action 目录
-            this.saveOrder(fromSection.title, getOrder(from.section))
-            this.saveOrder(toSection.title, getOrder(to.section))
+            this.saveOrder(fromType, getOrder(from.section))
+            this.saveOrder(toType, getOrder(to.section))
             $file.move({
-                src: `${this.kernel.userActionPath}${fromSection.title}/${toSection.rows[to.row].dir}`,
-                dst: `${this.kernel.userActionPath}${toSection.title}/${toSection.rows[to.row].dir}`
+                src: `${this.kernel.userActionPath}${fromType}/${toSection.rows[to.row].dir}`,
+                dst: `${this.kernel.userActionPath}${toType}/${toSection.rows[to.row].dir}`
             })
         }
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
-        updateUI(from.rom < to.rom, toSection.title)
+        updateUI(from.rom < to.rom, toType)
 
     }
 
@@ -696,9 +498,8 @@ class ActionManager {
         return [
             { // 编辑信息
                 title: $l10n("EDIT_DETAILS"),
-                handler: (sender, indexPath) => {
-                    const info = sender.object(indexPath).info.info
-                    this.editActionInfoPageSheet(info, info => {
+                handler: (sender, indexPath, data) => {
+                    this.editActionInfoPageSheet(data.info.info, info => {
                         // 更新视图信息
                         const view = sender.cell(indexPath)
                         view.get("info").info = info
@@ -712,10 +513,20 @@ class ActionManager {
                     })
                 }
             },
+            { // 编辑脚本
+                title: $l10n("EDIT_SCRIPT"),
+                handler: (sender, indexPath, data) => {
+                    const info = data.info.info
+                    if (!info) return
+                    const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`
+                    const main = $file.read(path).string
+                    this.editActionMainJs(main, info)
+                }
+            },
             { // 删除
                 title: $l10n("DELETE"),
                 destructive: true,
-                handler: (sender, indexPath) => {
+                handler: (sender, indexPath, data) => {
                     $ui.alert({
                         title: $l10n("CONFIRM_DELETE_MSG"),
                         actions: [
@@ -723,7 +534,7 @@ class ActionManager {
                                 title: $l10n("DELETE"),
                                 style: $alertActionType.destructive,
                                 handler: () => {
-                                    this.delete(sender.object(indexPath).info.info)
+                                    this.delete(data.info.info)
                                     sender.delete(indexPath)
                                 }
                             },
@@ -735,120 +546,198 @@ class ActionManager {
         ]
     }
 
-    getViews() {
-        return [ // 水平安全距离手动设置，因为需要设置背景色
-            {
-                type: "view",
-                props: { bgcolor: $color("insetGroupedBackground") },
-                layout: $layout.fill,
-                views: [
-                    {
-                        type: "matrix",
-                        props: {
-                            id: this.matrixId,
-                            columns: 2,
-                            itemHeight: 100,
-                            spacing: 20,
-                            indicatorInsets: $insets(50, 0, 50, 0),
-                            bgcolor: $color("insetGroupedBackground"),
-                            menu: { items: this.menuItems() },
-                            header: this.largeTitle.view.headerTitle(),
-                            footer: { // 防止被菜单遮挡
-                                type: "view",
-                                props: { height: 50 }
+    getPageView() {
+        const pageController = new PageController()
+        pageController.navigationItem
+            .setTitle($l10n("ACTION"))
+            .setRightButtons([
+                { // 添加
+                    symbol: "plus.circle",
+                    menu: {
+                        pullDown: true,
+                        asPrimary: true,
+                        items: [
+                            {
+                                title: $l10n("CREATE_NEW_ACTION"),
+                                handler: () => {
+                                    this.editActionInfoPageSheet(null, info => {
+                                        $(this.matrixId).insert({
+                                            indexPath: $indexPath(this.kernel.getActionTypes().indexOf(info.type), 0),
+                                            value: this.kernel.actionToData(info)
+                                        })
+                                        popover.dismiss()
+                                        const MainJsTemplate = $file.read(`${this.kernel.actionPath}template.js`).string
+                                        this.editActionMainJs(MainJsTemplate, info)
+                                    })
+                                }
                             },
-                            data: this.actionsToData(),
-                            template: {
-                                props: {
-                                    smoothCorners: true,
-                                    cornerRadius: 10,
-                                    bgcolor: $color("#ffffff", "#242424")
-                                },
-                                views: [
-                                    {
-                                        type: "image",
-                                        props: {
-                                            id: "color",
-                                            cornerRadius: 8,
-                                            smoothCorners: true
-                                        },
-                                        layout: make => {
-                                            make.top.left.inset(10)
-                                            make.size.equalTo($size(30, 30))
-                                        }
-                                    },
-                                    {
-                                        type: "image",
-                                        props: {
-                                            id: "icon",
-                                            tintColor: $color("#ffffff"),
-                                        },
-                                        layout: make => {
-                                            make.top.left.inset(15)
-                                            make.size.equalTo($size(20, 20))
-                                        }
-                                    },
-                                    {
-                                        type: "image",
-                                        props: {
-                                            symbol: "ellipsis.circle"
-                                        },
-                                        events: {
-                                            tapped: sender => {
-                                                const info = sender.next.info
-                                                if (!info) return
-                                                const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`
-                                                const main = $file.read(path).string
-                                                this.editActionMainJs(main, info)
+                            {
+                                title: $l10n("CREATE_NEW_TYPE"),
+                                handler: () => {
+                                    $input.text({
+                                        text: "",
+                                        placeholder: $l10n("CREATE_NEW_TYPE"),
+                                        handler: text => {
+                                            text = text.trim()
+                                            if (text === "") {
+                                                $ui.toast($l10n("INVALID_VALUE"))
+                                                return
                                             }
-                                        },
-                                        layout: make => {
-                                            make.top.right.inset(10)
-                                            make.size.equalTo($size(25, 25))
+                                            const path = `${this.kernel.userActionPath}${text}`
+                                            if ($file.isDirectory(path)) {
+                                                $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
+                                            } else {
+                                                $file.mkdir(path)
+                                                $ui.success($l10n("SUCCESS"))
+                                            }
+                                            setTimeout(() => { popover.dismiss() }, 1000)
                                         }
+                                    })
+                                }
+                            }
+                        ]
+                    }
+                },
+                { // 排序
+                    symbol: "arrow.up.arrow.down.circle",
+                    tapped: (animate, sender) => {
+                        $ui.popover({
+                            sourceView: sender,
+                            directions: $popoverDirection.up,
+                            size: $size(200, 300),
+                            views: [
+                                this.kernel.getActionListView($l10n("SORT"), {
+                                    reorder: true,
+                                    actions: [
+                                        { // 删除
+                                            title: "delete",
+                                            handler: (sender, indexPath) => {
+                                                const matrixView = $(this.matrixId)
+                                                const info = matrixView.object(indexPath).info.info
+                                                this.delete(info)
+                                                matrixView.delete(indexPath)
+                                            }
+                                        }
+                                    ]
+                                }, {
+                                    reorderBegan: indexPath => {
+                                        if (this.reorder === undefined) this.reorder = {}
+                                        this.reorder.from = indexPath
+                                        this.reorder.to = undefined
                                     },
-                                    { type: "label", props: { id: "info" } }, // 仅用来保存信息
-                                    {
-                                        type: "label",
-                                        props: {
-                                            id: "name",
-                                            font: $font(16)
-                                        },
-                                        layout: (make, view) => {
-                                            make.bottom.left.inset(10)
-                                            make.width.equalTo(view.super)
-                                        }
+                                    reorderMoved: (fromIndexPath, toIndexPath) => {
+                                        this.reorder.to = toIndexPath
+                                    },
+                                    reorderFinished: data => {
+                                        if (this.reorder.to === undefined) return
+                                        this.move(this.reorder.from, this.reorder.to, data)
                                     }
-                                ]
+                                })
+                            ]
+                        })
+                    }
+                }
+            ])
+        pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
+        pageController.setView({
+            type: "matrix",
+            props: {
+                id: this.matrixId,
+                columns: 2,
+                itemHeight: 100,
+                spacing: 15,
+                indicatorInsets: $insets(50, 0, 50, 0),
+                bgcolor: $color("insetGroupedBackground"),
+                menu: { items: this.menuItems() },
+                footer: { // 防止被菜单遮挡
+                    type: "view",
+                    props: { height: 50 }
+                },
+                data: this.actionsToData(),
+                template: {
+                    props: {
+                        smoothCorners: true,
+                        cornerRadius: 10,
+                        bgcolor: $color("#ffffff", "#242424")
+                    },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: "color",
+                                cornerRadius: 8,
+                                smoothCorners: true
+                            },
+                            layout: make => {
+                                make.top.left.inset(10)
+                                make.size.equalTo($size(30, 30))
                             }
                         },
-                        events: {
-                            pulled: animate => {
-                                setTimeout(() => {
-                                    $(this.matrixId).data = this.actionsToData()
-                                    animate.endRefreshing()
-                                }, 500)
+                        {
+                            type: "image",
+                            props: {
+                                id: "icon",
+                                tintColor: $color("#ffffff"),
                             },
-                            didSelect: (sender, indexPath, data) => {
-                                const info = data.info.info
-                                const ActionClass = require(`${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`)
-                                const action = new ActionClass(this.kernel, info, {
-                                    text: info.type === "clipboard" ? $clipboard.text : null,
-                                    uuid: null
-                                })
-                                action.do()
-                            },
-                            didScroll: sender => this.largeTitle.view.scrollAction(sender)
+                            layout: make => {
+                                make.top.left.inset(15)
+                                make.size.equalTo($size(20, 20))
+                            }
                         },
-                        layout: (make, view) => {
-                            make.bottom.equalTo(view.super)
-                            make.top.left.right.equalTo(view.super.safeArea)
+                        {
+                            type: "image",
+                            props: {
+                                symbol: "ellipsis.circle"
+                            },
+                            events: {
+                                tapped: sender => {
+                                    const info = sender.next.info
+                                    if (!info) return
+                                    const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`
+                                    const main = $file.read(path).string
+                                    this.editActionMainJs(main, info)
+                                }
+                            },
+                            layout: make => {
+                                make.top.right.inset(10)
+                                make.size.equalTo($size(25, 25))
+                            }
+                        },
+                        { type: "label", props: { id: "info" } }, // 仅用来保存信息
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                font: $font(16)
+                            },
+                            layout: (make, view) => {
+                                make.bottom.left.inset(10)
+                                make.width.equalTo(view.super)
+                            }
                         }
-                    },
-                    this.largeTitle.view.navBarView()
-                ]
+                    ]
+                }
+            },
+            layout: $layout.fill,
+            events: {
+                pulled: animate => {
+                    setTimeout(() => {
+                        $(this.matrixId).data = this.actionsToData()
+                        animate.endRefreshing()
+                    }, 500)
+                },
+                didSelect: (sender, indexPath, data) => {
+                    const info = data.info.info
+                    const action = this.kernel.getActionHandler(info.type, info.dir)
+                    action({
+                        text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
+                        uuid: null
+                    })
+                }
             }
-        ]
+        })
+        return pageController.getPage()
+            .setProp("bgcolor", $color("insetGroupedBackground"))
     }
 }
 

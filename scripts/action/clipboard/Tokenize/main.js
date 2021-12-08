@@ -70,7 +70,7 @@ class MyAction extends Action {
             handler: results => {
                 this.results = results
                 this.push({
-                    views: [this.getView()],
+                    view: this.getView(),
                     done: () => {
                         const result = []
                         this.selected.sort().forEach(i => {
