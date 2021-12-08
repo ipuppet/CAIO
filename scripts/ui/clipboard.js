@@ -680,6 +680,8 @@ class Clipboard {
             events: {
                 ready: () => {
                     setTimeout(() => { this.readClipboard() }, 500)
+                    // 初始化搜索功能
+                    searchBar.controller.setEvent("onChange", text => this.searchAction(text))
                     $app.listen({
                         // 在应用恢复响应后调用
                         resume: () => {
