@@ -467,7 +467,8 @@ class Clipboard {
             }
         }
         return this.kernel.getActions("clipboard").map(action => {
-            action.handler = handlerRewrite(action.handler)
+            const actionHandler = this.kernel.getActionHandler(action.type, action.dir)
+            action.handler = handlerRewrite(actionHandler)
             action.title = action.name
             return action
         })
