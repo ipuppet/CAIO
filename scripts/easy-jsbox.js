@@ -158,14 +158,14 @@ class UIKit {
         }
     }
 
-    static blurBox(props = {}, views = []) {
+    static blurBox(props = {}, views = [], layout = $layout.fill) {
         return {
             type: "blur",
             props: Object.assign({
                 style: $blurStyle.thinMaterial
             }, props),
             views: views,
-            layout: $layout.fill
+            layout: layout
         }
     }
 
