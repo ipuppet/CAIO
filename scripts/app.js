@@ -10,6 +10,8 @@ class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
+        // 初始化必要路径
+        if (!$file.exists("storage")) $file.mkdir("storage")
         // 初始话设置
         this.setting = new Setting()
         this.setting.loadConfig()
@@ -17,10 +19,12 @@ class AppKernel extends Kernel {
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"))
         // action 相关路径
-        this.actionPath = "/scripts/action/"
+        this.actionPath = "scripts/action/"
         this.actionOrderFile = "order.json"
-        this.userActionPath = "/storage/user_action/"
+        this.userActionPath = "storage/user_action/"
         this.checkUserAction()
+        // 用来存储被美化的 Action 分类名称
+        this.typeNameMap = {}
     }
 
     importExampleAction() {
@@ -62,6 +66,16 @@ class AppKernel extends Kernel {
         else return []
     }
 
+    getActionHandler(type, name, basePath) {
+        if (!basePath) basePath = `${this.userActionPath}${type}/${name}/`
+        const config = JSON.parse($file.read(basePath + "config.json").string)
+        return data => {
+            const ActionClass = require(basePath + "main.js")
+            const action = new ActionClass(this, config, data)
+            action.do()
+        }
+    }
+
     getActions(type) {
         const actions = []
         const typePath = `${this.userActionPath}${type}/`
@@ -74,11 +88,7 @@ class AppKernel extends Kernel {
                     dir: item,
                     type: type,
                     name: config.name ?? item,
-                    handler: data => {
-                        const ActionClass = require(basePath + "main.js")
-                        const action = new ActionClass(this, config, data)
-                        action.do()
-                    }
+                    icon: config.icon
                 }))
             }
         }
@@ -93,70 +103,146 @@ class AppKernel extends Kernel {
         return actions
     }
 
-    getActionButton(get, type = "all") {
+    actionToData(action) {
+        return {
+            name: { text: action.name },
+            icon: action.icon.slice(0, 5) === "icon_"
+                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                : { image: $image(action.icon) },
+            color: { bgcolor: $color(action.color) },
+            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
+        }
+    }
+
+    getTypeName(type) {
+        const typeUpperCase = type.toUpperCase()
+        const l10n = $l10n(typeUpperCase)
+        const name = l10n === typeUpperCase ? type : l10n
+        this.typeNameMap[name] = type
+        return name
+    }
+
+    getTypeDir(name) {
+        return this.typeNameMap[name] ?? name
+    }
+
+    getActionListView(title, props = {}, events = {}) {
+        const data = []
+        this.getActionTypes().forEach(type => {
+            const section = {
+                title: this.getTypeName(type),
+                rows: []
+            }
+            this.getActions(type).forEach(action => {
+                section.rows.push(this.actionToData(action))
+            })
+            data.push(section)
+        })
+        return {
+            type: "list",
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super)
+                make.bottom.inset(0)
+            },
+            events: events,
+            props: Object.assign({
+                reorder: false,
+                bgcolor: $color("clear"),
+                rowHeight: 60,
+                sectionTitleHeight: 30,
+                stickyHeader: true,
+                header: {
+                    type: "view",
+                    props: { height: 25 },
+                    views: [{
+                        type: "label",
+                        props: {
+                            text: title,
+                            color: $color("secondaryText"),
+                            font: $font(14)
+                        },
+                        layout: (make, view) => {
+                            make.top.equalTo(view.super.safeArea).offset(10)
+                            make.height.equalTo(30)
+                            make.left.inset(15)
+                        }
+                    }, UIKit.separatorLine()]
+                },
+                data: data,
+                template: {
+                    props: { bgcolor: $color("clear") },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: "color",
+                                cornerRadius: 8,
+                                smoothCorners: true
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.inset(15)
+                                make.size.equalTo($size(30, 30))
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: "icon",
+                                tintColor: $color("#ffffff"),
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.inset(20)
+                                make.size.equalTo($size(20, 20))
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                lines: 1,
+                                font: $font(16)
+                            },
+                            layout: (make, view) => {
+                                make.height.equalTo(30)
+                                make.centerY.equalTo(view.super)
+                                make.left.equalTo(view.prev.right).offset(15)
+                            }
+                        },
+                        { type: "label", props: { id: "info" } }
+                    ]
+                }
+            }, props)
+        }
+    }
+
+    getActionButton(getDataObject) {
         return {
             symbol: "bolt.circle",
             tapped: (animate, sender) => {
-                const data = { text: get.text() }
-                const defaultData = Object.keys(data)
-                Object.keys(get).map(item => {
+                const content = { text: getDataObject.text() }
+                const defaultData = Object.keys(content)
+                Object.keys(getDataObject).map(item => {
                     if (defaultData.indexOf(item) === -1) {
-                        if (typeof get[item] === "function") {
-                            data[item] = get[item]()
+                        if (typeof getDataObject[item] === "function") {
+                            content[item] = getDataObject[item]()
                         } else {
-                            data[item] = get[item]
+                            content[item] = getDataObject[item]
                         }
                     }
                 })
-                // TODO Pull-Down
                 const popover = $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                text: $l10n("ACTION"),
-                                color: $color("secondaryText"),
-                                font: $font(14)
-                            },
-                            layout: (make, view) => {
-                                make.top.equalTo(view.super.safeArea).offset(0)
-                                make.height.equalTo(40)
-                                make.left.inset(20)
-                            }
-                        },
-                        UIKit.separatorLine(),
-                        {
-                            type: "list",
-                            layout: (make, view) => {
-                                make.width.equalTo(view.super)
-                                make.top.equalTo(view.prev.bottom)
-                                make.bottom.inset(0)
-                            },
-                            props: {
-                                data: this.getActions(type).map(action => {
-                                    return {
-                                        type: "label",
-                                        layout: (make, view) => {
-                                            make.centerY.equalTo(view.super)
-                                            make.left.right.inset(15)
-                                        },
-                                        props: {
-                                            text: action.name
-                                        },
-                                        events: {
-                                            tapped: () => {
-                                                popover.dismiss()
-                                                setTimeout(() => action.handler(data), 500)
-                                            }
-                                        }
-                                    }
-                                })
-                            }
+                    views: [this.getActionListView($l10n("ACTION"), {}, {
+                        didSelect: (sender, indexPath, data) => {
+                            popover.dismiss()
+                            const action = this.getActionHandler(data.info.info.type, data.info.info.dir)
+                            setTimeout(() => action(content), 500)
                         }
-                    ]
+                    })]
                 })
             }
         }

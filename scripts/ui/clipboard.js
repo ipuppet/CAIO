@@ -486,7 +486,7 @@ class Clipboard {
                 },
                 this.kernel.getActionButton({
                     text: () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text
-                }, "clipboard")
+                })
             ])
             .setLeftButtons([
                 {
