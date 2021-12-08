@@ -1,3 +1,7 @@
+const {
+    UIKit,
+    BarButtonItem
+} = require("../easy-jsbox")
 const Clipboard = require("./clipboard")
 
 class Mini extends Clipboard {
@@ -12,34 +16,72 @@ class Mini extends Clipboard {
     }
 
     navButtons() {
-        if (!this.largeTitle)
-            this.largeTitle = this.registerComponent("large-title", "kernel.mini.large-title")
         let buttons = [
             // 手动读取剪切板
-            this.largeTitle.view.navButton("mini-reade", "square.and.arrow.down.on.square", () => {
-                this.readClipboard(true)
-            })
+            {
+                symbol: "square.and.arrow.down.on.square",
+                tapped: animate => {
+                    animate.start()
+                    this.readClipboard(true)
+                    animate.done()
+                }
+            }
         ]
-        if ($app.env === $env.today) {
+        if ($app.env !== $env.today) {
             buttons.unshift(
-                this.largeTitle.view.navButton("mini-add", "plus.circle", () => {
-                    $input.text({
-                        placeholder: "",
-                        text: "",
-                        handler: text => {
-                            if (text !== "") this.add(text)
-                        }
-                    })
-                })
+                {
+                    symbol: "plus.circle",
+                    tapped: () => {
+                        $input.text({
+                            placeholder: "",
+                            text: "",
+                            handler: text => {
+                                if (text !== "") this.add(text)
+                            }
+                        })
+                    }
+                }
             )
         } else if ($app.env === $env.keyboard) {
             // TODO keyboard buttons
         }
-        return buttons
+        return buttons.map(button => {
+            const barButtonItem = new BarButtonItem()
+            return barButtonItem
+                .setAlign(UIKit.align.right)
+                .setSymbol(button.symbol)
+                .setEvent("tapped", button.tapped)
+                .definition
+        })
     }
 
     getViews() {
         return [
+            { // 顶部按钮栏
+                type: "view",
+                props: { height: $app.env === $env.today ? 30 : 50 },
+                views: [{
+                    type: "view",
+                    layout: $layout.fill,
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: $l10n("CLIPBOARD"),
+                                font: $font("bold", 20)
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.equalTo(view.super).offset(this.left_right)
+                            }
+                        }
+                    ].concat(this.navButtons())
+                }],
+                layout: (make, view) => {
+                    make.top.width.equalTo(view.super)
+                    make.height.equalTo(45)
+                }
+            },
             { // 剪切板列表
                 type: "list",
                 props: Object.assign({
@@ -81,41 +123,7 @@ class Mini extends Clipboard {
                             }
                         ]
                     }
-                }, !this.kernel.setting.get("mini.displayNav") ? {} : {
-                    header: { // 顶部按钮栏
-                        type: "view",
-                        props: {
-                            height: $app.env === $env.today ? 30 : 50,
-                            clipsToBounds: true
-                        },
-                        views: [{
-                            type: "view",
-                            layout: $layout.fill,
-                            views: [
-                                {
-                                    type: "label",
-                                    props: {
-                                        text: $l10n("CLIPBOARD"),
-                                        font: $font("bold", 20)
-                                    },
-                                    layout: (make, view) => {
-                                        make.left.equalTo(view.super).offset(this.left_right)
-                                        make.centerY.equalTo(view.super).offset(-5)
-                                    }
-                                },
-                                {
-                                    type: "view",
-                                    views: this.navButtons(),
-                                    layout: (make, view) => {
-                                        make.right.equalTo(view.super).offset(-this.left_right + 10)
-                                        make.size.equalTo(view.super)
-                                        make.centerY.equalTo(view.super).offset(-5)
-                                    }
-                                }
-                            ]
-                        }]
-                    }
-                }),
+                }, {}),
                 events: {
                     ready: () => {
                         setTimeout(() => this.readClipboard(), 500)
@@ -138,7 +146,10 @@ class Mini extends Clipboard {
                         }
                     }
                 },
-                layout: $layout.fill
+                layout: (make, view) => {
+                    make.top.equalTo(view.prev.bottom)
+                    make.width.bottom.equalTo(view.super)
+                }
             }
         ]
     }

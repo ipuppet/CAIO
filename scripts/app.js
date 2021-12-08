@@ -407,14 +407,14 @@ module.exports = {
                     }
                 })
             })
-        } else if ($app.env === $env.app) {
-            const kernel = new AppKernel()
-            const Factory = require("./ui/factory")
-            new Factory(kernel).render()
         } else if ($app.env === $env.today || $app.env === $env.keyboard) {
             const kernel = new AppKernel()
             const Today = require("./ui/mini")
             new Today(kernel).render()
+        } else if ($app.env === $env.app) {
+            const kernel = new AppKernel()
+            const Factory = require("./ui/factory")
+            new Factory(kernel).render()
         } else {
             $ui.render({
                 views: [{
