@@ -45,7 +45,7 @@ module.exports = MyAction
  * page sheet
  * @param {*} args 
  *  {
-        views: args.views, // 视图数组
+        view: args.view, // 视图对象
         title: args.title ?? "", // 中间标题
         done: args.done, // 点击左上角按钮后的回调函数
         doneText: args.doneText ?? $l10n("DONE") // 左上角文本

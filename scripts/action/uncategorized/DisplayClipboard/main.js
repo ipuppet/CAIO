@@ -6,14 +6,14 @@ class MyAction extends Action {
      */
     do() {
         this.push({
-            views: [{
+            view: {
                 type: "label",
                 props: {
                     text: this.text,
                     align: $align.center
                 },
                 layout: $layout.fill
-            }]
+            }
         })
     }
 }
