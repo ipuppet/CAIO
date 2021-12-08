@@ -550,7 +550,7 @@ class NavigationBar extends View {
 class BarButtonItem extends View {
     constructor(args) {
         super(args)
-        this.title = "Button"
+        this.title = ""
         this.align = UIKit.align.right
     }
 
