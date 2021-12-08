@@ -676,10 +676,10 @@ class BarButtonItem extends View {
                 make.height.equalTo(view.super)
                 make.width.equalTo(BarButtonItem.width)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
-                    if (UIKit.align === UIKit.align.right) make.right.equalTo(view.prev.left)
+                    if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
                 } else {
-                    if (UIKit.align === UIKit.align.right) make.right.inset(0)
+                    if (this.align === UIKit.align.right) make.right.inset(0)
                     else make.left.inset(0)
                 }
             }
