@@ -46,7 +46,7 @@ class Factory {
                 title: $l10n("SETTING")
             }
         })
-        this.kernel.UIKit.UIRender(this.tabBarController.generateView().definition)
+        this.kernel.UIRender(this.tabBarController.generateView().definition)
     }
 }
 
