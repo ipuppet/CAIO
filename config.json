@@ -7,7 +7,7 @@
     },
     "settings": {
         "theme": "auto",
-        "minSDKVer": "2.13.0",
+        "minSDKVer": "2.19.0",
         "minOSVer": "14.0.0",
         "idleTimerDisabled": false,
         "keyboardToolbarEnabled": true,
