@@ -469,7 +469,7 @@ class NavigationBar extends View {
                     make.bottom.equalTo(view.super.safeAreaTop).offset(this.largeTitleTopOffset)
                     if (align === UIKit.align.left) make.left.inset(5)
                     else make.right.inset(5)
-                    make.width.equalTo(buttons.length * BarButtonItem.width)
+                    make.width.equalTo(buttons.length * BarButtonItem.size.width)
                 }
             } : {}
         }
@@ -554,8 +554,8 @@ class BarButtonItem extends View {
         this.align = UIKit.align.right
     }
 
-    static get width() {
-        return 40
+    static get size() {
+        return $size(40, 40)
     }
 
     setTitle(title) {
@@ -673,8 +673,7 @@ class BarButtonItem extends View {
                 }
             ],
             layout: (make, view) => {
-                make.height.equalTo(view.super)
-                make.width.equalTo(BarButtonItem.width)
+                make.size.equalTo(BarButtonItem.size)
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
