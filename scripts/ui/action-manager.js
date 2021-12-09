@@ -1,4 +1,5 @@
 const {
+    UIKit,
     PageController,
     Sheet
 } = require("../easy-jsbox")
@@ -65,7 +66,7 @@ class ActionManager {
                     type: "label",
                     props: {
                         text: title,
-                        textColor: this.kernel.UIKit.textColor,
+                        textColor: UIKit.textColor,
                         align: $align.left
                     },
                     layout: (make, view) => {
