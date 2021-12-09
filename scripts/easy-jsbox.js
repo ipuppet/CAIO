@@ -635,17 +635,16 @@ class BarButtonItem extends View {
             views: [
                 {
                     type: "button",
-                    props: {
+                    props: Object.assign({
                         id: this.id,
                         tintColor: UIKit.textColor,
                         symbol: this.symbol,
-                        menu: this.menu,
                         title: this.title,
                         titleColor: UIKit.textColor,
                         contentEdgeInsets: $insets(0, 0, 0, 0),
                         imageEdgeInsets: $insets(0, 0, 0, 0),
                         bgcolor: $color("clear")
-                    },
+                    }, this.menu ? { menu: this.menu } : {}),
                     events: {
                         tapped: sender => {
                             this.events.tapped({
