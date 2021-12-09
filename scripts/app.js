@@ -26,13 +26,13 @@ class AppKernel extends Kernel {
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
         // 检查更新
-        this.checkUpdate(content => {
+        /* this.checkUpdate(content => {
             $file.write({
                 data: $data({ string: content }),
                 path: "scripts/easy-jsbox.js"
             })
             $ui.toast("The framework has been updated.")
-        })
+        }) */
     }
 
     importExampleAction() {

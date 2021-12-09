@@ -211,6 +211,42 @@ class UIKit {
     static isSplitScreenMode() {
         return $device.info.screen.width !== UIKit.getWindowSize().width
     }
+
+    /**
+     * 建议仅在使用 JSBox nav 时使用，便于统一风格
+     */
+    static push(args) {
+        const views = args.views,
+            statusBarStyle = args.statusBarStyle === undefined ? 0 : args.statusBarStyle,
+            title = args.title ?? "",
+            navButtons = args.navButtons ?? [{ title: "" }],
+            bgcolor = args.bgcolor ?? "primarySurface",
+            disappeared = args.disappeared
+        $ui.push({
+            props: {
+                statusBarStyle: statusBarStyle,
+                navButtons: navButtons,
+                title: title,
+                bgcolor: $color(bgcolor),
+            },
+            events: {
+                disappeared: () => {
+                    if (disappeared !== undefined) disappeared()
+                }
+            },
+            views: [
+                {
+                    type: "view",
+                    views: views,
+                    layout: (make, view) => {
+                        make.top.equalTo(view.super.safeArea)
+                        make.bottom.equalTo(view.super)
+                        make.left.right.equalTo(view.super.safeArea)
+                    }
+                }
+            ]
+        })
+    }
 }
 
 class ViewController extends Controller {
@@ -2439,15 +2475,19 @@ class Setting extends Controller {
             events: this._withTouchEvents(lineId, {
                 tapped: () => {
                     setTimeout(() => {
-                        const pageController = new PageController()
-                        pageController
-                            .setView(this.getListView(children))
-                            .navigationItem
-                            .setTitle(title)
-                            .addPopButton()
-                            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
-                        pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
-                        this.viewController.push(pageController)
+                        if (this.events?.onChildPush) {
+                            this.callEvent("onChildPush", this.getListView(children))
+                        } else {
+                            const pageController = new PageController()
+                            pageController
+                                .setView(this.getListView(children))
+                                .navigationItem
+                                .setTitle(title)
+                                .addPopButton()
+                                .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+                            pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                            this.viewController.push(pageController)
+                        }
                     })
                 }
             }, true, 0.3)
