@@ -1877,7 +1877,7 @@ class Setting extends Controller {
                                         },
                                         events: {
                                             tapped: () => {
-                                                if (this.set(key, $(key).text)) {
+                                                if (this.set(key, $(`${this.name}-string-${key}`).text)) {
                                                     popover.dismiss()
                                                     if (events) eval(`(()=>{return ${events}})()`)
                                                 }
@@ -1927,7 +1927,7 @@ class Setting extends Controller {
                                         return
                                     }
                                     if (this.set(key, text)) {
-                                        $(key).text = text
+                                        $(`${this.name}-number-${key}`).text = text
                                         if (events) eval(`(()=>{return ${events}})()`)
                                     }
                                 }
@@ -1973,9 +1973,9 @@ class Setting extends Controller {
                     },
                     events: {
                         changed: (sender) => {
-                            $(key).text = sender.value
+                            $(`${this.name}-stepper-${key}`).text = sender.value
                             if (!this.set(key, sender.value)) {
-                                $(key).text = this.get(key)
+                                $(`${this.name}-stepper-${key}`).text = this.get(key)
                             } else {
                                 if (events) eval(`(()=>{return ${events}})()`)
                             }
@@ -2476,7 +2476,7 @@ class Setting extends Controller {
                 tapped: () => {
                     setTimeout(() => {
                         if (this.events?.onChildPush) {
-                            this.callEvent("onChildPush", this.getListView(children))
+                            this.callEvent("onChildPush", this.getListView(children), title)
                         } else {
                             const pageController = new PageController()
                             pageController
