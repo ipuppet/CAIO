@@ -380,6 +380,9 @@ class ActionManager {
             })
             .addNavBar("", () => {
                 this.saveActionInfo(this.editingActionInfo)
+                // 更新 clipboard 中的 menu
+                const Clipboard = require("./clipboard");
+                Clipboard.updateMenu(this.kernel)
                 if (done) done(this.editingActionInfo)
             }, "Done")
             .init()
@@ -499,10 +502,12 @@ class ActionManager {
         return [
             { // 编辑信息
                 title: $l10n("EDIT_DETAILS"),
-                handler: (sender, indexPath, data) => {
-                    this.editActionInfoPageSheet(data.info.info, info => {
+                symbol: "slider.horizontal.3",
+                handler: (sender, indexPath) => {
+                    const view = sender.cell(indexPath)
+                    const oldInfo = view.get("info").info
+                    this.editActionInfoPageSheet(oldInfo, info => {
                         // 更新视图信息
-                        const view = sender.cell(indexPath)
                         view.get("info").info = info
                         view.get("color").bgcolor = $color(info.color)
                         view.get("name").text = info.name
@@ -516,6 +521,7 @@ class ActionManager {
             },
             { // 编辑脚本
                 title: $l10n("EDIT_SCRIPT"),
+                symbol: "square.and.pencil",
                 handler: (sender, indexPath, data) => {
                     const info = data.info.info
                     if (!info) return
@@ -526,6 +532,7 @@ class ActionManager {
             },
             { // 删除
                 title: $l10n("DELETE"),
+                symbol: "trash",
                 destructive: true,
                 handler: (sender, indexPath, data) => {
                     $ui.alert({

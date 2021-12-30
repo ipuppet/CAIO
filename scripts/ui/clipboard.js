@@ -4,10 +4,11 @@ const {
     SearchBar
 } = require("../easy-jsbox")
 
+const listId = "clipboard-list"
+
 class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
-        this.listId = "clipboard-list"
         // 剪贴板列个性化设置
         this.edges = 20 // 列表边距
         this.edgesForSort = 20 // 列表边距
@@ -23,11 +24,15 @@ class Clipboard {
             syncByiCloud: object => {
                 if (object.status) {
                     this.savedClipboard = this.getSavedClipboard()
-                    const view = $(this.listId)
+                    const view = $(listId)
                     if (view) view.data = this.savedClipboard
                 }
             }
         })
+    }
+
+    static updateMenu(kernel) {
+        // TODO 更新 menu 中的动作
     }
 
     checkUrlScheme() {
@@ -57,7 +62,7 @@ class Clipboard {
             $cache.set("clipboard.copied", this.copied)
         } else {
             if (isUpdateIndicator) {
-                const listView = $(this.listId)
+                const listView = $(listId)
                 if (this.copied?.index !== undefined) {
                     listView.cell($indexPath(0, this.copied.index)).get("copied").hidden = true
                     this.savedClipboard[this.copied.index].copied.hidden = true
@@ -93,7 +98,7 @@ class Clipboard {
      * @param {String} uuid 
      */
     getIndexByUUID(uuid) {
-        const data = $(this.listId).data
+        const data = $(listId).data
         const length = data.length
         for (let index = 0; index < length; index++) {
             if (data[index].content.info.uuid === uuid) return index
@@ -102,10 +107,10 @@ class Clipboard {
     }
 
     update(uuid, text, index) {
-        const info = $(this.listId).cell($indexPath(0, index)).get("content").info
+        const info = $(listId).cell($indexPath(0, index)).get("content").info
         const lineData = this.lineData(Object.assign(info, { text, text }), info.uuid === this.copied?.uuid)
         this.savedClipboard[index] = lineData
-        $(this.listId).data = this.savedClipboard
+        $(listId).data = this.savedClipboard
         if (uuid === this.copied?.uuid) {
             $clipboard.text = text
         }
@@ -199,7 +204,7 @@ class Clipboard {
             { // 操作 UI
                 // 去除偏移
                 const _to = from < to ? to - 1 : to
-                const listView = $(this.listId)
+                const listView = $(listId)
                 // 移动列表
                 if (from < _to) { // 从上往下移动
                     listView.insert({
@@ -280,7 +285,7 @@ class Clipboard {
         lineData.copied.hidden = false // 强制显示指示器
         this.savedClipboard.unshift(lineData) // 保存到内存中
         // 在列表中插入行
-        $(this.listId).insert({
+        $(listId).insert({
             indexPath: $indexPath(0, 0),
             value: lineData
         })
@@ -417,14 +422,14 @@ class Clipboard {
     searchAction(text) {
         try {
             if (text === "") {
-                $(this.listId).data = this.savedClipboard
+                $(listId).data = this.savedClipboard
             } else {
                 const res = this.kernel.storage.search(text)
                 if (res && res.length > 0)
-                    $(this.listId).data = res.map(data => this.lineData(data))
+                    $(listId).data = res.map(data => this.lineData(data))
             }
         } catch (error) {
-            $(this.listId).data = this.savedClipboard
+            $(listId).data = this.savedClipboard
             throw error
         }
     }
@@ -455,7 +460,7 @@ class Clipboard {
         ])
     }
 
-    menuItems() {
+    static menuItems(kernel) {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
@@ -466,16 +471,123 @@ class Clipboard {
                 handler(data)
             }
         }
-        return this.kernel.getActions("clipboard").map(action => {
-            const actionHandler = this.kernel.getActionHandler(action.type, action.dir)
+        return kernel.getActions("clipboard").map(action => {
+            const actionHandler = kernel.getActionHandler(action.type, action.dir)
             action.handler = handlerRewrite(actionHandler)
             action.title = action.name
+            action.symbol = action.icon
             return action
         })
     }
 
+    getListView() {
+        return { // 剪切板列表
+            type: "list",
+            props: {
+                id: listId,
+                menu: {
+                    title: $l10n("ACTION"),
+                    items: Clipboard.menuItems(this.kernel)
+                },
+                indicatorInsets: $insets(50, 0, 50, 0),
+                separatorInset: $insets(0, this.edges, 0, 0),
+                data: this.savedClipboard,
+                template: {
+                    props: { bgcolor: $color("clear") },
+                    views: [
+                        {
+                            type: "view",
+                            props: {
+                                id: "copied",
+                                circular: this.copiedIndicatorSize,
+                                bgcolor: $color("green")
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo(this.copiedIndicatorSize)
+                                make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "content",
+                                lines: 0,
+                                font: $font(this.fontSize)
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.edges.inset(this.edges)
+                            }
+                        }
+                    ]
+                },
+                footer: { // 防止list被菜单遮挡
+                    type: "view",
+                    props: { height: 50 }
+                },
+                actions: [
+                    { // 复制
+                        title: $l10n("COPY"),
+                        color: $color("systemLink"),
+                        handler: (sender, indexPath) => {
+                            const data = sender.object(indexPath)
+                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
+                        }
+                    },
+                    { // 删除
+                        title: " " + $l10n("DELETE") + " ", // 防止JSBox自动更改成默认的删除操作
+                        color: $color("red"),
+                        handler: (sender, indexPath) => {
+                            $ui.alert({
+                                title: $l10n("CONFIRM_DELETE_MSG"),
+                                actions: [
+                                    {
+                                        title: $l10n("DELETE"),
+                                        style: $alertActionType.destructive,
+                                        handler: () => {
+                                            const data = sender.object(indexPath)
+                                            this.delete(data.content.info.uuid, indexPath.row)
+                                            sender.delete(indexPath)
+                                        }
+                                    },
+                                    { title: $l10n("CANCEL") }
+                                ]
+                            })
+                        }
+                    }
+                ]
+            },
+            layout: $layout.fill,
+            events: {
+                ready: () => {
+                    setTimeout(() => { this.readClipboard() }, 500)
+                    $app.listen({
+                        // 在应用恢复响应后调用
+                        resume: () => {
+                            setTimeout(() => { this.readClipboard() }, 500)
+                        }
+                    })
+                },
+                rowHeight: (sender, indexPath) => {
+                    const content = sender.object(indexPath).content
+                    return content.info.height + this.edges * 2 + 1
+                },
+                didSelect: (sender, indexPath, data) => {
+                    const content = data.content
+                    this.edit(content.info.text, text => {
+                        if (content.info.md5 !== $text.MD5(text))
+                            this.update(content.info.uuid, text, indexPath.row)
+                    })
+                }
+            }
+        }
+    }
+
     getPageView() {
         const searchBar = new SearchBar()
+        // 初始化搜索功能
+        searchBar.controller.setEvent("onChange", text => this.searchAction(text))
         const pageController = new PageController()
         pageController.navigationItem
             .setTitle($l10n("CLIPBOARD"))
@@ -558,7 +670,7 @@ class Clipboard {
                                             { // 删除
                                                 title: "delete",
                                                 handler: (sender, indexPath) => {
-                                                    const listView = $(this.listId)
+                                                    const listView = $(listId)
                                                     const data = listView.object(indexPath)
                                                     this.delete(data.content.info.uuid, indexPath.row)
                                                     listView.delete(indexPath)
@@ -599,109 +711,7 @@ class Clipboard {
                 }
             ])
         pageController.navigationController.navigationBar.setBackgroundColor($color("primarySurface"))
-        pageController.setView({ // 剪切板列表
-            type: "list",
-            props: {
-                id: this.listId,
-                menu: {
-                    title: $l10n("ACTION"),
-                    items: this.menuItems()
-                },
-                indicatorInsets: $insets(50, 0, 50, 0),
-                separatorInset: $insets(0, this.edges, 0, 0),
-                data: this.savedClipboard,
-                template: {
-                    props: { bgcolor: $color("clear") },
-                    views: [
-                        {
-                            type: "view",
-                            props: {
-                                id: "copied",
-                                circular: this.copiedIndicatorSize,
-                                bgcolor: $color("green")
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.size.equalTo(this.copiedIndicatorSize)
-                                make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "content",
-                                lines: 0,
-                                font: $font(this.fontSize)
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.edges.inset(this.edges)
-                            }
-                        }
-                    ]
-                },
-                footer: { // 防止list被菜单遮挡
-                    type: "view",
-                    props: { height: 50 }
-                },
-                actions: [
-                    { // 复制
-                        title: $l10n("COPY"),
-                        color: $color("systemLink"),
-                        handler: (sender, indexPath) => {
-                            const data = sender.object(indexPath)
-                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
-                        }
-                    },
-                    { // 删除
-                        title: " " + $l10n("DELETE") + " ", // 防止JSBox自动更改成默认的删除操作
-                        color: $color("red"),
-                        handler: (sender, indexPath) => {
-                            $ui.alert({
-                                title: $l10n("CONFIRM_DELETE_MSG"),
-                                actions: [
-                                    {
-                                        title: $l10n("DELETE"),
-                                        style: $alertActionType.destructive,
-                                        handler: () => {
-                                            const data = sender.object(indexPath)
-                                            this.delete(data.content.info.uuid, indexPath.row)
-                                            sender.delete(indexPath)
-                                        }
-                                    },
-                                    { title: $l10n("CANCEL") }
-                                ]
-                            })
-                        }
-                    }
-                ]
-            },
-            layout: $layout.fill,
-            events: {
-                ready: () => {
-                    setTimeout(() => { this.readClipboard() }, 500)
-                    // 初始化搜索功能
-                    searchBar.controller.setEvent("onChange", text => this.searchAction(text))
-                    $app.listen({
-                        // 在应用恢复响应后调用
-                        resume: () => {
-                            setTimeout(() => { this.readClipboard() }, 500)
-                        }
-                    })
-                },
-                rowHeight: (sender, indexPath) => {
-                    const content = sender.object(indexPath).content
-                    return content.info.height + this.edges * 2 + 1
-                },
-                didSelect: (sender, indexPath, data) => {
-                    const content = data.content
-                    this.edit(content.info.text, text => {
-                        if (content.info.md5 !== $text.MD5(text))
-                            this.update(content.info.uuid, text, indexPath.row)
-                    })
-                }
-            }
-        })
+        pageController.setView(this.getListView())
         return pageController.getPage()
     }
 }
