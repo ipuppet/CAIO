@@ -437,7 +437,7 @@ class Clipboard {
     edit(text, callback) {
         this.kernel.editor.push(text, text => {
             callback(text)
-        }, $l10n("CLIPBOARD"), "", [
+        }, "", [
             {
                 symbol: "square.and.arrow.up",
                 tapped: () => {
@@ -445,15 +445,6 @@ class Clipboard {
                         $share.sheet(this.kernel.editor.text)
                     } else {
                         $ui.warning($l10n("NONE"))
-                    }
-                }
-            },
-            {
-                symbol: "doc.on.clipboard",
-                tapped: () => {
-                    if (this.kernel.editor.text) {
-                        $clipboard.text = this.kernel.editor.text
-                        $ui.success($l10n("COPIED"))
                     }
                 }
             }
@@ -596,10 +587,7 @@ class Clipboard {
                 {
                     symbol: "plus.circle",
                     tapped: () => this.getAddTextView()
-                },
-                this.kernel.getActionButton({
-                    text: () => this.copied === undefined ? null : this.kernel.storage.getByUUID(this.copied.uuid).text
-                })
+                }
             ])
             .setLeftButtons([
                 {
@@ -710,7 +698,11 @@ class Clipboard {
                     }
                 }
             ])
-        pageController.navigationController.navigationBar.setBackgroundColor($color("primarySurface"))
+        pageController
+            .navigationController
+            .navigationBar
+            .setBackgroundColor($color("primarySurface"))
+            .withoutStatusBarHeight()
         pageController.setView(this.getListView())
         return pageController.getPage()
     }

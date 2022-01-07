@@ -149,7 +149,7 @@ class AppKernel extends Kernel {
         return {
             type: "list",
             layout: (make, view) => {
-                make.top.width.equalTo(view.super)
+                make.top.width.equalTo(view.super.safeArea)
                 make.bottom.inset(0)
             },
             events: events,
@@ -228,7 +228,7 @@ class AppKernel extends Kernel {
     getActionButton(getDataObject) {
         return {
             symbol: "bolt.circle",
-            tapped: (animate, sender) => {
+            tapped: sender => {
                 const content = { text: getDataObject.text() }
                 const defaultData = Object.keys(content)
                 Object.keys(getDataObject).map(item => {
@@ -421,8 +421,8 @@ module.exports = {
             new Today(kernel).render()
         } else if ($app.env === $env.app) {
             const kernel = new AppKernel()
-            const Factory = require("./ui/factory")
-            new Factory(kernel).render()
+            const MainUI = require("./ui/main")
+            new MainUI(kernel).render()
         } else {
             $ui.render({
                 views: [{
