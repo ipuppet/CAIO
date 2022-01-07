@@ -1,5 +1,7 @@
 const {
     UIKit,
+    NavigationBar,
+    NavigationItem,
     PageController,
     Sheet
 } = require("../easy-jsbox")
@@ -371,6 +373,7 @@ class ActionManager {
                     bgcolor: $color("insetGroupedBackground"),
                     style: 2,
                     separatorInset: $insets(0, 50, 0, 10), // 分割线边距
+                    indicatorInsets: $insets(NavigationBar.PageSheetNavigationBarHeight, 0, 0, 0),
                     data: data
                 },
                 layout: $layout.fill,
@@ -390,9 +393,9 @@ class ActionManager {
     }
 
     editActionMainJs(text = "", info) {
-        this.kernel.editor.push(text, content => {
+        this.kernel.editor.pageSheet(text, content => {
             this.saveMainJs(info, content)
-        }, $l10n("ACTION"), info.name, [{
+        }, info.name, [{
             symbol: "book.circle",
             tapped: () => {
                 const content = $file.read("/scripts/action/README.md").string
@@ -558,6 +561,7 @@ class ActionManager {
         const pageController = new PageController()
         pageController.navigationItem
             .setTitle($l10n("ACTION"))
+            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
             .setRightButtons([
                 { // 添加
                     symbol: "plus.circle",
@@ -646,7 +650,19 @@ class ActionManager {
                     }
                 }
             ])
-        pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
+            .setLeftButtons([{
+                symbol: "arrow.clockwise",
+                tapped: () => {
+                    const actionView = $(this.matrixId)
+                    setTimeout(() => {
+                        actionView.data = this.actionsToData()
+                        $ui.success($l10n("SUCCESS"))
+                    }, 500)
+                }
+            }])
+        pageController.navigationController.navigationBar
+            .pageSheetMode()
+            .withoutStatusBarHeight()
         pageController.setView({
             type: "matrix",
             props: {
@@ -654,13 +670,9 @@ class ActionManager {
                 columns: 2,
                 itemHeight: 100,
                 spacing: 15,
-                indicatorInsets: $insets(50, 0, 50, 0),
+                indicatorInsets: $insets(NavigationBar.PageSheetNavigationBarHeight, 0, 0, 0),
                 bgcolor: $color("insetGroupedBackground"),
                 menu: { items: this.menuItems() },
-                footer: { // 防止被菜单遮挡
-                    type: "view",
-                    props: { height: 50 }
-                },
                 data: this.actionsToData(),
                 template: {
                     props: {
@@ -728,12 +740,6 @@ class ActionManager {
             },
             layout: $layout.fill,
             events: {
-                pulled: animate => {
-                    setTimeout(() => {
-                        $(this.matrixId).data = this.actionsToData()
-                        animate.endRefreshing()
-                    }, 500)
-                },
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
                     const action = this.kernel.getActionHandler(info.type, info.dir)
