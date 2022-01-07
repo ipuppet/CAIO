@@ -26,7 +26,6 @@ class MainUI {
     render() {
         this.kernel.useJsboxNav()
         this.kernel.setting.useJsboxNav()
-        this.kernel.setTitle(this.kernel.name)
         this.kernel.setNavButtons([
             {
                 symbol: "gear",
