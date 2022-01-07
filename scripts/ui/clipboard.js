@@ -4,11 +4,10 @@ const {
     SearchBar
 } = require("../easy-jsbox")
 
-const listId = "clipboard-list"
-
 class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
+        this.listId = "clipboard-list"
         // 剪贴板列个性化设置
         this.edges = 20 // 列表边距
         this.edgesForSort = 20 // 列表边距
@@ -24,7 +23,7 @@ class Clipboard {
             syncByiCloud: object => {
                 if (object.status) {
                     this.savedClipboard = this.getSavedClipboard()
-                    const view = $(listId)
+                    const view = $(this.listId)
                     if (view) view.data = this.savedClipboard
                 }
             }
@@ -62,7 +61,7 @@ class Clipboard {
             $cache.set("clipboard.copied", this.copied)
         } else {
             if (isUpdateIndicator) {
-                const listView = $(listId)
+                const listView = $(this.listId)
                 if (this.copied?.index !== undefined) {
                     listView.cell($indexPath(0, this.copied.index)).get("copied").hidden = true
                     this.savedClipboard[this.copied.index].copied.hidden = true
@@ -98,7 +97,7 @@ class Clipboard {
      * @param {String} uuid 
      */
     getIndexByUUID(uuid) {
-        const data = $(listId).data
+        const data = $(this.listId).data
         const length = data.length
         for (let index = 0; index < length; index++) {
             if (data[index].content.info.uuid === uuid) return index
@@ -107,10 +106,10 @@ class Clipboard {
     }
 
     update(uuid, text, index) {
-        const info = $(listId).cell($indexPath(0, index)).get("content").info
+        const info = $(this.listId).cell($indexPath(0, index)).get("content").info
         const lineData = this.lineData(Object.assign(info, { text, text }), info.uuid === this.copied?.uuid)
         this.savedClipboard[index] = lineData
-        $(listId).data = this.savedClipboard
+        $(this.listId).data = this.savedClipboard
         if (uuid === this.copied?.uuid) {
             $clipboard.text = text
         }
@@ -204,7 +203,7 @@ class Clipboard {
             { // 操作 UI
                 // 去除偏移
                 const _to = from < to ? to - 1 : to
-                const listView = $(listId)
+                const listView = $(this.listId)
                 // 移动列表
                 if (from < _to) { // 从上往下移动
                     listView.insert({
@@ -285,7 +284,7 @@ class Clipboard {
         lineData.copied.hidden = false // 强制显示指示器
         this.savedClipboard.unshift(lineData) // 保存到内存中
         // 在列表中插入行
-        $(listId).insert({
+        $(this.listId).insert({
             indexPath: $indexPath(0, 0),
             value: lineData
         })
@@ -422,14 +421,14 @@ class Clipboard {
     searchAction(text) {
         try {
             if (text === "") {
-                $(listId).data = this.savedClipboard
+                $(this.listId).data = this.savedClipboard
             } else {
                 const res = this.kernel.storage.search(text)
                 if (res && res.length > 0)
-                    $(listId).data = res.map(data => this.lineData(data))
+                    $(this.listId).data = res.map(data => this.lineData(data))
             }
         } catch (error) {
-            $(listId).data = this.savedClipboard
+            $(this.listId).data = this.savedClipboard
             throw error
         }
     }
@@ -451,7 +450,7 @@ class Clipboard {
         ])
     }
 
-    static menuItems(kernel) {
+    menuItems() {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
@@ -462,8 +461,8 @@ class Clipboard {
                 handler(data)
             }
         }
-        return kernel.getActions("clipboard").map(action => {
-            const actionHandler = kernel.getActionHandler(action.type, action.dir)
+        return this.kernel.getActions("clipboard").map(action => {
+            const actionHandler = this.kernel.getActionHandler(action.type, action.dir)
             action.handler = handlerRewrite(actionHandler)
             action.title = action.name
             action.symbol = action.icon
@@ -475,10 +474,10 @@ class Clipboard {
         return { // 剪切板列表
             type: "list",
             props: {
-                id: listId,
+                id: this.listId,
                 menu: {
                     title: $l10n("ACTION"),
-                    items: Clipboard.menuItems(this.kernel)
+                    items: this.menuItems(this.kernel)
                 },
                 indicatorInsets: $insets(50, 0, 50, 0),
                 separatorInset: $insets(0, this.edges, 0, 0),
@@ -658,7 +657,7 @@ class Clipboard {
                                             { // 删除
                                                 title: "delete",
                                                 handler: (sender, indexPath) => {
-                                                    const listView = $(listId)
+                                                    const listView = $(this.listId)
                                                     const data = listView.object(indexPath)
                                                     this.delete(data.content.info.uuid, indexPath.row)
                                                     listView.delete(indexPath)
