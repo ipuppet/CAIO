@@ -80,7 +80,7 @@ class AppKernel extends Kernel {
         return data => {
             const ActionClass = require(basePath + "main.js")
             const action = new ActionClass(this, config, data)
-            action.do()
+            return action.do()
         }
     }
 

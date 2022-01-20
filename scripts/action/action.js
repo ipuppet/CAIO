@@ -35,6 +35,14 @@ class Action {
     getAllContent() {
         return this.kernel.storage.all().map(item => item.text)
     }
+
+    runAction(type, name) {
+        const handler = this.kernel.getActionHandler(type, name)
+        if (typeof handler === "function") {
+            return handler()
+        }
+        return false
+    }
 }
 
 module.exports = Action
