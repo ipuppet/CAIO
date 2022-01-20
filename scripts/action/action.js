@@ -36,16 +36,9 @@ class Action {
         return this.kernel.storage.all().map(item => item.text)
     }
 
-    async runAction(type, name) {
+    runAction(type, name) {
         const handler = this.kernel.getActionHandler(type, name)
-        return new Promise((resolve, reject) => {
-            if (typeof handler === "function") {
-                const result = await handler()
-                resolve(result)
-            } else {
-                reject(`No such Action: ${type}/${name}`)
-            }
-        })
+        return handler()
     }
 }
 

@@ -77,10 +77,10 @@ class AppKernel extends Kernel {
     getActionHandler(type, name, basePath) {
         if (!basePath) basePath = `${this.userActionPath}${type}/${name}/`
         const config = JSON.parse($file.read(basePath + "config.json").string)
-        return async data => {
+        return data => {
             const ActionClass = require(basePath + "main.js")
             const action = new ActionClass(this, config, data)
-            return await action.do()
+            return action.do()
         }
     }
 
