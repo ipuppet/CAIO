@@ -7,6 +7,10 @@ class Action {
         Object.assign(this, data)
     }
 
+    push(args) {
+        this.pageSheet(args)
+    }
+
     /**
      * page sheet
      * @param {*} args 
@@ -17,7 +21,7 @@ class Action {
             doneText: args.doneText ?? $l10n("DONE") // 左上角文本
         }
      */
-    push(args) {
+    pageSheet(args) {
         const sheet = new Sheet()
         sheet
             .setView(args.view)
