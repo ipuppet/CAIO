@@ -1828,7 +1828,7 @@ class Setting extends Controller {
         }
     }
 
-    createSwitch(key, icon, title, events) {
+    createSwitch(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -1843,8 +1843,6 @@ class Setting extends Controller {
                         changed: sender => {
                             if (!this.set(key, sender.on)) {
                                 sender.on = !sender.on
-                            } else {
-                                if (events) eval(`(()=>{return ${events}})()`)
                             }
                         }
                     },
@@ -1858,7 +1856,7 @@ class Setting extends Controller {
         }
     }
 
-    createString(key, icon, title, events) {
+    createString(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -1908,7 +1906,6 @@ class Setting extends Controller {
                                             tapped: () => {
                                                 if (this.set(key, $(`${this.name}-string-${key}`).text)) {
                                                     popover.dismiss()
-                                                    if (events) eval(`(()=>{return ${events}})()`)
                                                 }
                                             }
                                         }
@@ -1928,7 +1925,7 @@ class Setting extends Controller {
         }
     }
 
-    createNumber(key, icon, title, events) {
+    createNumber(key, icon, title) {
         const id = this.getId("number", key)
         return {
             type: "view",
@@ -1958,7 +1955,6 @@ class Setting extends Controller {
                                     }
                                     if (this.set(key, text)) {
                                         $(id).text = text
-                                        if (events) eval(`(()=>{return ${events}})()`)
                                     }
                                 }
                             })
@@ -1976,7 +1972,7 @@ class Setting extends Controller {
         }
     }
 
-    createStepper(key, icon, title, min, max, events) {
+    createStepper(key, icon, title, min, max) {
         const id = this.getId("stepper", key)
         return {
             type: "view",
@@ -2007,8 +2003,6 @@ class Setting extends Controller {
                             $(id).text = sender.value
                             if (!this.set(key, sender.value)) {
                                 $(id).text = this.get(key)
-                            } else {
-                                if (events) eval(`(()=>{return ${events}})()`)
                             }
                         }
                     },
@@ -2153,7 +2147,7 @@ class Setting extends Controller {
         }
     }
 
-    createTab(key, icon, title, items, events, withTitle) {
+    createTab(key, icon, title, items, withTitle) {
         return {
             type: "view",
             views: [
@@ -2173,7 +2167,6 @@ class Setting extends Controller {
                         changed: (sender) => {
                             const value = withTitle ? [sender.index, title] : sender.index
                             this.set(key, value)
-                            if (events) eval(`(()=>{return ${events}})()`)
                         }
                     }
                 }
@@ -2182,7 +2175,7 @@ class Setting extends Controller {
         }
     }
 
-    createColor(key, icon, title, events) {
+    createColor(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -2211,7 +2204,6 @@ class Setting extends Controller {
                                 tapped: async () => {
                                     const color = await $picker.color({ color: this.getColor(this.get(key)) })
                                     this.set(key, color.components)
-                                    if (events) eval(`(()=>{return ${events}})()`)
                                     $(`setting-${this.name}-color-${key}`).bgcolor = $rgba(
                                         color.components.red,
                                         color.components.green,
@@ -2236,7 +2228,7 @@ class Setting extends Controller {
         }
     }
 
-    createMenu(key, icon, title, items, events, withTitle) {
+    createMenu(key, icon, title, items, withTitle) {
         const id = this.getId("menu", key)
         const labelId = `${id}-label`
         const lineId = `${id}-line`
@@ -2280,7 +2272,6 @@ class Setting extends Controller {
                         handler: (title, idx) => {
                             const value = withTitle ? [idx, title] : idx
                             this.set(key, value)
-                            if (events) eval(`(()=>{return ${events}})()`)
                             $(labelId).text = $l10n(title)
                         },
                         finished: () => {
@@ -2293,7 +2284,7 @@ class Setting extends Controller {
         }
     }
 
-    createDate(key, icon, title, mode = 2, events) {
+    createDate(key, icon, title, mode = 2) {
         const id = this.getId("date", key)
         const getFormatDate = date => {
             let str = ""
@@ -2339,7 +2330,6 @@ class Setting extends Controller {
                                     date: settingData ? settingData : Date.now()
                                 }
                             })
-                            if (events) eval(`(()=>{return ${events}})()`)
                             this.set(key, date.getTime())
                             $(`${id}-label`).text = getFormatDate(date)
                         }
@@ -2355,7 +2345,7 @@ class Setting extends Controller {
         }
     }
 
-    createInput(key, icon, title, events) {
+    createInput(key, icon, title) {
         const id = this.getId("input", key)
         return {
             type: "view",
@@ -2388,7 +2378,6 @@ class Setting extends Controller {
                                     }
                                     if (this.set(key, text)) {
                                         $(`${id}-label`).text = text
-                                        if (events) eval(`(()=>{return ${events}})()`)
                                     }
                                 }
                             })
@@ -2414,7 +2403,7 @@ class Setting extends Controller {
      * @param {String} bgcolor 指定预览时的背景色，默认 "#000000"
      * @returns 
      */
-    createIcon(key, icon, title, events, bgcolor) {
+    createIcon(key, icon, title, bgcolor) {
         const id = this.getId("icon", key)
         return {
             type: "view",
@@ -2460,7 +2449,6 @@ class Setting extends Controller {
                                         const icon = await $ui.selectIcon()
                                         this.set(key, icon)
                                         $(id).icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
-                                        if (events) eval(`(()=>{return ${events}})()`)
                                     } else if (idx === 1 || idx === 2) {
                                         $input.text({
                                             text: "",
@@ -2473,7 +2461,6 @@ class Setting extends Controller {
                                                 this.set(key, text)
                                                 if (idx === 1) $(id).symbol = text
                                                 else $(id).image = $image(text)
-                                                if (events) eval(`(()=>{return ${events}})()`)
                                             }
                                         })
                                     }
@@ -2556,16 +2543,16 @@ class Setting extends Controller {
                 item.title = $l10n(item.title)
                 switch (item.type) {
                     case "switch":
-                        row = this.createSwitch(item.key, item.icon, item.title, item.events)
+                        row = this.createSwitch(item.key, item.icon, item.title)
                         break
                     case "stepper":
-                        row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max, item.events)
+                        row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max)
                         break
                     case "string":
-                        row = this.createString(item.key, item.icon, item.title, item.events)
+                        row = this.createString(item.key, item.icon, item.title)
                         break
                     case "number":
-                        row = this.createNumber(item.key, item.icon, item.title, item.events)
+                        row = this.createNumber(item.key, item.icon, item.title)
                         break
                     case "info":
                         row = this.createInfo(item.icon, item.title, value)
@@ -2574,25 +2561,25 @@ class Setting extends Controller {
                         row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
-                        row = this.createTab(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
+                        row = this.createTab(item.key, item.icon, item.title, item.items, item.withTitle)
                         break
                     case "color":
-                        row = this.createColor(item.key, item.icon, item.title, item.events)
+                        row = this.createColor(item.key, item.icon, item.title)
                         break
                     case "menu":
                         if (typeof item.items === "string") {
                             item.items = eval(`(()=>{return ${item.items}()})()`)
                         }
-                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
+                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.withTitle)
                         break
                     case "date":
-                        row = this.createDate(item.key, item.icon, item.title, item.mode, item.events)
+                        row = this.createDate(item.key, item.icon, item.title, item.mode)
                         break
                     case "input":
-                        row = this.createInput(item.key, item.icon, item.title, item.events)
+                        row = this.createInput(item.key, item.icon, item.title)
                         break
                     case "icon":
-                        row = this.createIcon(item.key, item.icon, item.title, item.events)
+                        row = this.createIcon(item.key, item.icon, item.title)
                         break
                     case "child":
                         row = this.createChild(item.key, item.icon, item.title, item.children)
