@@ -512,10 +512,6 @@ class Clipboard {
                         }
                     ]
                 },
-                footer: { // 防止list被菜单遮挡
-                    type: "view",
-                    props: { height: 50 }
-                },
                 actions: [
                     { // 复制
                         title: $l10n("COPY"),
