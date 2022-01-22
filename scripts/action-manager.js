@@ -261,8 +261,8 @@ class ActionManager {
         })
         const nameInput = SettingUI.createInput("name", ["pencil.circle", "#FF3366"], $l10n("NAME"))
         const createColor = SettingUI.createColor("color", ["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
-        const iconInput = SettingUI.createIcon("icon", ["star.circle", "#FF9933"], $l10n("ICON"), null, this.editingActionInfo.color)
-        const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, null, true)
+        const iconInput = SettingUI.createIcon("icon", ["star.circle", "#FF9933"], $l10n("ICON"), this.editingActionInfo.color)
+        const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, true)
         const description = {
             type: "view",
             views: [
