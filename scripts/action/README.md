@@ -62,6 +62,11 @@ getAllContent() {
 }
 
 /**
+ * 更新当前文本，当用户侧滑返回时才会触发保存操作
+ */
+setContent(text): void
+
+/**
  * 运行指定的 Action 并返回该 Action do() 方法的返回值
  */
 runAction(type, name): any

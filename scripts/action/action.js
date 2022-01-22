@@ -36,8 +36,13 @@ class Action {
         return this.kernel.storage.all().map(item => item.text)
     }
 
+    setContent(text) {
+        this.text = text
+        this.kernel.editor.setContent(text)
+    }
+
     async runAction(type, name) {
-        const handler = this.kernel.getActionHandler(type, name)
+        const handler = this.kernel.actionManager.getActionHandler(type, name)
         return new Promise(async (resolve, reject) => {
             if (typeof handler === "function") {
                 const result = await handler()

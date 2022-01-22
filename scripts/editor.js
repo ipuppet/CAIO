@@ -30,13 +30,18 @@ class Editor {
                     views: [this.kernel.actionManager.getActionListView($l10n("ACTION"), {}, {
                         didSelect: (sender, indexPath, data) => {
                             popover.dismiss()
-                            const action = this.kernel.getActionHandler(data.info.info.type, data.info.info.dir)
+                            const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
                             setTimeout(() => action(content), 500)
                         }
                     })]
                 })
             }
         }
+    }
+
+    setContent(text) {
+        this.text = text
+        $(this.id).text = text
     }
 
     getView(type = "text") {
