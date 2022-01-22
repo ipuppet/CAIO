@@ -1,4 +1,4 @@
-const Action = require("/scripts/action/action.js")
+const Action = require("scripts/action/action.js")
 
 class MyAction extends Action {
     openUrl(url) {
