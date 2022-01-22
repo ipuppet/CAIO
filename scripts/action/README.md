@@ -51,7 +51,7 @@ module.exports = MyAction
         doneText: args.doneText ?? $l10n("DONE") // 左上角文本
     }
   */
-push(args): void
+pageSheet(args): void
 
 /**
  * 获取所有剪切板数据
