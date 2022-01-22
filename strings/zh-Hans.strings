@@ -52,6 +52,6 @@
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
 
 "TODAY&KEYBOARD" = "通知中心和键盘";
-"DISPLAY_NAV" = "显示标题栏";
+"SHOW_NAV" = "显示标题栏";
 
 "EXIT" = "退出";

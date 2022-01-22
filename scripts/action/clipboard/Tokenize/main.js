@@ -1,4 +1,4 @@
-const Action = require("/scripts/action/action.js")
+const Action = require("scripts/action/action.js")
 
 class MyAction extends Action {
     getView() {
@@ -69,7 +69,7 @@ class MyAction extends Action {
             text: this.text,
             handler: results => {
                 this.results = results
-                this.push({
+                this.pageSheet({
                     view: this.getView(),
                     done: () => {
                         const result = []

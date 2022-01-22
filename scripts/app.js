@@ -5,6 +5,8 @@ const {
     Setting
 } = require("./easy-jsbox")
 const Storage = require("./storage")
+const ActionManager = require("./action-manager")
+const Editor = require("./editor")
 
 class AppKernel extends Kernel {
     constructor() {
@@ -12,19 +14,17 @@ class AppKernel extends Kernel {
         this.query = $context.query
         // 初始化必要路径
         if (!$file.exists("storage")) $file.mkdir("storage")
-        // 初始话设置
+        // Setting
         this.setting = new Setting()
-        this.setting.loadConfig()
+        this.setting.loadConfig().useJsboxNav()
         this.initSettingMethods()
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"))
-        // action 相关路径
-        this.actionPath = "scripts/action/"
-        this.actionOrderFile = "order.json"
-        this.userActionPath = "storage/user_action/"
-        this.checkUserAction()
-        // 用来存储被美化的 Action 分类名称
-        this.typeNameMap = {}
+        // ActionManager
+        this.actionManager = new ActionManager(this)
+        this.actionManager.checkUserAction()
+        // Editor
+        this.editor = new Editor(this)
         // 检查更新
         /* this.checkUpdate(content => {
             $file.write({
@@ -33,227 +33,6 @@ class AppKernel extends Kernel {
             })
             $ui.toast("The framework has been updated.")
         }) */
-    }
-
-    importExampleAction() {
-        $file.list(this.actionPath).forEach(type => {
-            const actionTypePath = `${this.actionPath}${type}`
-            if ($file.isDirectory(actionTypePath)) {
-                const userActionTypePath = `${this.userActionPath}${type}`
-                $file.list(actionTypePath).forEach(item => {
-                    if (!$file.exists(`${userActionTypePath}/${item}/main.js`)) {
-                        $file.mkdir(userActionTypePath)
-                        $file.copy({
-                            src: `${actionTypePath}/${item}`,
-                            dst: `${userActionTypePath}/${item}`
-                        })
-                    }
-                })
-            }
-        })
-    }
-
-    checkUserAction() {
-        if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
-            $file.mkdir(this.userActionPath)
-            this.importExampleAction()
-        }
-    }
-
-    getActionTypes() {
-        const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        return type.concat($file.list(this.userActionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
-            if ($file.isDirectory(this.userActionPath + "/" + dir) && type.indexOf(dir) < 0)
-                return dir
-        }))
-    }
-
-    getActionOrder(type) {
-        const path = `${this.userActionPath}${type}/${this.actionOrderFile}`
-        if ($file.exists(path)) return JSON.parse($file.read(path).string)
-        else return []
-    }
-
-    getActionHandler(type, name, basePath) {
-        if (!basePath) basePath = `${this.userActionPath}${type}/${name}/`
-        const config = JSON.parse($file.read(basePath + "config.json").string)
-        return data => {
-            const ActionClass = require(basePath + "main.js")
-            const action = new ActionClass(this, config, data)
-            action.do()
-        }
-    }
-
-    getActions(type) {
-        const actions = []
-        const typePath = `${this.userActionPath}${type}/`
-        if (!$file.exists(typePath)) return []
-        const pushAction = item => {
-            const basePath = `${typePath}/${item}/`
-            if ($file.isDirectory(basePath)) {
-                const config = JSON.parse($file.read(basePath + "config.json").string)
-                actions.push(Object.assign(config, {
-                    dir: item,
-                    type: type,
-                    name: config.name ?? item,
-                    icon: config.icon
-                }))
-            }
-        }
-        // push 有顺序的 Action
-        const order = this.getActionOrder(type)
-        order.forEach(item => pushAction(item))
-        // push 剩下的 Action
-        $file.list(typePath).forEach(item => {
-            if (order.indexOf(item) === -1)
-                pushAction(item)
-        })
-        return actions
-    }
-
-    actionToData(action) {
-        return {
-            name: { text: action.name },
-            icon: action.icon.slice(0, 5) === "icon_"
-                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                : { image: $image(action.icon) },
-            color: { bgcolor: $color(action.color) },
-            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
-        }
-    }
-
-    getTypeName(type) {
-        const typeUpperCase = type.toUpperCase()
-        const l10n = $l10n(typeUpperCase)
-        const name = l10n === typeUpperCase ? type : l10n
-        this.typeNameMap[name] = type
-        return name
-    }
-
-    getTypeDir(name) {
-        return this.typeNameMap[name] ?? name
-    }
-
-    getActionListView(title, props = {}, events = {}) {
-        const data = []
-        this.getActionTypes().forEach(type => {
-            const section = {
-                title: this.getTypeName(type),
-                rows: []
-            }
-            this.getActions(type).forEach(action => {
-                section.rows.push(this.actionToData(action))
-            })
-            data.push(section)
-        })
-        return {
-            type: "list",
-            layout: (make, view) => {
-                make.top.width.equalTo(view.super.safeArea)
-                make.bottom.inset(0)
-            },
-            events: events,
-            props: Object.assign({
-                reorder: false,
-                bgcolor: $color("clear"),
-                rowHeight: 60,
-                sectionTitleHeight: 30,
-                stickyHeader: true,
-                header: {
-                    type: "view",
-                    props: { height: 25 },
-                    views: [{
-                        type: "label",
-                        props: {
-                            text: title,
-                            color: $color("secondaryText"),
-                            font: $font(14)
-                        },
-                        layout: (make, view) => {
-                            make.top.equalTo(view.super.safeArea).offset(10)
-                            make.height.equalTo(30)
-                            make.left.inset(15)
-                        }
-                    }, UIKit.separatorLine()]
-                },
-                data: data,
-                template: {
-                    props: { bgcolor: $color("clear") },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                id: "color",
-                                cornerRadius: 8,
-                                smoothCorners: true
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.inset(15)
-                                make.size.equalTo($size(30, 30))
-                            }
-                        },
-                        {
-                            type: "image",
-                            props: {
-                                id: "icon",
-                                tintColor: $color("#ffffff"),
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.inset(20)
-                                make.size.equalTo($size(20, 20))
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "name",
-                                lines: 1,
-                                font: $font(16)
-                            },
-                            layout: (make, view) => {
-                                make.height.equalTo(30)
-                                make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.prev.right).offset(15)
-                            }
-                        },
-                        { type: "label", props: { id: "info" } }
-                    ]
-                }
-            }, props)
-        }
-    }
-
-    getActionButton(getDataObject) {
-        return {
-            symbol: "bolt.circle",
-            tapped: sender => {
-                const content = { text: getDataObject.text() }
-                const defaultData = Object.keys(content)
-                Object.keys(getDataObject).map(item => {
-                    if (defaultData.indexOf(item) === -1) {
-                        if (typeof getDataObject[item] === "function") {
-                            content[item] = getDataObject[item]()
-                        } else {
-                            content[item] = getDataObject[item]
-                        }
-                    }
-                })
-                const popover = $ui.popover({
-                    sourceView: sender,
-                    directions: $popoverDirection.up,
-                    size: $size(200, 300),
-                    views: [this.getActionListView($l10n("ACTION"), {}, {
-                        didSelect: (sender, indexPath, data) => {
-                            popover.dismiss()
-                            const action = this.getActionHandler(data.info.info.type, data.info.info.dir)
-                            setTimeout(() => action(content), 500)
-                        }
-                    })]
-                })
-            }
-        }
     }
 
     /**
@@ -326,7 +105,7 @@ class AppKernel extends Kernel {
             const fileName = "actions.zip"
             const tempPath = `/storage/${fileName}`
             $archiver.zip({
-                directory: this.userActionPath,
+                directory: this.actionManager.userActionPath,
                 dest: tempPath,
                 handler: () => {
                     $share.sheet({
@@ -365,7 +144,7 @@ class AppKernel extends Kernel {
                                     if ($file.isDirectory(`${path}/${item}`)) {
                                         $file.copy({
                                             src: `${path}/${item}`,
-                                            dst: `${this.userActionPath}${item}`
+                                            dst: `${this.actionManager.userActionPath}${item}`
                                         })
                                     }
                                 })
@@ -388,7 +167,7 @@ class AppKernel extends Kernel {
 
         this.setting.method.importExampleAction = animate => {
             animate.actionStart()
-            this.importExampleAction()
+            this.actionManager.importExampleAction()
             animate.actionDone()
         }
     }
@@ -421,8 +200,29 @@ module.exports = {
             new Today(kernel).render()
         } else if ($app.env === $env.app) {
             const kernel = new AppKernel()
-            const MainUI = require("./ui/main")
-            new MainUI(kernel).render()
+            kernel.useJsboxNav()
+            kernel.setNavButtons([
+                {
+                    symbol: "gear",
+                    title: $l10n("SETTING"),
+                    handler: () => {
+                        UIKit.push({
+                            title: $l10n("SETTING"),
+                            views: [kernel.setting.getListView()]
+                        })
+                    }
+                },
+                {
+                    symbol: "command",
+                    title: $l10n("ACTION"),
+                    handler: () => {
+                        kernel.actionManager.present()
+                    }
+                }
+            ])
+            const Clipboard = require("./ui/clipboard")
+            const ClipboardUI = new Clipboard(kernel)
+            kernel.UIRender(ClipboardUI.getPageView())
         } else {
             $ui.render({
                 views: [{
@@ -431,10 +231,7 @@ module.exports = {
                         text: "不支持在此环境中运行",
                         align: $align.center
                     },
-                    layout: (make, view) => {
-                        make.center.equalTo(view.super)
-                        make.size.equalTo(view.super)
-                    }
+                    layout: $layout.fill
                 }]
             })
         }

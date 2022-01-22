@@ -1482,12 +1482,20 @@ class SettingLoadConfigError extends Error {
 class Setting extends Controller {
     constructor(args = {}) {
         super()
-        this.savePath = args.savePath ?? (() => {
-            if (!$file.isDirectory("storage")) {
-                $file.mkdir("storage")
-            }
-            return "storage/setting.json"
-        })()
+        this.loadConfigStatus = false
+        // set 和 get 同时设置才会生效
+        if (typeof args.set === "function" && typeof args.get === "function") {
+            this.set = args.set
+            this.get = args.get
+            this.loadConfigStatus = true
+        } else {
+            this.savePath = args.savePath ?? (() => {
+                if (!$file.isDirectory("storage")) {
+                    $file.mkdir("storage")
+                }
+                return "storage/setting.json"
+            })()
+        }
         if (args.structure) {
             this.setStructure(args.structure) // structure 优先级高于 structurePath
         } else {
@@ -1501,7 +1509,6 @@ class Setting extends Controller {
         this.viewController = new ViewController()
         // 用于存放 script 类型用到的方法
         this.method = {}
-        this.loadConfigStatus = false
     }
 
     useJsboxNav() {
@@ -1670,6 +1677,10 @@ class Setting extends Controller {
             : $rgba(color.red, color.green, color.blue, color.alpha)
     }
 
+    getId(type, key) {
+        return `setting-${this.name}-${type}-${key}`
+    }
+
     _touchHighlightStart(id) {
         $(id).bgcolor = $color("insetGroupedBackground")
     }
@@ -1767,6 +1778,7 @@ class Setting extends Controller {
         const isArray = Array.isArray(value)
         const text = isArray ? value[0] : value
         const moreInfo = isArray ? value[1] : value
+        // 内部随机 id
         const lineId = `script-${this.name}-${uuid()}`
         return {
             type: "view",
@@ -1816,7 +1828,7 @@ class Setting extends Controller {
         }
     }
 
-    createSwitch(key, icon, title, events) {
+    createSwitch(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -1831,8 +1843,6 @@ class Setting extends Controller {
                         changed: sender => {
                             if (!this.set(key, sender.on)) {
                                 sender.on = !sender.on
-                            } else {
-                                if (events) eval(`(()=>{return ${events}})()`)
                             }
                         }
                     },
@@ -1846,7 +1856,7 @@ class Setting extends Controller {
         }
     }
 
-    createString(key, icon, title, events) {
+    createString(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -1896,7 +1906,6 @@ class Setting extends Controller {
                                             tapped: () => {
                                                 if (this.set(key, $(`${this.name}-string-${key}`).text)) {
                                                     popover.dismiss()
-                                                    if (events) eval(`(()=>{return ${events}})()`)
                                                 }
                                             }
                                         }
@@ -1916,7 +1925,8 @@ class Setting extends Controller {
         }
     }
 
-    createNumber(key, icon, title, events) {
+    createNumber(key, icon, title) {
+        const id = this.getId("number", key)
         return {
             type: "view",
             views: [
@@ -1924,7 +1934,7 @@ class Setting extends Controller {
                 {
                     type: "label",
                     props: {
-                        id: `${this.name}-number-${key}`,
+                        id: id,
                         align: $align.right,
                         text: this.get(key)
                     },
@@ -1944,8 +1954,7 @@ class Setting extends Controller {
                                         return
                                     }
                                     if (this.set(key, text)) {
-                                        $(`${this.name}-number-${key}`).text = text
-                                        if (events) eval(`(()=>{return ${events}})()`)
+                                        $(id).text = text
                                     }
                                 }
                             })
@@ -1963,7 +1972,8 @@ class Setting extends Controller {
         }
     }
 
-    createStepper(key, icon, title, min, max, events) {
+    createStepper(key, icon, title, min, max) {
+        const id = this.getId("stepper", key)
         return {
             type: "view",
             views: [
@@ -1971,7 +1981,7 @@ class Setting extends Controller {
                 {
                     type: "label",
                     props: {
-                        id: `${this.name}-stepper-${key}`,
+                        id: id,
                         text: this.get(key),
                         textColor: this.textColor,
                         align: $align.left
@@ -1990,11 +2000,9 @@ class Setting extends Controller {
                     },
                     events: {
                         changed: (sender) => {
-                            $(`${this.name}-stepper-${key}`).text = sender.value
+                            $(id).text = sender.value
                             if (!this.set(key, sender.value)) {
-                                $(`${this.name}-stepper-${key}`).text = this.get(key)
-                            } else {
-                                if (events) eval(`(()=>{return ${events}})()`)
+                                $(id).text = this.get(key)
                             }
                         }
                     },
@@ -2009,27 +2017,28 @@ class Setting extends Controller {
     }
 
     createScript(key, icon, title, script) {
-        const id = `script-${this.name}-${key}`
+        const id = this.getId("script", key)
+        const buttonId = `${id}-button`
         const lineId = `${id}-line`
         const touchHighlight = () => {
             this._touchHighlightStart(lineId)
             this._touchHighlightEnd(lineId)
         }
         const actionStart = () => {
-            // 隐藏button，显示spinner
-            $(id).alpha = 0
-            $(`${id}-spinner`).alpha = 1
+            // 隐藏 button，显示 spinner
+            $(buttonId).alpha = 0
+            $(`${buttonId}-spinner`).alpha = 1
             this._touchHighlightStart(lineId)
         }
         const actionCancel = () => {
-            $(id).alpha = 1
-            $(`${id}-spinner`).alpha = 0
+            $(buttonId).alpha = 1
+            $(`${buttonId}-spinner`).alpha = 0
             this._touchHighlightEnd(lineId)
         }
         const actionDone = (status = true, message = $l10n("ERROR")) => {
-            $(`${id}-spinner`).alpha = 0
+            $(`${buttonId}-spinner`).alpha = 0
             this._touchHighlightEnd(lineId)
-            const button = $(id)
+            const button = $(buttonId)
             if (!status) { // 失败
                 $ui.toast(message)
                 button.alpha = 1
@@ -2077,7 +2086,7 @@ class Setting extends Controller {
                         {// 仅用于显示图片
                             type: "image",
                             props: {
-                                id: id,
+                                id: buttonId,
                                 symbol: "chevron.right",
                                 tintColor: $color("secondaryText")
                             },
@@ -2090,7 +2099,7 @@ class Setting extends Controller {
                         {
                             type: "spinner",
                             props: {
-                                id: `${id}-spinner`,
+                                id: `${buttonId}-spinner`,
                                 loading: true,
                                 alpha: 0
                             },
@@ -2138,7 +2147,7 @@ class Setting extends Controller {
         }
     }
 
-    createTab(key, icon, title, items, events, withTitle) {
+    createTab(key, icon, title, items, withTitle) {
         return {
             type: "view",
             views: [
@@ -2158,7 +2167,6 @@ class Setting extends Controller {
                         changed: (sender) => {
                             const value = withTitle ? [sender.index, title] : sender.index
                             this.set(key, value)
-                            if (events) eval(`(()=>{return ${events}})()`)
                         }
                     }
                 }
@@ -2167,7 +2175,7 @@ class Setting extends Controller {
         }
     }
 
-    createColor(key, icon, title, events) {
+    createColor(key, icon, title) {
         return {
             type: "view",
             views: [
@@ -2196,7 +2204,6 @@ class Setting extends Controller {
                                 tapped: async () => {
                                     const color = await $picker.color({ color: this.getColor(this.get(key)) })
                                     this.set(key, color.components)
-                                    if (events) eval(`(()=>{return ${events}})()`)
                                     $(`setting-${this.name}-color-${key}`).bgcolor = $rgba(
                                         color.components.red,
                                         color.components.green,
@@ -2221,8 +2228,9 @@ class Setting extends Controller {
         }
     }
 
-    createMenu(key, icon, title, items, events, withTitle) {
-        const id = `setting-menu-${this.name}-${key}`
+    createMenu(key, icon, title, items, withTitle) {
+        const id = this.getId("menu", key)
+        const labelId = `${id}-label`
         const lineId = `${id}-line`
         return {
             type: "view",
@@ -2241,7 +2249,7 @@ class Setting extends Controller {
                                     else return value
                                 })()] : items[this.get(key)],
                                 color: $color("secondaryText"),
-                                id: id
+                                id: labelId
                             },
                             layout: (make, view) => {
                                 make.right.inset(0)
@@ -2264,8 +2272,7 @@ class Setting extends Controller {
                         handler: (title, idx) => {
                             const value = withTitle ? [idx, title] : idx
                             this.set(key, value)
-                            if (events) eval(`(()=>{return ${events}})()`)
-                            $(id).text = $l10n(title)
+                            $(labelId).text = $l10n(title)
                         },
                         finished: () => {
                             this._touchHighlightEnd(lineId, 0.2)
@@ -2277,8 +2284,8 @@ class Setting extends Controller {
         }
     }
 
-    createDate(key, icon, title, mode = 2, events) {
-        const id = `setting-date-${this.name}-${key}`
+    createDate(key, icon, title, mode = 2) {
+        const id = this.getId("date", key)
         const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
@@ -2323,7 +2330,6 @@ class Setting extends Controller {
                                     date: settingData ? settingData : Date.now()
                                 }
                             })
-                            if (events) eval(`(()=>{return ${events}})()`)
                             this.set(key, date.getTime())
                             $(`${id}-label`).text = getFormatDate(date)
                         }
@@ -2339,8 +2345,8 @@ class Setting extends Controller {
         }
     }
 
-    createInput(key, icon, title, events) {
-        const id = `setting-input-${this.name}-${key}`
+    createInput(key, icon, title) {
+        const id = this.getId("input", key)
         return {
             type: "view",
             views: [
@@ -2372,7 +2378,6 @@ class Setting extends Controller {
                                     }
                                     if (this.set(key, text)) {
                                         $(`${id}-label`).text = text
-                                        if (events) eval(`(()=>{return ${events}})()`)
                                     }
                                 }
                             })
@@ -2389,8 +2394,17 @@ class Setting extends Controller {
         }
     }
 
-    createIcon(key, icon, title, events) {
-        const id = `setting-icon-${this.name}-${key}`
+    /**
+     * 
+     * @param {*} key 
+     * @param {*} icon 
+     * @param {*} title 
+     * @param {*} events 
+     * @param {String} bgcolor 指定预览时的背景色，默认 "#000000"
+     * @returns 
+     */
+    createIcon(key, icon, title, bgcolor) {
+        const id = this.getId("icon", key)
         return {
             type: "view",
             views: [
@@ -2402,7 +2416,7 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 cornerRadius: 8,
-                                bgcolor: $color("#000000"),
+                                bgcolor: $color(bgcolor ?? "#000000"),
                                 smoothCorners: true
                             },
                             layout: (make, view) => {
@@ -2435,7 +2449,6 @@ class Setting extends Controller {
                                         const icon = await $ui.selectIcon()
                                         this.set(key, icon)
                                         $(id).icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
-                                        if (events) eval(`(()=>{return ${events}})()`)
                                     } else if (idx === 1 || idx === 2) {
                                         $input.text({
                                             text: "",
@@ -2448,7 +2461,6 @@ class Setting extends Controller {
                                                 this.set(key, text)
                                                 if (idx === 1) $(id).symbol = text
                                                 else $(id).image = $image(text)
-                                                if (events) eval(`(()=>{return ${events}})()`)
                                             }
                                         })
                                     }
@@ -2468,7 +2480,7 @@ class Setting extends Controller {
     }
 
     createChild(key, icon, title, children) {
-        const id = `setting-child-${this.name}-${key}`
+        const id = this.getId("child", key)
         const lineId = `${id}-line`
         return {
             type: "view",
@@ -2531,16 +2543,16 @@ class Setting extends Controller {
                 item.title = $l10n(item.title)
                 switch (item.type) {
                     case "switch":
-                        row = this.createSwitch(item.key, item.icon, item.title, item.events)
+                        row = this.createSwitch(item.key, item.icon, item.title)
                         break
                     case "stepper":
-                        row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max, item.events)
+                        row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max)
                         break
                     case "string":
-                        row = this.createString(item.key, item.icon, item.title, item.events)
+                        row = this.createString(item.key, item.icon, item.title)
                         break
                     case "number":
-                        row = this.createNumber(item.key, item.icon, item.title, item.events)
+                        row = this.createNumber(item.key, item.icon, item.title)
                         break
                     case "info":
                         row = this.createInfo(item.icon, item.title, value)
@@ -2549,25 +2561,25 @@ class Setting extends Controller {
                         row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
-                        row = this.createTab(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
+                        row = this.createTab(item.key, item.icon, item.title, item.items, item.withTitle)
                         break
                     case "color":
-                        row = this.createColor(item.key, item.icon, item.title, item.events)
+                        row = this.createColor(item.key, item.icon, item.title)
                         break
                     case "menu":
                         if (typeof item.items === "string") {
                             item.items = eval(`(()=>{return ${item.items}()})()`)
                         }
-                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.events, item.withTitle)
+                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.withTitle)
                         break
                     case "date":
-                        row = this.createDate(item.key, item.icon, item.title, item.mode, item.events)
+                        row = this.createDate(item.key, item.icon, item.title, item.mode)
                         break
                     case "input":
-                        row = this.createInput(item.key, item.icon, item.title, item.events)
+                        row = this.createInput(item.key, item.icon, item.title)
                         break
                     case "icon":
-                        row = this.createIcon(item.key, item.icon, item.title, item.events)
+                        row = this.createIcon(item.key, item.icon, item.title)
                         break
                     case "child":
                         row = this.createChild(item.key, item.icon, item.title, item.children)

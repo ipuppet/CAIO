@@ -1,8 +1,8 @@
-const Action = require("/scripts/action/action.js")
+const Action = require("scripts/action/action.js")
 
 class MyAction extends Action {
     do() {
-        this.push({
+        this.pageSheet({
             view: {
                 type: "markdown",
                 props: { content: this.text },

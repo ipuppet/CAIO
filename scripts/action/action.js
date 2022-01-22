@@ -7,6 +7,10 @@ class Action {
         Object.assign(this, data)
     }
 
+    push(args) {
+        this.pageSheet(args)
+    }
+
     /**
      * page sheet
      * @param {*} args 
@@ -17,7 +21,7 @@ class Action {
             doneText: args.doneText ?? $l10n("DONE") // 左上角文本
         }
      */
-    push(args) {
+    pageSheet(args) {
         const sheet = new Sheet()
         sheet
             .setView(args.view)
@@ -34,6 +38,23 @@ class Action {
      */
     getAllContent() {
         return this.kernel.storage.all().map(item => item.text)
+    }
+
+    setContent(text) {
+        this.text = text
+        this.kernel.editor.setContent(text)
+    }
+
+    async runAction(type, name) {
+        const handler = this.kernel.actionManager.getActionHandler(type, name)
+        return new Promise(async (resolve, reject) => {
+            if (typeof handler === "function") {
+                const result = await handler()
+                resolve(result)
+            } else {
+                reject(`No such Action: ${type}/${name}`)
+            }
+        })
     }
 }
 

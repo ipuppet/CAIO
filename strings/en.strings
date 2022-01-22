@@ -23,7 +23,7 @@
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";
-"CREATE_NEW_ACTION" = "Create New Action";
+"CREATE_NEW_ACTION" = "New Action";
 "CREATE_NEW_TYPE" = "New Category";
 "TYPE_ALREADY_EXISTS" = "This category already exists";
 "EDIT_DETAILS" = "Edit Details";
@@ -52,6 +52,6 @@
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 
 "TODAY&KEYBOARD" = "Today & Keyboard";
-"DISPLAY_NAV" = "Display NAV";
+"SHOW_NAV" = "Show NAV";
 
 "EXIT" = "Exit";

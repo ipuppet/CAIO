@@ -199,7 +199,7 @@
                                 "icon": [
                                     "paperplane.fill"
                                 ],
-                                "title": "DISPLAY_NAV",
+                                "title": "SHOW_NAV",
                                 "type": "switch",
                                 "key": "mini.displayNav",
                                 "value": true

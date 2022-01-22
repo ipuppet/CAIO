@@ -27,7 +27,9 @@ class Mini extends Clipboard {
                 }
             }
         ]
-        if ($app.env !== $env.today) {
+        if ($app.env === $env.keyboard) {
+            // TODO keyboard buttons
+        } else {
             buttons.unshift(
                 {
                     symbol: "plus.circle",
@@ -42,8 +44,6 @@ class Mini extends Clipboard {
                     }
                 }
             )
-        } else if ($app.env === $env.keyboard) {
-            // TODO keyboard buttons
         }
         return buttons.map(button => {
             const barButtonItem = new BarButtonItem()

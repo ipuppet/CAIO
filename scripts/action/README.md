@@ -51,7 +51,7 @@ module.exports = MyAction
         doneText: args.doneText ?? $l10n("DONE") // 左上角文本
     }
   */
-push(args): void
+pageSheet(args): void
 
 /**
  * 获取所有剪切板数据
@@ -60,4 +60,14 @@ push(args): void
 getAllContent() {
     return this.kernel.storage.all()
 }
+
+/**
+ * 更新当前文本，当用户侧滑返回时才会触发保存操作
+ */
+setContent(text): void
+
+/**
+ * 运行指定的 Action 并返回该 Action do() 方法的返回值
+ */
+runAction(type, name): any
 ```
