@@ -225,37 +225,6 @@ class AppKernel extends Kernel {
         }
     }
 
-    getActionButton(getDataObject) {
-        return {
-            symbol: "bolt.circle",
-            tapped: sender => {
-                const content = { text: getDataObject.text() }
-                const defaultData = Object.keys(content)
-                Object.keys(getDataObject).map(item => {
-                    if (defaultData.indexOf(item) === -1) {
-                        if (typeof getDataObject[item] === "function") {
-                            content[item] = getDataObject[item]()
-                        } else {
-                            content[item] = getDataObject[item]
-                        }
-                    }
-                })
-                const popover = $ui.popover({
-                    sourceView: sender,
-                    directions: $popoverDirection.up,
-                    size: $size(200, 300),
-                    views: [this.getActionListView($l10n("ACTION"), {}, {
-                        didSelect: (sender, indexPath, data) => {
-                            popover.dismiss()
-                            const action = this.getActionHandler(data.info.info.type, data.info.info.dir)
-                            setTimeout(() => action(content), 500)
-                        }
-                    })]
-                })
-            }
-        }
-    }
-
     /**
      * 注入设置中的脚本类型方法
      */
