@@ -1,63 +1,232 @@
 const {
+    UIKit,
     Setting,
     NavigationBar,
     NavigationItem,
     PageController,
     Sheet
-} = require("../easy-jsbox")
+} = require("./easy-jsbox")
 
 class ActionManager {
     constructor(kernel) {
         this.kernel = kernel
         this.matrixId = "actions"
+        // path
+        this.actionPath = "scripts/action/"
+        this.actionOrderFile = "order.json"
+        this.userActionPath = "storage/user_action/"
+        // 用来存储被美化的 Action 分类名称
+        this.typeNameMap = {}
+        // sheet
+        this.actionSheet = undefined
     }
 
-    actionsToData() { // 格式化数据供 matrix 使用
-        const data = []
-        this.kernel.getActionTypes().forEach(type => {
-            const section = {
-                title: this.kernel.getTypeName(type), // TODO section 标题
-                items: []
+    importExampleAction() {
+        $file.list(this.actionPath).forEach(type => {
+            const actionTypePath = `${this.actionPath}${type}`
+            if ($file.isDirectory(actionTypePath)) {
+                const userActionTypePath = `${this.userActionPath}${type}`
+                $file.list(actionTypePath).forEach(item => {
+                    if (!$file.exists(`${userActionTypePath}/${item}/main.js`)) {
+                        $file.mkdir(userActionTypePath)
+                        $file.copy({
+                            src: `${actionTypePath}/${item}`,
+                            dst: `${userActionTypePath}/${item}`
+                        })
+                    }
+                })
             }
-            this.kernel.getActions(type).forEach(action => {
-                section.items.push(this.kernel.actionToData(action))
+        })
+    }
+
+    checkUserAction() {
+        if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
+            $file.mkdir(this.userActionPath)
+            this.importExampleAction()
+        }
+    }
+
+    initActionSheet() {
+        this.actionSheet = new Sheet()
+        this.actionSheet
+            .setView(this.getPageView())
+            .init()
+    }
+
+    present() {
+        if (!this.actionSheet) {
+            this.initActionSheet()
+        }
+        this.actionSheet.present()
+    }
+
+    getActionTypes() {
+        const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
+        return type.concat($file.list(this.userActionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
+            if ($file.isDirectory(this.userActionPath + "/" + dir) && type.indexOf(dir) < 0)
+                return dir
+        }))
+    }
+
+    getActionOrder(type) {
+        const path = `${this.userActionPath}${type}/${this.actionOrderFile}`
+        if ($file.exists(path)) return JSON.parse($file.read(path).string)
+        else return []
+    }
+
+    getActionHandler(type, name, basePath) {
+        if (!basePath) basePath = `${this.userActionPath}${type}/${name}/`
+        const config = JSON.parse($file.read(basePath + "config.json").string)
+        return async data => {
+            const ActionClass = require(basePath + "main.js")
+            const action = new ActionClass(this.kernel, config, data)
+            return await action.do()
+        }
+    }
+
+    getActions(type) {
+        const actions = []
+        const typePath = `${this.userActionPath}${type}/`
+        if (!$file.exists(typePath)) return []
+        const pushAction = item => {
+            const basePath = `${typePath}/${item}/`
+            if ($file.isDirectory(basePath)) {
+                const config = JSON.parse($file.read(basePath + "config.json").string)
+                actions.push(Object.assign(config, {
+                    dir: item,
+                    type: type,
+                    name: config.name ?? item,
+                    icon: config.icon
+                }))
+            }
+        }
+        // push 有顺序的 Action
+        const order = this.getActionOrder(type)
+        order.forEach(item => pushAction(item))
+        // push 剩下的 Action
+        $file.list(typePath).forEach(item => {
+            if (order.indexOf(item) === -1)
+                pushAction(item)
+        })
+        return actions
+    }
+
+    getTypeName(type) {
+        const typeUpperCase = type.toUpperCase()
+        const l10n = $l10n(typeUpperCase)
+        const name = l10n === typeUpperCase ? type : l10n
+        this.typeNameMap[name] = type
+        return name
+    }
+
+    getTypeDir(name) {
+        return this.typeNameMap[name] ?? name
+    }
+
+    actionToData(action) {
+        return {
+            name: { text: action.name },
+            icon: action.icon.slice(0, 5) === "icon_"
+                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                : { image: $image(action.icon) },
+            color: { bgcolor: $color(action.color) },
+            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
+        }
+    }
+
+    getActionListView(title, props = {}, events = {}) {
+        const data = []
+        this.getActionTypes().forEach(type => {
+            const section = {
+                title: this.getTypeName(type),
+                rows: []
+            }
+            this.getActions(type).forEach(action => {
+                section.rows.push(this.actionToData(action))
             })
             data.push(section)
         })
-        return data
-    }
-
-    createText(editingOffset) {
         return {
-            type: "view",
-            views: [
-                {
-                    type: "text",
-                    props: {
-                        id: "action-text",
-                        textColor: $color("#000000", "secondaryText"),
-                        bgcolor: $color("systemBackground"),
-                        text: this.editingActionInfo.description,
-                        insets: $insets(10, 10, 10, 10)
-                    },
-                    layout: $layout.fill,
-                    events: {
-                        tapped: sender => {
-                            $("actionInfoPageSheetList").scrollToOffset($point(0, editingOffset))
-                            setTimeout(() => sender.focus(), 200)
+            type: "list",
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super.safeArea)
+                make.bottom.inset(0)
+            },
+            events: events,
+            props: Object.assign({
+                reorder: false,
+                bgcolor: $color("clear"),
+                rowHeight: 60,
+                sectionTitleHeight: 30,
+                stickyHeader: true,
+                header: {
+                    type: "view",
+                    props: { height: 25 },
+                    views: [{
+                        type: "label",
+                        props: {
+                            text: title,
+                            color: $color("secondaryText"),
+                            font: $font(14)
                         },
-                        didChange: sender => {
-                            this.editingActionInfo.description = sender.text
+                        layout: (make, view) => {
+                            make.top.equalTo(view.super.safeArea).offset(10)
+                            make.height.equalTo(30)
+                            make.left.inset(15)
                         }
-                    }
+                    }, UIKit.separatorLine()]
+                },
+                data: data,
+                template: {
+                    props: { bgcolor: $color("clear") },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: "color",
+                                cornerRadius: 8,
+                                smoothCorners: true
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.inset(15)
+                                make.size.equalTo($size(30, 30))
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: "icon",
+                                tintColor: $color("#ffffff"),
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.inset(20)
+                                make.size.equalTo($size(20, 20))
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                lines: 1,
+                                font: $font(16)
+                            },
+                            layout: (make, view) => {
+                                make.height.equalTo(30)
+                                make.centerY.equalTo(view.super)
+                                make.left.equalTo(view.prev.right).offset(15)
+                            }
+                        },
+                        { type: "label", props: { id: "info" } }
+                    ]
                 }
-            ],
-            layout: $layout.fill
+            }, props)
         }
     }
 
     editActionInfoPageSheet(info, done) {
-        const actionTypes = this.kernel.getActionTypes()
+        const actionTypes = this.getActionTypes()
         const actionTypesIndex = {} // 用于反查索引
         actionTypes.forEach((key, index) => {
             actionTypesIndex[key] = index
@@ -94,7 +263,32 @@ class ActionManager {
         const createColor = SettingUI.createColor("color", ["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
         const iconInput = SettingUI.createIcon("icon", ["star.circle", "#FF9933"], $l10n("ICON"), null, this.editingActionInfo.color)
         const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, null, true)
-        const description = this.createText(info ? 230 : 280)
+        const description = {
+            type: "view",
+            views: [
+                {
+                    type: "text",
+                    props: {
+                        id: "action-text",
+                        textColor: $color("#000000", "secondaryText"),
+                        bgcolor: $color("systemBackground"),
+                        text: this.editingActionInfo.description,
+                        insets: $insets(10, 10, 10, 10)
+                    },
+                    layout: $layout.fill,
+                    events: {
+                        tapped: sender => {
+                            $("actionInfoPageSheetList").scrollToOffset($point(0, info ? 230 : 280))
+                            setTimeout(() => sender.focus(), 200)
+                        },
+                        didChange: sender => {
+                            this.editingActionInfo.description = sender.text
+                        }
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
         const data = [
             { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
             { title: $l10n("DESCRIPTION"), rows: [description] },
@@ -121,7 +315,7 @@ class ActionManager {
             .addNavBar("", () => {
                 this.saveActionInfo(this.editingActionInfo)
                 // 更新 clipboard 中的 menu
-                const Clipboard = require("./clipboard");
+                const Clipboard = require("./ui/clipboard");
                 Clipboard.updateMenu(this.kernel)
                 if (done) done(this.editingActionInfo)
             }, "Done")
@@ -152,7 +346,7 @@ class ActionManager {
     }
 
     saveActionInfo(info) {
-        const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/`
+        const path = `${this.userActionPath}${info.type}/${info.dir}/`
         if (!$file.exists(path)) $file.mkdir(path)
         $file.write({
             data: $data({
@@ -168,7 +362,7 @@ class ActionManager {
     }
 
     saveMainJs(info, content) {
-        const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/`
+        const path = `${this.userActionPath}${info.type}/${info.dir}/`
         const mainJsPath = `${path}main.js`
         if (!$file.exists(path)) $file.mkdir(path)
         if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
@@ -181,7 +375,7 @@ class ActionManager {
     saveOrder(type, order) {
         $file.write({
             data: $data({ string: JSON.stringify(order) }),
-            path: `${this.kernel.userActionPath}${type}/${this.kernel.actionOrderFile}`
+            path: `${this.userActionPath}${type}/${this.actionOrderFile}`
         })
     }
 
@@ -201,7 +395,7 @@ class ActionManager {
         }
         const updateUI = (insertFirst = true, type) => {
             const actionsView = $(this.matrixId)
-            const toData = this.kernel.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
+            const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
             if (insertFirst) {
                 actionsView.insert({
                     indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
@@ -216,8 +410,8 @@ class ActionManager {
                 })
             }
         }
-        const fromType = this.kernel.getTypeDir(fromSection.title)
-        const toType = this.kernel.getTypeDir(toSection.title)
+        const fromType = this.getTypeDir(fromSection.title)
+        const toType = this.getTypeDir(toSection.title)
         // 判断是否跨 section
         if (from.section === to.section) {
             this.saveOrder(fromType, getOrder(from.section))
@@ -225,8 +419,8 @@ class ActionManager {
             this.saveOrder(fromType, getOrder(from.section))
             this.saveOrder(toType, getOrder(to.section))
             $file.move({
-                src: `${this.kernel.userActionPath}${fromType}/${toSection.rows[to.row].dir}`,
-                dst: `${this.kernel.userActionPath}${toType}/${toSection.rows[to.row].dir}`
+                src: `${this.userActionPath}${fromType}/${toSection.rows[to.row].dir}`,
+                dst: `${this.userActionPath}${toType}/${toSection.rows[to.row].dir}`
             })
         }
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
@@ -235,7 +429,7 @@ class ActionManager {
     }
 
     delete(info) {
-        $file.delete(`${this.kernel.userActionPath}${info.type}/${info.dir}`)
+        $file.delete(`${this.userActionPath}${info.type}/${info.dir}`)
     }
 
     menuItems() { // 卡片长按菜单
@@ -265,7 +459,7 @@ class ActionManager {
                 handler: (sender, indexPath, data) => {
                     const info = data.info.info
                     if (!info) return
-                    const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`
+                    const path = `${this.userActionPath}${info.type}/${info.dir}/main.js`
                     const main = $file.read(path).string
                     this.editActionMainJs(main, info)
                 }
@@ -295,6 +489,20 @@ class ActionManager {
     }
 
     getPageView() {
+        const actionsToData = () => { // 格式化数据供 matrix 使用
+            const data = []
+            this.getActionTypes().forEach(type => {
+                const section = {
+                    title: this.getTypeName(type), // TODO section 标题
+                    items: []
+                }
+                this.getActions(type).forEach(action => {
+                    section.items.push(this.actionToData(action))
+                })
+                data.push(section)
+            })
+            return data
+        }
         const pageController = new PageController()
         pageController.navigationItem
             .setTitle($l10n("ACTION"))
@@ -311,11 +519,11 @@ class ActionManager {
                                 handler: () => {
                                     this.editActionInfoPageSheet(null, info => {
                                         $(this.matrixId).insert({
-                                            indexPath: $indexPath(this.kernel.getActionTypes().indexOf(info.type), 0),
-                                            value: this.kernel.actionToData(info)
+                                            indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
+                                            value: this.actionToData(info)
                                         })
                                         popover.dismiss()
-                                        const MainJsTemplate = $file.read(`${this.kernel.actionPath}template.js`).string
+                                        const MainJsTemplate = $file.read(`${this.actionPath}template.js`).string
                                         this.editActionMainJs(MainJsTemplate, info)
                                     })
                                 }
@@ -332,7 +540,7 @@ class ActionManager {
                                                 $ui.toast($l10n("INVALID_VALUE"))
                                                 return
                                             }
-                                            const path = `${this.kernel.userActionPath}${text}`
+                                            const path = `${this.userActionPath}${text}`
                                             if ($file.isDirectory(path)) {
                                                 $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
                                             } else {
@@ -355,7 +563,7 @@ class ActionManager {
                             directions: $popoverDirection.up,
                             size: $size(200, 300),
                             views: [
-                                this.kernel.getActionListView($l10n("SORT"), {
+                                this.getActionListView($l10n("SORT"), {
                                     reorder: true,
                                     actions: [
                                         { // 删除
@@ -387,12 +595,12 @@ class ActionManager {
                     }
                 }
             ])
-            .setLeftButtons([{
+            .setLeftButtons([{ // 刷新
                 symbol: "arrow.clockwise",
                 tapped: () => {
                     const actionView = $(this.matrixId)
                     setTimeout(() => {
-                        actionView.data = this.actionsToData()
+                        actionView.data = actionsToData()
                         $ui.success($l10n("SUCCESS"))
                     }, 500)
                 }
@@ -410,7 +618,7 @@ class ActionManager {
                 indicatorInsets: $insets(NavigationBar.PageSheetNavigationBarHeight, 0, 0, 0),
                 bgcolor: $color("insetGroupedBackground"),
                 menu: { items: this.menuItems() },
-                data: this.actionsToData(),
+                data: actionsToData(),
                 template: {
                     props: {
                         smoothCorners: true,
@@ -450,7 +658,7 @@ class ActionManager {
                                 tapped: sender => {
                                     const info = sender.next.info
                                     if (!info) return
-                                    const path = `${this.kernel.userActionPath}${info.type}/${info.dir}/main.js`
+                                    const path = `${this.userActionPath}${info.type}/${info.dir}/main.js`
                                     const main = $file.read(path).string
                                     this.editActionMainJs(main, info)
                                 }
@@ -479,7 +687,7 @@ class ActionManager {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    const action = this.kernel.getActionHandler(info.type, info.dir)
+                    const action = this.getActionHandler(info.type, info.dir)
                     action({
                         text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
                         uuid: null

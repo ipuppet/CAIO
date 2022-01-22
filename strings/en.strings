@@ -52,6 +52,6 @@
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 
 "TODAY&KEYBOARD" = "Today & Keyboard";
-"DISPLAY_NAV" = "Display NAV";
+"SHOW_NAV" = "Show NAV";
 
 "EXIT" = "Exit";

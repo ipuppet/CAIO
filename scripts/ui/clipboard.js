@@ -461,8 +461,8 @@ class Clipboard {
                 handler(data)
             }
         }
-        return this.kernel.getActions("clipboard").map(action => {
-            const actionHandler = this.kernel.getActionHandler(action.type, action.dir)
+        return this.kernel.actionManager.getActions("clipboard").map(action => {
+            const actionHandler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
             action.handler = handlerRewrite(actionHandler)
             action.title = action.name
             action.symbol = action.icon

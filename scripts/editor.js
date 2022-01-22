@@ -1,8 +1,8 @@
 const {
+    UIKit,
     ViewController,
-    Sheet,
-    UIKit
-} = require("../easy-jsbox")
+    Sheet
+} = require("./easy-jsbox")
 
 class Editor {
     constructor(kernel) {
@@ -27,7 +27,7 @@ class Editor {
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
-                    views: [this.kernel.getActionListView($l10n("ACTION"), {}, {
+                    views: [this.kernel.actionManager.getActionListView($l10n("ACTION"), {}, {
                         didSelect: (sender, indexPath, data) => {
                             popover.dismiss()
                             const action = this.kernel.getActionHandler(data.info.info.type, data.info.info.dir)
