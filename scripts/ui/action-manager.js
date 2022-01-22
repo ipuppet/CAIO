@@ -1,5 +1,6 @@
 const {
     UIKit,
+    Setting,
     NavigationBar,
     NavigationItem,
     PageController,
@@ -25,294 +26,6 @@ class ActionManager {
             data.push(section)
         })
         return data
-    }
-
-    createLineLabel(title, icon) {
-        if (!icon[1]) icon[1] = "#00CC00"
-        if (typeof icon[1] !== "object") {
-            icon[1] = [icon[1], icon[1]]
-        }
-        if (typeof icon[0] !== "object") {
-            icon[0] = [icon[0], icon[0]]
-        }
-        return {
-            type: "view",
-            views: [
-                {// icon
-                    type: "view",
-                    props: {
-                        bgcolor: $color(icon[1][0], icon[1][1]),
-                        cornerRadius: 5,
-                        smoothCorners: true
-                    },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                tintColor: $color("white"),
-                                image: $image(icon[0][0], icon[0][1])
-                            },
-                            layout: (make, view) => {
-                                make.center.equalTo(view.super)
-                                make.size.equalTo(20)
-                            }
-                        },
-                    ],
-                    layout: (make, view) => {
-                        make.centerY.equalTo(view.super)
-                        make.size.equalTo(30)
-                        make.left.inset(10)
-                    }
-                },
-                {// title
-                    type: "label",
-                    props: {
-                        text: title,
-                        textColor: UIKit.textColor,
-                        align: $align.left
-                    },
-                    layout: (make, view) => {
-                        make.centerY.equalTo(view.super)
-                        make.height.equalTo(view.super)
-                        make.left.equalTo(view.prev.right).offset(10)
-                    }
-                }
-            ],
-            layout: (make, view) => {
-                make.centerY.equalTo(view.super)
-                make.height.equalTo(view.super)
-                make.left.inset(0)
-            }
-        }
-    }
-
-    createInput(icon, title) {
-        return {
-            type: "view",
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "view",
-                    views: [{
-                        type: "label",
-                        props: {
-                            id: "action-input",
-                            color: $color("secondaryText"),
-                            text: this.editingActionInfo.name
-                        },
-                        layout: (make, view) => {
-                            make.right.inset(0)
-                            make.height.equalTo(view.super)
-
-                        }
-                    }],
-                    events: {
-                        tapped: () => {
-                            $input.text({
-                                text: "",
-                                placeholder: title,
-                                handler: text => {
-                                    text = text.trim()
-                                    if (text === "") {
-                                        $ui.toast($l10n("INVALID_VALUE"))
-                                        return
-                                    }
-                                    $("action-input").text = text
-                                    this.editingActionInfo.name = text
-                                }
-                            })
-                        }
-                    },
-                    layout: (make, view) => {
-                        make.right.inset(15)
-                        make.height.equalTo(50)
-                        make.width.equalTo(view.super)
-                    }
-                }
-            ],
-            layout: $layout.fill
-        }
-    }
-
-    createColor(icon, title) {
-        return {
-            type: "view",
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "view",
-                    views: [
-                        {// 颜色预览以及按钮功能
-                            type: "view",
-                            props: {
-                                id: "action-color",
-                                bgcolor: $color(this.editingActionInfo.color),
-                                circular: true,
-                                borderWidth: 1,
-                                borderColor: $color("#e3e3e3")
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.right.inset(15)
-                                make.size.equalTo(20)
-                            }
-                        },
-                        { // 用来监听点击事件，增大可点击面积
-                            type: "view",
-                            events: {
-                                tapped: async () => {
-                                    const newColor = await $picker.color({ color: $color(this.editingActionInfo.color) })
-                                    $("action-color").bgcolor = newColor
-                                    this.editingActionInfo.color = newColor.hexCode
-                                    // 将下方图标选择框的背景色也更改
-                                    $("action-icon-color").bgcolor = newColor
-                                }
-                            },
-                            layout: (make, view) => {
-                                make.right.inset(0)
-                                make.height.width.equalTo(view.super.height)
-                            }
-                        }
-                    ],
-                    layout: (make, view) => {
-                        make.height.equalTo(50)
-                        make.width.equalTo(view.super)
-                    }
-                }
-            ],
-            layout: $layout.fill
-        }
-    }
-
-    createIcon(icon, title) {
-        return {
-            type: "view",
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "view",
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                cornerRadius: 8,
-                                id: "action-icon-color",
-                                bgcolor: $color(this.editingActionInfo.color),
-                                smoothCorners: true
-                            },
-                            layout: (make, view) => {
-                                make.right.inset(15)
-                                make.centerY.equalTo(view.super)
-                                make.size.equalTo($size(30, 30))
-                            }
-                        },
-                        {
-                            type: "image",
-                            props: {
-                                id: "action-icon",
-                                image: $image(this.editingActionInfo.icon),
-                                icon: $icon(this.editingActionInfo.icon.slice(5, this.editingActionInfo.icon.indexOf(".")), $color("#ffffff")),
-                                tintColor: $color("#ffffff")
-                            },
-                            layout: (make, view) => {
-                                make.right.inset(20)
-                                make.centerY.equalTo(view.super)
-                                make.size.equalTo($size(20, 20))
-                            }
-                        }
-                    ],
-                    events: {
-                        tapped: () => {
-                            $ui.menu({
-                                items: [$l10n("JSBOX_ICON"), $l10n("SF_SYMBOLS"), $l10n("IMAGE_BASE64")],
-                                handler: async (title, idx) => {
-                                    if (idx === 0) {
-                                        const icon = await $ui.selectIcon()
-                                        $("action-icon").icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
-                                        this.editingActionInfo.icon = icon
-                                    } else if (idx === 1 || idx === 2) {
-                                        $input.text({
-                                            text: "",
-                                            placeholder: title,
-                                            handler: text => {
-                                                text = text.trim()
-                                                if (text === "") {
-                                                    $ui.toast($l10n("INVALID_VALUE"))
-                                                    return
-                                                }
-                                                if (idx === 1) $("action-icon").symbol = text
-                                                else $("action-icon").image = $image(text)
-                                                this.editingActionInfo.icon = text
-                                            }
-                                        })
-                                    }
-                                }
-                            })
-                        }
-                    },
-                    layout: (make, view) => {
-                        make.right.inset(0)
-                        make.height.equalTo(50)
-                        make.width.equalTo(view.super)
-                    }
-                }
-            ],
-            layout: $layout.fill
-        }
-    }
-
-    createMenu(icon, title, items) {
-        const id = `action-menu`
-        return {
-            type: "view",
-            props: { id: `${id}-line` },
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "view",
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                text: this.editingActionInfo.type,
-                                color: $color("secondaryText"),
-                                id: id
-                            },
-                            layout: (make, view) => {
-                                make.right.inset(0)
-                                make.height.equalTo(view.super)
-                            }
-                        }
-                    ],
-                    layout: (make, view) => {
-                        make.right.inset(15)
-                        make.height.equalTo(50)
-                        make.width.equalTo(view.super)
-                    }
-                }
-            ],
-            events: {
-                tapped: () => {
-                    $(`${id}-line`).bgcolor = $color("insetGroupedBackground")
-                    $ui.menu({
-                        items: items,
-                        handler: (title, idx) => {
-                            this.editingActionInfo.type = title
-                            $(id).text = $l10n(title)
-                        },
-                        finished: () => {
-                            $ui.animate({
-                                duration: 0.2,
-                                animation: () => {
-                                    $(`${id}-line`).bgcolor = $color("clear")
-                                }
-                            })
-                        }
-                    })
-                }
-            },
-            layout: $layout.fill
-        }
     }
 
     createText(editingOffset) {
@@ -345,6 +58,11 @@ class ActionManager {
     }
 
     editActionInfoPageSheet(info, done) {
+        const actionTypes = this.kernel.getActionTypes()
+        const actionTypesIndex = {} // 用于反查索引
+        actionTypes.forEach((key, index) => {
+            actionTypesIndex[key] = index
+        })
         this.editingActionInfo = info ?? {
             dir: this.kernel.uuid(), // 随机生成文件夹名
             type: "clipboard",
@@ -353,10 +71,30 @@ class ActionManager {
             icon: "icon_062.png", // 默认星星图标
             description: "",
         }
-        const nameInput = this.createInput(["pencil.circle", "#FF3366"], $l10n("NAME"))
-        const createColor = this.createColor(["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
-        const iconInput = this.createIcon(["star.circle", "#FF9933"], $l10n("ICON"))
-        const typeMenu = this.createMenu(["tag.circle", "#33CC33"], $l10n("TYPE"), this.kernel.getActionTypes())
+        const SettingUI = new Setting({
+            structure: {},
+            set: (key, value) => {
+                if (key === "type") {
+                    this.editingActionInfo[key] = value[1]
+                } else {
+                    this.editingActionInfo[key] = value
+                }
+                return true
+            },
+            get: (key, _default = null) => {
+                if (key === "type") {
+                    return actionTypesIndex[this.editingActionInfo.type]
+                }
+                if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key))
+                    return this.editingActionInfo[key]
+                else
+                    return _default
+            }
+        })
+        const nameInput = SettingUI.createInput("name", ["pencil.circle", "#FF3366"], $l10n("NAME"))
+        const createColor = SettingUI.createColor("color", ["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
+        const iconInput = SettingUI.createIcon("icon", ["star.circle", "#FF9933"], $l10n("ICON"), null, this.editingActionInfo.color)
+        const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, null, true)
         const description = this.createText(info ? 230 : 280)
         const data = [
             { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
