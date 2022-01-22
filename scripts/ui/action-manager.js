@@ -1,5 +1,4 @@
 const {
-    UIKit,
     Setting,
     NavigationBar,
     NavigationItem,
