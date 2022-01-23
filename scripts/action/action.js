@@ -36,13 +36,21 @@ class Action {
      * 获取所有剪切板数据
      * @returns Array
      */
-    getAllContent() {
+    getAllClipboard() {
         return this.kernel.storage.all().map(item => item.text)
+    }
+
+    getAllContent() {
+        return this.getAllClipboard()
     }
 
     setContent(text) {
         this.text = text
         this.kernel.editor.setContent(text)
+    }
+
+    get originalContent() {
+        return this.kernel.editor.originalContent
     }
 
     async runAction(type, name) {

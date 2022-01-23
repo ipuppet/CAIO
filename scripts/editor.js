@@ -9,6 +9,24 @@ class Editor {
         this.kernel = kernel
         this.id = "editor"
         this.viewController = new ViewController()
+        // 原始数据
+        this.originalContent = undefined
+    }
+
+    /**
+     * 编辑器内容
+     * @param {string} text
+     */
+    set text(text = "") {
+        if (this.originalContent === undefined) {
+            // 原始内容
+            this.originalContent = text
+        }
+        this._text = text
+    }
+
+    get text() {
+        return this._text
     }
 
     getActionButton() {
@@ -72,7 +90,7 @@ class Editor {
         const sheet = new Sheet()
         sheet
             .setView(this.getView(type))
-            .addNavBar(title, callback, $l10n("DONE"), navButtons)
+            .addNavBar(title, () => callback(this.text), $l10n("DONE"), navButtons)
             .init()
             .present()
     }
