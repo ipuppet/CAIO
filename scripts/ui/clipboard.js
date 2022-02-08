@@ -476,8 +476,16 @@ class Clipboard {
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
                         handler: (sender, indexPath) => {
-                            const item = sender.object(indexPath)
-                            $share.sheet(item.content.info.text)
+                            const data = sender.object(indexPath)
+                            $share.sheet(data.content.info.text)
+                        }
+                    },
+                    {
+                        title: $l10n("COPY"),
+                        symbol: "square.on.square",
+                        handler: (sender, indexPath) => {
+                            const data = sender.object(indexPath)
+                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
                         }
                     },
                     {
@@ -488,8 +496,8 @@ class Clipboard {
                             this.kernel.deleteConfirm(
                                 $l10n("CONFIRM_DELETE_MSG"),
                                 () => {
-                                    const item = sender.object(indexPath)
-                                    this.delete(item.content.info.uuid, indexPath.row)
+                                    const data = sender.object(indexPath)
+                                    this.delete(data.content.info.uuid, indexPath.row)
                                     sender.delete(indexPath)
                                 }
                             )
