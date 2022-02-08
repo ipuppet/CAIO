@@ -506,7 +506,6 @@ class Clipboard {
             props: {
                 id: this.listId,
                 menu: {
-                    title: $l10n("ACTIONS"),
                     items: this.menuItems(this.kernel)
                 },
                 indicatorInsets: $insets(50, 0, 50, 0),
