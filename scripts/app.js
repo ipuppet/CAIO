@@ -191,30 +191,7 @@ class AppKernel extends Kernel {
 
 module.exports = {
     run: () => {
-        if ($app.env === $env.widget) {
-            function widgetInstance(widget) {
-                if ($file.exists(`/scripts/widget/${widget}.js`)) {
-                    const { Widget } = require(`./widget/${widget}.js`)
-                    return new Widget(new AppKernel())
-                } else {
-                    return false
-                }
-            }
-            const widgetName = $widget.inputValue ?? "Clipboard"
-            const widget = widgetInstance(widgetName)
-            widget ? widget.render() : $widget.setTimeline({
-                render: () => ({
-                    type: "text",
-                    props: {
-                        text: "NULL"
-                    }
-                })
-            })
-        } else if ($app.env === $env.today || $app.env === $env.keyboard) {
-            const kernel = new AppKernel()
-            const Today = require("./ui/mini")
-            new Today(kernel).render()
-        } else if ($app.env === $env.app) {
+        if ($app.env === $env.app) {
             const kernel = new AppKernel()
             kernel.useJsboxNav()
             kernel.setNavButtons([
@@ -239,6 +216,29 @@ module.exports = {
             const Clipboard = require("./ui/clipboard")
             const ClipboardUI = new Clipboard(kernel)
             kernel.UIRender(ClipboardUI.getPageView())
+        } else if ($app.env === $env.today || $app.env === $env.keyboard) {
+            const kernel = new AppKernel()
+            const Today = require("./ui/mini")
+            new Today(kernel).render()
+        } else if ($app.env === $env.widget) {
+            function widgetInstance(widget) {
+                if ($file.exists(`/scripts/widget/${widget}.js`)) {
+                    const { Widget } = require(`./widget/${widget}.js`)
+                    return new Widget(new AppKernel())
+                } else {
+                    return false
+                }
+            }
+            const widgetName = $widget.inputValue ?? "Clipboard"
+            const widget = widgetInstance(widgetName)
+            widget ? widget.render() : $widget.setTimeline({
+                render: () => ({
+                    type: "text",
+                    props: {
+                        text: "NULL"
+                    }
+                })
+            })
         } else {
             $ui.render({
                 views: [{
