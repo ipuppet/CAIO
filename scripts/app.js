@@ -35,6 +35,22 @@ class AppKernel extends Kernel {
         }) */
     }
 
+    deleteConfirm(message, conformAction) {
+        $ui.alert({
+            title: message,
+            actions: [
+                {
+                    title: $l10n("DELETE"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        conformAction()
+                    }
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+    }
+
     /**
      * 注入设置中的脚本类型方法
      */
@@ -214,7 +230,7 @@ module.exports = {
                 },
                 {
                     symbol: "command",
-                    title: $l10n("ACTION"),
+                    title: $l10n("ACTIONS"),
                     handler: () => {
                         kernel.actionManager.present()
                     }

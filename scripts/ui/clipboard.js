@@ -255,6 +255,41 @@ class Clipboard {
         this.setCopied(uuid, isMoveToTop ? 0 : index)
     }
 
+    delete(uuid, index) {
+        // 删除数据库中的值
+        this.kernel.storage.beginTransaction()
+        this.kernel.storage.delete(uuid)
+        // 更改指针
+        if (this.savedClipboard[index - 1]) {
+            const prevItem = {
+                uuid: this.savedClipboard[index - 1].content.info.uuid,
+                text: this.savedClipboard[index - 1].content.info.text,
+                prev: this.savedClipboard[index - 1].content.info.prev,
+                next: this.savedClipboard[index].content.info.next // next 指向被删除元素的 next
+            }
+            this.kernel.storage.update(prevItem)
+            this.savedClipboard[index - 1] = this.lineData(prevItem)
+        }
+        if (this.savedClipboard[index + 1]) {
+            const nextItem = {
+                uuid: this.savedClipboard[index + 1].content.info.uuid,
+                text: this.savedClipboard[index + 1].content.info.text,
+                prev: this.savedClipboard[index].content.info.prev, // prev 指向被删除元素的 prev
+                next: this.savedClipboard[index + 1].content.info.next
+            }
+            this.kernel.storage.update(nextItem)
+            this.savedClipboard[index + 1] = this.lineData(nextItem)
+        }
+        this.kernel.storage.commit()
+        // 删除内存中的值
+        this.savedClipboard.splice(index, 1)
+        // 删除列表中的行
+        // 删除剪切板信息
+        if (this.copied?.uuid === uuid) {
+            this.setCopied(null)
+        }
+    }
+
     add(text) {
         text = text.trim()
         if (text === "") return
@@ -299,41 +334,6 @@ class Clipboard {
         this.edit("", text => {
             if (text !== "") this.add(text)
         })
-    }
-
-    delete(uuid, index) {
-        // 删除数据库中的值
-        this.kernel.storage.beginTransaction()
-        this.kernel.storage.delete(uuid)
-        // 更改指针
-        if (this.savedClipboard[index - 1]) {
-            const prevItem = {
-                uuid: this.savedClipboard[index - 1].content.info.uuid,
-                text: this.savedClipboard[index - 1].content.info.text,
-                prev: this.savedClipboard[index - 1].content.info.prev,
-                next: this.savedClipboard[index].content.info.next // next 指向被删除元素的 next
-            }
-            this.kernel.storage.update(prevItem)
-            this.savedClipboard[index - 1] = this.lineData(prevItem)
-        }
-        if (this.savedClipboard[index + 1]) {
-            const nextItem = {
-                uuid: this.savedClipboard[index + 1].content.info.uuid,
-                text: this.savedClipboard[index + 1].content.info.text,
-                prev: this.savedClipboard[index].content.info.prev, // prev 指向被删除元素的 prev
-                next: this.savedClipboard[index + 1].content.info.next
-            }
-            this.kernel.storage.update(nextItem)
-            this.savedClipboard[index + 1] = this.lineData(nextItem)
-        }
-        this.kernel.storage.commit()
-        // 删除内存中的值
-        this.savedClipboard.splice(index, 1)
-        // 删除列表中的行
-        // 删除剪切板信息
-        if (this.copied?.uuid === uuid) {
-            this.setCopied(null)
-        }
     }
 
     sliceText(text) {
@@ -461,13 +461,43 @@ class Clipboard {
                 handler(data)
             }
         }
-        return this.kernel.actionManager.getActions("clipboard").map(action => {
+        const actions = this.kernel.actionManager.getActions("clipboard").map(action => {
             const actionHandler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
             action.handler = handlerRewrite(actionHandler)
             action.title = action.name
             action.symbol = action.icon
             return action
         })
+        return actions.concat([
+            {
+                inline: true,
+                items: [
+                    {
+                        title: $l10n("SHARE"),
+                        symbol: "square.and.arrow.up",
+                        handler: (sender, indexPath) => {
+                            const item = sender.object(indexPath)
+                            $share.sheet(item.content.info.text)
+                        }
+                    },
+                    {
+                        title: $l10n("DELETE"),
+                        symbol: "trash",
+                        destructive: true,
+                        handler: (sender, indexPath) => {
+                            this.kernel.deleteConfirm(
+                                $l10n("CONFIRM_DELETE_MSG"),
+                                () => {
+                                    const item = sender.object(indexPath)
+                                    this.delete(item.content.info.uuid, indexPath.row)
+                                    sender.delete(indexPath)
+                                }
+                            )
+                        }
+                    }
+                ]
+            }
+        ])
     }
 
     getListView() {
@@ -476,7 +506,7 @@ class Clipboard {
             props: {
                 id: this.listId,
                 menu: {
-                    title: $l10n("ACTION"),
+                    title: $l10n("ACTIONS"),
                     items: this.menuItems(this.kernel)
                 },
                 indicatorInsets: $insets(50, 0, 50, 0),
@@ -525,21 +555,14 @@ class Clipboard {
                         title: " " + $l10n("DELETE") + " ", // 防止JSBox自动更改成默认的删除操作
                         color: $color("red"),
                         handler: (sender, indexPath) => {
-                            $ui.alert({
-                                title: $l10n("CONFIRM_DELETE_MSG"),
-                                actions: [
-                                    {
-                                        title: $l10n("DELETE"),
-                                        style: $alertActionType.destructive,
-                                        handler: () => {
-                                            const data = sender.object(indexPath)
-                                            this.delete(data.content.info.uuid, indexPath.row)
-                                            sender.delete(indexPath)
-                                        }
-                                    },
-                                    { title: $l10n("CANCEL") }
-                                ]
-                            })
+                            this.kernel.deleteConfirm(
+                                $l10n("CONFIRM_DELETE_MSG"),
+                                () => {
+                                    const data = sender.object(indexPath)
+                                    this.delete(data.content.info.uuid, indexPath.row)
+                                    sender.delete(indexPath)
+                                }
+                            )
                         }
                     }
                 ]

@@ -45,7 +45,7 @@ class Editor {
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
-                    views: [this.kernel.actionManager.getActionListView($l10n("ACTION"), {}, {
+                    views: [this.kernel.actionManager.getActionListView($l10n("ACTIONS"), {}, {
                         didSelect: (sender, indexPath, data) => {
                             popover.dismiss()
                             const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)

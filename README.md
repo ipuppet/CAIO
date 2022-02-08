@@ -6,7 +6,7 @@
 
 支持桌面小组件和通知中心小组件
 
-## Action
+## Actions
 
 > 编写方式详见 `scripts/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。
 
