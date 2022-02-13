@@ -252,16 +252,18 @@ class Clipboard {
                 // 修正指示器
                 if (this.copied?.indexPath !== undefined) {
                     const copiedIndex = this.copied.indexPath
-                    const copiedUUID = this.copied.uuid
-                    if (copiedIndex === from) { // 被移动的行是被复制的行
-                        this.setCopied(copiedUUID, $indexPath(section, _to))
-                    } else if (
-                        copiedIndex > from && copiedIndex < _to
-                        || copiedIndex < from && copiedIndex > _to
-                        || copiedIndex === _to
-                    ) { // 被复制的行介于 from 和 _to 之间或等于 _to
-                        // 从上往下移动则 -1 否则 +1
-                        this.setCopied(copiedUUID, $indexPath(section, from < _to ? copiedIndex - 1 : copiedIndex + 1))
+                    if (copiedIndex.section === section) {
+                        const copiedUUID = this.copied.uuid
+                        if (copiedIndex.row === from) { // 被移动的行是被复制的行
+                            this.setCopied(copiedUUID, $indexPath(section, _to))
+                        } else if (
+                            copiedIndex.row > from && copiedIndex.row < _to
+                            || copiedIndex.row < from && copiedIndex.row > _to
+                            || copiedIndex.row === _to
+                        ) { // 被复制的行介于 from 和 _to 之间或等于 _to
+                            // 从上往下移动则 -1 否则 +1
+                            this.setCopied(copiedUUID, $indexPath(section, from < _to ? copiedIndex.row - 1 : copiedIndex.row + 1))
+                        }
                     }
                 }
             }
@@ -277,9 +279,10 @@ class Clipboard {
      * @param {*} uuid 
      * @param {Number} index 被复制的行的索引
      */
-    copy(text, uuid, indexPath, isMoveToTop = true) {
+    copy(text, uuid, indexPath) {
         // 复制到剪切板
         $clipboard.text = text
+        const isMoveToTop = indexPath.section === 1
         // 将被复制的行移动到最前端
         if (isMoveToTop) this.move(indexPath.row, 0, indexPath.section)
         // 写入缓存并更新数据
@@ -359,18 +362,15 @@ class Clipboard {
         this.kernel.storage.commit()
         // 格式化数据
         const lineData = this.lineData(data)
-        lineData.copied.hidden = false // 强制显示指示器
         this.savedClipboard[1].rows.unshift(lineData) // 保存到内存中
         // 在列表中插入行
         $(this.listId).insert({
             indexPath: $indexPath(1, 0),
             value: lineData
         })
-        // 只更新数据，不更新指示器
-        if (this.copied?.indexPath !== undefined)
+        // 被复制的元素向下移动了一个单位
+        if (this.copied?.indexPath !== undefined && this.copied.indexPath.section === 1)
             this.setCopied(this.copied.uuid, $indexPath(this.copied.indexPath.section, this.copied.indexPath.row + 1), false)
-        // 复制新添加的元素
-        this.copy(text, data.uuid, $indexPath(1, 0), false)
     }
 
     edit(text, callback) {
@@ -711,6 +711,7 @@ class Clipboard {
                                     props: {
                                         id: "clipboard-list-sort",
                                         reorder: true,
+                                        crossSections: false,
                                         bgcolor: $color("clear"),
                                         data: this.savedClipboard,
                                         template: {
