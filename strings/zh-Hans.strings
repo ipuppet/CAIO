@@ -10,6 +10,7 @@
 "BACKUP_AND_REBUILD_DATABASE" = "备份并且重建数据库";
 "EDIT" = "编辑";
 "SEARCH" = "搜索";
+"PIN" = "置顶";
 "COPY" = "复制";
 "COPIED" = "已复制";
 "COPY_SUCCESS" = "复制成功";

@@ -10,6 +10,7 @@
 "BACKUP_AND_REBUILD_DATABASE" = "Backup and rebuild the database";
 "EDIT" = "Edit";
 "SEARCH" = "Search";
+"PIN" = "Pin";
 "COPY" = "Copy";
 "COPIED" = "Copied";
 "COPY_SUCCESS" = "Copy success";
