@@ -102,6 +102,22 @@
                 "key": "editor",
                 "children": [
                     {
+                        "title": "CLIPBOARD",
+                        "items": [
+                            {
+                                "icon": [
+                                    "wand.and.stars",
+                                    "#FF6633"
+                                ],
+                                "title": "TEXT_INSETS",
+                                "type": "input",
+                                "key": "editor.text.insets",
+                                "value": 300
+                            }
+                        ]
+                    },
+                    {
+                        "title": "CODE",
                         "items": [
                             {
                                 "icon": [
@@ -110,7 +126,7 @@
                                 ],
                                 "title": "SHOW_LINE_NUMBER",
                                 "type": "switch",
-                                "key": "editor.lineNumbers",
+                                "key": "editor.code.lineNumbers",
                                 "value": false
                             },
                             {
@@ -120,7 +136,7 @@
                                 ],
                                 "title": "LIGHT_MODE_THEME",
                                 "type": "input",
-                                "key": "editor.lightTheme",
+                                "key": "editor.code.lightTheme",
                                 "value": "atom-one-light"
                             },
                             {
@@ -130,7 +146,7 @@
                                 ],
                                 "title": "DARK_MODE_THEME",
                                 "type": "input",
-                                "key": "editor.darkTheme",
+                                "key": "editor.code.darkTheme",
                                 "value": "atom-one-dark"
                             }
                         ]

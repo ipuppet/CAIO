@@ -68,9 +68,10 @@ class Editor {
             layout: $layout.fill,
             props: {
                 id: this.id,
-                lineNumbers: this.kernel.setting.get("editor.lineNumbers"), // 放在此处动态获取设置的更改
-                theme: this.kernel.setting.get($device.isDarkMode ? "editor.darkTheme" : "editor.lightTheme"),
-                text: this.text
+                lineNumbers: this.kernel.setting.get("editor.code.lineNumbers"), // 放在此处动态获取设置的更改
+                theme: this.kernel.setting.get($device.isDarkMode ? "editor.code.darkTheme" : "editor.code.lightTheme"),
+                text: this.text,
+                insets: $insets(0, 0, type === "text" ? this.kernel.setting.get("editor.text.insets") : 0, 0)
             },
             events: {
                 ready: sender => {
