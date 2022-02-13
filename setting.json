@@ -243,6 +243,19 @@
             },
             {
                 "icon": [
+                    "/assets/icon/telegram.png",
+                    "white"
+                ],
+                "title": "Telegram",
+                "type": "info",
+                "key": "telegram",
+                "value": [
+                    "JSBoxTG",
+                    "https://t.me/JSBoxTG"
+                ]
+            },
+            {
+                "icon": [
                     "person.fill",
                     "#FF9900"
                 ],
