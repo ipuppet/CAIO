@@ -87,7 +87,7 @@ class Mini extends Clipboard {
                 props: Object.assign({
                     id: this.listId,
                     menu: {
-                        title: $l10n("ACTION"),
+                        title: $l10n("ACTIONS"),
                         items: this.menuItems()
                     },
                     indicatorInsets: $insets(0, 0, 50, 0),

@@ -35,6 +35,7 @@ module.exports = MyAction
 
 父类 `Action` 的属性：
 - `this.config` 当前 `Action` 配置文件内容
+- `this.originalContent` 原始数据
 - `this.text` 当前复制的文本或剪切板页面选中的文本亦或者编辑器内的文本
 - `this.selectedRange` 在编辑器中，当前选中的文本范围 `{location: Number, length: Number}`
 - `this.selectedText` 在编辑器中，当前选中的文本
@@ -57,7 +58,7 @@ pageSheet(args): void
  * 获取所有剪切板数据
  * @returns Array
  */
-getAllContent() {
+getAllClipboard() {
     return this.kernel.storage.all()
 }
 

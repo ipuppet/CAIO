@@ -35,6 +35,22 @@ class AppKernel extends Kernel {
         }) */
     }
 
+    deleteConfirm(message, conformAction) {
+        $ui.alert({
+            title: message,
+            actions: [
+                {
+                    title: $l10n("DELETE"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        conformAction()
+                    }
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+    }
+
     /**
      * 注入设置中的脚本类型方法
      */
@@ -175,7 +191,36 @@ class AppKernel extends Kernel {
 
 module.exports = {
     run: () => {
-        if ($app.env === $env.widget) {
+        if ($app.env === $env.app) {
+            const kernel = new AppKernel()
+            kernel.useJsboxNav()
+            kernel.setNavButtons([
+                {
+                    symbol: "gear",
+                    title: $l10n("SETTING"),
+                    handler: () => {
+                        UIKit.push({
+                            title: $l10n("SETTING"),
+                            views: [kernel.setting.getListView()]
+                        })
+                    }
+                },
+                {
+                    symbol: "command",
+                    title: $l10n("ACTIONS"),
+                    handler: () => {
+                        kernel.actionManager.present()
+                    }
+                }
+            ])
+            const Clipboard = require("./ui/clipboard")
+            const ClipboardUI = new Clipboard(kernel)
+            kernel.UIRender(ClipboardUI.getPageView())
+        } else if ($app.env === $env.today || $app.env === $env.keyboard) {
+            const kernel = new AppKernel()
+            const Today = require("./ui/mini")
+            new Today(kernel).render()
+        } else if ($app.env === $env.widget) {
             function widgetInstance(widget) {
                 if ($file.exists(`/scripts/widget/${widget}.js`)) {
                     const { Widget } = require(`./widget/${widget}.js`)
@@ -194,35 +239,6 @@ module.exports = {
                     }
                 })
             })
-        } else if ($app.env === $env.today || $app.env === $env.keyboard) {
-            const kernel = new AppKernel()
-            const Today = require("./ui/mini")
-            new Today(kernel).render()
-        } else if ($app.env === $env.app) {
-            const kernel = new AppKernel()
-            kernel.useJsboxNav()
-            kernel.setNavButtons([
-                {
-                    symbol: "gear",
-                    title: $l10n("SETTING"),
-                    handler: () => {
-                        UIKit.push({
-                            title: $l10n("SETTING"),
-                            views: [kernel.setting.getListView()]
-                        })
-                    }
-                },
-                {
-                    symbol: "command",
-                    title: $l10n("ACTION"),
-                    handler: () => {
-                        kernel.actionManager.present()
-                    }
-                }
-            ])
-            const Clipboard = require("./ui/clipboard")
-            const ClipboardUI = new Clipboard(kernel)
-            kernel.UIRender(ClipboardUI.getPageView())
         } else {
             $ui.render({
                 views: [{

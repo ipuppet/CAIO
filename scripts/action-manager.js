@@ -505,7 +505,7 @@ class ActionManager {
         }
         const pageController = new PageController()
         pageController.navigationItem
-            .setTitle($l10n("ACTION"))
+            .setTitle($l10n("ACTIONS"))
             .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
             .setRightButtons([
                 { // 添加

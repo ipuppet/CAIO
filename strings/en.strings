@@ -3,17 +3,19 @@
 "FAILED_TO_LOAD_VIEW" = "Faild to load view";
 "VIEW_NOT_PROVIDED" = "The view is not provided";
 "UNCATEGORIZED" = "Uncategorized";
+"SHARE" = "Share";
 
 "CLIPBOARD" = "Clipboard";
 "CLIPBOARD_STRUCTURE_ERROR" = "Clipboard data structure is abnormal";
 "BACKUP_AND_REBUILD_DATABASE" = "Backup and rebuild the database";
 "EDIT" = "Edit";
 "SEARCH" = "Search";
+"PIN" = "Pin";
 "COPY" = "Copy";
 "COPIED" = "Copied";
 "COPY_SUCCESS" = "Copy success";
 "SORT" = "Sort";
-"ACTION" = "Action";
+"ACTIONS" = "Actions";
 "PREVIEW" = "Preview";
 "MAX_ITEM_LENGTH" = "Line Limit";
 "TEXT_MAX_LENGTH" = "Display Character Length";
@@ -33,6 +35,8 @@
 "ICON" = "Icon";
 "TYPE" = "Category";
 "DESCRIPTION" = "Description";
+"CODE" = "Code";
+"TEXT_INSETS" = "Text bottom margin";
 "SHOW_LINE_NUMBER" = "Show line number";
 "LIGHT_MODE_THEME" = "Light Mode Theme";
 "DARK_MODE_THEME" = "Dark Mode Theme";
@@ -45,7 +49,7 @@
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";
 
-"IMPORT_EXAMPLE_ACTION" = "Import example actions";
+"IMPORT_EXAMPLE_ACTIONS" = "Import example actions";
 "EXPORT" = "Export";
 "IMPORT" = "Import";
 "FILE_TYPE_ERROR" = "File type does not match";
@@ -53,5 +57,3 @@
 
 "TODAY&KEYBOARD" = "Today & Keyboard";
 "SHOW_NAV" = "Show NAV";
-
-"EXIT" = "Exit";

@@ -17,6 +17,7 @@ class Storage {
         // 初始化表
         this.sqlite = $sqlite.open(this.localDb)
         this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
+        this.sqlite.update("CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
         // 初始化目录
         if (!$file.exists(this.tempPath)) $file.mkdir(this.tempPath)
         if (!$file.exists(this.iCloudPath)) $file.mkdir(this.iCloudPath)
@@ -87,6 +88,7 @@ class Storage {
         while (result.result.next()) {
             data.push({
                 uuid: result.result.get("uuid"),
+                section: result.result.get("section"),
                 text: result.result.get("text"),
                 md5: result.result.get("md5"),
                 prev: result.result.get("prev") ?? null,
@@ -97,39 +99,52 @@ class Storage {
         return data
     }
 
+    beginTransaction() {
+        this.sqlite.beginTransaction()
+    }
+
+    commit() {
+        this.sqlite.commit()
+        this.upload()
+    }
+
+    rollback() {
+        this.sqlite.rollback()
+    }
+
     all() {
-        const result = this.sqlite.query("SELECT * FROM clipboard")
+        const result = this.sqlite.query("SELECT *, 'clipboard' AS section FROM clipboard")
         return this.parse(result)
     }
 
     getByText(text) {
         const result = this.sqlite.query({
-            sql: "SELECT * FROM clipboard WHERE text = ?",
-            args: [`${text}`]
+            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text = ? UNION SELECT *, 'pin' AS section FROM pin WHERE text = ?",
+            args: [text, text]
         })
         return this.parse(result)[0]
     }
 
     getByUUID(uuid) {
         const result = this.sqlite.query({
-            sql: "SELECT * FROM clipboard WHERE uuid = ?",
-            args: [`${uuid}`]
+            sql: "SELECT *, 'clipboard' AS section FROM clipboard a WHERE uuid = ? UNION SELECT *, 'pin' AS section FROM pin a WHERE uuid = ?",
+            args: [uuid, uuid]
         })
         return this.parse(result)[0]
     }
 
     getByMD5(md5) {
         const result = this.sqlite.query({
-            sql: "SELECT * FROM clipboard WHERE md5 = ?",
-            args: [`${md5}`]
+            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE md5 = ? UNION SELECT *, 'pin' AS section FROM pin WHERE md5 = ?",
+            args: [md5, md5]
         })
         return this.parse(result)[0]
     }
 
     search(kw) {
         const result = this.sqlite.query({
-            sql: "SELECT * FROM clipboard WHERE text like ?",
-            args: [`%${kw}%`]
+            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text like ? UNION SELECT *, 'pin' AS section FROM pin WHERE text like ?",
+            args: [`%${kw}%`, `%${kw}%`]
         })
         return this.parse(result)
     }
@@ -188,17 +203,63 @@ class Storage {
         return false
     }
 
-    beginTransaction() {
-        this.sqlite.beginTransaction()
+    allPin() {
+        const result = this.sqlite.query("SELECT *, 'pin' AS section FROM pin")
+        return this.parse(result)
     }
 
-    commit() {
-        this.sqlite.commit()
-        this.upload()
+    insertPin(clipboard) {
+        const result = this.sqlite.update({
+            sql: "INSERT INTO pin (uuid, text, md5, prev, next) values(?, ?, ?, ?, ?)",
+            args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
+        })
+        if (result.result) {
+            this.upload()
+            return true
+        }
+        $console.error(result.error)
+        return false
     }
 
-    rollback() {
-        this.sqlite.rollback()
+    updatePin(clipboard) {
+        if (Object.keys(clipboard).length !== 4 || typeof clipboard.uuid !== "string") return
+        const result = this.sqlite.update({
+            sql: "UPDATE pin SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?",
+            args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
+        })
+        if (result.result) {
+            this.upload()
+            return true
+        }
+        $console.error(result.error)
+        return false
+    }
+
+    updateTextPin(uuid, text) {
+        if (typeof uuid !== "string") return
+        const result = this.sqlite.update({
+            sql: "UPDATE pin SET text = ?, md5 = ? WHERE uuid = ?",
+            args: [text, $text.MD5(text), uuid]
+        })
+        if (result.result) {
+            this.upload()
+            return true
+        }
+        $console.error(result.error)
+        return false
+    }
+
+    deletePin(uuid) {
+        const result = this.sqlite.update({
+            sql: "DELETE FROM pin WHERE uuid = ?",
+            args: [uuid]
+        })
+        if (result.result) {
+            this.upload()
+            return true
+        }
+        $console.error(result.error)
+        return false
     }
 }
 

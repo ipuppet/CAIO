@@ -3,17 +3,19 @@
 "FAILED_TO_LOAD_VIEW" = "加载视图失败";
 "VIEW_NOT_PROVIDED" = "未提供该视图";
 "UNCATEGORIZED" = "未分类";
+"SHARE" = "分享";
 
 "CLIPBOARD" = "剪切板";
 "CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";
 "BACKUP_AND_REBUILD_DATABASE" = "备份并且重建数据库";
 "EDIT" = "编辑";
 "SEARCH" = "搜索";
+"PIN" = "置顶";
 "COPY" = "复制";
 "COPIED" = "已复制";
 "COPY_SUCCESS" = "复制成功";
 "SORT" = "排序";
-"ACTION" = "动作";
+"ACTIONS" = "动作";
 "PREVIEW" = "预览";
 "MAX_ITEM_LENGTH" = "行数限制";
 "TEXT_MAX_LENGTH" = "显示字符长度";
@@ -33,6 +35,8 @@
 "ICON" = "图标";
 "TYPE" = "分类";
 "DESCRIPTION" = "描述";
+"CODE" = "代码";
+"TEXT_INSETS" = "文本下边距";
 "SHOW_LINE_NUMBER" = "显示行号";
 "LIGHT_MODE_THEME" = "浅色模式主题";
 "DARK_MODE_THEME" = "深色模式主题";
@@ -45,7 +49,7 @@
 "DELETE_SUCCESS" = "删除成功";
 "DELETE_ERROR" = "删除失败";
 
-"IMPORT_EXAMPLE_ACTION" = "导入示例动作";
+"IMPORT_EXAMPLE_ACTIONS" = "导入示例动作";
 "EXPORT" = "导出";
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";
@@ -53,5 +57,3 @@
 
 "TODAY&KEYBOARD" = "通知中心和键盘";
 "SHOW_NAV" = "显示标题栏";
-
-"EXIT" = "退出";

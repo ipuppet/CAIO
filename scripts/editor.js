@@ -9,6 +9,24 @@ class Editor {
         this.kernel = kernel
         this.id = "editor"
         this.viewController = new ViewController()
+        // 原始数据
+        this.originalContent = undefined
+    }
+
+    /**
+     * 编辑器内容
+     * @param {string} text
+     */
+    set text(text = "") {
+        if (this.originalContent === undefined) {
+            // 原始内容
+            this.originalContent = text
+        }
+        this._text = text
+    }
+
+    get text() {
+        return this._text
     }
 
     getActionButton() {
@@ -27,7 +45,7 @@ class Editor {
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
-                    views: [this.kernel.actionManager.getActionListView($l10n("ACTION"), {}, {
+                    views: [this.kernel.actionManager.getActionListView($l10n("ACTIONS"), {}, {
                         didSelect: (sender, indexPath, data) => {
                             popover.dismiss()
                             const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
@@ -50,9 +68,10 @@ class Editor {
             layout: $layout.fill,
             props: {
                 id: this.id,
-                lineNumbers: this.kernel.setting.get("editor.lineNumbers"), // 放在此处动态获取设置的更改
-                theme: this.kernel.setting.get($device.isDarkMode ? "editor.darkTheme" : "editor.lightTheme"),
-                text: this.text
+                lineNumbers: this.kernel.setting.get("editor.code.lineNumbers"), // 放在此处动态获取设置的更改
+                theme: this.kernel.setting.get($device.isDarkMode ? "editor.code.darkTheme" : "editor.code.lightTheme"),
+                text: this.text,
+                insets: $insets(0, 0, type === "text" ? this.kernel.setting.get("editor.text.insets") : 0, 0)
             },
             events: {
                 ready: sender => {
@@ -72,7 +91,7 @@ class Editor {
         const sheet = new Sheet()
         sheet
             .setView(this.getView(type))
-            .addNavBar(title, callback, $l10n("DONE"), navButtons)
+            .addNavBar(title, () => callback(this.text), $l10n("DONE"), navButtons)
             .init()
             .present()
     }
