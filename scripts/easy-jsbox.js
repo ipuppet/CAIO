@@ -2671,6 +2671,7 @@ class Setting extends Controller {
 
 module.exports = {
     VERSION,
+    versionCompare,
     // class
     UIKit,
     ViewController,
