@@ -1,16 +1,17 @@
 const {
+    versionCompare,
     UIKit,
     Sheet,
     Kernel,
     Setting
 } = require("./easy-jsbox")
 const Storage = require("./storage")
-const ActionManager = require("./action-manager")
-const Editor = require("./editor")
 
 class AppKernel extends Kernel {
     constructor() {
         super()
+        const ActionManager = require("./ui/components/action-manager")
+        const Editor = require("./ui/components/editor")
         this.query = $context.query
         // 初始化必要路径
         if (!$file.exists("storage")) $file.mkdir("storage")
@@ -186,6 +187,41 @@ class AppKernel extends Kernel {
             this.actionManager.importExampleAction()
             animate.actionDone()
         }
+
+        this.setting.method.checkUpdate = animate => {
+            animate.actionStart()
+            $http.get({
+                url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json",
+                handler: resp => {
+                    const version = resp.data?.info.version
+                    const config = JSON.parse($file.read("config.json").string)
+                    if (versionCompare(version, config.info.version) > 0) {
+                        $ui.alert({
+                            title: "New Version",
+                            message: `New version found: ${version}\nUpdate via Github or click the button to open Erots.`,
+                            actions: [
+                                { title: $l10n("CANCEL") },
+                                {
+                                    title: "Erots",
+                                    handler: () => {
+                                        $addin.run({
+                                            name: "Erots",
+                                            query: {
+                                                "q": "show",
+                                                "objectId": "603e6eaaca0dd64fcef93e2d"
+                                            }
+                                        })
+                                    }
+                                }
+                            ]
+                        })
+                    } else {
+                        $ui.toast("No need to update")
+                    }
+                    animate.actionDone()
+                }
+            })
+        }
     }
 }
 
@@ -201,6 +237,7 @@ module.exports = {
                     handler: () => {
                         UIKit.push({
                             title: $l10n("SETTING"),
+                            bgcolor: Setting.bgcolor,
                             views: [kernel.setting.getListView()]
                         })
                     }

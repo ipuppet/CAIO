@@ -2,7 +2,7 @@ const {
     UIKit,
     ViewController,
     Sheet
-} = require("./easy-jsbox")
+} = require("../../easy-jsbox")
 
 class Editor {
     constructor(kernel) {
@@ -71,7 +71,7 @@ class Editor {
                 lineNumbers: this.kernel.setting.get("editor.code.lineNumbers"), // 放在此处动态获取设置的更改
                 theme: this.kernel.setting.get($device.isDarkMode ? "editor.code.darkTheme" : "editor.code.lightTheme"),
                 text: this.text,
-                insets: $insets(0, 0, type === "text" ? this.kernel.setting.get("editor.text.insets") : 0, 0)
+                insets: $insets(15, 15, type === "text" ? this.kernel.setting.get("editor.text.insets") : 15, 15)
             },
             events: {
                 ready: sender => {

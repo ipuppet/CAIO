@@ -269,6 +269,15 @@
             },
             {
                 "icon": [
+                    "arrow.2.circlepath"
+                ],
+                "title": "CHECK_UPDATE",
+                "type": "script",
+                "key": "checkUpdate",
+                "value": "this.method.checkUpdate"
+            },
+            {
+                "icon": [
                     "book.fill",
                     "#A569BD"
                 ],
