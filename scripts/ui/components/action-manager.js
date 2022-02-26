@@ -5,7 +5,7 @@ const {
     NavigationItem,
     PageController,
     Sheet
-} = require("./easy-jsbox")
+} = require("../../easy-jsbox")
 
 class ActionManager {
     constructor(kernel) {
@@ -315,7 +315,7 @@ class ActionManager {
             .addNavBar("", () => {
                 this.saveActionInfo(this.editingActionInfo)
                 // 更新 clipboard 中的 menu
-                const Clipboard = require("./ui/clipboard");
+                const Clipboard = require("../clipboard");
                 Clipboard.updateMenu(this.kernel)
                 if (done) done(this.editingActionInfo)
             }, "Done")
