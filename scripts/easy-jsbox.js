@@ -1044,7 +1044,10 @@ class NavigationController extends Controller {
 
     _navigationBarScrollAction(contentOffset) {
         if (contentOffset > 0) {
-            if (contentOffset > this.largeTitleScrollTrigger) {
+            let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever
+                ? 5
+                : this.largeTitleScrollTrigger
+            if (contentOffset > trigger) {
                 // 隐藏遮罩
                 this.selector.largeTitleMaskView.hidden = true
                 $ui.animate({
