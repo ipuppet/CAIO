@@ -17,13 +17,31 @@ class Mini extends Clipboard {
 
     navButtons() {
         let buttons = [
-            // 手动读取剪切板
-            {
+            { // 手动读取剪切板
                 symbol: "square.and.arrow.down.on.square",
                 tapped: animate => {
                     animate.start()
                     this.readClipboard(true)
                     animate.done()
+                }
+            },
+            {
+                symbol: "bolt.circle",
+                tapped: (animate, sender) => {
+                    const popover = $ui.popover({
+                        sourceView: sender,
+                        directions: $popoverDirection.up,
+                        size: $size(200, 300),
+                        views: [this.kernel.actionManager.getActionListView({}, {
+                            didSelect: (sender, indexPath, data) => {
+                                popover.dismiss()
+                                const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
+                                setTimeout(() => action({
+                                    text: $clipboard.text
+                                }), 500)
+                            }
+                        })]
+                    })
                 }
             }
         ]
@@ -87,7 +105,6 @@ class Mini extends Clipboard {
                 props: Object.assign({
                     id: this.listId,
                     menu: {
-                        title: $l10n("ACTIONS"),
                         items: this.menuItems()
                     },
                     indicatorInsets: $insets(0, 0, 50, 0),
