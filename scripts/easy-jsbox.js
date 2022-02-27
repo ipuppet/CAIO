@@ -1,4 +1,4 @@
-const VERSION = "1.0.0"
+const VERSION = "1.0.1"
 
 /**
  * 对比版本号
@@ -497,7 +497,7 @@ class NavigationBar extends View {
                 layout: (make, view) => {
                     make.left.equalTo(view.super.safeArea).offset(15)
                     make.height.equalTo(this.largeTitleFontSize + 5)
-                    make.top.equalTo(view.super.safeArea).offset(this.getNavigationBarHeight())
+                    make.top.equalTo(this.getNavigationBarHeight())
                 }
             } : {}
     }
@@ -929,7 +929,7 @@ class NavigationItem {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.inset(10)
+                make.left.equalTo(view.super.safeArea).offset(10)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: { tapped: () => { $ui.pop() } }
@@ -1171,7 +1171,9 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    make.top.equalTo(height)
+                    const navigationBarHeight = this.navigationController.navigationBar.getNavigationBarHeight()
+                    const largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
+                    make.top.equalTo(navigationBarHeight + largeTitleFontSize)
                 }
             } else {
                 this.view.layout = $layout.fill
