@@ -26,14 +26,6 @@ class AppKernel extends Kernel {
         this.actionManager.checkUserAction()
         // Editor
         this.editor = new Editor(this)
-        // 检查更新
-        /* this.checkUpdate(content => {
-            $file.write({
-                data: $data({ string: content }),
-                path: "scripts/easy-jsbox.js"
-            })
-            $ui.toast("The framework has been updated.")
-        }) */
     }
 
     deleteConfirm(message, conformAction) {
@@ -190,6 +182,13 @@ class AppKernel extends Kernel {
 
         this.setting.method.checkUpdate = animate => {
             animate.actionStart()
+            this.checkUpdate(content => {
+                $file.write({
+                    data: $data({ string: content }),
+                    path: "scripts/easy-jsbox.js"
+                })
+                $ui.toast("The framework has been updated.")
+            })
             $http.get({
                 url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json",
                 handler: resp => {
