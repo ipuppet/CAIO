@@ -523,7 +523,7 @@ class Clipboard {
             action.symbol = action.icon
             return action
         })
-        return actions.concat([
+        const defaultButtons = [
             {
                 inline: true,
                 items: [
@@ -560,7 +560,8 @@ class Clipboard {
                     }
                 ]
             }
-        ])
+        ]
+        return actions.concat(defaultButtons)
     }
 
     getListView() {

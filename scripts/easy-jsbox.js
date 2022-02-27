@@ -1,4 +1,4 @@
-const VERSION = "1.0.0"
+const VERSION = "1.0.1"
 
 /**
  * 对比版本号
@@ -436,6 +436,7 @@ class NavigationBar extends View {
         this.navigationBarNormalHeight = args?.navigationBarNormalHeight ?? $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
         this.navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
         this.largeTitleFontSize = 34
+        this.navigationBarTitleFontSize = 17
         this.isAddStatusBarHeight = true
         this.contentViewHeightOffset = 10
     }
@@ -497,7 +498,7 @@ class NavigationBar extends View {
                 layout: (make, view) => {
                     make.left.equalTo(view.super.safeArea).offset(15)
                     make.height.equalTo(this.largeTitleFontSize + 5)
-                    make.top.equalTo(view.super.safeArea).offset(this.getNavigationBarHeight())
+                    make.top.equalTo(this.getNavigationBarHeight())
                 }
             } : {}
     }
@@ -551,13 +552,22 @@ class NavigationBar extends View {
                     id: this.id + "-underline",
                     alpha: isHideBackground ? 0 : 1
                 }),
+                {
+                    type: "view",
+                    props: {
+                        hidden: true,
+                        bgcolor: $color("clear"),
+                        id: this.id + "-large-title-mask"
+                    },
+                    layout: $layout.fill
+                },
                 { // 标题
                     type: "label",
                     props: {
                         id: this.id + "-small-title",
                         alpha: isHideTitle ? 1 : 0,  // 不显示大标题则显示小标题
                         text: this.navigationItem.title,
-                        font: $font("bold", 17),
+                        font: $font("bold", this.navigationBarTitleFontSize),
                         align: $align.center,
                         bgcolor: $color("clear"),
                         textColor: UIKit.textColor
@@ -929,7 +939,7 @@ class NavigationItem {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.inset(10)
+                make.left.equalTo(view.super.safeArea).offset(10)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: { tapped: () => { $ui.pop() } }
@@ -951,7 +961,7 @@ class NavigationController extends Controller {
     constructor() {
         super()
         this.navigationBar = new NavigationBar()
-        this.topScrollTrigger = 40
+        this.largeTitleScrollTrigger = this.navigationBar.largeTitleFontSize - 3
     }
 
     updateSelector() {
@@ -960,6 +970,7 @@ class NavigationController extends Controller {
             largeTitleView: $(this.navigationBar.id + "-large-title"),
             smallTitleView: $(this.navigationBar.id + "-small-title"),
             underlineView: $(this.navigationBar.id + "-underline"),
+            largeTitleMaskView: $(this.navigationBar.id + "-large-title-mask"),
             backgroundView: $(this.navigationBar.id + "-background")
         }
     }
@@ -1005,7 +1016,7 @@ class NavigationController extends Controller {
             make.top.equalTo(view.super).offset(this.navigationBar.getNavigationBarHeight() - contentOffset)
         })
         if (contentOffset > 0) {
-            if (contentOffset > this.topScrollTrigger) {
+            if (contentOffset > this.largeTitleScrollTrigger) {
                 $ui.animate({
                     duration: 0.2,
                     animation: () => {
@@ -1033,8 +1044,12 @@ class NavigationController extends Controller {
 
     _navigationBarScrollAction(contentOffset) {
         if (contentOffset > 0) {
-            this.selector.backgroundView.hidden = false
-            if (contentOffset > this.topScrollTrigger) {
+            let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever
+                ? 5
+                : this.largeTitleScrollTrigger
+            if (contentOffset > trigger) {
+                // 隐藏遮罩
+                this.selector.largeTitleMaskView.hidden = true
                 $ui.animate({
                     duration: 0.2,
                     animation: () => {
@@ -1044,6 +1059,9 @@ class NavigationController extends Controller {
                     }
                 })
             } else {
+                const contentViewBackgroundColor = this.selector.largeTitleView?.prev.bgcolor
+                this.selector.largeTitleMaskView.bgcolor = contentViewBackgroundColor
+                this.selector.largeTitleMaskView.hidden = false
                 this.selector.underlineView.alpha = 0
             }
         } else {
@@ -1171,7 +1189,9 @@ class PageController extends Controller {
             if (scrollView.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
-                    make.top.equalTo(height)
+                    const navigationBarHeight = this.navigationController.navigationBar.getNavigationBarHeight()
+                    const largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
+                    make.top.equalTo(navigationBarHeight + largeTitleFontSize)
                 }
             } else {
                 this.view.layout = $layout.fill

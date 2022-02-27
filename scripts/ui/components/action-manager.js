@@ -134,7 +134,7 @@ class ActionManager {
         }
     }
 
-    getActionListView(title, props = {}, events = {}) {
+    getActionListView(props = {}, events = {}) {
         const data = []
         this.getActionTypes().forEach(type => {
             const section = {
@@ -159,23 +159,6 @@ class ActionManager {
                 rowHeight: 60,
                 sectionTitleHeight: 30,
                 stickyHeader: true,
-                header: {
-                    type: "view",
-                    props: { height: 25 },
-                    views: [{
-                        type: "label",
-                        props: {
-                            text: title,
-                            color: $color("secondaryText"),
-                            font: $font(14)
-                        },
-                        layout: (make, view) => {
-                            make.top.equalTo(view.super.safeArea).offset(10)
-                            make.height.equalTo(30)
-                            make.left.inset(15)
-                        }
-                    }, UIKit.separatorLine()]
-                },
                 data: data,
                 template: {
                     props: { bgcolor: $color("clear") },
@@ -563,7 +546,7 @@ class ActionManager {
                             directions: $popoverDirection.up,
                             size: $size(200, 300),
                             views: [
-                                this.getActionListView($l10n("SORT"), {
+                                this.getActionListView({
                                     reorder: true,
                                     actions: [
                                         { // 删除
