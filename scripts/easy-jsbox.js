@@ -436,6 +436,7 @@ class NavigationBar extends View {
         this.navigationBarNormalHeight = args?.navigationBarNormalHeight ?? $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
         this.navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
         this.largeTitleFontSize = 34
+        this.navigationBarTitleFontSize = 17
         this.isAddStatusBarHeight = true
         this.contentViewHeightOffset = 10
     }
@@ -551,13 +552,22 @@ class NavigationBar extends View {
                     id: this.id + "-underline",
                     alpha: isHideBackground ? 0 : 1
                 }),
+                {
+                    type: "view",
+                    props: {
+                        hidden: true,
+                        bgcolor: $color("clear"),
+                        id: this.id + "-large-title-mask"
+                    },
+                    layout: $layout.fill
+                },
                 { // 标题
                     type: "label",
                     props: {
                         id: this.id + "-small-title",
                         alpha: isHideTitle ? 1 : 0,  // 不显示大标题则显示小标题
                         text: this.navigationItem.title,
-                        font: $font("bold", 17),
+                        font: $font("bold", this.navigationBarTitleFontSize),
                         align: $align.center,
                         bgcolor: $color("clear"),
                         textColor: UIKit.textColor
@@ -951,7 +961,7 @@ class NavigationController extends Controller {
     constructor() {
         super()
         this.navigationBar = new NavigationBar()
-        this.topScrollTrigger = 40
+        this.largeTitleScrollTrigger = this.navigationBar.largeTitleFontSize - 3
     }
 
     updateSelector() {
@@ -960,6 +970,7 @@ class NavigationController extends Controller {
             largeTitleView: $(this.navigationBar.id + "-large-title"),
             smallTitleView: $(this.navigationBar.id + "-small-title"),
             underlineView: $(this.navigationBar.id + "-underline"),
+            largeTitleMaskView: $(this.navigationBar.id + "-large-title-mask"),
             backgroundView: $(this.navigationBar.id + "-background")
         }
     }
@@ -1005,7 +1016,7 @@ class NavigationController extends Controller {
             make.top.equalTo(view.super).offset(this.navigationBar.getNavigationBarHeight() - contentOffset)
         })
         if (contentOffset > 0) {
-            if (contentOffset > this.topScrollTrigger) {
+            if (contentOffset > this.largeTitleScrollTrigger) {
                 $ui.animate({
                     duration: 0.2,
                     animation: () => {
@@ -1033,8 +1044,9 @@ class NavigationController extends Controller {
 
     _navigationBarScrollAction(contentOffset) {
         if (contentOffset > 0) {
-            this.selector.backgroundView.hidden = false
-            if (contentOffset > this.topScrollTrigger) {
+            if (contentOffset > this.largeTitleScrollTrigger) {
+                // 隐藏遮罩
+                this.selector.largeTitleMaskView.hidden = true
                 $ui.animate({
                     duration: 0.2,
                     animation: () => {
@@ -1044,6 +1056,9 @@ class NavigationController extends Controller {
                     }
                 })
             } else {
+                const contentViewBackgroundColor = this.selector.largeTitleView?.prev.bgcolor
+                this.selector.largeTitleMaskView.bgcolor = contentViewBackgroundColor
+                this.selector.largeTitleMaskView.hidden = false
                 this.selector.underlineView.alpha = 0
             }
         } else {
