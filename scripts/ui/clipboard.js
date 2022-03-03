@@ -35,16 +35,17 @@ class Clipboard {
     }
 
     checkUrlScheme() {
-        if ($context.query["copy"]) {
-            const content = this.kernel.storage.getByUUID($context.query["copy"])
-            $clipboard.text = content.text
-            /* setTimeout(() => {
-                this.readClipboard()
+        $delay(0.5, () => {
+            if ($context.query["copy"]) {
+                const uuid = $context.query["copy"]
+                const content = this.kernel.storage.getByUUID(uuid)
+                $clipboard.text = content.text
+                this.setCopied(uuid, this.getIndexPathByUUID(uuid))
                 $ui.success($l10n("COPIED"))
-            }, 500) */
-        } else if ($context.query["add"]) {
-            this.getAddTextView()
-        }
+            } else if ($context.query["add"]) {
+                this.getAddTextView()
+            }
+        })
     }
 
     initCopied() {
@@ -77,24 +78,24 @@ class Clipboard {
         }
     }
 
-    readClipboard(manual = false) {
-        /**
-         * 警告！该方法可能消耗大量资源
-         * @param {String} uuid 
-         */
-        const getIndexPathByUUID = uuid => {
-            const data = $(this.listId).data
-            let length = data[0].rows.length
-            for (let index = 0; index < length; index++) {
-                if (data[0].rows[index].content.info.uuid === uuid) return $indexPath(0, index)
-            }
-            length = data[1].rows.length
-            for (let index = 0; index < length; index++) {
-                if (data[1].rows[index].content.info.uuid === uuid) return $indexPath(1, index)
-            }
-            return false
+    /**
+     * 警告！该方法可能消耗大量资源
+     * @param {String} uuid 
+     */
+    getIndexPathByUUID(uuid) {
+        const data = $(this.listId).data
+        let length = data[0].rows.length
+        for (let index = 0; index < length; index++) {
+            if (data[0].rows[index].content.info.uuid === uuid) return $indexPath(0, index)
         }
+        length = data[1].rows.length
+        for (let index = 0; index < length; index++) {
+            if (data[1].rows[index].content.info.uuid === uuid) return $indexPath(1, index)
+        }
+        return false
+    }
 
+    readClipboard(manual = false) {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
             this.kernel.print("读取剪切板")
             if ($cache.get("clipboard.copied") && this.copied) // 只更新 uuid
@@ -102,7 +103,7 @@ class Clipboard {
             const md5 = $text.MD5($clipboard.text)
             const res = this.kernel.storage.getByMD5(md5)
             if ((this.copied && res) && this.copied.uuid === res.uuid) {
-                this.setCopied(res.uuid, getIndexPathByUUID(res.uuid))
+                this.setCopied(res.uuid, this.getIndexPathByUUID(res.uuid))
             } else if ($clipboard.text) {
                 if (res?.md5 !== md5) this.add($clipboard.text)
             }
