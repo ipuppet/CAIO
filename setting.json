@@ -229,6 +229,16 @@
     {
         "items": [
             {
+                "title": "WIDGET",
+                "type": "script",
+                "key": "previewWidget",
+                "value": "this.method.previewWidget"
+            }
+        ]
+    },
+    {
+        "items": [
+            {
                 "icon": [
                     "/assets/icon/github.com.jpeg",
                     "white"

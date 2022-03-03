@@ -221,6 +221,23 @@ class AppKernel extends Kernel {
                 }
             })
         }
+
+        this.setting.method.previewWidget = animate => {
+            animate.touchHighlight()
+            const widgets = []
+            try {
+                JSON.parse($file.read("widget-options.json").string).map(widget => widgets.push(widget.value))
+            } catch (error) {
+                $ui.error(error)
+                return
+            }
+            $ui.menu({
+                items: ["Clipboard"],
+                handler: title => {
+                    Widget.render(title)
+                }
+            })
+        }
     }
 }
 
@@ -274,7 +291,7 @@ class AppUI {
 }
 
 class Widget {
-    widgetInstance(widget, data) {
+    static widgetInstance(widget, data) {
         if ($file.exists(`/scripts/widget/${widget}.js`)) {
             const { Widget } = require(`./widget/${widget}.js`)
             return new Widget(data)
@@ -283,7 +300,7 @@ class Widget {
         }
     }
 
-    renderError() {
+    static renderError() {
         $widget.setTimeline({
             render: () => ({
                 type: "text",
@@ -294,18 +311,17 @@ class Widget {
         })
     }
 
-    renderClipboard() {
-        const widget = this.widgetInstance("Clipboard", new Storage())
+    static renderClipboard() {
+        const widget = Widget.widgetInstance("Clipboard", new Storage())
         widget.render()
     }
 
-    static render() {
-        const widget = new Widget()
-        const widgetName = $widget.inputValue ?? "Clipboard"
+    static render(widgetName = $widget.inputValue) {
+        widgetName = widgetName ?? "Clipboard"
         if (widgetName === "Clipboard") {
-            widget.renderClipboard()
+            Widget.renderClipboard()
         } else {
-            widget.renderError()
+            Widget.renderError()
         }
     }
 }
