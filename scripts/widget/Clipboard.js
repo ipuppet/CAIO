@@ -102,14 +102,14 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 color: $color(this.viewStyle.tipTextColor),
-                                text: "最近内容",
+                                text: $l10n("RECENT"),
                                 font: $font("bold", 16)
                             }
                         },
                         {
                             type: "text",
                             props: {
-                                text: clipboardList[0].text,
+                                text: clipboardList[0] ? clipboardList[0].text : "",
                                 font: $font(12)
                             }
                         }
@@ -158,7 +158,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 color: $color(this.viewStyle.tipTextColor),
-                                text: "剪切板",
+                                text: $l10n("CLIPBOARD"),
                                 font: $font("bold", 16)
                             }
                         }
