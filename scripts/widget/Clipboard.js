@@ -13,7 +13,15 @@ class ClipboardWidget {
         }
     }
 
-    getSavedClipboard(family) {
+    getListMaxLength() {
+        switch (this.ctx.family) {
+            case 0: return 1
+            case 1: return 5
+            case 2: return 10
+        }
+    }
+
+    getSavedClipboard() {
         const dataObj = {}
         let length = 0
         let header = null
@@ -32,13 +40,7 @@ class ClipboardWidget {
         const sorted = []
         if (length > 0) {
             let p = dataObj[header]
-            let maxLoop = (() => {
-                switch (family) {
-                    case 0: return 1
-                    case 1: return 5
-                    case 1: return 10
-                }
-            })() // 控制显示行数
+            let maxLoop = this.getListMaxLength() // 控制显示行数
             while (p.next !== null && maxLoop > 1) {
                 maxLoop--
                 sorted.push(p)
@@ -73,6 +75,7 @@ class ClipboardWidget {
                         {
                             type: "image",
                             props: {
+                                offset: $point(-3, 0), // 图标圆边与文字对齐
                                 symbol: {
                                     glyph: "plus.circle.fill",
                                     size: this.viewStyle.topItemSize
@@ -120,24 +123,24 @@ class ClipboardWidget {
     }
 
     view2x4(clipboardList) {
+        const padding = 15
         return {
             type: "hstack",
             props: {
-                alignment: $widget.horizontalAlignment.leading,
                 spacing: 0,
-                padding: 15
+                padding: padding
             },
             views: [
                 { // 左侧
                     type: "vstack",
                     props: {
-                        alignment: $widget.horizontalAlignment.leading,
-                        spacing: 0
+                        alignment: $widget.horizontalAlignment.leading
                     },
                     views: [
                         {
                             type: "image",
                             props: {
+                                offset: $point(-3, 0), // 图标圆边与文字对齐
                                 symbol: {
                                     glyph: "plus.circle.fill",
                                     size: this.viewStyle.topItemSize
@@ -166,18 +169,22 @@ class ClipboardWidget {
                 },
                 {
                     type: "spacer",
-                    props: { frame: { maxWidth: 50 } }
+                    props: { frame: { maxWidth: clipboardList.length > 0 ? 25 : Infinity } }
                 },
                 { // 右侧
                     type: "vstack",
                     props: {
-                        alignment: $widget.horizontalAlignment.leading,
-                        spacing: 0
+                        spacing: 0,
+                        frame: {
+                            maxHeight: Infinity,
+                            maxWidth: Infinity,
+                            alignment: $widget.alignment.topLeading
+                        }
                     },
                     views: (() => {
                         const result = []
-                        let i = 0
-                        clipboardList.map(item => {
+                        const height = (this.ctx.displaySize.height - padding) / this.getListMaxLength()
+                        clipboardList.map((item, i) => {
                             if (i !== 0 && i !== 5) {
                                 result.push({ type: "divider" })
                             }
@@ -189,13 +196,12 @@ class ClipboardWidget {
                                     font: $font(14),
                                     link: `${this.urlScheme.copy(item.uuid)}`,
                                     frame: {
-                                        maxHeight: Infinity,
+                                        maxHeight: height,
                                         maxWidth: Infinity,
                                         alignment: $widget.alignment.leading
                                     }
                                 }
                             })
-                            i++
                         })
                         return result
                     })()
@@ -222,9 +228,10 @@ class ClipboardWidget {
                 afterDate: expireDate
             },
             render: ctx => {
-                const clipboardList = this.getSavedClipboard(ctx.family)
+                this.ctx = ctx
+                const clipboardList = this.getSavedClipboard()
                 let view
-                switch (ctx.family) {
+                switch (this.ctx.family) {
                     case 0:
                         view = this.view2x2(clipboardList)
                         break
