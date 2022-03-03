@@ -1,7 +1,7 @@
 class ClipboardWidget {
-    constructor(kernel) {
-        this.kernel = kernel
-        this.baseUrlScheme = `jsbox://run?name=${this.kernel.name}&widget=${this.widget}`
+    constructor(storage) {
+        this.storage = storage
+        this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}&widget=${this.widget}`
         this.urlScheme = {
             add: `${this.baseUrlScheme}&add=1`,
             copy: uuid => `${this.baseUrlScheme}&copy=${uuid}`
@@ -25,7 +25,7 @@ class ClipboardWidget {
         const dataObj = {}
         let length = 0
         let header = null
-        this.kernel.storage.all().forEach(item => {
+        this.storage.all().forEach(item => {
             // 构建结构
             dataObj[item.uuid] = item
             // 寻找头节点

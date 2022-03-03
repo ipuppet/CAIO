@@ -1,7 +1,7 @@
 const {
     UIKit,
     BarButtonItem
-} = require("../easy-jsbox")
+} = require("../lib/easy-jsbox")
 const Clipboard = require("./clipboard")
 
 class Mini extends Clipboard {

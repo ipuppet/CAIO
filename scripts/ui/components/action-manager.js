@@ -5,7 +5,7 @@ const {
     NavigationItem,
     PageController,
     Sheet
-} = require("../../easy-jsbox")
+} = require("../../lib/easy-jsbox")
 
 class ActionManager {
     constructor(kernel) {
