@@ -1426,7 +1426,6 @@ class Kernel {
     constructor() {
         this.startTime = Date.now()
         this.version = VERSION
-        this.name = $addin.current.name
         // 隐藏 jsbox 默认 nav 栏
         this.jsboxNavHidden = true
     }
@@ -1455,7 +1454,6 @@ class Kernel {
             console.log(message)
         }
     }
-
 
     useJsboxNav() {
         this.jsboxNavHidden = false

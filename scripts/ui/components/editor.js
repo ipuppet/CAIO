@@ -2,7 +2,7 @@ const {
     UIKit,
     ViewController,
     Sheet
-} = require("../../easy-jsbox")
+} = require("../../lib/easy-jsbox")
 
 class Editor {
     constructor(kernel) {

@@ -1,4 +1,4 @@
-const { Sheet } = require("../easy-jsbox")
+const { Sheet } = require("../lib/easy-jsbox")
 
 class Action {
     constructor(kernel, config, data) {

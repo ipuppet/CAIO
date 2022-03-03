@@ -4,7 +4,7 @@ const {
     Sheet,
     Kernel,
     Setting
-} = require("./easy-jsbox")
+} = require("./lib/easy-jsbox")
 const Storage = require("./storage")
 
 class AppKernel extends Kernel {
@@ -185,7 +185,7 @@ class AppKernel extends Kernel {
             this.checkUpdate(content => {
                 $file.write({
                     data: $data({ string: content }),
-                    path: "scripts/easy-jsbox.js"
+                    path: "scripts/lib/easy-jsbox.js"
                 })
                 $ui.toast("The framework has been updated.")
             })
@@ -221,71 +221,121 @@ class AppKernel extends Kernel {
                 }
             })
         }
+
+        this.setting.method.previewWidget = animate => {
+            animate.touchHighlight()
+            const widgets = []
+            try {
+                JSON.parse($file.read("widget-options.json").string).map(widget => widgets.push(widget.value))
+            } catch (error) {
+                $ui.error(error)
+                return
+            }
+            $ui.menu({
+                items: ["Clipboard"],
+                handler: title => {
+                    Widget.render(title)
+                }
+            })
+        }
+    }
+}
+
+class AppUI {
+    static renderMainUI() {
+        const kernel = new AppKernel()
+        kernel.useJsboxNav()
+        kernel.setNavButtons([
+            {
+                symbol: "gear",
+                title: $l10n("SETTING"),
+                handler: () => {
+                    UIKit.push({
+                        title: $l10n("SETTING"),
+                        bgcolor: Setting.bgcolor,
+                        views: [kernel.setting.getListView()]
+                    })
+                }
+            },
+            {
+                symbol: "command",
+                title: $l10n("ACTIONS"),
+                handler: () => {
+                    kernel.actionManager.present()
+                }
+            }
+        ])
+        const Clipboard = require("./ui/clipboard")
+        const ClipboardUI = new Clipboard(kernel)
+        kernel.UIRender(ClipboardUI.getPageView())
+    }
+
+    static renderMiniUI() {
+        const kernel = new AppKernel()
+        const Today = require("./ui/mini")
+        new Today(kernel).render()
+    }
+
+    static renderUnsupported() {
+        $ui.render({
+            views: [{
+                type: "label",
+                props: {
+                    text: "不支持在此环境中运行",
+                    align: $align.center
+                },
+                layout: $layout.fill
+            }]
+        })
+    }
+}
+
+class Widget {
+    static widgetInstance(widget, data) {
+        if ($file.exists(`/scripts/widget/${widget}.js`)) {
+            const { Widget } = require(`./widget/${widget}.js`)
+            return new Widget(data)
+        } else {
+            return false
+        }
+    }
+
+    static renderError() {
+        $widget.setTimeline({
+            render: () => ({
+                type: "text",
+                props: {
+                    text: "Invalid argument"
+                }
+            })
+        })
+    }
+
+    static renderClipboard() {
+        const widget = Widget.widgetInstance("Clipboard", new Storage())
+        widget.render()
+    }
+
+    static render(widgetName = $widget.inputValue) {
+        widgetName = widgetName ?? "Clipboard"
+        if (widgetName === "Clipboard") {
+            Widget.renderClipboard()
+        } else {
+            Widget.renderError()
+        }
     }
 }
 
 module.exports = {
     run: () => {
         if ($app.env === $env.app) {
-            const kernel = new AppKernel()
-            kernel.useJsboxNav()
-            kernel.setNavButtons([
-                {
-                    symbol: "gear",
-                    title: $l10n("SETTING"),
-                    handler: () => {
-                        UIKit.push({
-                            title: $l10n("SETTING"),
-                            bgcolor: Setting.bgcolor,
-                            views: [kernel.setting.getListView()]
-                        })
-                    }
-                },
-                {
-                    symbol: "command",
-                    title: $l10n("ACTIONS"),
-                    handler: () => {
-                        kernel.actionManager.present()
-                    }
-                }
-            ])
-            const Clipboard = require("./ui/clipboard")
-            const ClipboardUI = new Clipboard(kernel)
-            kernel.UIRender(ClipboardUI.getPageView())
+            AppUI.renderMainUI()
         } else if ($app.env === $env.today || $app.env === $env.keyboard) {
-            const kernel = new AppKernel()
-            const Today = require("./ui/mini")
-            new Today(kernel).render()
+            AppUI.renderMiniUI()
         } else if ($app.env === $env.widget) {
-            function widgetInstance(widget) {
-                if ($file.exists(`/scripts/widget/${widget}.js`)) {
-                    const { Widget } = require(`./widget/${widget}.js`)
-                    return new Widget(new AppKernel())
-                } else {
-                    return false
-                }
-            }
-            const widgetName = $widget.inputValue ?? "Clipboard"
-            const widget = widgetInstance(widgetName)
-            widget ? widget.render() : $widget.setTimeline({
-                render: () => ({
-                    type: "text",
-                    props: {
-                        text: "NULL"
-                    }
-                })
-            })
+            Widget.render()
         } else {
-            $ui.render({
-                views: [{
-                    type: "label",
-                    props: {
-                        text: "不支持在此环境中运行",
-                        align: $align.center
-                    },
-                    layout: $layout.fill
-                }]
-            })
+            AppUI.renderUnsupported()
         }
     }
 }
