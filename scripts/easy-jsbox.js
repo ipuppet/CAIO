@@ -1430,10 +1430,6 @@ class Kernel {
         this.jsboxNavHidden = true
     }
 
-    static get name() {
-        return $addin.current.name
-    }
-
     uuid() {
         return uuid()
     }
