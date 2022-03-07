@@ -1190,7 +1190,10 @@ class PageController extends Controller {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
                     const navigationBarHeight = this.navigationController.navigationBar.getNavigationBarHeight()
-                    const largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
+                    let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
+                    if (this.navigationItem.largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever) {
+                        largeTitleFontSize = 0
+                    }
                     make.top.equalTo(navigationBarHeight + largeTitleFontSize)
                 }
             } else {
