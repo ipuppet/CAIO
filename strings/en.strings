@@ -22,6 +22,9 @@
 "AUTO_SAVE" = "Auto Save";
 "AUTO_SYNC" = "Auto Sync";
 "SYNC_NOW" = "Sync Now";
+"UNZIP_FAILED" = "Unzip file failed";
+"SYNC_ALERT_INFO" = "If it has not been synced locally, the iCloud data will be pulled directly. \nDo you want to continue?";
+"DELETE_ICLOUD_DATA" = "Delete iCloud Data";
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";

@@ -22,6 +22,9 @@
 "AUTO_SAVE" = "自动保存";
 "AUTO_SYNC" = "自动同步";
 "SYNC_NOW" = "立即同步";
+"UNZIP_FAILED" = "解压文件失败";
+"SYNC_ALERT_INFO" = "若未在本机进行过同步则会直接拉取 iCloud 数据。\n是否继续？";
+"DELETE_ICLOUD_DATA" = "删除 iCloud 数据";
 
 "EDITOR" = "编辑器";
 "CREATE_NEW" = "新建";

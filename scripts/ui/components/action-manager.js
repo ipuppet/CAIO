@@ -452,19 +452,9 @@ class ActionManager {
                 symbol: "trash",
                 destructive: true,
                 handler: (sender, indexPath, data) => {
-                    $ui.alert({
-                        title: $l10n("CONFIRM_DELETE_MSG"),
-                        actions: [
-                            {
-                                title: $l10n("DELETE"),
-                                style: $alertActionType.destructive,
-                                handler: () => {
-                                    this.delete(data.info.info)
-                                    sender.delete(indexPath)
-                                }
-                            },
-                            { title: $l10n("CANCEL") }
-                        ]
+                    this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+                        this.delete(data.info.info)
+                        sender.delete(indexPath)
                     })
                 }
             }

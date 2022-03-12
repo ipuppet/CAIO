@@ -64,6 +64,16 @@
                                 "type": "script",
                                 "key": "clipboard.sync",
                                 "value": "this.method.sync"
+                            },
+                            {
+                                "icon": [
+                                    "trash",
+                                    "red"
+                                ],
+                                "title": "DELETE_ICLOUD_DATA",
+                                "type": "script",
+                                "key": "clipboard.deleteIcloudData",
+                                "value": "this.method.deleteIcloudData"
                             }
                         ]
                     },

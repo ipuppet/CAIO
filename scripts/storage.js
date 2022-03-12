@@ -42,41 +42,67 @@ class Storage {
         return result
     }
 
-    upload(manual) {
-        if (this.all().length === 0) return
+    async upload(manual) {
         if (!this.sync && !manual) return
-        $file.write({
+        if (this.all().length === 0) return
+
+        const handler = status => {
+            if (!status) {
+                throw "upload failed"
+            }
+        }
+
+        handler($file.write({
             data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
             path: this.syncInfoFile
-        })
-        $file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile })
-        $file.copy({ src: this.localDb, dst: this.tempDbFile })
-        $archiver.zip({ directory: this.tempPath, dest: this.iCloudZipFile })
+        }))
+        handler($file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile }))
+        handler($file.copy({ src: this.localDb, dst: this.tempDbFile }))
+        const success = await $archiver.zip({ directory: this.tempPath, dest: this.iCloudZipFile })
+        handler(success)
     }
 
-    async syncByiCloud(manual = false, callback) {
+    async syncByiCloud(manual = false) {
         const data = await $file.download(this.iCloudZipFile)
-        if (data !== undefined) {
-            const success = await $archiver.unzip({ file: data, dest: this.tempPath })
-            if (!success) return
-            const syncInfoLocal = $file.exists(this.syncInfoFile) ?
-                JSON.parse($file.read(this.syncInfoFile).string) : {}
-            const syncInfoIcloud = JSON.parse($file.read(this.tempSyncInfoFile).string)
-            if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
-                $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
-                $file.write({ data: $data({ path: this.tempSyncInfoFile }), path: this.syncInfoFile })
-                // Update
-                $sqlite.close(this.sqlite)
-                this.sqlite = $sqlite.open(this.localDb)
-                $app.notify({
-                    name: "syncByiCloud",
-                    object: { status: true }
-                })
-            } else {
-                this.upload(manual)
+
+        return new Promise(async (resolve, reject) => {
+            if (data !== undefined) {
+                const success = await $archiver.unzip({ file: data, dest: this.tempPath })
+                if (!success) {
+                    reject("UNZIP_FAILED")
+                    return
+                }
+
+                const syncInfoLocal = $file.exists(this.syncInfoFile) ?
+                    JSON.parse($file.read(this.syncInfoFile).string) : {}
+                const syncInfoIcloud = JSON.parse($file.read(this.tempSyncInfoFile).string)
+
+                if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
+                    $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
+                    $file.write({ data: $data({ path: this.tempSyncInfoFile }), path: this.syncInfoFile })
+                    // Update
+                    $sqlite.close(this.sqlite)
+                    this.sqlite = $sqlite.open(this.localDb)
+                    $app.notify({
+                        name: "syncByiCloud",
+                        object: { status: true }
+                    })
+                    resolve()
+                    return
+                }
             }
-        } else this.upload(manual)
-        callback()
+
+            try {
+                await this.upload(manual)
+                resolve()
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    deleteIcloudData() {
+        return $file.delete(this.iCloudZipFile)
     }
 
     parse(result) {
