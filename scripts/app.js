@@ -170,8 +170,40 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.sync = animate => {
-            animate.actionStart()
-            setTimeout(() => this.storage.syncByiCloud(true, () => animate.actionDone()), 200)
+            $ui.alert({
+                title: $l10n("SYNC_NOW"),
+                message: $l10n("SYNC_ALERT_INFO"),
+                actions: [
+                    { title: $l10n("CANCEL") },
+                    {
+                        title: $l10n("OK"),
+                        handler: () => {
+                            animate.actionStart()
+                            setTimeout(() => {
+                                this.storage
+                                    .syncByiCloud(true)
+                                    .then(() => {
+                                        animate.actionDone()
+                                    })
+                                    .catch(error => {
+                                        $ui.error(error)
+                                        animate.actionCancel()
+                                    })
+                            }, 200)
+                        }
+                    }
+                ]
+            })
+        }
+
+        this.setting.method.deleteIcloudData = animate => {
+            this.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+                if (this.storage.deleteIcloudData()) {
+                    animate.actionDone()
+                } else {
+                    $ui.info($l10n("DELETE_ERROR"))
+                }
+            })
         }
 
         this.setting.method.importExampleAction = animate => {
