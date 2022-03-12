@@ -201,7 +201,7 @@ class AppKernel extends Kernel {
                 if (this.storage.deleteIcloudData()) {
                     animate.actionDone()
                 } else {
-                    $ui.info($l10n("DELETE_ERROR"))
+                    $ui.toast($l10n("DELETE_ERROR"))
                 }
             })
         }
