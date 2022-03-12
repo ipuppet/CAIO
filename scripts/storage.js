@@ -102,7 +102,7 @@ class Storage {
     }
 
     deleteIcloudData() {
-        return $drive.delete(this.iCloudZipFile)
+        return $file.delete(this.iCloudZipFile)
     }
 
     parse(result) {
