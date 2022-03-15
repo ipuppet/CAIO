@@ -12,7 +12,6 @@ class Mini extends Clipboard {
         this.left_right = 20 // 列表边距
         this.top_bottom = 10 // 列表边距
         this.fontSize = 14 // 字体大小
-        this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
     }
 
     navButtons() {
@@ -86,56 +85,27 @@ class Mini extends Clipboard {
                 indicatorInsets: $insets(0, 0, 50, 0),
                 separatorInset: $insets(0, this.left_right, 0, this.left_right),
                 data: this.savedClipboard,
-                template: {
-                    props: { bgcolor: $color("clear") },
-                    views: [
-                        {
-                            type: "view",
-                            props: {
-                                id: "copied",
-                                circular: this.copiedIndicatorSize,
-                                bgcolor: $color("green")
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.size.equalTo(this.copiedIndicatorSize)
-                                make.left.inset(this.left_right / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "content",
-                                lines: 0,
-                                font: $font(this.fontSize)
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.right.inset(this.left_right)
-                            }
-                        }
-                    ]
-                }
+                template: this.listTemplate()
             }, {}),
             events: {
-                ready: () => {
-                    setTimeout(() => this.readClipboard(), 500)
-                    $app.listen({
-                        // 在应用恢复响应后调用
-                        resume: () => {
-                            setTimeout(() => this.readClipboard(), 500)
-                        }
-                    })
-                },
+                ready: () => this.ready(),
                 rowHeight: (sender, indexPath) => {
                     const content = sender.object(indexPath).content
                     return content.info.height + this.top_bottom * 2 + 1
                 },
                 didSelect: (sender, indexPath, data) => {
-                    if ($app.env === $env.today) {
-                        this.copy(data.content.info.text, data.content.info.uuid, indexPath.row, false)
-                    } else if ($app.env === $env.keyboard) {
-                        $keyboard.insert(data.content.info.text)
+                    const content = data.content
+                    const text = content.info.text
+                    const path = this.kernel.storage.ketToPath(text)
+                    if (path && $file.exists(path)) {
+                        $clipboard.image = $file.read(path).image
+                        $ui.toast($l10n("COPIED"))
+                    } else {
+                        if ($app.env === $env.today) {
+                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row, false)
+                        } else if ($app.env === $env.keyboard) {
+                            $keyboard.insert(data.content.info.text)
+                        }
                     }
                 }
             },

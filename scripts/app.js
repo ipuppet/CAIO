@@ -10,6 +10,7 @@ const Storage = require("./storage")
 class AppKernel extends Kernel {
     constructor() {
         super()
+        this.debug()
         const ActionManager = require("./ui/components/action-manager")
         const Editor = require("./ui/components/editor")
         this.query = $context.query
@@ -20,7 +21,7 @@ class AppKernel extends Kernel {
         this.setting.loadConfig().useJsboxNav()
         this.initSettingMethods()
         // Storage
-        this.storage = new Storage(this.setting.get("clipboard.autoSync"))
+        this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
         // ActionManager
         this.actionManager = new ActionManager(this)
         this.actionManager.checkUserAction()
@@ -90,8 +91,15 @@ class AppKernel extends Kernel {
                                         animate.actionCancel()
                                         return
                                     }
-                                    if (data.fileName.slice(-2) === "db") {
-                                        this.storage.recover(data) ? animate.actionDone() : animate.actionCancel()
+                                    if (data.fileName.slice(-2) === "db" || data.fileName.slice(-3) === "zip") {
+                                        this.storage.import(data)
+                                            .then(() => {
+                                                animate.actionDone()
+                                                $delay(0.3, () => {
+                                                    $addin.restart()
+                                                })
+                                            })
+                                            .catch(() => animate.actionCancel())
                                     } else {
                                         $ui.warning($l10n("FILE_TYPE_ERROR"))
                                         animate.actionCancel()
@@ -371,7 +379,7 @@ class Widget {
 
 module.exports = {
     run: () => {
-        if ($app.env === $env.app) {
+        if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
         } else if ($app.env === $env.today || $app.env === $env.keyboard) {
             AppUI.renderMiniUI()

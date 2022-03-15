@@ -1,14 +1,17 @@
 class Storage {
-    constructor(sync = false) {
+    constructor(sync = false, kernel = {}) {
         this.sync = sync
+        this.kernel = kernel
         this.dbName = "CAIO.db"
         this.localDb = `storage/${this.dbName}`
         this.iCloudPath = "drive://CAIO"
         this.iCloudZipFile = `${this.iCloudPath}/CAIO.zip`
         this.syncInfoFile = "storage/sync.json"
+        this.imagePath = "storage/image"
         this.tempPath = "storage/temp"
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
+        this.tempImagePath = `${this.tempPath}/image`
         this.init()
         if (this.sync) this.syncByiCloud()
     }
@@ -23,23 +26,51 @@ class Storage {
         if (!$file.exists(this.iCloudPath)) $file.mkdir(this.iCloudPath)
     }
 
-    export(callback) {
+    async export(callback) {
+        $file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile })
+        $file.copy({ src: this.localDb, dst: this.tempDbFile })
+        $file.copy({ src: this.imagePath, dst: this.tempImagePath })
+        const exportFileName = "CAIO.zip"
+        const exportFile = this.tempPath + "/" + exportFileName
+        await $archiver.zip({ directory: this.tempPath, dest: exportFile })
         $share.sheet({
             items: [{
-                name: this.dbName,
-                data: $data({ path: this.localDb })
+                name: exportFileName,
+                data: $data({ path: exportFile })
             }],
-            handler: callback
+            handler: success => {
+                $file.delete(exportFile)
+                callback(success)
+            }
         })
     }
 
     import(data) {
-        const result = $file.write({
-            data: data,
-            path: this.localDb
+        return new Promise(async (resolve, reject) => {
+            if (data.fileName.slice(-2) === "db") {
+                if (!$file.write({ data: data, path: this.localDb })) {
+                    reject()
+                    return
+                }
+            } else if (data.fileName.slice(-3) === "zip") {
+                const success = await $archiver.unzip({ file: data, dest: this.tempPath })
+                if (!success) {
+                    reject("UNZIP_FAILED")
+                    return
+                }
+                $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
+                // image
+                $file.move({ src: this.tempImagePath, dst: this.imagePath })
+            }
+            $sqlite.close(this.sqlite)
+            this.sqlite = $sqlite.open(this.localDb)
+            try {
+                await this.upload(manual)
+                resolve()
+            } finally {
+                resolve()
+            }
         })
-        if (result) this.sqlite = $sqlite.open(this.localDb)
-        return result
     }
 
     async upload(manual) {
@@ -58,14 +89,15 @@ class Storage {
         }))
         handler($file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile }))
         handler($file.copy({ src: this.localDb, dst: this.tempDbFile }))
+        handler($file.copy({ src: this.imagePath, dst: this.tempImagePath }))
         const success = await $archiver.zip({ directory: this.tempPath, dest: this.iCloudZipFile })
         handler(success)
     }
 
-    async syncByiCloud(manual = false) {
-        const data = await $file.download(this.iCloudZipFile)
-
+    syncByiCloud(manual = false) {
         return new Promise(async (resolve, reject) => {
+            const data = await $file.download(this.iCloudZipFile)
+
             if (data !== undefined) {
                 const success = await $archiver.unzip({ file: data, dest: this.tempPath })
                 if (!success) {
@@ -78,8 +110,10 @@ class Storage {
                 const syncInfoIcloud = JSON.parse($file.read(this.tempSyncInfoFile).string)
 
                 if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
-                    $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
                     $file.write({ data: $data({ path: this.tempSyncInfoFile }), path: this.syncInfoFile })
+                    $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
+                    // image
+                    $file.move({ src: this.tempImagePath, dst: this.imagePath })
                     // Update
                     $sqlite.close(this.sqlite)
                     this.sqlite = $sqlite.open(this.localDb)
@@ -107,8 +141,7 @@ class Storage {
 
     parse(result) {
         if (result.error !== null) {
-            $console.error(result.error)
-            return false
+            throw result.error
         }
         const data = []
         while (result.result.next()) {
@@ -136,11 +169,6 @@ class Storage {
 
     rollback() {
         this.sqlite.rollback()
-    }
-
-    all() {
-        const result = this.sqlite.query("SELECT *, 'clipboard' AS section FROM clipboard")
-        return this.parse(result)
     }
 
     getByText(text) {
@@ -175,117 +203,117 @@ class Storage {
         return this.parse(result)
     }
 
-    insert(clipboard) {
+    pathToKey(path) {
+        return `@image=${path}`
+    }
+
+    ketToPath(key) {
+        if (key.startsWith("@image=")) {
+            return key.slice(7)
+        }
+        return false
+    }
+
+    _all(table) {
+        const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table}`)
+        return this.parse(result)
+    }
+    _insert(table, clipboard) {
+        if (clipboard.image) {
+            if (!$file.isDirectory(this.imagePath)) {
+                $file.mkdir(this.imagePath)
+            }
+            const image = clipboard.image.png
+            const fileName = image.fileName ?? $text.uuid + ".png"
+            const path = `${this.imagePath}/${fileName}`
+            $file.write({
+                data: image,
+                path: path
+            })
+            clipboard.text = this.pathToKey(path)
+        }
         const result = this.sqlite.update({
-            sql: "INSERT INTO clipboard (uuid, text, md5, prev, next) values(?, ?, ?, ?, ?)",
+            sql: `INSERT INTO ${table} (uuid, text, md5, prev, next) values (?, ?, ?, ?, ?)`,
             args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
         })
         if (result.result) {
             this.upload()
-            return true
+        } else {
+            throw result.error
         }
-        $console.error(result.error)
-        return false
     }
-
-    update(clipboard) {
+    _update(table, clipboard) {
         if (Object.keys(clipboard).length !== 4 || typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
-            sql: "UPDATE clipboard SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?",
+            sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
             args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
         })
         if (result.result) {
             this.upload()
-            return true
+        } else {
+            throw result.error
         }
-        $console.error(result.error)
-        return false
     }
-
-    updateText(uuid, text) {
+    _updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
         const result = this.sqlite.update({
-            sql: "UPDATE clipboard SET text = ?, md5 = ? WHERE uuid = ?",
+            sql: `UPDATE ${table} SET text = ?, md5 = ? WHERE uuid = ?`,
             args: [text, $text.MD5(text), uuid]
         })
         if (result.result) {
             this.upload()
-            return true
+        } else {
+            throw result.error
         }
-        $console.error(result.error)
-        return false
     }
-
-    delete(uuid) {
+    _delete(table, uuid) {
+        const clipboard = this.getByUUID(uuid)
         const result = this.sqlite.update({
-            sql: "DELETE FROM clipboard WHERE uuid = ?",
+            sql: `DELETE FROM ${table} WHERE uuid = ?`,
             args: [uuid]
         })
+        // delete image file
+        const path = this.ketToPath(clipboard.text)
+        if (path) {
+            $file.delete(path)
+        }
         if (result.result) {
             this.upload()
-            return true
+        } else {
+            throw result.error
         }
-        $console.error(result.error)
-        return false
+    }
+
+    all() {
+        return this._all("clipboard")
+    }
+    insert(clipboard) {
+        return this._insert("clipboard", clipboard)
+    }
+    update(clipboard) {
+        return this._update("clipboard", clipboard)
+    }
+    updateText(uuid, text) {
+        return this._updateText("clipboard", uuid, text)
+    }
+    delete(uuid) {
+        return this._delete("clipboard", uuid)
     }
 
     allPin() {
-        const result = this.sqlite.query("SELECT *, 'pin' AS section FROM pin")
-        return this.parse(result)
+        return this._all("pin")
     }
-
     insertPin(clipboard) {
-        const result = this.sqlite.update({
-            sql: "INSERT INTO pin (uuid, text, md5, prev, next) values(?, ?, ?, ?, ?)",
-            args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
-        })
-        if (result.result) {
-            this.upload()
-            return true
-        }
-        $console.error(result.error)
-        return false
+        return this._insert("pin", clipboard)
     }
-
     updatePin(clipboard) {
-        if (Object.keys(clipboard).length !== 4 || typeof clipboard.uuid !== "string") return
-        const result = this.sqlite.update({
-            sql: "UPDATE pin SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?",
-            args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
-        })
-        if (result.result) {
-            this.upload()
-            return true
-        }
-        $console.error(result.error)
-        return false
+        return this._update("pin", clipboard)
     }
-
     updateTextPin(uuid, text) {
-        if (typeof uuid !== "string") return
-        const result = this.sqlite.update({
-            sql: "UPDATE pin SET text = ?, md5 = ? WHERE uuid = ?",
-            args: [text, $text.MD5(text), uuid]
-        })
-        if (result.result) {
-            this.upload()
-            return true
-        }
-        $console.error(result.error)
-        return false
+        return this._updateText("pin", uuid, text)
     }
-
     deletePin(uuid) {
-        const result = this.sqlite.update({
-            sql: "DELETE FROM pin WHERE uuid = ?",
-            args: [uuid]
-        })
-        if (result.result) {
-            this.upload()
-            return true
-        }
-        $console.error(result.error)
-        return false
+        return this._delete("pin", uuid)
     }
 }
 
