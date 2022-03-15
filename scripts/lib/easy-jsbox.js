@@ -1681,8 +1681,41 @@ class Setting extends Controller {
     }
 
     setFooter(footer) {
-        this.footer = footer
+        this._footer = footer
         return this
+    }
+
+    set footer(footer) {
+        this._footer = footer
+    }
+
+    get footer() {
+        if (this._footer === undefined) {
+            const info = JSON.parse($file.read("/config.json")?.string)["info"]
+            this._footer = {
+                type: "view",
+                props: { height: 130 },
+                views: [
+                    {
+                        type: "label",
+                        props: {
+                            font: $font(14),
+                            text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
+                            textColor: $color({
+                                light: "#C0C0C0",
+                                dark: "#545454"
+                            }),
+                            align: $align.center
+                        },
+                        layout: make => {
+                            make.left.right.inset(0)
+                            make.top.inset(10)
+                        }
+                    }
+                ]
+            }
+        }
+        return this._footer
     }
 
     set(key, value) {
@@ -2632,31 +2665,6 @@ class Setting extends Controller {
     }
 
     getListView(structure, footer = this.footer) {
-        if (footer === undefined) {
-            const info = JSON.parse($file.read("/config.json")?.string)["info"]
-            footer = {
-                type: "view",
-                props: { height: 130 },
-                views: [
-                    {
-                        type: "label",
-                        props: {
-                            font: $font(14),
-                            text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
-                            textColor: $color({
-                                light: "#C0C0C0",
-                                dark: "#545454"
-                            }),
-                            align: $align.center
-                        },
-                        layout: make => {
-                            make.left.right.inset(0)
-                            make.top.inset(10)
-                        }
-                    }
-                ]
-            }
-        }
         return {
             type: "list",
             props: {
