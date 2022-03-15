@@ -222,13 +222,10 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "paperplane.fill"
-                                ],
-                                "title": "SHOW_NAV",
-                                "type": "switch",
-                                "key": "mini.displayNav",
-                                "value": true
+                                "title": "PREVIEW",
+                                "type": "script",
+                                "key": "mini.preview",
+                                "value": "this.method.previewMini"
                             }
                         ]
                     }

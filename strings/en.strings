@@ -13,7 +13,6 @@
 "PIN" = "Pin";
 "COPY" = "Copy";
 "COPIED" = "Copied";
-"COPY_SUCCESS" = "Copy success";
 "SORT" = "Sort";
 "ACTIONS" = "Actions";
 "PREVIEW" = "Preview";
@@ -59,7 +58,6 @@
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 
 "TODAY&KEYBOARD" = "Today & Keyboard";
-"SHOW_NAV" = "Show NAV";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
