@@ -309,6 +309,7 @@ class AppUI {
     }
 
     static renderUnsupported() {
+        $intents.finish("不支持在此环境中运行")
         $ui.render({
             views: [{
                 type: "label",
