@@ -270,6 +270,16 @@ class AppKernel extends Kernel {
                 }
             })
         }
+
+        this.setting.method.previewMini = animate => {
+            animate.touchHighlightStart()
+            const Today = require("./ui/mini")
+            const miniView = new Today(this)
+            UIKit.push({
+                views: miniView.getViews(),
+                disappeared: () => animate.touchHighlightEnd()
+            })
+        }
     }
 }
 

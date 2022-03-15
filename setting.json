@@ -222,6 +222,16 @@
                     {
                         "items": [
                             {
+                                "title": "PREVIEW",
+                                "type": "script",
+                                "key": "mini.preview",
+                                "value": "this.method.previewMini"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
                                 "icon": [
                                     "paperplane.fill"
                                 ],

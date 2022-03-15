@@ -74,10 +74,79 @@ class Mini extends Clipboard {
     }
 
     getViews() {
-        return [
-            { // 顶部按钮栏
+        const displayNav = this.kernel.setting.get("mini.displayNav")
+        const navHeight = $app.env === $env.today ? 30 : 50
+        const views = [{ // 剪切板列表
+            type: "list",
+            props: Object.assign({
+                id: this.listId,
+                menu: {
+                    items: this.menuItems()
+                },
+                indicatorInsets: $insets(0, 0, 50, 0),
+                separatorInset: $insets(0, this.left_right, 0, this.left_right),
+                data: this.savedClipboard,
+                template: {
+                    props: { bgcolor: $color("clear") },
+                    views: [
+                        {
+                            type: "view",
+                            props: {
+                                id: "copied",
+                                circular: this.copiedIndicatorSize,
+                                bgcolor: $color("green")
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo(this.copiedIndicatorSize)
+                                make.left.inset(this.left_right / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "content",
+                                lines: 0,
+                                font: $font(this.fontSize)
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.right.inset(this.left_right)
+                            }
+                        }
+                    ]
+                }
+            }, {}),
+            events: {
+                ready: () => {
+                    setTimeout(() => this.readClipboard(), 500)
+                    $app.listen({
+                        // 在应用恢复响应后调用
+                        resume: () => {
+                            setTimeout(() => this.readClipboard(), 500)
+                        }
+                    })
+                },
+                rowHeight: (sender, indexPath) => {
+                    const content = sender.object(indexPath).content
+                    return content.info.height + this.top_bottom * 2 + 1
+                },
+                didSelect: (sender, indexPath, data) => {
+                    if ($app.env === $env.today) {
+                        this.copy(data.content.info.text, data.content.info.uuid, indexPath.row, false)
+                    } else if ($app.env === $env.keyboard) {
+                        $keyboard.insert(data.content.info.text)
+                    }
+                }
+            },
+            layout: (make, view) => {
+                make.top.equalTo(displayNav ? navHeight : 0)
+                make.width.bottom.equalTo(view.super)
+            }
+        }]
+        if (displayNav) {
+            const navView = { // 顶部按钮栏
                 type: "view",
-                props: { height: $app.env === $env.today ? 30 : 50 },
                 views: [{
                     type: "view",
                     layout: $layout.fill,
@@ -97,78 +166,12 @@ class Mini extends Clipboard {
                 }],
                 layout: (make, view) => {
                     make.top.width.equalTo(view.super)
-                    make.height.equalTo(45)
-                }
-            },
-            { // 剪切板列表
-                type: "list",
-                props: Object.assign({
-                    id: this.listId,
-                    menu: {
-                        items: this.menuItems()
-                    },
-                    indicatorInsets: $insets(0, 0, 50, 0),
-                    separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                    data: this.savedClipboard,
-                    template: {
-                        props: { bgcolor: $color("clear") },
-                        views: [
-                            {
-                                type: "view",
-                                props: {
-                                    id: "copied",
-                                    circular: this.copiedIndicatorSize,
-                                    bgcolor: $color("green")
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.size.equalTo(this.copiedIndicatorSize)
-                                    make.left.inset(this.left_right / 2 - this.copiedIndicatorSize / 2) // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                }
-                            },
-                            {
-                                type: "label",
-                                props: {
-                                    id: "content",
-                                    lines: 0,
-                                    font: $font(this.fontSize)
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.left.right.inset(this.left_right)
-                                }
-                            }
-                        ]
-                    }
-                }, {}),
-                events: {
-                    ready: () => {
-                        setTimeout(() => this.readClipboard(), 500)
-                        $app.listen({
-                            // 在应用恢复响应后调用
-                            resume: () => {
-                                setTimeout(() => this.readClipboard(), 500)
-                            }
-                        })
-                    },
-                    rowHeight: (sender, indexPath) => {
-                        const content = sender.object(indexPath).content
-                        return content.info.height + this.top_bottom * 2 + 1
-                    },
-                    didSelect: (sender, indexPath, data) => {
-                        if ($app.env === $env.today) {
-                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row, false)
-                        } else if ($app.env === $env.keyboard) {
-                            $keyboard.insert(data.content.info.text)
-                        }
-                    }
-                },
-                layout: (make, view) => {
-                    make.top.equalTo(view.prev.bottom)
-                    make.width.bottom.equalTo(view.super)
+                    make.height.equalTo(navHeight)
                 }
             }
-        ]
+            views.unshift(navView)
+        }
+        return views
     }
 
     render() {
