@@ -2538,18 +2538,18 @@ class Setting extends Controller {
                 tapped: () => {
                     setTimeout(() => {
                         if (this.events?.onChildPush) {
-                            this.callEvent("onChildPush", this.getListView(children), title)
+                            this.callEvent("onChildPush", this.getListView(children, {}), title)
                         } else {
                             if (this.isUseJsboxNav) {
                                 UIKit.push({
                                     title: title,
                                     bgcolor: Setting.bgcolor,
-                                    views: [this.getListView(children)]
+                                    views: [this.getListView(children, {})]
                                 })
                             } else {
                                 const pageController = new PageController()
                                 pageController
-                                    .setView(this.getListView(children))
+                                    .setView(this.getListView(children, {}))
                                     .navigationItem
                                     .setTitle(title)
                                     .addPopButton()
@@ -2631,10 +2631,10 @@ class Setting extends Controller {
         return sections
     }
 
-    getListView(structure) {
-        this.footer = this.footer ?? (() => {
+    getListView(structure, footer = this.footer) {
+        if (footer === undefined) {
             const info = JSON.parse($file.read("/config.json")?.string)["info"]
-            return {
+            footer = {
                 type: "view",
                 props: { height: 130 },
                 views: [
@@ -2656,7 +2656,7 @@ class Setting extends Controller {
                     }
                 ]
             }
-        })()
+        }
         return {
             type: "list",
             props: {
@@ -2664,7 +2664,7 @@ class Setting extends Controller {
                 separatorInset: $insets(0, 50, 0, 10), // 分割线边距
                 rowHeight: 50,
                 indicatorInsets: $insets(50, 0, 50, 0),
-                footer: this.footer,
+                footer: footer,
                 data: this._getSections(structure ?? this.structure)
             },
             layout: $layout.fill
