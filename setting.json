@@ -228,19 +228,6 @@
                                 "value": "this.method.previewMini"
                             }
                         ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": [
-                                    "paperplane.fill"
-                                ],
-                                "title": "SHOW_NAV",
-                                "type": "switch",
-                                "key": "mini.displayNav",
-                                "value": true
-                            }
-                        ]
                     }
                 ]
             }

@@ -10,7 +10,7 @@ const Storage = require("./storage")
 class AppKernel extends Kernel {
     constructor() {
         super()
-        this.debug()
+        // this.debug()
         const ActionManager = require("./ui/components/action-manager")
         const Editor = require("./ui/components/editor")
         this.query = $context.query
@@ -381,7 +381,7 @@ module.exports = {
     run: () => {
         if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
-        } else if ($app.env === $env.today || $app.env === $env.keyboard) {
+        } else if ($app.env === $env.keyboard) {
             AppUI.renderMiniUI()
         } else if ($app.env === $env.widget) {
             Widget.render()

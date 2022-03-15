@@ -1,6 +1,8 @@
 const {
     UIKit,
-    BarButtonItem
+    BarButtonItem,
+    NavigationItem,
+    NavigationBar
 } = require("../lib/easy-jsbox")
 const Clipboard = require("./clipboard")
 
@@ -12,10 +14,20 @@ class Mini extends Clipboard {
         this.left_right = 20 // 列表边距
         this.top_bottom = 10 // 列表边距
         this.fontSize = 14 // 字体大小
+        this.navHeight = 50
+        this.keyboardSetting()
+    }
+
+    keyboardSetting() {
+        $keyboard.barHidden = true
     }
 
     navButtons() {
-        let buttons = [
+        const buttons = [
+            { // 关闭键盘
+                symbol: "keyboard.chevron.compact.down",
+                tapped: () => $keyboard.dismiss()
+            },
             { // 手动读取剪切板
                 symbol: "square.and.arrow.down.on.square",
                 tapped: animate => {
@@ -44,24 +56,6 @@ class Mini extends Clipboard {
                 }
             }
         ]
-        if ($app.env === $env.keyboard) {
-            // TODO keyboard buttons
-        } else {
-            buttons.unshift(
-                {
-                    symbol: "plus.circle",
-                    tapped: () => {
-                        $input.text({
-                            placeholder: "",
-                            text: "",
-                            handler: text => {
-                                if (text !== "") this.add(text)
-                            }
-                        })
-                    }
-                }
-            )
-        }
         return buttons.map(button => {
             const barButtonItem = new BarButtonItem()
             return barButtonItem
@@ -72,10 +66,76 @@ class Mini extends Clipboard {
         })
     }
 
-    getViews() {
-        const displayNav = this.kernel.setting.get("mini.displayNav")
-        const navHeight = $app.env === $env.today ? 30 : 50
-        const views = [{ // 剪切板列表
+    bottomBarButtons() {
+        const navigationBar = new NavigationBar()
+        const navigationItem = new NavigationItem()
+
+        navigationItem.setLeftButtons([
+            { // TODO 切换键盘
+                symbol: "globe",
+                tapped: () => $keyboard.next(),
+                menu: {
+                    pullDown: true,
+                    items: [
+                        {
+                            title: "Next Keyboard",
+                            handler: (sender, indexPath) => {
+                                $keyboard.next()
+                            }
+                        }
+                    ]
+                }
+            }
+        ])
+        navigationItem.setRightButtons([
+            {
+                symbol: "delete.left",
+                tapped: () => $keyboard.delete()
+            }
+        ])
+
+        navigationBar.setNavigationItem(navigationItem)
+
+        return { // 底部按钮栏
+            type: "view",
+            views: [navigationBar.getNavigationBarView()],
+            layout: (make, view) => {
+                make.width.equalTo(view.super)
+                make.height.equalTo(view.super)
+                make.top.equalTo(view.super.safeArea).offset(3)
+            }
+        }
+    }
+
+    getNavBarView() {
+        return { // 顶部按钮栏
+            type: "view",
+            views: [{
+                type: "view",
+                layout: $layout.fill,
+                views: [
+                    {
+                        type: "label",
+                        props: {
+                            text: $l10n("CLIPBOARD"),
+                            font: $font("bold", 20)
+                        },
+                        layout: (make, view) => {
+                            make.centerY.equalTo(view.super)
+                            make.left.equalTo(view.super).offset(this.left_right)
+                        }
+                    }
+                ].concat(this.navButtons())
+            }],
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super)
+                make.height.equalTo(this.navHeight)
+            }
+        }
+    }
+
+    getListView() {
+        return { // 剪切板列表
             type: "list",
             props: Object.assign({
                 id: this.listId,
@@ -101,46 +161,40 @@ class Mini extends Clipboard {
                         $clipboard.image = $file.read(path).image
                         $ui.toast($l10n("COPIED"))
                     } else {
-                        if ($app.env === $env.today) {
-                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row, false)
-                        } else if ($app.env === $env.keyboard) {
-                            $keyboard.insert(data.content.info.text)
-                        }
+                        $keyboard.insert(data.content.info.text)
                     }
                 }
             },
             layout: (make, view) => {
-                make.top.equalTo(displayNav ? navHeight : 0)
+                make.top.equalTo(this.navHeight)
                 make.width.bottom.equalTo(view.super)
             }
-        }]
-        if (displayNav) {
-            const navView = { // 顶部按钮栏
-                type: "view",
-                views: [{
-                    type: "view",
-                    layout: $layout.fill,
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                text: $l10n("CLIPBOARD"),
-                                font: $font("bold", 20)
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.super).offset(this.left_right)
-                            }
-                        }
-                    ].concat(this.navButtons())
-                }],
-                layout: (make, view) => {
-                    make.top.width.equalTo(view.super)
-                    make.height.equalTo(navHeight)
-                }
-            }
-            views.unshift(navView)
         }
+    }
+
+    getBottomBarView() {
+        return UIKit.blurBox(
+            {
+                clipsToBounds: true
+            },
+            [{
+                type: "view",
+                layout: $layout.fill,
+                views: [this.bottomBarButtons()]
+            }],
+            (make, view) => {
+                make.bottom.width.equalTo(view.super)
+                make.height.equalTo(this.navHeight)
+            }
+        )
+    }
+
+    getViews() {
+        const views = [
+            this.getNavBarView(),
+            this.getListView(),
+            this.getBottomBarView()
+        ]
         return views
     }
 
