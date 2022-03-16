@@ -22,23 +22,32 @@ class Mini extends Clipboard {
         $keyboard.barHidden = true
     }
 
+    keyboardTapped(tapped) {
+        return (...args) => {
+            if (this.kernel.setting.get("mini.tapticEngine")) {
+                $device.taptic(1)
+            }
+            tapped(...args)
+        }
+    }
+
     navButtons() {
         const buttons = [
             { // 关闭键盘
                 symbol: "keyboard.chevron.compact.down",
-                tapped: () => $keyboard.dismiss()
+                tapped: this.keyboardTapped(() => $keyboard.dismiss())
             },
             { // 手动读取剪切板
                 symbol: "square.and.arrow.down.on.square",
-                tapped: animate => {
+                tapped: this.keyboardTapped(animate => {
                     animate.start()
                     this.readClipboard(true)
                     animate.done()
-                }
+                })
             },
             {
                 symbol: "bolt.circle",
-                tapped: (animate, sender) => {
+                tapped: this.keyboardTapped((animate, sender) => {
                     const popover = $ui.popover({
                         sourceView: sender,
                         directions: $popoverDirection.up,
@@ -53,7 +62,7 @@ class Mini extends Clipboard {
                             }
                         })]
                     })
-                }
+                })
             }
         ]
         return buttons.map(button => {
@@ -73,24 +82,57 @@ class Mini extends Clipboard {
         navigationItem.setLeftButtons([
             { // TODO 切换键盘
                 symbol: "globe",
-                tapped: () => $keyboard.next(),
+                tapped: this.keyboardTapped(() => $keyboard.next()),
                 menu: {
                     pullDown: true,
                     items: [
                         {
                             title: "Next Keyboard",
-                            handler: (sender, indexPath) => {
-                                $keyboard.next()
-                            }
+                            handler: this.keyboardTapped(() => $keyboard.next())
                         }
                     ]
                 }
             }
         ])
+        const keyboardDelete = times => {
+            let t = 0
+            for (let index = 0; index < times; index++) {
+                $delay(t, () => $keyboard.delete())
+                t += 0.05
+            }
+        }
         navigationItem.setRightButtons([
-            {
+            { // send
+                title: "Send",
+                tapped: this.keyboardTapped(() => $keyboard.send())
+            },
+            { // delete
                 symbol: "delete.left",
-                tapped: () => $keyboard.delete()
+                tapped: this.keyboardTapped(() => keyboardDelete(1)),
+                menu: {
+                    pullDown: true,
+                    items: [
+                        {
+                            title: "Delete 5",
+                            handler: this.keyboardTapped(() => keyboardDelete(5))
+                        },
+                        {
+                            title: "Delete 10",
+                            handler: this.keyboardTapped(() => keyboardDelete(10))
+                        },
+                        {
+                            title: "Try Clear All",
+                            handler: this.keyboardTapped(() => {
+                                const startTime = Date.now()
+                                const ttl = 1000 * 60 * 2
+                                while ($keyboard.hasText && Date.now() - startTime < ttl) {
+                                    $keyboard.delete()
+                                    $keyboard.delete()
+                                }
+                            })
+                        }
+                    ]
+                }
             }
         ])
 
@@ -153,17 +195,17 @@ class Mini extends Clipboard {
                     const content = sender.object(indexPath).content
                     return content.info.height + this.top_bottom * 2 + 1
                 },
-                didSelect: (sender, indexPath, data) => {
+                didSelect: this.keyboardTapped((sender, indexPath, data) => {
                     const content = data.content
                     const text = content.info.text
                     const path = this.kernel.storage.ketToPath(text)
-                    if (path && $file.exists(path)) {
-                        $clipboard.image = $file.read(path).image
+                    if (path && $file.exists(path.original)) {
+                        $clipboard.image = $file.read(path.original).image
                         $ui.toast($l10n("COPIED"))
                     } else {
                         $keyboard.insert(data.content.info.text)
                     }
-                }
+                })
             },
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)

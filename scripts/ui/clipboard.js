@@ -420,8 +420,8 @@ class Clipboard {
      */
     copy(text, uuid, indexPath) {
         const path = this.kernel.storage.ketToPath(text)
-        if (path && $file.exists(path)) {
-            $clipboard.image = $file.read(path).image
+        if (path && $file.exists(path.original)) {
+            $clipboard.image = $file.read(path.original).image
         } else {
             $clipboard.text = text
         }
@@ -562,8 +562,8 @@ class Clipboard {
                             const text = sender.object(indexPath).content.info.text
                             let shareContent = text
                             const path = this.kernel.storage.ketToPath(text)
-                            if (path && $file.exists(path)) {
-                                const image = $file.read(path)?.image?.png
+                            if (path && $file.exists(path.original)) {
+                                const image = $file.read(path.original)?.image?.png
                                 shareContent = {
                                     name: image.fileName,
                                     data: image
@@ -612,7 +612,7 @@ class Clipboard {
             return {
                 copied: { hidden: !indicator },
                 image: {
-                    src: path,
+                    src: path.preview,
                     hidden: false
                 },
                 content: {
@@ -754,9 +754,9 @@ class Clipboard {
                     const content = data.content
                     const text = content.info.text
                     const path = this.kernel.storage.ketToPath(text)
-                    if (path && $file.exists(path)) {
+                    if (path && $file.exists(path.original)) {
                         $quicklook.open({
-                            image: $file.read(path)?.image
+                            image: $file.read(path.original)?.image
                         })
                     } else {
                         this.edit(content.info.text, text => {

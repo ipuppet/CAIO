@@ -8,6 +8,8 @@ class Storage {
         this.iCloudZipFile = `${this.iCloudPath}/CAIO.zip`
         this.syncInfoFile = "storage/sync.json"
         this.imagePath = "storage/image"
+        this.imageOriginalPath = `${this.imagePath}/original`
+        this.imagePreviewPath = `${this.imagePath}/preview`
         this.tempPath = "storage/temp"
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
@@ -24,6 +26,10 @@ class Storage {
         // 初始化目录
         if (!$file.exists(this.tempPath)) $file.mkdir(this.tempPath)
         if (!$file.exists(this.iCloudPath)) $file.mkdir(this.iCloudPath)
+        // image path
+        if (!$file.isDirectory(this.imagePath)) { $file.mkdir(this.imagePath) }
+        if (!$file.isDirectory(this.imagePreviewPath)) $file.mkdir(this.imagePreviewPath)
+        if (!$file.isDirectory(this.imageOriginalPath)) $file.mkdir(this.imageOriginalPath)
     }
 
     async export(callback) {
@@ -204,12 +210,13 @@ class Storage {
     }
 
     pathToKey(path) {
+        path = JSON.stringify(path)
         return `@image=${path}`
     }
 
     ketToPath(key) {
         if (key.startsWith("@image=")) {
-            return key.slice(7)
+            return JSON.parse(key.slice(7))
         }
         return false
     }
@@ -220,15 +227,19 @@ class Storage {
     }
     _insert(table, clipboard) {
         if (clipboard.image) {
-            if (!$file.isDirectory(this.imagePath)) {
-                $file.mkdir(this.imagePath)
+            const image = clipboard.image
+            const fileName = $text.uuid
+            const path = {
+                original: `${this.imageOriginalPath}/${fileName}.png`,
+                preview: `${this.imagePreviewPath}/${fileName}.jpg`
             }
-            const image = clipboard.image.png
-            const fileName = image.fileName ?? $text.uuid + ".png"
-            const path = `${this.imagePath}/${fileName}`
             $file.write({
-                data: image,
-                path: path
+                data: image.png,
+                path: path.original
+            })
+            $file.write({
+                data: this.kernel.compressImage(image).jpg(0.8),
+                path: path.preview
             })
             clipboard.text = this.pathToKey(path)
         }
@@ -275,7 +286,8 @@ class Storage {
         // delete image file
         const path = this.ketToPath(clipboard.text)
         if (path) {
-            $file.delete(path)
+            $file.delete(path.original)
+            $file.delete(path.preview)
         }
         if (result.result) {
             this.upload()
