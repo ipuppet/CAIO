@@ -395,6 +395,7 @@ class Widget {
 module.exports = {
     run: () => {
         if ($app.env === $env.app || $app.env === $env.action) {
+            //AppUI.renderMiniUI()
             AppUI.renderMainUI()
         } else if ($app.env === $env.keyboard) {
             AppUI.renderMiniUI()

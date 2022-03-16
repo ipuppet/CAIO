@@ -58,6 +58,7 @@
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
 
 "KEYBOARD" = "键盘";
+"DELETE_DELAY" = "删除延时";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";

@@ -688,6 +688,15 @@ class BarButtonItem extends View {
     }
 
     getView() {
+        const userTapped = this.events.tapped
+        this.events.tapped = sender => {
+            if (!userTapped) return
+            userTapped({
+                start: () => this.actionStart(),
+                done: () => this.actionDone(),
+                cancel: () => this.actionCancel()
+            }, sender)
+        }
         return {
             type: "view",
             views: [
@@ -705,15 +714,7 @@ class BarButtonItem extends View {
                     },
                         this.menu ? { menu: this.menu } : {},
                         this.title?.length > 0 ? { title: this.title } : {}),
-                    events: {
-                        tapped: sender => {
-                            this.events.tapped({
-                                start: () => this.actionStart(),
-                                done: () => this.actionDone(),
-                                cancel: () => this.actionCancel()
-                            }, sender)
-                        }
-                    },
+                    events: this.events,
                     layout: $layout.fill
                 },
                 {
@@ -881,21 +882,23 @@ class NavigationItem {
     }
 
     setRightButtons(buttons) {
-        buttons.forEach(button => this.addRightButton(button.symbol, button.title, button.tapped, button.menu))
+        buttons.forEach(button => this.addRightButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
     setLeftButtons(buttons) {
-        buttons.forEach(button => this.addLeftButton(button.symbol, button.title, button.tapped, button.menu))
+        buttons.forEach(button => this.addLeftButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
-    addRightButton(symbol, title, tapped, menu) {
+    addRightButton({ symbol, title, tapped, menu, events }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvent("tapped", tapped)
+            .setEvents(Object.assign({
+                tapped: tapped
+            }, events))
             .setAlign(UIKit.align.right)
             .setSymbol(symbol)
             .setTitle(title)
@@ -905,10 +908,12 @@ class NavigationItem {
         return this
     }
 
-    addLeftButton(symbol, title, tapped, menu) {
+    addLeftButton({ symbol, title, tapped, menu, events }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvent("tapped", tapped)
+            .setEvents(Object.assign({
+                tapped: tapped
+            }, events))
             .setAlign(UIKit.align.left)
             .setSymbol(symbol)
             .setTitle(title)
@@ -2007,7 +2012,7 @@ class Setting extends Controller {
                     events: {
                         tapped: () => {
                             $input.text({
-                                type: $kbType.number,
+                                type: $kbType.decimal,
                                 text: this.get(key),
                                 placeholder: title,
                                 handler: (text) => {
