@@ -18,6 +18,7 @@ class Mini extends Clipboard {
         this.keyboardSetting()
         this.deleteTimer = undefined
         this.continuousDeleteTimer = undefined
+        this.deleteDelay = this.kernel.setting.get("mini.deleteDelay")
         this.continuousDeleteDelay = 0.5
     }
 
@@ -110,7 +111,7 @@ class Mini extends Clipboard {
                         $keyboard.delete()
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
-                                interval: 0.05,
+                                interval: this.deleteDelay,
                                 handler: () => $keyboard.delete()
                             })
                         })

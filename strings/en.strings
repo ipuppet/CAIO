@@ -58,6 +58,7 @@
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 
 "KEYBOARD" = "Keyboard";
+"DELETE_DELAY" = "Delete Delay";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

@@ -234,6 +234,20 @@
                                 "value": true
                             }
                         ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "rays",
+                                    "#FFCC33"
+                                ],
+                                "title": "DELETE_DELAY",
+                                "type": "number",
+                                "key": "mini.deleteDelay",
+                                "value": 0.05
+                            }
+                        ]
                     }
                 ]
             }
