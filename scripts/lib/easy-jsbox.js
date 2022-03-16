@@ -2012,7 +2012,7 @@ class Setting extends Controller {
                     events: {
                         tapped: () => {
                             $input.text({
-                                //type: $kbType.number,
+                                type: $kbType.decimal,
                                 text: this.get(key),
                                 placeholder: title,
                                 handler: (text) => {
