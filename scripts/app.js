@@ -296,10 +296,10 @@ class AppKernel extends Kernel {
 
         this.setting.method.previewMini = animate => {
             animate.touchHighlightStart()
-            const Today = require("./ui/mini")
-            const miniView = new Today(this)
+            const Mini = require("./ui/mini")
+            const mini = new Mini(this).getView()
             UIKit.push({
-                views: miniView.getViews(),
+                views: [mini],
                 disappeared: () => animate.touchHighlightEnd()
             })
         }
@@ -337,8 +337,14 @@ class AppUI {
 
     static renderMiniUI() {
         const kernel = new AppKernel()
-        const Today = require("./ui/mini")
-        new Today(kernel).render()
+        const Mini = require("./ui/mini")
+        const mini = new Mini(kernel).getView()
+        $ui.render({
+            props: {
+                clipsToSafeArea: true
+            },
+            views: [mini]
+        })
     }
 
     static renderUnsupported() {
