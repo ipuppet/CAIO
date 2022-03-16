@@ -881,21 +881,23 @@ class NavigationItem {
     }
 
     setRightButtons(buttons) {
-        buttons.forEach(button => this.addRightButton(button.symbol, button.title, button.tapped, button.menu))
+        buttons.forEach(button => this.addRightButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
     setLeftButtons(buttons) {
-        buttons.forEach(button => this.addLeftButton(button.symbol, button.title, button.tapped, button.menu))
+        buttons.forEach(button => this.addLeftButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
-    addRightButton(symbol, title, tapped, menu) {
+    addRightButton({ symbol, title, tapped, menu, events }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvent("tapped", tapped)
+            .setEvents(Object.assign({
+                tapped: tapped
+            }, events))
             .setAlign(UIKit.align.right)
             .setSymbol(symbol)
             .setTitle(title)
@@ -905,10 +907,12 @@ class NavigationItem {
         return this
     }
 
-    addLeftButton(symbol, title, tapped, menu) {
+    addLeftButton({ symbol, title, tapped, menu, events }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvent("tapped", tapped)
+            .setEvents(Object.assign({
+                tapped: tapped
+            }, events))
             .setAlign(UIKit.align.left)
             .setSymbol(symbol)
             .setTitle(title)
