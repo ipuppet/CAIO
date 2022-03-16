@@ -207,24 +207,19 @@ class Mini extends Clipboard {
         }
     }
 
-    render() {
-        $ui.render({
-            props: {
-                clipsToSafeArea: true
-            },
-            views: [{
-                type: "view",
-                props: { bgcolor: $color("clear") },
-                views: [
-                    this.getNavBarView(),
-                    UIKit.separatorLine(),
-                    this.getListView(),
-                    UIKit.separatorLine(),
-                    this.getBottomBarView()
-                ],
-                layout: $layout.fill
-            }]
-        })
+    getView() {
+        return {
+            type: "view",
+            props: { bgcolor: $color("clear") },
+            views: [
+                this.getNavBarView(),
+                UIKit.separatorLine(),
+                this.getListView(),
+                UIKit.separatorLine(),
+                this.getBottomBarView()
+            ],
+            layout: $layout.fill
+        }
     }
 }
 
