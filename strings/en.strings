@@ -57,7 +57,7 @@
 "FILE_TYPE_ERROR" = "File type does not match";
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 
-"TODAY&KEYBOARD" = "Today & Keyboard";
+"KEYBOARD" = "Keyboard";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

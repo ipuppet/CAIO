@@ -216,7 +216,7 @@
                     "rectangle.3.offgrid.fill"
                 ],
                 "type": "child",
-                "title": "TODAY&KEYBOARD",
+                "title": "KEYBOARD",
                 "key": "mini",
                 "children": [
                     {
@@ -226,6 +226,12 @@
                                 "type": "script",
                                 "key": "mini.preview",
                                 "value": "this.method.previewMini"
+                            },
+                            {
+                                "title": "Taptic Engine",
+                                "type": "switch",
+                                "key": "mini.tapticEngine",
+                                "value": true
                             }
                         ]
                     }
