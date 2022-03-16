@@ -1,5 +1,4 @@
 const {
-    UIKit,
     Setting,
     NavigationBar,
     NavigationItem,
@@ -495,7 +494,6 @@ class ActionManager {
                                             indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
                                             value: this.actionToData(info)
                                         })
-                                        popover.dismiss()
                                         const MainJsTemplate = $file.read(`${this.actionPath}template.js`).string
                                         this.editActionMainJs(MainJsTemplate, info)
                                     })
@@ -520,7 +518,6 @@ class ActionManager {
                                                 $file.mkdir(path)
                                                 $ui.success($l10n("SUCCESS"))
                                             }
-                                            setTimeout(() => { popover.dismiss() }, 1000)
                                         }
                                     })
                                 }
