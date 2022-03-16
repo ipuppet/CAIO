@@ -157,8 +157,8 @@ class Mini extends Clipboard {
                     const content = data.content
                     const text = content.info.text
                     const path = this.kernel.storage.ketToPath(text)
-                    if (path && $file.exists(path)) {
-                        $clipboard.image = $file.read(path).image
+                    if (path && $file.exists(path.original)) {
+                        $clipboard.image = $file.read(path.original).image
                         $ui.toast($l10n("COPIED"))
                     } else {
                         $keyboard.insert(data.content.info.text)
