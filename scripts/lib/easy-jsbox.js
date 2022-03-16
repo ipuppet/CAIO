@@ -2665,13 +2665,14 @@ class Setting extends Controller {
     }
 
     getListView(structure, footer = this.footer) {
+        const indicatorInsets = this.isUseJsboxNav ? $insets(0, 0, 0, 0) : $insets(50, 0, 50, 0)
         return {
             type: "list",
             props: {
                 style: 2,
                 separatorInset: $insets(0, 50, 0, 10), // 分割线边距
                 rowHeight: 50,
-                indicatorInsets: $insets(50, 0, 50, 0),
+                indicatorInsets: indicatorInsets, // 滚动条偏移
                 footer: footer,
                 data: this._getSections(structure ?? this.structure)
             },
