@@ -16,6 +16,9 @@ class Mini extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
         this.keyboardSetting()
+        this.deleteTimer = undefined
+        this.continuousDeleteTimer = undefined
+        this.continuousDeleteDelay = 0.5
     }
 
     keyboardSetting() {
@@ -79,8 +82,9 @@ class Mini extends Clipboard {
         const navigationBar = new NavigationBar()
         const navigationItem = new NavigationItem()
 
-        navigationItem.setLeftButtons([
-            { // TODO 切换键盘
+        if (!$device.isIphoneX) {
+            // TODO 切换键盘
+            navigationItem.addLeftButton({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
                 menu: {
@@ -92,14 +96,7 @@ class Mini extends Clipboard {
                         }
                     ]
                 }
-            }
-        ])
-        const keyboardDelete = times => {
-            let t = 0
-            for (let index = 0; index < times; index++) {
-                $delay(t, () => $keyboard.delete())
-                t += 0.05
-            }
+            })
         }
         navigationItem.setRightButtons([
             { // send
@@ -108,45 +105,27 @@ class Mini extends Clipboard {
             },
             { // delete
                 symbol: "delete.left",
-                tapped: this.keyboardTapped(() => keyboardDelete(1)),
-                menu: {
-                    pullDown: true,
-                    items: [
-                        {
-                            title: "Delete 5",
-                            handler: this.keyboardTapped(() => keyboardDelete(5))
-                        },
-                        {
-                            title: "Delete 10",
-                            handler: this.keyboardTapped(() => keyboardDelete(10))
-                        },
-                        {
-                            title: "Try Clear All",
-                            handler: this.keyboardTapped(() => {
-                                const startTime = Date.now()
-                                const ttl = 1000 * 60 * 2
-                                while ($keyboard.hasText && Date.now() - startTime < ttl) {
-                                    $keyboard.delete()
-                                    $keyboard.delete()
-                                }
+                events: {
+                    touchesBegan: () => {
+                        $keyboard.delete()
+                        this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
+                            this.deleteTimer = $timer.schedule({
+                                interval: 0.05,
+                                handler: () => $keyboard.delete()
                             })
-                        }
-                    ]
+                        })
+                    },
+                    touchesEnded: () => {
+                        this.deleteTimer?.invalidate()
+                        this.continuousDeleteTimer?.cancel()
+                    }
                 }
             }
         ])
 
         navigationBar.setNavigationItem(navigationItem)
 
-        return { // 底部按钮栏
-            type: "view",
-            views: [navigationBar.getNavigationBarView()],
-            layout: (make, view) => {
-                make.width.equalTo(view.super)
-                make.height.equalTo(view.super)
-                make.top.equalTo(view.super.safeArea).offset(3)
-            }
-        }
+        return navigationBar.getNavigationBarView()
     }
 
     getNavBarView() {
@@ -181,10 +160,11 @@ class Mini extends Clipboard {
             type: "list",
             props: Object.assign({
                 id: this.listId,
+                bgcolor: $color("clear"),
                 menu: {
                     items: this.menuItems()
                 },
-                indicatorInsets: $insets(0, 0, 50, 0),
+                indicatorInsets: $insets(0, 0, 0, 0),
                 separatorInset: $insets(0, this.left_right, 0, this.left_right),
                 data: this.savedClipboard,
                 template: this.listTemplate()
@@ -209,40 +189,40 @@ class Mini extends Clipboard {
             },
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
-                make.width.bottom.equalTo(view.super)
+                make.width.equalTo(view.super)
+                make.bottom.equalTo(view.super).offset(-this.navHeight)
             }
         }
     }
 
     getBottomBarView() {
-        return UIKit.blurBox(
-            {
-                clipsToBounds: true
-            },
-            [{
-                type: "view",
-                layout: $layout.fill,
-                views: [this.bottomBarButtons()]
-            }],
-            (make, view) => {
+        return {
+            type: "view",
+            views: [this.bottomBarButtons()],
+            layout: (make, view) => {
                 make.bottom.width.equalTo(view.super)
-                make.height.equalTo(this.navHeight)
+                make.height.equalTo(this.navHeight - 3)
             }
-        )
-    }
-
-    getViews() {
-        const views = [
-            this.getNavBarView(),
-            this.getListView(),
-            this.getBottomBarView()
-        ]
-        return views
+        }
     }
 
     render() {
         $ui.render({
-            views: this.getViews()
+            props: {
+                clipsToSafeArea: true
+            },
+            views: [{
+                type: "view",
+                props: { bgcolor: $color("clear") },
+                views: [
+                    this.getNavBarView(),
+                    UIKit.separatorLine(),
+                    this.getListView(),
+                    UIKit.separatorLine(),
+                    this.getBottomBarView()
+                ],
+                layout: $layout.fill
+            }]
         })
     }
 }
