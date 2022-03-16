@@ -11,9 +11,9 @@ class ActionManager {
         this.kernel = kernel
         this.matrixId = "actions"
         // path
-        this.actionPath = "scripts/action/"
+        this.actionPath = "scripts/action"
         this.actionOrderFile = "order.json"
-        this.userActionPath = "storage/user_action/"
+        this.userActionPath = "storage/user_action"
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
         // sheet
@@ -22,9 +22,9 @@ class ActionManager {
 
     importExampleAction() {
         $file.list(this.actionPath).forEach(type => {
-            const actionTypePath = `${this.actionPath}${type}`
+            const actionTypePath = `${this.actionPath}/${type}`
             if ($file.isDirectory(actionTypePath)) {
-                const userActionTypePath = `${this.userActionPath}${type}`
+                const userActionTypePath = `${this.userActionPath}/${type}`
                 $file.list(actionTypePath).forEach(item => {
                     if (!$file.exists(`${userActionTypePath}/${item}/main.js`)) {
                         $file.mkdir(userActionTypePath)
@@ -62,22 +62,22 @@ class ActionManager {
     getActionTypes() {
         const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
         return type.concat($file.list(this.userActionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
-            if ($file.isDirectory(this.userActionPath + "/" + dir) && type.indexOf(dir) < 0)
+            if ($file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0)
                 return dir
         }))
     }
 
     getActionOrder(type) {
-        const path = `${this.userActionPath}${type}/${this.actionOrderFile}`
+        const path = `${this.userActionPath}/${type}/${this.actionOrderFile}`
         if ($file.exists(path)) return JSON.parse($file.read(path).string)
         else return []
     }
 
     getActionHandler(type, name, basePath) {
-        if (!basePath) basePath = `${this.userActionPath}${type}/${name}/`
-        const config = JSON.parse($file.read(basePath + "config.json").string)
+        if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
+        const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         return async data => {
-            const ActionClass = require(basePath + "main.js")
+            const ActionClass = require(`${basePath}/main.js`)
             const action = new ActionClass(this.kernel, config, data)
             return await action.do()
         }
@@ -85,7 +85,7 @@ class ActionManager {
 
     getActions(type) {
         const actions = []
-        const typePath = `${this.userActionPath}${type}/`
+        const typePath = `${this.userActionPath}/${type}`
         if (!$file.exists(typePath)) return []
         const pushAction = item => {
             const basePath = `${typePath}/${item}/`
@@ -306,29 +306,35 @@ class ActionManager {
     }
 
     editActionMainJs(text = "", info) {
-        this.kernel.editor.pageSheet(text, content => {
-            this.saveMainJs(info, content)
-        }, info.name, [{
-            symbol: "book.circle",
-            tapped: () => {
-                const content = $file.read("/scripts/action/README.md").string
-                const sheet = new Sheet()
-                sheet
-                    .setView({
-                        type: "markdown",
-                        props: { content: content },
-                        layout: (make, view) => {
-                            make.size.equalTo(view.super)
-                        }
-                    })
-                    .init()
-                    .present()
-            }
-        }], "code")
+        this.kernel.editor.pageSheet(
+            text,
+            content => {
+                this.saveMainJs(info, content)
+            },
+            info.name,
+            [{
+                symbol: "book.circle",
+                tapped: () => {
+                    const content = $file.read("scripts/action/README.md").string
+                    const sheet = new Sheet()
+                    sheet
+                        .setView({
+                            type: "markdown",
+                            props: { content: content },
+                            layout: (make, view) => {
+                                make.size.equalTo(view.super)
+                            }
+                        })
+                        .init()
+                        .present()
+                }
+            }],
+            "code"
+        )
     }
 
     saveActionInfo(info) {
-        const path = `${this.userActionPath}${info.type}/${info.dir}/`
+        const path = `${this.userActionPath}/${info.type}/${info.dir}`
         if (!$file.exists(path)) $file.mkdir(path)
         $file.write({
             data: $data({
@@ -339,13 +345,13 @@ class ActionManager {
                     description: info.description
                 })
             }),
-            path: `${path}config.json`
+            path: `${path}/config.json`
         })
     }
 
     saveMainJs(info, content) {
-        const path = `${this.userActionPath}${info.type}/${info.dir}/`
-        const mainJsPath = `${path}main.js`
+        const path = `${this.userActionPath}/${info.type}/${info.dir}`
+        const mainJsPath = `${path}/main.js`
         if (!$file.exists(path)) $file.mkdir(path)
         if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
         $file.write({
@@ -357,7 +363,7 @@ class ActionManager {
     saveOrder(type, order) {
         $file.write({
             data: $data({ string: JSON.stringify(order) }),
-            path: `${this.userActionPath}${type}/${this.actionOrderFile}`
+            path: `${this.userActionPath}/${type}/${this.actionOrderFile}`
         })
     }
 
@@ -401,8 +407,8 @@ class ActionManager {
             this.saveOrder(fromType, getOrder(from.section))
             this.saveOrder(toType, getOrder(to.section))
             $file.move({
-                src: `${this.userActionPath}${fromType}/${toSection.rows[to.row].dir}`,
-                dst: `${this.userActionPath}${toType}/${toSection.rows[to.row].dir}`
+                src: `${this.userActionPath}/${fromType}/${toSection.rows[to.row].dir}`,
+                dst: `${this.userActionPath}/${toType}/${toSection.rows[to.row].dir}`
             })
         }
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
@@ -411,7 +417,7 @@ class ActionManager {
     }
 
     delete(info) {
-        $file.delete(`${this.userActionPath}${info.type}/${info.dir}`)
+        $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
     }
 
     menuItems() { // 卡片长按菜单
@@ -441,7 +447,7 @@ class ActionManager {
                 handler: (sender, indexPath, data) => {
                     const info = data.info.info
                     if (!info) return
-                    const path = `${this.userActionPath}${info.type}/${info.dir}/main.js`
+                    const path = `${this.userActionPath}/${info.type}/${info.dir}/main.js`
                     const main = $file.read(path).string
                     this.editActionMainJs(main, info)
                 }
@@ -494,7 +500,8 @@ class ActionManager {
                                             indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
                                             value: this.actionToData(info)
                                         })
-                                        const MainJsTemplate = $file.read(`${this.actionPath}template.js`).string
+                                        const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
+                                        this.saveMainJs(info, MainJsTemplate)
                                         this.editActionMainJs(MainJsTemplate, info)
                                     })
                                 }
@@ -511,7 +518,7 @@ class ActionManager {
                                                 $ui.toast($l10n("INVALID_VALUE"))
                                                 return
                                             }
-                                            const path = `${this.userActionPath}${text}`
+                                            const path = `${this.userActionPath}/${text}`
                                             if ($file.isDirectory(path)) {
                                                 $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
                                             } else {
@@ -628,7 +635,7 @@ class ActionManager {
                                 tapped: sender => {
                                     const info = sender.next.info
                                     if (!info) return
-                                    const path = `${this.userActionPath}${info.type}/${info.dir}/main.js`
+                                    const path = `${this.userActionPath}/${info.type}/${info.dir}/main.js`
                                     const main = $file.read(path).string
                                     this.editActionMainJs(main, info)
                                 }
