@@ -688,6 +688,15 @@ class BarButtonItem extends View {
     }
 
     getView() {
+        const userTapped = this.events.tapped
+        this.events.tapped = sender => {
+            if (!userTapped) return
+            userTapped({
+                start: () => this.actionStart(),
+                done: () => this.actionDone(),
+                cancel: () => this.actionCancel()
+            }, sender)
+        }
         return {
             type: "view",
             views: [
@@ -705,15 +714,7 @@ class BarButtonItem extends View {
                     },
                         this.menu ? { menu: this.menu } : {},
                         this.title?.length > 0 ? { title: this.title } : {}),
-                    events: {
-                        tapped: sender => {
-                            this.events.tapped({
-                                start: () => this.actionStart(),
-                                done: () => this.actionDone(),
-                                cancel: () => this.actionCancel()
-                            }, sender)
-                        }
-                    },
+                    events: this.events,
                     layout: $layout.fill
                 },
                 {
