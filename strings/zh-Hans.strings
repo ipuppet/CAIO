@@ -59,6 +59,7 @@
 
 "KEYBOARD" = "键盘";
 "DELETE_DELAY" = "删除延时";
+"JSBOX_TOOLBAR" = "JSBox 工具栏";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";

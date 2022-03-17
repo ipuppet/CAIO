@@ -59,6 +59,7 @@
 
 "KEYBOARD" = "Keyboard";
 "DELETE_DELAY" = "Delete Delay";
+"JSBOX_TOOLBAR" = "JSBox Toolbar";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
