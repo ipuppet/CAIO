@@ -303,6 +303,12 @@ class AppKernel extends Kernel {
                 disappeared: () => animate.touchHighlightEnd()
             })
         }
+
+        this.setting.method.setMiniQuickStart = animate => {
+            animate.touchHighlightStart()
+            const MiniScripts = require("./ui/components/mini-scripts")
+            MiniScripts.push(() => animate.touchHighlightEnd())
+        }
     }
 }
 

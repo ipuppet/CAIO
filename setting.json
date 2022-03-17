@@ -253,6 +253,15 @@
                                 "type": "switch",
                                 "key": "mini.showJSBoxToolbar",
                                 "value": false
+                            },
+                            {
+                                "icon": [
+                                    "paperplane"
+                                ],
+                                "title": "QUICK_START_SCRIPTS",
+                                "type": "script",
+                                "key": "mini.setMiniQuickStart",
+                                "value": "this.method.setMiniQuickStart"
                             }
                         ]
                     },
