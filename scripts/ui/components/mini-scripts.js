@@ -17,7 +17,7 @@ class MiniScripts {
         return JSON.parse(addins)
     }
 
-    setAddins(list = []) {
+    static setAddins(list = []) {
         list.map((item, i) => {
             if (item === null) {
                 list.splice(i, 1)
@@ -48,7 +48,7 @@ class MiniScripts {
                 didSelect: (sender, indexPath, data) => {
                     const addins = MiniScripts.getAddins()
                     addins.unshift(data)
-                    this.setAddins(addins)
+                    MiniScripts.setAddins(addins)
                     $(this.listId).insert({
                         indexPath: $indexPath(0, 0),
                         value: data
@@ -88,7 +88,7 @@ class MiniScripts {
                     {
                         title: "delete",
                         handler: (sender, indexPath) => {
-                            this.setAddins(sender.data)
+                            MiniScripts.setAddins(sender.data)
                         }
                     }
                 ]
