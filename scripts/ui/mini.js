@@ -23,7 +23,9 @@ class Mini extends Clipboard {
     }
 
     keyboardSetting() {
-        $keyboard.barHidden = true
+        if (!this.kernel.setting.get("mini.showJSBoxToolbar")) {
+            $keyboard.barHidden = true
+        }
     }
 
     keyboardTapped(tapped) {

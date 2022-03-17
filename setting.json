@@ -222,16 +222,37 @@
                     {
                         "items": [
                             {
+                                "icon": [
+                                    "rectangle.3.offgrid.fill"
+                                ],
                                 "title": "PREVIEW",
                                 "type": "script",
                                 "key": "mini.preview",
                                 "value": "this.method.previewMini"
-                            },
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
                             {
+                                "icon": [
+                                    "cursor.rays",
+                                    "#FF8C00"
+                                ],
                                 "title": "Taptic Engine",
                                 "type": "switch",
                                 "key": "mini.tapticEngine",
                                 "value": true
+                            },
+                            {
+                                "icon": [
+                                    "option",
+                                    "#157EFB"
+                                ],
+                                "title": "JSBOX_TOOLBAR",
+                                "type": "switch",
+                                "key": "mini.showJSBoxToolbar",
+                                "value": false
                             }
                         ]
                     },
