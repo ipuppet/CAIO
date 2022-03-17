@@ -5,6 +5,7 @@ const {
     NavigationBar
 } = require("../lib/easy-jsbox")
 const Clipboard = require("./clipboard")
+const MiniScripts = require("./components/mini-scripts")
 
 class Mini extends Clipboard {
     constructor(kernel) {
@@ -85,6 +86,21 @@ class Mini extends Clipboard {
         const navigationBar = new NavigationBar()
         const navigationItem = new NavigationItem()
 
+        navigationItem.setLeftButtons([
+            {
+                symbol: "paperplane",
+                menu: {
+                    pullDown: true,
+                    asPrimary: true,
+                    items: MiniScripts.getAddins().map(addin => {
+                        return {
+                            title: addin,
+                            handler: this.keyboardTapped(() => $addin.run(addin))
+                        }
+                    })
+                }
+            }
+        ])
         if (!$device.isIphoneX) {
             // TODO 切换键盘
             navigationItem.addLeftButton({
