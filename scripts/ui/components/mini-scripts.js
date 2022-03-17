@@ -31,8 +31,9 @@ class MiniScripts {
         const addins = MiniScripts.getAddins()
         const res = []
         $addin.list?.forEach(addin => {
-            if (addins.indexOf(addin.name) === -1 && current !== addin.name) {
-                res.push(addin.name)
+            const name = addin.displayName
+            if (addins.indexOf(name) === -1 && current !== name) {
+                res.push(name)
             }
         })
         return res
