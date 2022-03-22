@@ -294,20 +294,20 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.method.previewMini = animate => {
+        this.setting.method.previewKeyboard = animate => {
             animate.touchHighlightStart()
-            const Mini = require("./ui/mini")
-            const mini = new Mini(this).getView()
+            const Keyboard = require("./ui/keyboard")
+            const keyboard = new Keyboard(this).getView()
             UIKit.push({
-                views: [mini],
+                views: [keyboard],
                 disappeared: () => animate.touchHighlightEnd()
             })
         }
 
-        this.setting.method.setMiniQuickStart = animate => {
+        this.setting.method.setKeyboardQuickStart = animate => {
             animate.touchHighlightStart()
-            const MiniScripts = require("./ui/components/mini-scripts")
-            MiniScripts.push(() => animate.touchHighlightEnd())
+            const KeyboardScripts = require("./ui/components/keyboard-scripts")
+            KeyboardScripts.push(() => animate.touchHighlightEnd())
         }
     }
 }
@@ -341,15 +341,15 @@ class AppUI {
         kernel.UIRender(ClipboardUI.getPageView())
     }
 
-    static renderMiniUI() {
+    static renderKeyboardUI() {
         const kernel = new AppKernel()
-        const Mini = require("./ui/mini")
-        const mini = new Mini(kernel).getView()
+        const Keyboard = require("./ui/keyboard")
+        const keyboard = new Keyboard(kernel).getView()
         $ui.render({
             props: {
                 clipsToSafeArea: true
             },
-            views: [mini]
+            views: [keyboard]
         })
     }
 
@@ -407,10 +407,9 @@ class Widget {
 module.exports = {
     run: () => {
         if ($app.env === $env.app || $app.env === $env.action) {
-            //AppUI.renderMiniUI()
             AppUI.renderMainUI()
         } else if ($app.env === $env.keyboard) {
-            AppUI.renderMiniUI()
+            AppUI.renderKeyboardUI()
         } else if ($app.env === $env.widget) {
             Widget.render()
         } else {
