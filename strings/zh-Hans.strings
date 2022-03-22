@@ -67,3 +67,7 @@
 
 "WIDGET" = "小组件";
 "RECENT" = "最近内容";
+
+"DISPLAY_MODE" = "显示模式";
+"CLASSIC" = "经典";
+"MODERN" = "现代";

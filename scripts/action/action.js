@@ -15,19 +15,25 @@ class Action {
      * page sheet
      * @param {*} args 
      *  {
-            view: args.view, // 视图对象
-            title: args.title ?? "", // 中间标题
-            done: args.done, // 点击左上角按钮后的回调函数
-            doneText: args.doneText ?? $l10n("DONE") // 左上角文本
+            view: 视图对象
+            title: 中间标题
+            done: 点击左上角按钮后的回调函数
+            doneText: 左上角文本
         }
      */
-    pageSheet(args) {
+    pageSheet({ view, title = "", done, doneText = $l10n("DONE") }) {
         const sheet = new Sheet()
         sheet
-            .setView(args.view)
-            .addNavBar(args.title ?? "", () => {
-                if (args.done) args.done()
-            }, args.doneText ?? $l10n("DONE"))
+            .setView(view)
+            .addNavBar({
+                title: title,
+                popButton: {
+                    title: doneText,
+                    tapped: () => {
+                        if (done) done()
+                    }
+                }
+            })
             .init()
             .present()
     }

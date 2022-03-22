@@ -1,6 +1,8 @@
 const {
     UIKit,
-    Sheet
+    Sheet,
+    NavigationItem,
+    PageController
 } = require("../../lib/easy-jsbox")
 
 class KeyboardScripts {
@@ -62,10 +64,7 @@ class KeyboardScripts {
         const sheet = new Sheet()
         sheet
             .setView(view)
-            .addNavBar(
-                $l10n("ADD"),
-                () => { }
-            )
+            .addNavBar({ title: $l10n("ADD") })
             .init()
             .present()
     }
@@ -98,7 +97,19 @@ class KeyboardScripts {
         }
     }
 
-    static push(disappeared) {
+    static getPageController() {
+        const keyboardScripts = new KeyboardScripts()
+        const pageController = new PageController()
+        pageController
+            .setView(keyboardScripts.getListView())
+            .navigationItem
+            .setTitle($l10n("QUICK_START_SCRIPTS"))
+            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+            .setRightButtons(keyboardScripts.getNavButtons())
+        return pageController
+    }
+
+    static push() {
         const keyboardScripts = new KeyboardScripts()
         const navButtons = keyboardScripts.getNavButtons().map(item => {
             item.handler = item.tapped
@@ -107,8 +118,7 @@ class KeyboardScripts {
         })
         UIKit.push({
             navButtons: navButtons,
-            views: [keyboardScripts.getListView()],
-            disappeared: () => disappeared()
+            views: [keyboardScripts.getListView()]
         })
     }
 }

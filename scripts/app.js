@@ -2,29 +2,34 @@ const {
     versionCompare,
     UIKit,
     Sheet,
+    TabBarController,
     Kernel,
     Setting
 } = require("./lib/easy-jsbox")
 const Storage = require("./storage")
+const Clipboard = require("./ui/clipboard")
+const ActionManager = require("./ui/components/action-manager")
+const Editor = require("./ui/components/editor")
 
 class AppKernel extends Kernel {
     constructor() {
         super()
         // this.debug()
-        const ActionManager = require("./ui/components/action-manager")
-        const Editor = require("./ui/components/editor")
         this.query = $context.query
-        // 初始化必要路径
-        if (!$file.exists("storage")) $file.mkdir("storage")
         // Setting
         this.setting = new Setting()
-        this.setting.loadConfig().useJsboxNav()
+        this.setting.loadConfig()
         this.initSettingMethods()
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
+        this.initComponents()
+    }
+
+    initComponents() {
+        // Clipboard
+        this.clipboard = new Clipboard(this)
         // ActionManager
         this.actionManager = new ActionManager(this)
-        this.actionManager.checkUserAction()
         // Editor
         this.editor = new Editor(this)
     }
@@ -305,9 +310,13 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.setKeyboardQuickStart = animate => {
-            animate.touchHighlightStart()
+            animate.touchHighlight()
             const KeyboardScripts = require("./ui/components/keyboard-scripts")
-            KeyboardScripts.push(() => animate.touchHighlightEnd())
+            if (this.isUseJsboxNav) {
+                KeyboardScripts.push()
+            } else {
+                this.setting.viewController.push(KeyboardScripts.getPageController())
+            }
         }
     }
 }
@@ -315,30 +324,66 @@ class AppKernel extends Kernel {
 class AppUI {
     static renderMainUI() {
         const kernel = new AppKernel()
-        kernel.useJsboxNav()
-        kernel.setNavButtons([
-            {
-                symbol: "gear",
-                title: $l10n("SETTING"),
-                handler: () => {
-                    UIKit.push({
-                        title: $l10n("SETTING"),
-                        bgcolor: Setting.bgcolor,
-                        views: [kernel.setting.getListView()]
-                    })
-                }
+        const buttons = {
+            clipboard: {
+                icon: ["house", "house.fill"],
+                title: $l10n("CLIPBOARD")
             },
-            {
-                symbol: "command",
-                title: $l10n("ACTIONS"),
-                handler: () => {
-                    kernel.actionManager.present()
-                }
+            action: {
+                icon: "command",
+                title: $l10n("ACTIONS")
+            },
+            setting: {
+                icon: "gear",
+                title: $l10n("SETTING")
             }
-        ])
-        const Clipboard = require("./ui/clipboard")
-        const ClipboardUI = new Clipboard(kernel)
-        kernel.UIRender(ClipboardUI.getPageView())
+        }
+        kernel.setting.setEvent("onSet", key => {
+            if (key === "mainUIDisplayMode") {
+                $delay(0.3, () => $addin.restart())
+            }
+        })
+        if (kernel.setting.get("mainUIDisplayMode") === 0) {
+            kernel.useJsboxNav()
+            kernel.setting.useJsboxNav()
+            kernel.setNavButtons([
+                {
+                    symbol: buttons.setting.icon,
+                    title: buttons.setting.title,
+                    handler: () => {
+                        UIKit.push({
+                            title: buttons.setting.title,
+                            bgcolor: Setting.bgcolor,
+                            views: [kernel.setting.getListView()]
+                        })
+                    }
+                },
+                {
+                    symbol: buttons.action.icon,
+                    title: buttons.action.title,
+                    handler: () => {
+                        kernel.actionManager.present()
+                    }
+                }
+            ])
+
+            kernel.UIRender(kernel.clipboard.getPageController().getPage())
+        } else {
+            const tabBarController = new TabBarController()
+            const clipboardPageController = kernel.clipboard.getPageController()
+            kernel.editor.viewController.setRootPageController(clipboardPageController)
+            tabBarController.setPages({
+                clipboard: clipboardPageController.getPage(),
+                action: kernel.actionManager.getPageView(),
+                setting: kernel.setting.getPageView()
+            }).setCells({
+                clipboard: buttons.clipboard,
+                action: buttons.action,
+                setting: buttons.setting
+            })
+
+            kernel.UIRender(tabBarController.generateView().definition)
+        }
     }
 
     static renderKeyboardUI() {

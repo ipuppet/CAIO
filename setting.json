@@ -307,6 +307,24 @@
         "items": [
             {
                 "icon": [
+                    "rectangle.topthird.inset.filled",
+                    "#A569BD"
+                ],
+                "title": "DISPLAY_MODE",
+                "type": "tab",
+                "key": "mainUIDisplayMode",
+                "items": [
+                    "CLASSIC",
+                    "MODERN"
+                ],
+                "value": 0
+            }
+        ]
+    },
+    {
+        "items": [
+            {
+                "icon": [
                     "/assets/icon/github.com.jpeg",
                     "white"
                 ],
