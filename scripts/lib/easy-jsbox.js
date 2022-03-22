@@ -296,17 +296,17 @@ class ViewController extends Controller {
 
     /**
      * 
-     * @param {PageView} pageView 
+     * @param {PageController} pageController 
      * @returns 
      */
-    setRootPageController(pageView) {
+    setRootPageController(pageController) {
         this.pageControllers = []
-        this.pageControllers.push(pageView)
+        this.pageControllers.push(pageController)
         return this
     }
 
     hasRootPageController() {
-        return this.pageControllers[0] instanceof PageView
+        return this.pageControllers[0] instanceof PageController
     }
 
     getRootPageController() {
