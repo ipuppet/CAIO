@@ -269,6 +269,16 @@
                         "items": [
                             {
                                 "icon": [
+                                    "cursor.rays",
+                                    "#FF8C00"
+                                ],
+                                "title": "Taptic Engine For Delete",
+                                "type": "switch",
+                                "key": "keyboard.tapticEngineForDelete",
+                                "value": true
+                            },
+                            {
+                                "icon": [
                                     "rays",
                                     "#FFCC33"
                                 ],

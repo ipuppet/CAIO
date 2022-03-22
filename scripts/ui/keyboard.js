@@ -17,6 +17,7 @@ class Keyboard extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
         this.keyboardSetting()
+        this.taptic = 1
         this.deleteTimer = undefined
         this.continuousDeleteTimer = undefined
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
@@ -29,10 +30,10 @@ class Keyboard extends Clipboard {
         }
     }
 
-    keyboardTapped(tapped) {
+    keyboardTapped(tapped, tapticEngine = true) {
         return (...args) => {
-            if (this.kernel.setting.get("keyboard.tapticEngine")) {
-                $device.taptic(1)
+            if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
+                $device.taptic(this.taptic)
             }
             tapped(...args)
         }
@@ -52,7 +53,7 @@ class Keyboard extends Clipboard {
                     animate.done()
                 })
             },
-            {
+            { // Action
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped((animate, sender) => {
                     const popover = $ui.popover({
@@ -125,15 +126,18 @@ class Keyboard extends Clipboard {
             { // delete
                 symbol: "delete.left",
                 events: {
-                    touchesBegan: () => {
+                    touchesBegan: this.keyboardTapped(() => {
                         $keyboard.delete()
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
-                                handler: () => $keyboard.delete()
+                                handler: this.keyboardTapped(
+                                    () => $keyboard.delete(),
+                                    this.kernel.setting.get("keyboard.tapticEngineForDelete")
+                                )
                             })
                         })
-                    },
+                    }),
                     touchesEnded: () => {
                         this.deleteTimer?.invalidate()
                         this.continuousDeleteTimer?.cancel()
