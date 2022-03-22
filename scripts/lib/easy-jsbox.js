@@ -1,4 +1,4 @@
-const VERSION = "1.0.1"
+const VERSION = "1.1.0"
 
 /**
  * 对比版本号
@@ -150,6 +150,13 @@ class UIKit {
 
     static get linkColor() {
         return $color("systemLink")
+    }
+
+    static get scrollViewList() {
+        return [
+            "list",
+            "matrix"
+        ]
     }
 
     static separatorLine(props = {}, align = UIKit.align.bottom) {
@@ -375,33 +382,32 @@ class Sheet extends View {
      * 为 view 添加一个 navBar
      * @param {String} title 标题
      * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
-     * @param {String} btnText 按钮显示的文字，默认为 "Done"
+     * @param {String} button 按钮显示的文字，默认为 "Done"
      * @returns this
      */
-    addNavBar(title, callback, btnText = "Done", rightButtons = []) {
+    addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
         if (this.view === undefined) throw new SheetAddNavBarError()
         const pageController = new PageController()
-        pageController.navigationItem
-            .addPopButton("", { // 返回按钮
-                type: "button",
-                props: {
-                    bgcolor: $color("clear"),
-                    tintColor: UIKit.linkColor,
-                    title: btnText,
-                    titleColor: UIKit.linkColor,
-                    font: $font("bold", 16)
-                },
-                layout: (make, view) => {
-                    make.left.inset(15)
-                    make.centerY.equalTo(view.super)
-                },
-                events: {
-                    tapped: () => {
-                        this.dismiss()
-                        if (typeof callback === "function") callback()
-                    }
+        // 返回按钮
+        const barButtonItem = new BarButtonItem()
+        barButtonItem
+            .setEvents(Object.assign({
+                tapped: () => {
+                    this.dismiss()
+                    if (typeof popButton.tapped === "function") popButton.tapped()
                 }
-            })
+            }, popButton.events))
+            .setAlign(UIKit.align.left)
+            .setSymbol(popButton.symbol)
+            .setTitle(popButton.title)
+            .setMenu(popButton.menu)
+        const button = barButtonItem.definition.views[0]
+        button.layout = (make, view) => {
+            make.left.inset(15)
+            make.centerY.equalTo(view.super.safeArea)
+        }
+        pageController.navigationItem
+            .addPopButton("", button)
             .setTitle(title)
             .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
             .setRightButtons(rightButtons)
@@ -448,6 +454,11 @@ class NavigationBar extends View {
     pageSheetMode() {
         this.navigationBarNormalHeight = NavigationBar.PageSheetNavigationBarHeight
         this.navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
+        return this
+    }
+
+    withStatusBarHeight() {
+        this.isAddStatusBarHeight = true
         return this
     }
 
@@ -1187,11 +1198,7 @@ class PageController extends Controller {
             })
             // 重写布局
             // 滚动视图（有 header 属性）
-            const scrollView = [
-                "list",
-                "matrix"
-            ]
-            if (scrollView.indexOf(this.view.type) === -1) {
+            if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
                 this.view.layout = (make, view) => {
                     make.bottom.left.right.equalTo(view.super)
                     const navigationBarHeight = this.navigationController.navigationBar.getNavigationBarHeight()
@@ -1202,6 +1209,19 @@ class PageController extends Controller {
                     make.top.equalTo(navigationBarHeight + largeTitleFontSize)
                 }
             } else {
+                // indicatorInsets
+                if (this.view.props.indicatorInsets) {
+                    const old = this.view.props.indicatorInsets
+                    this.view.props.indicatorInsets = $insets(
+                        old.top + NavigationBar.PageSheetNavigationBarHeight,
+                        old.left,
+                        old.bottom,
+                        old.right
+                    )
+                } else {
+                    this.view.props.indicatorInsets = $insets(NavigationBar.PageSheetNavigationBarHeight, 0, 0, 0)
+                }
+                // layout
                 this.view.layout = $layout.fill
             }
             // 重写滚动事件
@@ -1289,8 +1309,9 @@ class TabBarCellView extends ContainerView {
                 },
                 layout: (make, view) => {
                     make.centerX.equalTo(view.super)
-                    make.size.equalTo(25)
-                    make.top.inset(7)
+                    const half = TabBarController.TabBarHeight / 2
+                    make.size.equalTo(half)
+                    make.top.inset((TabBarController.TabBarHeight - half - 13) / 2)
                 }
             },
             {
@@ -1303,7 +1324,7 @@ class TabBarCellView extends ContainerView {
                 },
                 layout: (make, view) => {
                     make.centerX.equalTo(view.prev)
-                    make.bottom.inset(5)
+                    make.top.equalTo(view.prev.bottom).offset(3)
                 }
             }
         ]
@@ -1317,6 +1338,10 @@ class TabBarController extends Controller {
         this.selected = undefined
         this.pages = {}
         this.cells = {}
+    }
+
+    static get TabBarHeight() {
+        return 50
     }
 
     /**
@@ -1398,7 +1423,39 @@ class TabBarController extends Controller {
     }
 
     pageViews() {
-        return Object.values(this.pages).map(page => page.definition)
+        return Object.values(this.pages).map(page => {
+            const view = page.definition
+            if (UIKit.scrollViewList.indexOf(view.views[0].type) > -1) {
+                if (view.views[0].props === undefined) {
+                    view.views[0].props = {}
+                }
+                // indicatorInsets
+                if (view.views[0].props.indicatorInsets) {
+                    const old = view.views[0].props.indicatorInsets
+                    view.views[0].props.indicatorInsets = $insets(
+                        old.top,
+                        old.left,
+                        old.bottom + TabBarController.TabBarHeight,
+                        old.right
+                    )
+                } else {
+                    view.views[0].props.indicatorInsets = $insets(0, 0, 0, TabBarController.TabBarHeight)
+                }
+                // footer
+                if (view.views[0].props.footer) {
+                    view.views[0].props.footer.height += TabBarController.TabBarHeight
+                } else {
+                    view.views[0].props.footer = Object.assign(
+                        view.views[0].props.footer = {
+                            props: {
+                                height: TabBarController.TabBarHeight
+                            }
+                        }
+                    )
+                }
+            }
+            return view
+        })
     }
 
     generateView() {
@@ -2672,14 +2729,12 @@ class Setting extends Controller {
     }
 
     getListView(structure, footer = this.footer) {
-        const indicatorInsets = this.isUseJsboxNav ? $insets(0, 0, 0, 0) : $insets(50, 0, 50, 0)
         return {
             type: "list",
             props: {
                 style: 2,
                 separatorInset: $insets(0, 50, 0, 10), // 分割线边距
                 rowHeight: 50,
-                indicatorInsets: indicatorInsets, // 滚动条偏移
                 footer: footer,
                 data: this._getSections(structure ?? this.structure)
             },
