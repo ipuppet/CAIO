@@ -217,7 +217,7 @@ class UIKit {
      */
     static push(args) {
         const views = args.views,
-            statusBarStyle = args.statusBarStyle === undefined ? 0 : args.statusBarStyle,
+            statusBarStyle = args.statusBarStyle ?? 0,
             title = args.title ?? "",
             navButtons = args.navButtons ?? [{ title: "" }],
             bgcolor = args.bgcolor ?? "primarySurface",
@@ -1435,7 +1435,7 @@ class Kernel {
         this.startTime = Date.now()
         this.version = VERSION
         // 隐藏 jsbox 默认 nav 栏
-        this.jsboxNavHidden = true
+        this.isUseJsboxNav = false
     }
 
     uuid() {
@@ -1464,11 +1464,12 @@ class Kernel {
     }
 
     useJsboxNav() {
-        this.jsboxNavHidden = false
+        this.isUseJsboxNav = true
+        return this
     }
 
     setTitle(title) {
-        if (!this.jsboxNavHidden) {
+        if (this.isUseJsboxNav) {
             $ui.title = title
         }
         this.title = title
@@ -1481,7 +1482,7 @@ class Kernel {
     UIRender(view) {
         view.props = Object.assign({
             title: this.title,
-            navBarHidden: this.jsboxNavHidden,
+            navBarHidden: !this.isUseJsboxNav,
             navButtons: this.navButtons ?? [],
             statusBarStyle: 0
         }, view.props)
@@ -1535,7 +1536,7 @@ class Setting extends Controller {
         } else {
             this.setStructurePath(args.structurePath ?? "setting.json")
         }
-        this.isUseJsboxNav = false
+        this.isUseJsboxNav = args.isUseJsboxNav ?? false
         this.setName(args.name ?? uuid())
         // l10n
         this.loadL10n()
@@ -1551,6 +1552,7 @@ class Setting extends Controller {
 
     useJsboxNav() {
         this.isUseJsboxNav = true
+        return this
     }
 
     _checkLoadConfigError() {
@@ -2618,7 +2620,7 @@ class Setting extends Controller {
                         row = this.createSwitch(item.key, item.icon, item.title)
                         break
                     case "stepper":
-                        row = this.createStepper(item.key, item.icon, item.title, item.min === undefined ? 1 : item.min, item.max === undefined ? 12 : item.max)
+                        row = this.createStepper(item.key, item.icon, item.title, item.min ?? 1, item.max ?? 12)
                         break
                     case "string":
                         row = this.createString(item.key, item.icon, item.title)
