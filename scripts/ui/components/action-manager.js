@@ -16,8 +16,8 @@ class ActionManager {
         this.userActionPath = "storage/user_action"
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
-        // sheet
-        this.actionSheet = undefined
+        // checkUserAction
+        this.checkUserAction()
     }
 
     importExampleAction() {
@@ -43,20 +43,6 @@ class ActionManager {
             $file.mkdir(this.userActionPath)
             this.importExampleAction()
         }
-    }
-
-    initActionSheet() {
-        this.actionSheet = new Sheet()
-        this.actionSheet
-            .setView(this.getPageView())
-            .init()
-    }
-
-    present() {
-        if (!this.actionSheet) {
-            this.initActionSheet()
-        }
-        this.actionSheet.present()
     }
 
     getActionTypes() {
@@ -286,7 +272,6 @@ class ActionManager {
                     bgcolor: $color("insetGroupedBackground"),
                     style: 2,
                     separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                    indicatorInsets: $insets(NavigationBar.PageSheetNavigationBarHeight, 0, 0, 0),
                     data: data
                 },
                 layout: $layout.fill,
@@ -294,13 +279,19 @@ class ActionManager {
                     rowHeight: (sender, indexPath) => indexPath.section === 1 ? 120 : 50
                 }
             })
-            .addNavBar("", () => {
-                this.saveActionInfo(this.editingActionInfo)
-                // 更新 clipboard 中的 menu
-                const Clipboard = require("../clipboard");
-                Clipboard.updateMenu(this.kernel)
-                if (done) done(this.editingActionInfo)
-            }, "Done")
+            .addNavBar({
+                title: "",
+                popButton: {
+                    title: "Done",
+                    tapped: () => {
+                        this.saveActionInfo(this.editingActionInfo)
+                        // 更新 clipboard 中的 menu
+                        const Clipboard = require("../clipboard");
+                        Clipboard.updateMenu(this.kernel)
+                        if (done) done(this.editingActionInfo)
+                    }
+                }
+            })
             .init()
             .present()
     }
@@ -466,7 +457,97 @@ class ActionManager {
         ]
     }
 
-    getPageView() {
+    getNavButtons() {
+        return [
+            { // 添加
+                symbol: "plus.circle",
+                menu: {
+                    pullDown: true,
+                    asPrimary: true,
+                    items: [
+                        {
+                            title: $l10n("CREATE_NEW_ACTION"),
+                            handler: () => {
+                                this.editActionInfoPageSheet(null, info => {
+                                    $(this.matrixId).insert({
+                                        indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
+                                        value: this.actionToData(info)
+                                    })
+                                    const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
+                                    this.saveMainJs(info, MainJsTemplate)
+                                    this.editActionMainJs(MainJsTemplate, info)
+                                })
+                            }
+                        },
+                        {
+                            title: $l10n("CREATE_NEW_TYPE"),
+                            handler: () => {
+                                $input.text({
+                                    text: "",
+                                    placeholder: $l10n("CREATE_NEW_TYPE"),
+                                    handler: text => {
+                                        text = text.trim()
+                                        if (text === "") {
+                                            $ui.toast($l10n("INVALID_VALUE"))
+                                            return
+                                        }
+                                        const path = `${this.userActionPath}/${text}`
+                                        if ($file.isDirectory(path)) {
+                                            $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
+                                        } else {
+                                            $file.mkdir(path)
+                                            $ui.success($l10n("SUCCESS"))
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                    ]
+                }
+            },
+            { // 排序
+                symbol: "arrow.up.arrow.down.circle",
+                tapped: (animate, sender) => {
+                    $ui.popover({
+                        sourceView: sender,
+                        directions: $popoverDirection.up,
+                        size: $size(200, 300),
+                        views: [
+                            this.getActionListView({
+                                reorder: true,
+                                actions: [
+                                    { // 删除
+                                        title: "delete",
+                                        handler: (sender, indexPath) => {
+                                            const matrixView = $(this.matrixId)
+                                            const info = matrixView.object(indexPath).info.info
+                                            this.delete(info)
+                                            matrixView.delete(indexPath)
+                                        }
+                                    }
+                                ]
+                            }, {
+                                reorderBegan: indexPath => {
+                                    if (this.reorder === undefined) this.reorder = {}
+                                    this.reorder.from = indexPath
+                                    this.reorder.to = undefined
+                                },
+                                reorderMoved: (fromIndexPath, toIndexPath) => {
+                                    this.reorder.to = toIndexPath
+                                },
+                                reorderFinished: data => {
+                                    if (this.reorder.to === undefined) return
+                                    this.move(this.reorder.from, this.reorder.to, data)
+                                }
+                            })
+                        ]
+                    })
+                }
+            }
+        ]
+    }
+
+    getMatrixView() {
         const actionsToData = () => { // 格式化数据供 matrix 使用
             const data = []
             this.getActionTypes().forEach(type => {
@@ -481,118 +562,13 @@ class ActionManager {
             })
             return data
         }
-        const pageController = new PageController()
-        pageController.navigationItem
-            .setTitle($l10n("ACTIONS"))
-            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
-            .setRightButtons([
-                { // 添加
-                    symbol: "plus.circle",
-                    menu: {
-                        pullDown: true,
-                        asPrimary: true,
-                        items: [
-                            {
-                                title: $l10n("CREATE_NEW_ACTION"),
-                                handler: () => {
-                                    this.editActionInfoPageSheet(null, info => {
-                                        $(this.matrixId).insert({
-                                            indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
-                                            value: this.actionToData(info)
-                                        })
-                                        const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
-                                        this.saveMainJs(info, MainJsTemplate)
-                                        this.editActionMainJs(MainJsTemplate, info)
-                                    })
-                                }
-                            },
-                            {
-                                title: $l10n("CREATE_NEW_TYPE"),
-                                handler: () => {
-                                    $input.text({
-                                        text: "",
-                                        placeholder: $l10n("CREATE_NEW_TYPE"),
-                                        handler: text => {
-                                            text = text.trim()
-                                            if (text === "") {
-                                                $ui.toast($l10n("INVALID_VALUE"))
-                                                return
-                                            }
-                                            const path = `${this.userActionPath}/${text}`
-                                            if ($file.isDirectory(path)) {
-                                                $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
-                                            } else {
-                                                $file.mkdir(path)
-                                                $ui.success($l10n("SUCCESS"))
-                                            }
-                                        }
-                                    })
-                                }
-                            }
-                        ]
-                    }
-                },
-                { // 排序
-                    symbol: "arrow.up.arrow.down.circle",
-                    tapped: (animate, sender) => {
-                        $ui.popover({
-                            sourceView: sender,
-                            directions: $popoverDirection.up,
-                            size: $size(200, 300),
-                            views: [
-                                this.getActionListView({
-                                    reorder: true,
-                                    actions: [
-                                        { // 删除
-                                            title: "delete",
-                                            handler: (sender, indexPath) => {
-                                                const matrixView = $(this.matrixId)
-                                                const info = matrixView.object(indexPath).info.info
-                                                this.delete(info)
-                                                matrixView.delete(indexPath)
-                                            }
-                                        }
-                                    ]
-                                }, {
-                                    reorderBegan: indexPath => {
-                                        if (this.reorder === undefined) this.reorder = {}
-                                        this.reorder.from = indexPath
-                                        this.reorder.to = undefined
-                                    },
-                                    reorderMoved: (fromIndexPath, toIndexPath) => {
-                                        this.reorder.to = toIndexPath
-                                    },
-                                    reorderFinished: data => {
-                                        if (this.reorder.to === undefined) return
-                                        this.move(this.reorder.from, this.reorder.to, data)
-                                    }
-                                })
-                            ]
-                        })
-                    }
-                }
-            ])
-            .setLeftButtons([{ // 刷新
-                symbol: "arrow.clockwise",
-                tapped: () => {
-                    const actionView = $(this.matrixId)
-                    setTimeout(() => {
-                        actionView.data = actionsToData()
-                        $ui.success($l10n("SUCCESS"))
-                    }, 500)
-                }
-            }])
-        pageController.navigationController.navigationBar
-            .pageSheetMode()
-            .withoutStatusBarHeight()
-        pageController.setView({
+        return {
             type: "matrix",
             props: {
                 id: this.matrixId,
                 columns: 2,
                 itemHeight: 100,
                 spacing: 15,
-                indicatorInsets: $insets(NavigationBar.PageSheetNavigationBarHeight, 0, 0, 0),
                 bgcolor: $color("insetGroupedBackground"),
                 menu: { items: this.menuItems() },
                 data: actionsToData(),
@@ -669,11 +645,40 @@ class ActionManager {
                         text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
                         uuid: null
                     })
+                },
+                pulled: sender => {
+                    $delay(0.5, () => {
+                        sender.endRefreshing()
+                        sender.data = actionsToData()
+                    })
                 }
             }
-        })
+        }
+    }
+
+    getPageView() {
+        const pageController = new PageController()
+        pageController.navigationItem
+            .setTitle($l10n("ACTIONS"))
+            .setRightButtons(this.getNavButtons())
+        pageController.setView(this.getMatrixView())
         return pageController.getPage()
             .setProp("bgcolor", $color("insetGroupedBackground"))
+    }
+
+    present() {
+        const actionSheet = new Sheet()
+        actionSheet
+            .setView(this.getMatrixView())
+            .addNavBar({
+                title: $l10n("ACTIONS"),
+                popButton: {
+                    symbol: "xmark.circle"
+                },
+                rightButtons: this.getNavButtons()
+            })
+            .init()
+            .present()
     }
 }
 

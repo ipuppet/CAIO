@@ -67,3 +67,7 @@
 
 "WIDGET" = "Widget";
 "RECENT" = "Recent";
+
+"DISPLAY_MODE" = "Display Mode";
+"CLASSIC" = "Classic";
+"MODERN" = "Modern";

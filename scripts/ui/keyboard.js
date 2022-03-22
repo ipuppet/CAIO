@@ -187,7 +187,6 @@ class Keyboard extends Clipboard {
                 menu: {
                     items: this.menuItems()
                 },
-                indicatorInsets: $insets(0, 0, 0, 0),
                 separatorInset: $insets(0, this.left_right, 0, this.left_right),
                 data: this.savedClipboard,
                 template: this.listTemplate()

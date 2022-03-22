@@ -705,7 +705,6 @@ class Clipboard {
                 menu: {
                     items: this.menuItems(this.kernel)
                 },
-                indicatorInsets: $insets(50, 0, 50, 0),
                 separatorInset: $insets(0, this.edges, 0, 0),
                 data: this.savedClipboard,
                 template: this.listTemplate(),
@@ -878,7 +877,12 @@ class Clipboard {
             .navigationController
             .navigationBar
             .setBackgroundColor($color("primarySurface"))
-            .withoutStatusBarHeight()
+        if (this.kernel.isUseJsboxNav) {
+            pageController
+                .navigationController
+                .navigationBar
+                .withoutStatusBarHeight()
+        }
         pageController.setView(this.getListView())
         return pageController.getPage()
     }

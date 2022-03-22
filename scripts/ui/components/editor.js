@@ -91,7 +91,14 @@ class Editor {
         const sheet = new Sheet()
         sheet
             .setView(this.getView(type))
-            .addNavBar(title, () => callback(this.text), $l10n("DONE"), navButtons)
+            .addNavBar({
+                title,
+                popButton: {
+                    title: $l10n("DONE"),
+                    tapped: () => callback(this.text)
+                },
+                rightButtons: navButtons
+            })
             .init()
             .present()
     }
