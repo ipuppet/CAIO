@@ -768,7 +768,7 @@ class Clipboard {
         }
     }
 
-    getPageView() {
+    getPageController() {
         const searchBar = new SearchBar()
         // 初始化搜索功能
         searchBar.controller.setEvent("onChange", text => this.searchAction(text))
@@ -884,7 +884,7 @@ class Clipboard {
                 .withoutStatusBarHeight()
         }
         pageController.setView(this.getListView())
-        return pageController.getPage()
+        return pageController
     }
 }
 

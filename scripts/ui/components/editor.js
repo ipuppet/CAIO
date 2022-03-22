@@ -1,6 +1,8 @@
 const {
     UIKit,
+    NavigationItem,
     ViewController,
+    PageController,
     Sheet
 } = require("../../lib/easy-jsbox")
 
@@ -114,16 +116,28 @@ class Editor {
     push(text = "", callback, title, navButtons = [], type = "text") {
         this.text = text
         navButtons.unshift(this.getActionButton())
-        UIKit.push({
-            title: title,
-            navButtons: navButtons.map(button => {
-                button.handler = button.tapped
-                button.tapped = undefined
-                return button
-            }),
-            views: [this.getView(type)],
-            disappeared: () => { callback(this.text) }
-        })
+        if (this.kernel.isUseJsboxNav) {
+            UIKit.push({
+                title: title,
+                navButtons: navButtons.map(button => {
+                    button.handler = button.tapped
+                    button.tapped = undefined
+                    return button
+                }),
+                views: [this.getView(type)],
+                disappeared: () => callback(this.text)
+            })
+        } else {
+            const pageController = new PageController()
+            pageController
+                .setView(this.getView(type))
+                .navigationItem
+                .setTitle(title)
+                .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+                .setRightButtons(navButtons)
+            this.viewController.setEvent("onPop", () => callback(this.text))
+            this.viewController.push(pageController)
+        }
     }
 }
 
