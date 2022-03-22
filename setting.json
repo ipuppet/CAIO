@@ -217,7 +217,7 @@
                 ],
                 "type": "child",
                 "title": "KEYBOARD",
-                "key": "mini",
+                "key": "keyboard",
                 "children": [
                     {
                         "items": [
@@ -227,8 +227,8 @@
                                 ],
                                 "title": "PREVIEW",
                                 "type": "script",
-                                "key": "mini.preview",
-                                "value": "this.method.previewMini"
+                                "key": "keyboard.preview",
+                                "value": "this.method.previewKeyboard"
                             }
                         ]
                     },
@@ -241,7 +241,7 @@
                                 ],
                                 "title": "Taptic Engine",
                                 "type": "switch",
-                                "key": "mini.tapticEngine",
+                                "key": "keyboard.tapticEngine",
                                 "value": true
                             },
                             {
@@ -251,7 +251,7 @@
                                 ],
                                 "title": "JSBOX_TOOLBAR",
                                 "type": "switch",
-                                "key": "mini.showJSBoxToolbar",
+                                "key": "keyboard.showJSBoxToolbar",
                                 "value": false
                             },
                             {
@@ -260,8 +260,8 @@
                                 ],
                                 "title": "QUICK_START_SCRIPTS",
                                 "type": "script",
-                                "key": "mini.setMiniQuickStart",
-                                "value": "this.method.setMiniQuickStart"
+                                "key": "keyboard.setKeyboardQuickStart",
+                                "value": "this.method.setKeyboardQuickStart"
                             }
                         ]
                     },
@@ -269,12 +269,22 @@
                         "items": [
                             {
                                 "icon": [
+                                    "cursor.rays",
+                                    "#FF8C00"
+                                ],
+                                "title": "Taptic Engine For Delete",
+                                "type": "switch",
+                                "key": "keyboard.tapticEngineForDelete",
+                                "value": true
+                            },
+                            {
+                                "icon": [
                                     "rays",
                                     "#FFCC33"
                                 ],
                                 "title": "DELETE_DELAY",
                                 "type": "number",
-                                "key": "mini.deleteDelay",
+                                "key": "keyboard.deleteDelay",
                                 "value": 0.05
                             }
                         ]

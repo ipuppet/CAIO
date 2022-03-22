@@ -3,13 +3,13 @@ const {
     Sheet
 } = require("../../lib/easy-jsbox")
 
-class MiniScripts {
+class KeyboardScripts {
     constructor() {
-        this.listId = "mini-clipboard-list"
+        this.listId = "keyboard-clipboard-list"
     }
 
     static getAddins() {
-        const addins = $cache.get("mini.addins")
+        const addins = $cache.get("keyboard.addins")
         if (addins === undefined) {
             this.setAddins()
             return []
@@ -23,12 +23,12 @@ class MiniScripts {
                 list.splice(i, 1)
             }
         })
-        $cache.set("mini.addins", JSON.stringify(list))
+        $cache.set("keyboard.addins", JSON.stringify(list))
     }
 
     getUnsetAddins() {
         const current = $addin.current.name // 用于排除自身
-        const addins = MiniScripts.getAddins()
+        const addins = KeyboardScripts.getAddins()
         const res = []
         $addin.list?.forEach(addin => {
             const name = addin.displayName
@@ -47,9 +47,9 @@ class MiniScripts {
             },
             events: {
                 didSelect: (sender, indexPath, data) => {
-                    const addins = MiniScripts.getAddins()
+                    const addins = KeyboardScripts.getAddins()
                     addins.unshift(data)
-                    MiniScripts.setAddins(addins)
+                    KeyboardScripts.setAddins(addins)
                     $(this.listId).insert({
                         indexPath: $indexPath(0, 0),
                         value: data
@@ -84,12 +84,12 @@ class MiniScripts {
             type: "list",
             props: {
                 id: this.listId,
-                data: MiniScripts.getAddins(),
+                data: KeyboardScripts.getAddins(),
                 actions: [
                     {
                         title: "delete",
                         handler: (sender, indexPath) => {
-                            MiniScripts.setAddins(sender.data)
+                            KeyboardScripts.setAddins(sender.data)
                         }
                     }
                 ]
@@ -99,18 +99,18 @@ class MiniScripts {
     }
 
     static push(disappeared) {
-        const miniScripts = new MiniScripts()
-        const navButtons = miniScripts.getNavButtons().map(item => {
+        const keyboardScripts = new KeyboardScripts()
+        const navButtons = keyboardScripts.getNavButtons().map(item => {
             item.handler = item.tapped
             delete item.tapped
             return item
         })
         UIKit.push({
             navButtons: navButtons,
-            views: [miniScripts.getListView()],
+            views: [keyboardScripts.getListView()],
             disappeared: () => disappeared()
         })
     }
 }
 
-module.exports = MiniScripts
+module.exports = KeyboardScripts

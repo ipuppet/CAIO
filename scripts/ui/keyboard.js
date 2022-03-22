@@ -5,34 +5,35 @@ const {
     NavigationBar
 } = require("../lib/easy-jsbox")
 const Clipboard = require("./clipboard")
-const MiniScripts = require("./components/mini-scripts")
+const KeyboardScripts = require("./components/keyboard-scripts")
 
-class Mini extends Clipboard {
+class Keyboard extends Clipboard {
     constructor(kernel) {
         super(kernel)
-        this.listId = "mini-clipboard-list"
+        this.listId = "keyboard-clipboard-list"
         // 剪贴板列个性化设置
         this.left_right = 20 // 列表边距
         this.top_bottom = 10 // 列表边距
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
         this.keyboardSetting()
+        this.taptic = 1
         this.deleteTimer = undefined
         this.continuousDeleteTimer = undefined
-        this.deleteDelay = this.kernel.setting.get("mini.deleteDelay")
+        this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
         this.continuousDeleteDelay = 0.5
     }
 
     keyboardSetting() {
-        if (!this.kernel.setting.get("mini.showJSBoxToolbar")) {
+        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
             $keyboard.barHidden = true
         }
     }
 
-    keyboardTapped(tapped) {
+    keyboardTapped(tapped, tapticEngine = true) {
         return (...args) => {
-            if (this.kernel.setting.get("mini.tapticEngine")) {
-                $device.taptic(1)
+            if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
+                $device.taptic(this.taptic)
             }
             tapped(...args)
         }
@@ -52,7 +53,7 @@ class Mini extends Clipboard {
                     animate.done()
                 })
             },
-            {
+            { // Action
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped((animate, sender) => {
                     const popover = $ui.popover({
@@ -92,7 +93,7 @@ class Mini extends Clipboard {
                 menu: {
                     pullDown: true,
                     asPrimary: true,
-                    items: MiniScripts.getAddins().map(addin => {
+                    items: KeyboardScripts.getAddins().map(addin => {
                         return {
                             title: addin,
                             handler: this.keyboardTapped(() => $addin.run(addin))
@@ -125,15 +126,18 @@ class Mini extends Clipboard {
             { // delete
                 symbol: "delete.left",
                 events: {
-                    touchesBegan: () => {
+                    touchesBegan: this.keyboardTapped(() => {
                         $keyboard.delete()
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
-                                handler: () => $keyboard.delete()
+                                handler: this.keyboardTapped(
+                                    () => $keyboard.delete(),
+                                    this.kernel.setting.get("keyboard.tapticEngineForDelete")
+                                )
                             })
                         })
-                    },
+                    }),
                     touchesEnded: () => {
                         this.deleteTimer?.invalidate()
                         this.continuousDeleteTimer?.cancel()
@@ -241,4 +245,4 @@ class Mini extends Clipboard {
     }
 }
 
-module.exports = Mini
+module.exports = Keyboard
