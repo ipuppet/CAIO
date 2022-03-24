@@ -1,4 +1,4 @@
-const VERSION = "1.1.0"
+const VERSION = "1.1.1"
 
 /**
  * 对比版本号
@@ -834,7 +834,7 @@ class SearchBarController extends Controller {
         })
     }
 
-    scrollAction(contentOffset) {
+    didScroll(contentOffset) {
         this.updateSelector()
         // 调整大小
         let height = this.searchBar.height - contentOffset
@@ -847,6 +847,21 @@ class SearchBarController extends Controller {
             this.selector.input.placeholder = ""
         } else {
             this.selector.input.placeholder = this.searchBar.placeholder
+        }
+    }
+
+    didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset) {
+        this.updateSelector()
+        if (
+            contentOffset >= 0
+            && contentOffset <= this.searchBar.height
+        ) {
+            scrollToOffset($point(
+                0,
+                contentOffset >= this.searchBar.height / 2
+                    ? this.searchBar.height - zeroOffset
+                    : -zeroOffset
+            ))
         }
     }
 }
@@ -991,7 +1006,7 @@ class NavigationController extends Controller {
         }
     }
 
-    toNormal() {
+    toNormal(permanent = true) {
         this.updateSelector()
         $ui.animate({
             duration: 0.2,
@@ -1004,12 +1019,12 @@ class NavigationController extends Controller {
                 this.selector.largeTitleView.alpha = 0
             }
         })
-        if (this.navigationBar?.navigationItem) {
+        if (permanent && this.navigationBar?.navigationItem) {
             this.navigationBar.navigationItem.largeTitleDisplayMode = NavigationItem.LargeTitleDisplayModeNever
         }
     }
 
-    toLargeTitle() {
+    toLargeTitle(permanent = true) {
         this.updateSelector()
         this.selector.underlineView.alpha = 0
         this.selector.backgroundView.hidden = true
@@ -1020,7 +1035,7 @@ class NavigationController extends Controller {
                 this.selector.largeTitleView.alpha = 1
             }
         })
-        if (this.navigationBar?.navigationItem) {
+        if (permanent && this.navigationBar?.navigationItem) {
             this.navigationBar.navigationItem.largeTitleDisplayMode = NavigationItem.LargeTitleDisplayModeAlways
         }
     }
@@ -1099,16 +1114,17 @@ class NavigationController extends Controller {
         }
     }
 
-    scrollAction(contentOffset) {
+    didScroll(contentOffset) {
         if (!this.navigationBar.prefersLargeTitles) return
         const largeTitleDisplayMode = this.navigationBar?.navigationItem.largeTitleDisplayMode
         if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeAlways) return
         this.updateSelector()
         if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeAutomatic) {
-            this.navigationBar?.navigationItem?.titleView?.controller.scrollAction(contentOffset)
+            // titleView didScroll
+            this.navigationBar?.navigationItem?.titleView?.controller.didScroll(contentOffset)
             // 在 titleView 折叠前锁住主要视图
             if (contentOffset > 0) {
-                let height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+                const height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
                 contentOffset -= height
                 if (contentOffset < 0) contentOffset = 0
             }
@@ -1116,6 +1132,31 @@ class NavigationController extends Controller {
             this._navigationBarScrollAction(contentOffset)
         } else if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeNever) {
             this._navigationBarScrollAction(contentOffset)
+        }
+    }
+
+    didEndDragging(contentOffset, decelerate, scrollToOffset) {
+        if (!this.navigationBar.prefersLargeTitles) return
+        const largeTitleDisplayMode = this.navigationBar?.navigationItem.largeTitleDisplayMode
+        if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeAlways) return
+        this.updateSelector()
+        if (largeTitleDisplayMode === NavigationItem.LargeTitleDisplayModeAutomatic) {
+            // titleView didEndDragging
+            const zeroOffset = this.navigationBar.isAddStatusBarHeight ? UIKit.statusBarHeight : 0
+            this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset)
+            const titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+            contentOffset -= titleViewHeight
+            if (
+                contentOffset >= 0
+                && contentOffset <= this.navigationBar.largeTitleFontSize
+            ) {
+                scrollToOffset($point(
+                    0,
+                    contentOffset >= this.navigationBar.largeTitleFontSize / 2
+                        ? this.navigationBar.navigationBarNormalHeight + titleViewHeight - zeroOffset
+                        : titleViewHeight - zeroOffset
+                ))
+            }
         }
     }
 }
@@ -1237,14 +1278,25 @@ class PageController extends Controller {
             }
             // 重写滚动事件
             if (!this.view.events) this.view.events = {}
-            const oldScrollAction = this.view.events.didScroll
+            const oldEvents = {
+                didScroll: this.view.events.didScroll,
+                didEndDragging: this.view.events.didEndDragging
+            }
             this.view.events.didScroll = sender => {
                 let contentOffset = sender.contentOffset.y
                 if (this.navigationController.navigationBar.isAddStatusBarHeight) {
                     contentOffset += UIKit.statusBarHeight
                 }
-                this.navigationController.scrollAction(contentOffset)
-                if (typeof oldScrollAction === "function") oldScrollAction(contentOffset)
+                this.navigationController.didScroll(contentOffset)
+                if (typeof oldEvents.didScroll === "function") oldEvents.didScroll(sender)
+            }
+            this.view.events.didEndDragging = (sender, decelerate) => {
+                let contentOffset = sender.contentOffset.y
+                if (this.navigationController.navigationBar.isAddStatusBarHeight) {
+                    contentOffset += UIKit.statusBarHeight
+                }
+                this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
+                if (typeof oldEvents.didEndDragging === "function") oldEvents.didEndDragging(sender, decelerate)
             }
             // 初始化 PageView
             this.page = PageView.createByViews([
