@@ -1025,32 +1025,42 @@ class NavigationController extends Controller {
         }
     }
 
+    static get LargeTitleViewSmallMode() {
+        return 0
+    }
+
+    static get LargeTitleViewLargeMode() {
+        return 1
+    }
+
+    _changeLargeTitleView(largeTitleViewMode) {
+        const isSmallMode = largeTitleViewMode === NavigationController.LargeTitleViewSmallMode
+        $ui.animate({
+            duration: 0.2,
+            animation: () => {
+                // 隐藏大标题，显示小标题
+                this.selector.smallTitleView.alpha = isSmallMode ? 1 : 0
+                this.selector.largeTitleView.alpha = isSmallMode ? 0 : 1
+            }
+        })
+    }
+
     _largeTitleScrollAction(contentOffset) {
         const titleSizeMax = 40 // 下拉放大字体最大值
         // 标题跟随
         this.selector.largeTitleView.updateLayout((make, view) => {
             make.top.equalTo(view.super).offset(this.navigationBar.getNavigationBarHeight() - contentOffset)
         })
+
         if (contentOffset > 0) {
             if (contentOffset > this.largeTitleScrollTrigger) {
-                $ui.animate({
-                    duration: 0.2,
-                    animation: () => {
-                        // 隐藏大标题，显示小标题
-                        this.selector.smallTitleView.alpha = 1
-                        this.selector.largeTitleView.alpha = 0
-                    }
-                })
+                this._changeLargeTitleView(NavigationController.LargeTitleViewSmallMode)
             } else {
-                $ui.animate({
-                    duration: 0.2,
-                    animation: () => {
-                        this.selector.smallTitleView.alpha = 0
-                        this.selector.largeTitleView.alpha = 1
-                    }
-                })
+                this._changeLargeTitleView(NavigationController.LargeTitleViewLargeMode)
             }
         } else if (contentOffset < -20) {
+            // 切换模式
+            this._changeLargeTitleView(NavigationController.LargeTitleViewLargeMode)
             // 下拉放大字体
             let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
             if (size > titleSizeMax) size = titleSizeMax
@@ -1078,13 +1088,14 @@ class NavigationController extends Controller {
                 const contentViewBackgroundColor = this.selector.largeTitleView?.prev.bgcolor
                 this.selector.largeTitleMaskView.bgcolor = contentViewBackgroundColor
                 this.selector.largeTitleMaskView.hidden = false
+                // 隐藏背景
                 this.selector.underlineView.alpha = 0
-            }
-        } else {
-            // 隐藏背景
-            if (contentOffset > -10) {
                 this.selector.backgroundView.hidden = true
             }
+        } else {
+            // 隐藏背景 滑动过快时， contentOffset > 0 内的隐藏背景可能失效
+            this.selector.underlineView.alpha = 0
+            this.selector.backgroundView.hidden = true
         }
     }
 
@@ -1597,6 +1608,8 @@ class Setting extends Controller {
         this.setName(args.name ?? uuid())
         // l10n
         this.loadL10n()
+        // _withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
+        this._withTouchEventsT = {}
         // 用来控制 child 类型
         this.viewController = new ViewController()
         // 用于存放 script 类型用到的方法
@@ -1824,16 +1837,19 @@ class Setting extends Controller {
         })
     }
 
-    _withTouchEvents(lineId, events, withTapped = false, highlightEndDelay = 0) {
+    _withTouchEvents(lineId, events, withTappedHighlight = false, highlightEndDelay = 0) {
         events = Object.assign(events, {
             touchesBegan: () => {
                 this._touchHighlightStart(lineId)
+                // 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
+                this._withTouchEventsT[lineId] = $delay(1, () => this._touchHighlightEnd(lineId, 0))
             },
             touchesMoved: () => {
+                this._withTouchEventsT[lineId]?.cancel()
                 this._touchHighlightEnd(lineId, 0)
             }
         })
-        if (withTapped) {
+        if (withTappedHighlight) {
             const tapped = events.tapped
             events.tapped = () => {
                 // highlight
