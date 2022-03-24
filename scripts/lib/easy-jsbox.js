@@ -285,7 +285,7 @@ class ViewController extends Controller {
                 navBarHidden: true
             },
             events: {
-                disappeared: () => {
+                dealloc: () => {
                     this.onPop(pageController)
                 }
             },
