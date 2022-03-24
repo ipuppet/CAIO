@@ -1,9 +1,12 @@
 class ClipboardWidget {
-    constructor(storage) {
+    constructor(setting, storage) {
+        this.setting = setting
         this.storage = storage
         this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}&widget=${this.widget}`
         this.urlScheme = {
+            clipboard: this.baseUrlScheme,
             add: `${this.baseUrlScheme}&add=1`,
+            actions: `${this.baseUrlScheme}&actions=1`,
             copy: uuid => `${this.baseUrlScheme}&copy=${uuid}`
         }
         this.length = 0 // 统计剪切板总数
@@ -66,7 +69,16 @@ class ClipboardWidget {
                 alignment: $widget.horizontalAlignment.leading,
                 spacing: 0,
                 padding: 15,
-                widgetURL: this.urlScheme.add
+                widgetURL: (() => {
+                    switch (this.setting.get("widget.2x2.widgetURL")) {
+                        case 0:
+                            return this.urlScheme.add
+                        case 1:
+                            return this.urlScheme.actions
+                        case 2:
+                            return this.urlScheme.clipboard
+                    }
+                })()
             },
             views: [
                 { // 顶部
@@ -128,7 +140,8 @@ class ClipboardWidget {
             type: "hstack",
             props: {
                 spacing: 0,
-                padding: padding
+                padding: padding,
+                widgetURL: this.urlScheme.clipboard
             },
             views: [
                 { // 左侧

@@ -1378,6 +1378,18 @@ class TabBarController extends Controller {
 
     switchPageTo(key) {
         if (this.pages[key]) {
+            if (this.selected === key) return
+            // menu 动画
+            $ui.animate({
+                duration: 0.4,
+                animation: () => {
+                    // 点击的图标
+                    this.cells[key].active()
+                }
+            })
+            // 之前的图标
+            this.cells[this.selected].inactive()
+            // 切换页面
             this.pages[this.selected].hide()
             this.pages[key].show()
             this.callEvent("onChange", this.selected, key)
@@ -1414,17 +1426,6 @@ class TabBarController extends Controller {
         Object.values(this.cells).forEach(cell => {
             cell.setEvent("tapped", sender => {
                 const key = sender.info.key
-                if (this.selected === key) return
-                // menu动画
-                $ui.animate({
-                    duration: 0.4,
-                    animation: () => {
-                        // 点击的图标
-                        cell.active()
-                    }
-                })
-                // 之前的图标
-                this.cells[this.selected].inactive()
                 // 切换页面
                 this.switchPageTo(key)
             })
@@ -1578,6 +1579,13 @@ class SettingLoadConfigError extends Error {
     }
 }
 
+class SettingReadonlyError extends Error {
+    constructor() {
+        super("Attempted to assign to readonly property.")
+        this.name = "SettingReadonlyError"
+    }
+}
+
 /**
  * events:
  * - onSet(key, value)
@@ -1614,6 +1622,8 @@ class Setting extends Controller {
         this.viewController = new ViewController()
         // 用于存放 script 类型用到的方法
         this.method = {}
+        // read only
+        this._readonly = false
     }
 
     static get bgcolor() {
@@ -1795,7 +1805,15 @@ class Setting extends Controller {
         return this._footer
     }
 
+    setReadonly() {
+        this._readonly = true
+        return this
+    }
+
     set(key, value) {
+        if (this._readonly) {
+            throw new SettingReadonlyError()
+        }
         this._checkLoadConfigError()
         this.setting[key] = value
         $file.write({

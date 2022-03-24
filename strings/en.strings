@@ -8,6 +8,7 @@
 "CLIPBOARD" = "Clipboard";
 "CLIPBOARD_STRUCTURE_ERROR" = "Clipboard data structure is abnormal";
 "BACKUP_AND_REBUILD_DATABASE" = "Backup and rebuild the database";
+"ADD" = "Add";
 "EDIT" = "Edit";
 "SEARCH" = "Search";
 "PIN" = "Pin";
@@ -67,6 +68,7 @@
 
 "WIDGET" = "Widget";
 "RECENT" = "Recent";
+"CLICK_ACTION" = "Click Action";
 
 "DISPLAY_MODE" = "Display Mode";
 "CLASSIC" = "Classic";
