@@ -326,7 +326,7 @@ class AppUI {
         const kernel = new AppKernel()
         const buttons = {
             clipboard: {
-                icon: ["house", "house.fill"],
+                icon: "doc.on.clipboard",
                 title: $l10n("CLIPBOARD")
             },
             action: {
