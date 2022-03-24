@@ -1579,6 +1579,13 @@ class SettingLoadConfigError extends Error {
     }
 }
 
+class SettingReadonlyError extends Error {
+    constructor() {
+        super("Attempted to assign to readonly property.")
+        this.name = "SettingReadonlyError"
+    }
+}
+
 /**
  * events:
  * - onSet(key, value)
@@ -1615,6 +1622,8 @@ class Setting extends Controller {
         this.viewController = new ViewController()
         // 用于存放 script 类型用到的方法
         this.method = {}
+        // read only
+        this._readonly = false
     }
 
     static get bgcolor() {
@@ -1796,7 +1805,15 @@ class Setting extends Controller {
         return this._footer
     }
 
+    setReadonly() {
+        this._readonly = true
+        return this
+    }
+
     set(key, value) {
+        if (this._readonly) {
+            throw new SettingReadonlyError()
+        }
         this._checkLoadConfigError()
         this.setting[key] = value
         $file.write({
