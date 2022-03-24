@@ -284,17 +284,19 @@ class AppKernel extends Kernel {
 
         this.setting.method.previewWidget = animate => {
             animate.touchHighlight()
-            const widgets = []
+            const widgets = {}
             try {
-                JSON.parse($file.read("widget-options.json").string).map(widget => widgets.push(widget.value))
+                JSON.parse($file.read("widget-options.json").string).forEach(item => {
+                    widgets[item.name] = item.value
+                })
             } catch (error) {
                 $ui.error(error)
                 return
             }
             $ui.menu({
-                items: ["Clipboard"],
-                handler: title => {
-                    Widget.render(title)
+                items: Object.keys(widgets),
+                handler: name => {
+                    Widget.render(widgets[name])
                 }
             })
         }
@@ -329,7 +331,7 @@ class AppUI {
                 icon: "doc.on.clipboard",
                 title: $l10n("CLIPBOARD")
             },
-            action: {
+            actions: {
                 icon: "command",
                 title: $l10n("ACTIONS")
             },
@@ -359,8 +361,8 @@ class AppUI {
                     }
                 },
                 {
-                    symbol: buttons.action.icon,
-                    title: buttons.action.title,
+                    symbol: buttons.actions.icon,
+                    title: buttons.actions.title,
                     handler: () => {
                         kernel.actionManager.present()
                     }
@@ -369,20 +371,20 @@ class AppUI {
 
             kernel.UIRender(kernel.clipboard.getPageController().getPage())
         } else {
-            const tabBarController = new TabBarController()
+            kernel.tabBarController = new TabBarController()
             const clipboardPageController = kernel.clipboard.getPageController()
             kernel.editor.viewController.setRootPageController(clipboardPageController)
-            tabBarController.setPages({
+            kernel.tabBarController.setPages({
                 clipboard: clipboardPageController.getPage(),
-                action: kernel.actionManager.getPageView(),
+                actions: kernel.actionManager.getPageView(),
                 setting: kernel.setting.getPageView()
             }).setCells({
                 clipboard: buttons.clipboard,
-                action: buttons.action,
+                actions: buttons.actions,
                 setting: buttons.setting
             })
 
-            kernel.UIRender(tabBarController.generateView().definition)
+            kernel.UIRender(kernel.tabBarController.generateView().definition)
         }
     }
 
@@ -414,10 +416,10 @@ class AppUI {
 }
 
 class Widget {
-    static widgetInstance(widget, data) {
+    static widgetInstance(widget, ...data) {
         if ($file.exists(`/scripts/widget/${widget}.js`)) {
             const { Widget } = require(`./widget/${widget}.js`)
-            return new Widget(data)
+            return new Widget(...data)
         } else {
             return false
         }
@@ -435,7 +437,9 @@ class Widget {
     }
 
     static renderClipboard() {
-        const widget = Widget.widgetInstance("Clipboard", new Storage())
+        const setting = new Setting()
+        setting.loadConfig()
+        const widget = Widget.widgetInstance("Clipboard", setting, new Storage())
         widget.render()
     }
 

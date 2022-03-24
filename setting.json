@@ -213,7 +213,7 @@
             },
             {
                 "icon": [
-                    "rectangle.3.offgrid.fill"
+                    "keyboard"
                 ],
                 "type": "child",
                 "title": "KEYBOARD",
@@ -290,16 +290,48 @@
                         ]
                     }
                 ]
-            }
-        ]
-    },
-    {
-        "items": [
+            },
             {
+                "icon": [
+                    "rectangle.3.offgrid.fill"
+                ],
+                "type": "child",
                 "title": "WIDGET",
-                "type": "script",
-                "key": "previewWidget",
-                "value": "this.method.previewWidget"
+                "key": "widget",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "rectangle.3.offgrid.fill"
+                                ],
+                                "title": "PREVIEW",
+                                "type": "script",
+                                "key": "previewWidget",
+                                "value": "this.method.previewWidget"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "2x2",
+                        "items": [
+                            {
+                                "icon": [
+                                    "link"
+                                ],
+                                "title": "CLICK_ACTION",
+                                "type": "menu",
+                                "key": "widget.2x2.widgetURL",
+                                "items": [
+                                    "ADD",
+                                    "ACTIONS",
+                                    "CLIPBOARD"
+                                ],
+                                "value": 2
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },

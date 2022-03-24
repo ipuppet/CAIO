@@ -34,6 +34,12 @@ class Clipboard {
                 $ui.success($l10n("COPIED"))
             } else if ($context.query["add"]) {
                 this.getAddTextView()
+            } else if ($context.query["actions"]) {
+                if (this.kernel.isUseJsboxNav) {
+                    this.kernel.actionManager.present()
+                } else {
+                    this.kernel.tabBarController.switchPageTo("actions")
+                }
             }
         })
 
