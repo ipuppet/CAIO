@@ -387,7 +387,7 @@ class Sheet extends View {
             .setMenu(popButton.menu)
         const button = barButtonItem.definition.views[0]
         button.layout = (make, view) => {
-            make.left.inset(15)
+            make.left.equalTo(view.super.safeArea).offset(15)
             make.centerY.equalTo(view.super.safeArea)
         }
         pageController.navigationItem
@@ -930,7 +930,7 @@ class NavigationItem {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(10)
+                make.left.equalTo(view.super.safeArea).offset(15)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: { tapped: () => { $ui.pop() } }
@@ -1209,7 +1209,8 @@ class PageController extends Controller {
             if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
                 // 非滚动视图
                 this.view.layout = (make, view) => {
-                    make.bottom.left.right.equalTo(view.super)
+                    make.left.right.equalTo(view.super.safeArea)
+                    make.bottom.equalTo(view.super)
                     let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
                     if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
                         largeTitleFontSize = 0
@@ -1230,7 +1231,10 @@ class PageController extends Controller {
                     this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
                 }
                 // layout
-                this.view.layout = $layout.fill
+                this.view.layout = (make, view) => {
+                    make.left.right.equalTo(view.super.safeArea)
+                    make.top.bottom.equalTo(view.super)
+                }
             }
 
             // 重写滚动事件
