@@ -104,7 +104,7 @@ class KeyboardScripts {
             .setView(keyboardScripts.getListView())
             .navigationItem
             .setTitle($l10n("QUICK_START_SCRIPTS"))
-            .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(keyboardScripts.getNavButtons())
         return pageController
     }

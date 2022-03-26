@@ -133,7 +133,7 @@ class Editor {
                 .setView(this.getView(type))
                 .navigationItem
                 .setTitle(title)
-                .setLargeTitleDisplayMode(NavigationItem.LargeTitleDisplayModeNever)
+                .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
                 .setRightButtons(navButtons)
             this.viewController.setEvent("onPop", () => callback(this.text))
             this.viewController.push(pageController)
