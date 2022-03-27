@@ -136,7 +136,6 @@ class View {
 
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
-    static statusBarHeight = UIKit.#sharedApplication.$statusBarFrame().height
     static align = { left: 0, right: 1, top: 2, bottom: 3 }
     static textColor = $color("primaryText", "secondaryText")
     static linkColor = $color("systemLink")
@@ -160,6 +159,10 @@ class UIKit {
      * @returns {Boolean}
      */
     static isSplitScreenMode = UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
+
+    static get statusBarHeight() {
+        return UIKit.#sharedApplication.$statusBarFrame().height
+    }
 
     static get statusBarOrientation() {
         return UIKit.#sharedApplication.$statusBarOrientation()
