@@ -144,21 +144,25 @@ class UIKit {
     static scrollViewList = ["list", "matrix"]
 
     /**
-     * 获取Window大小
-     * @returns 
-     */
-    static windowSize = $objc("UIWindow").$keyWindow().jsValue().size
-
-    /**
      * 是否属于大屏设备
      */
     static isLargeScreen = $device.isIpad || $device.isIpadPro
 
     /**
+     * 获取Window大小
+     * @returns 
+     */
+    static get windowSize() {
+        return $objc("UIWindow").$keyWindow().jsValue().size
+    }
+
+    /**
      * 判断是否是分屏模式
      * @returns {Boolean}
      */
-    static isSplitScreenMode = UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
+    static get isSplitScreenMode() {
+        return UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
+    }
 
     static get statusBarHeight() {
         return UIKit.#sharedApplication.$statusBarFrame().height
@@ -706,9 +710,11 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: UIKit.textColor,
                                 },
-                                typeof this.symbol === "string"
-                                    ? { symbol: this.symbol }
-                                    : { data: this.symbol.png }
+                                this.symbol === undefined
+                                    ? {}
+                                    : typeof this.symbol === "string"
+                                        ? { symbol: this.symbol }
+                                        : { data: this.symbol.png }
                             ),
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
