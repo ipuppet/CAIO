@@ -599,6 +599,7 @@ class NavigationBar extends View {
  */
 class BarButtonItem extends View {
     static size = $size(44, 44)
+    static iconSize = $size(23, 23)
 
     title = ""
     align = UIKit.align.right
@@ -625,58 +626,47 @@ class BarButtonItem extends View {
 
     #actionStart() {
         // 隐藏button，显示spinner
-        const button = $(this.id)
-        button.alpha = 0
-        button.hidden = true
-        $("spinner-" + this.id).alpha = 1
+        $(this.id).hidden = true
+        $("spinner-" + this.id).hidden = false
     }
 
-    #actionDone(status = true, message = $l10n("ERROR")) {
-        $("spinner-" + this.id).alpha = 0
-        const button = $(this.id)
-        button.hidden = false
-        if (!status) { // 失败
-            $ui.toast(message)
-            button.alpha = 1
-            return
-        }
+    #actionDone() {
+        const buttonIcon = $(`icon-button-${this.id}`)
+        const checkmarkIcon = $(`icon-checkmark-${this.id}`)
+        buttonIcon.alpha = 0
+        $(this.id).hidden = false
+        $("spinner-" + this.id).hidden = true
         // 成功动画
-        button.symbol = "checkmark"
         $ui.animate({
             duration: 0.6,
             animation: () => {
-                button.alpha = 1
+                checkmarkIcon.alpha = 1
             },
             completion: () => {
-                setTimeout(() => {
-                    $ui.animate({
-                        duration: 0.4,
-                        animation: () => {
-                            button.alpha = 0
-                        },
-                        completion: () => {
-                            button.symbol = this.symbol
-                            $ui.animate({
-                                duration: 0.4,
-                                animation: () => {
-                                    button.alpha = 1
-                                },
-                                completion: () => {
-                                    button.alpha = 1
-                                }
-                            })
-                        }
-                    })
-                }, 600)
+                $delay(0.3, () => $ui.animate({
+                    duration: 0.6,
+                    animation: () => {
+                        checkmarkIcon.alpha = 0
+                    },
+                    completion: () => {
+                        $ui.animate({
+                            duration: 0.4,
+                            animation: () => {
+                                buttonIcon.alpha = 1
+                            },
+                            completion: () => {
+                                buttonIcon.alpha = 1
+                            }
+                        })
+                    }
+                }))
             }
         })
     }
 
     #actionCancel() {
-        $("spinner-" + this.id).alpha = 0
-        const button = $(this.id)
-        button.alpha = 1
-        button.hidden = false
+        $(this.id).hidden = false
+        $("spinner-" + this.id).hidden = true
     }
 
     getView() {
@@ -693,19 +683,52 @@ class BarButtonItem extends View {
             type: "view",
             views: [
                 {
-                    type: "button", // TODO 控制 symbol 大小
-                    props: Object.assign({
-                        id: this.id,
-                        bgcolor: $color("clear"),
-                        tintColor: UIKit.textColor,
-                        image: $image(this.symbol),
-                        titleColor: UIKit.textColor,
-                        contentEdgeInsets: $insets(0, 0, 0, 0),
-                        titleEdgeInsets: $insets(0, 0, 0, 0),
-                        imageEdgeInsets: $insets(0, 0, 0, 0)
-                    },
+                    type: "button",
+                    props: Object.assign(
+                        {
+                            id: this.id,
+                            bgcolor: $color("clear"),
+                            tintColor: UIKit.textColor,
+                            titleColor: UIKit.textColor,
+                            contentEdgeInsets: $insets(0, 0, 0, 0),
+                            titleEdgeInsets: $insets(0, 0, 0, 0),
+                            imageEdgeInsets: $insets(0, 0, 0, 0)
+                        },
                         this.menu ? { menu: this.menu } : {},
-                        this.title?.length > 0 ? { title: this.title } : {}),
+                        this.title?.length > 0 ? { title: this.title } : {}
+                    ),
+                    views: [
+                        {
+                            type: "image",
+                            props: Object.assign(
+                                {
+                                    id: `icon-button-${this.id}`,
+                                    hidden: this.symbol === undefined,
+                                    tintColor: UIKit.textColor,
+                                },
+                                typeof this.symbol === "string"
+                                    ? { symbol: this.symbol }
+                                    : { data: this.symbol.png }
+                            ),
+                            layout: (make, view) => {
+                                make.center.equalTo(view.super)
+                                make.size.equalTo(BarButtonItem.iconSize)
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: `icon-checkmark-${this.id}`,
+                                alpha: 0,
+                                tintColor: UIKit.textColor,
+                                symbol: "checkmark"
+                            },
+                            layout: (make, view) => {
+                                make.center.equalTo(view.super)
+                                make.size.equalTo(BarButtonItem.iconSize)
+                            }
+                        }
+                    ],
                     events: this.events,
                     layout: $layout.fill
                 },
@@ -714,7 +737,7 @@ class BarButtonItem extends View {
                     props: {
                         id: "spinner-" + this.id,
                         loading: true,
-                        alpha: 0
+                        hidden: true
                     },
                     layout: $layout.fill
                 }
