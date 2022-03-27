@@ -711,6 +711,7 @@ class Clipboard {
                 menu: {
                     items: this.menuItems(this.kernel)
                 },
+                bgcolor: UIKit.primaryViewBackgroundColor,
                 separatorInset: $insets(0, this.edges, 0, 0),
                 data: this.savedClipboard,
                 template: this.listTemplate(),
@@ -882,7 +883,7 @@ class Clipboard {
         pageController
             .navigationController
             .navigationBar
-            .setBackgroundColor($color("primarySurface"))
+            .setBackgroundColor(UIKit.primaryViewBackgroundColor)
         if (this.kernel.isUseJsboxNav) {
             pageController
                 .navigationController

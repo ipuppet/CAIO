@@ -1,9 +1,8 @@
 const {
     Setting,
-    NavigationBar,
-    NavigationItem,
     PageController,
-    Sheet
+    Sheet,
+    UIKit
 } = require("../../lib/easy-jsbox")
 
 class ActionManager {
@@ -569,7 +568,7 @@ class ActionManager {
                 columns: 2,
                 itemHeight: 100,
                 spacing: 15,
-                bgcolor: $color("insetGroupedBackground"),
+                bgcolor: UIKit.scrollViewBackgroundColor,
                 menu: { items: this.menuItems() },
                 data: actionsToData(),
                 template: {
@@ -663,7 +662,6 @@ class ActionManager {
             .setRightButtons(this.getNavButtons())
         pageController.setView(this.getMatrixView())
         return pageController.getPage()
-            .setProp("bgcolor", $color("insetGroupedBackground"))
     }
 
     present() {

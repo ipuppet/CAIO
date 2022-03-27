@@ -136,10 +136,11 @@ class View {
 
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
-    static statusBarHeight = UIKit.#sharedApplication.$statusBarFrame().height
     static align = { left: 0, right: 1, top: 2, bottom: 3 }
     static textColor = $color("primaryText", "secondaryText")
     static linkColor = $color("systemLink")
+    static primaryViewBackgroundColor = $color("primarySurface")
+    static scrollViewBackgroundColor = $color("insetGroupedBackground")
     static scrollViewList = ["list", "matrix"]
 
     /**
@@ -159,12 +160,20 @@ class UIKit {
      */
     static isSplitScreenMode = UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
 
+    static get statusBarHeight() {
+        return UIKit.#sharedApplication.$statusBarFrame().height
+    }
+
     static get statusBarOrientation() {
         return UIKit.#sharedApplication.$statusBarOrientation()
     }
 
     static get isHorizontal() {
         return UIKit.statusBarOrientation === 3 || UIKit.statusBarOrientation === 4
+    }
+
+    static defaultBackgroundColor(type) {
+        return UIKit.scrollViewList.indexOf(type) > -1 ? UIKit.scrollViewBackgroundColor : UIKit.primaryViewBackgroundColor
     }
 
     static separatorLine(props = {}, align = UIKit.align.bottom) {
@@ -212,7 +221,7 @@ class UIKit {
             statusBarStyle = args.statusBarStyle ?? 0,
             title = args.title ?? "",
             navButtons = args.navButtons ?? [{ title: "" }],
-            bgcolor = args.bgcolor ?? "primarySurface",
+            bgcolor = args.bgcolor ?? (views[0]?.props?.bgcolor ?? "primarySurface"),
             disappeared = args.disappeared
         $ui.push({
             props: {
@@ -333,6 +342,7 @@ class SheetViewTypeError extends ValidationError {
 class Sheet extends View {
     #present = () => { }
     #dismiss = () => { }
+    pageController = undefined
 
     init() {
         const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
@@ -344,7 +354,7 @@ class Sheet extends View {
         PSViewControllerView.$addSubview(UIView)
         PSViewController.$setModalPresentationStyle(UIModalPresentationStyle.pageSheet)
         this.#present = () => {
-            PSViewControllerView.jsValue().add(this.view)
+            PSViewControllerView.jsValue().add(this.pageController?.getPage().definition ?? this.view)
             $ui.vc.ocValue().invoke("presentModalViewController:animated", PSViewController, true)
         }
         this.#dismiss = () => PSViewController.invoke("dismissModalViewControllerAnimated", true)
@@ -371,7 +381,7 @@ class Sheet extends View {
      */
     addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
         if (this.view === undefined) throw new SheetAddNavBarError()
-        const pageController = new PageController()
+        this.pageController = new PageController()
         // 返回按钮
         const barButtonItem = new BarButtonItem()
         barButtonItem
@@ -390,16 +400,16 @@ class Sheet extends View {
             make.left.equalTo(view.super.safeArea).offset(15)
             make.centerY.equalTo(view.super.safeArea)
         }
-        pageController.navigationItem
+        this.pageController.navigationItem
             .addPopButton("", button)
             .setTitle(title)
             .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(rightButtons)
-        pageController
+        this.pageController
             .setView(this.view)
             .navigationController.navigationBar
             .pageSheetMode()
-        this.view = pageController.getPage().definition
+        this.pageController?.getPage().setProp("bgcolor", this.view.props.bgcolor)
         return this
     }
 
@@ -1094,7 +1104,9 @@ class NavigationController extends Controller {
         this.updateSelector()
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAutomatic) {
             // titleView didEndDragging
-            const zeroOffset = !UIKit.isHorizontal && this.navigationBar.addStatusBarHeight ? UIKit.statusBarHeight : 0
+            const zeroOffset = (!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationBar.addStatusBarHeight
+                ? UIKit.statusBarHeight
+                : 0
             this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset)
             const titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
             contentOffset -= titleViewHeight
@@ -1245,7 +1257,7 @@ class PageController extends Controller {
             }
             this.view.events.didScroll = sender => {
                 let contentOffset = sender.contentOffset.y
-                if (!UIKit.isHorizontal && this.navigationController.navigationBar.addStatusBarHeight) {
+                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
                     contentOffset += UIKit.statusBarHeight
                 }
                 this.navigationController.didScroll(contentOffset)
@@ -1253,7 +1265,7 @@ class PageController extends Controller {
             }
             this.view.events.didEndDragging = (sender, decelerate) => {
                 let contentOffset = sender.contentOffset.y
-                if (!UIKit.isHorizontal && this.navigationController.navigationBar.addStatusBarHeight) {
+                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
                     contentOffset += UIKit.statusBarHeight
                 }
                 this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
@@ -1271,6 +1283,11 @@ class PageController extends Controller {
             ])
         } else {
             this.page = PageView.createByViews([this.view])
+        }
+        if (this.view.props?.bgcolor) {
+            this.page.setProp("bgcolor", this.view.props.bgcolor)
+        } else {
+            this.page.setProp("bgcolor", UIKit.defaultBackgroundColor(this.view.type))
         }
         return this
     }
@@ -1621,8 +1638,6 @@ class SettingReadonlyError extends Error {
  * - onSet(key, value)
  */
 class Setting extends Controller {
-    static bgcolor = $color("insetGroupedBackground")
-
     // 存储数据
     setting = {}
     // 用来控制 child 类型
@@ -2708,7 +2723,7 @@ class Setting extends Controller {
                             if (this.isUseJsboxNav) {
                                 UIKit.push({
                                     title: title,
-                                    bgcolor: Setting.bgcolor,
+                                    bgcolor: UIKit.scrollViewBackgroundColor,
                                     views: [this.getListView(children, {})]
                                 })
                             } else {
@@ -2803,6 +2818,7 @@ class Setting extends Controller {
                 style: 2,
                 separatorInset: $insets(0, 50, 0, 10), // 分割线边距
                 rowHeight: 50,
+                bgcolor: UIKit.scrollViewBackgroundColor,
                 footer: footer,
                 data: this.#getSections(structure ?? this.structure)
             },
@@ -2819,10 +2835,6 @@ class Setting extends Controller {
                 .setTitle($l10n("SETTING"))
             if (this.hasSectionTitle(this.structure))
                 pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
-            pageController
-                .initPage()
-                .page
-                .setProp("bgcolor", Setting.bgcolor)
             this.viewController.setRootPageController(pageController)
         }
         return this.viewController.getRootPageController().getPage()

@@ -355,7 +355,6 @@ class AppUI {
                     handler: () => {
                         UIKit.push({
                             title: buttons.setting.title,
-                            bgcolor: Setting.bgcolor,
                             views: [kernel.setting.getListView()]
                         })
                     }
