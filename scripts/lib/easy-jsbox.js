@@ -706,9 +706,11 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: UIKit.textColor,
                                 },
-                                typeof this.symbol === "string"
-                                    ? { symbol: this.symbol }
-                                    : { data: this.symbol.png }
+                                this.symbol === undefined
+                                    ? {}
+                                    : typeof this.symbol === "string"
+                                        ? { symbol: this.symbol }
+                                        : { data: this.symbol.png }
                             ),
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
