@@ -1,7 +1,8 @@
 const {
     Setting,
     PageController,
-    Sheet
+    Sheet,
+    UIKit
 } = require("../../lib/easy-jsbox")
 
 class ActionManager {
@@ -567,7 +568,7 @@ class ActionManager {
                 columns: 2,
                 itemHeight: 100,
                 spacing: 15,
-                bgcolor: Setting.bgcolor,
+                bgcolor: UIKit.scrollViewBackgroundColor,
                 menu: { items: this.menuItems() },
                 data: actionsToData(),
                 template: {
@@ -661,7 +662,6 @@ class ActionManager {
             .setRightButtons(this.getNavButtons())
         pageController.setView(this.getMatrixView())
         return pageController.getPage()
-            .setProp("bgcolor", Setting.bgcolor)
     }
 
     present() {
