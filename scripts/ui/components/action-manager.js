@@ -1,6 +1,7 @@
 const {
     Setting,
     PageController,
+    BarButtonItem,
     Sheet,
     UIKit
 } = require("../../lib/easy-jsbox")
@@ -602,10 +603,25 @@ class ActionManager {
                             }
                         },
                         {
-                            type: "image",
+                            type: "button",
                             props: {
-                                symbol: "ellipsis.circle"
+                                bgcolor: $color("clear"),
+                                tintColor: UIKit.textColor,
+                                titleColor: UIKit.textColor,
+                                contentEdgeInsets: $insets(0, 0, 0, 0),
+                                titleEdgeInsets: $insets(0, 0, 0, 0),
+                                imageEdgeInsets: $insets(0, 0, 0, 0)
                             },
+                            views: [{
+                                type: "image",
+                                props: {
+                                    symbol: "ellipsis.circle"
+                                },
+                                layout: (make, view) => {
+                                    make.center.equalTo(view.super)
+                                    make.size.equalTo(BarButtonItem.iconSize)
+                                }
+                            }],
                             events: {
                                 tapped: sender => {
                                     const info = sender.next.info
@@ -616,8 +632,8 @@ class ActionManager {
                                 }
                             },
                             layout: make => {
-                                make.top.right.inset(10)
-                                make.size.equalTo($size(25, 25))
+                                make.top.right.inset(0)
+                                make.size.equalTo(BarButtonItem.size)
                             }
                         },
                         { type: "label", props: { id: "info" } }, // 仅用来保存信息
@@ -637,6 +653,14 @@ class ActionManager {
             },
             layout: $layout.fill,
             events: {
+                ready: sender => {
+                    $app.listen({
+                        interfaceOrientationEvent: () => {
+                            //console.log("interfaceOrientationEvent")
+                            sender.sizeToFit()
+                        }
+                    })
+                },
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
                     const action = this.getActionHandler(info.type, info.dir)
