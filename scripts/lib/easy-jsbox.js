@@ -86,14 +86,20 @@ class Controller {
 
 class View {
     id = uuid()
+    type = "view"
 
     constructor(args = {}) {
         // 属性
+        this.type = args.type ?? "view"
         this.props = args.props ?? {}
         this.props.id = this.id
         this.views = args.views ?? []
         this.events = args.events ?? {}
         this.layout = args.layout ?? $layout.fill
+    }
+
+    static get(...args) {
+        return new this(...args)
     }
 
     setProps(props) {
@@ -121,12 +127,25 @@ class View {
         return this
     }
 
+    assignEvent(event, action) {
+        const old = this.events[event]
+        this.events[event] = (...args) => {
+            if (typeof old === "function") {
+                old(...args)
+            }
+            action(...args)
+        }
+        return this
+    }
+
     setLayout(layout) {
         this.layout = layout
         return this
     }
 
-    getView() { }
+    getView() {
+        return this
+    }
 
     get definition() {
         const view = this.getView()
@@ -320,7 +339,7 @@ class ContainerView extends View {
 
     getView() {
         return {
-            type: "view",
+            type: this.type,
             props: this.props,
             views: this.views,
             events: this.events,
@@ -1220,87 +1239,89 @@ class PageController extends Controller {
      * @returns 
      */
     setView(view) {
-        if (view.props === undefined) view.props = {}
-        if (view.events === undefined) view.events = {}
-        this.view = view
+        if (typeof view !== "object") {
+            throw new PageControllerViewTypeError("view", "object")
+        }
+        this.view = View.get(view)
         return this
     }
 
-    initPage() {
-        if (this.navigationController.navigationBar.prefersLargeTitles) {
-            if (typeof this.view !== "object") throw new PageControllerViewTypeError("view", "object")
-            // 计算偏移高度
-            let height = this.navigationController.navigationBar.contentViewHeightOffset
-            if (this.navigationItem.titleView) {
-                height += this.navigationItem.titleView.height
+    bindScrollEvents() {
+        if (!(this.view instanceof View)) {
+            throw new PageControllerViewTypeError("view", "View")
+        }
+
+        // 计算偏移高度
+        let height = this.navigationController.navigationBar.contentViewHeightOffset
+        if (this.navigationItem.titleView) {
+            height += this.navigationItem.titleView.height
+        }
+        if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
+            height += this.navigationController.navigationBar.navigationBarNormalHeight
+        } else {
+            height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+        }
+
+        // 修饰视图顶部偏移
+        if (!this.view.props.header) this.view.props.header = {}
+        this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
+            height: height
+        })
+
+        // 重写布局
+        if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
+            // 非滚动视图
+            this.view.layout = (make, view) => {
+                make.left.right.equalTo(view.super.safeArea)
+                make.bottom.equalTo(view.super)
+                let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
+                if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
+                    largeTitleFontSize = 0
+                }
+                make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + largeTitleFontSize)
             }
-            if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-                height += this.navigationController.navigationBar.navigationBarNormalHeight
+        } else {
+            // indicatorInsets
+            if (this.view.props.indicatorInsets) {
+                const old = this.view.props.indicatorInsets
+                this.view.props.indicatorInsets = $insets(
+                    old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
+                    old.left,
+                    old.bottom,
+                    old.right
+                )
             } else {
-                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+                this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
             }
-
-            // 修饰视图顶部偏移
-            if (!this.view.props.header) this.view.props.header = {}
-            this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-                height: height
-            })
-
-            // 重写布局
-            if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
-                // 非滚动视图
-                this.view.layout = (make, view) => {
-                    make.left.right.equalTo(view.super.safeArea)
-                    make.bottom.equalTo(view.super)
-                    let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
-                    if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-                        largeTitleFontSize = 0
-                    }
-                    make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + largeTitleFontSize)
-                }
-            } else {
-                // indicatorInsets
-                if (this.view.props.indicatorInsets) {
-                    const old = this.view.props.indicatorInsets
-                    this.view.props.indicatorInsets = $insets(
-                        old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
-                        old.left,
-                        old.bottom,
-                        old.right
-                    )
-                } else {
-                    this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
-                }
-                // layout
-                this.view.layout = (make, view) => {
-                    make.left.right.equalTo(view.super.safeArea)
-                    make.top.bottom.equalTo(view.super)
-                }
+            // layout
+            this.view.layout = (make, view) => {
+                make.left.right.equalTo(view.super.safeArea)
+                make.top.bottom.equalTo(view.super)
             }
+        }
 
-            // 重写滚动事件
-            if (!this.view.events) this.view.events = {}
-            const oldEvents = {
-                didScroll: this.view.events.didScroll,
-                didEndDragging: this.view.events.didEndDragging
-            }
-            this.view.events.didScroll = sender => {
+        // 重写滚动事件
+        this.view
+            .assignEvent("didScroll", sender => {
                 let contentOffset = sender.contentOffset.y
                 if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
                     contentOffset += UIKit.statusBarHeight
                 }
                 this.navigationController.didScroll(contentOffset)
-                if (typeof oldEvents.didScroll === "function") oldEvents.didScroll(sender)
-            }
-            this.view.events.didEndDragging = (sender, decelerate) => {
+            })
+            .assignEvent("didEndDragging", (sender, decelerate) => {
                 let contentOffset = sender.contentOffset.y
                 if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
                     contentOffset += UIKit.statusBarHeight
                 }
                 this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
-                if (typeof oldEvents.didEndDragging === "function") oldEvents.didEndDragging(sender, decelerate)
-            }
-            this.view.events.didEndDecelerating = this.view.events.didEndDragging
+            })
+            .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+    }
+
+    initPage() {
+        if (this.navigationController.navigationBar.prefersLargeTitles) {
+            this.bindScrollEvents()
 
             // 初始化 PageView
             this.page = PageView.createByViews([
