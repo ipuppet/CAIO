@@ -101,8 +101,8 @@ class Editor {
                 },
                 rightButtons: navButtons
             })
-            .init()
-            .present()
+        sheet.pageController.navigationController.navigationBar.contentViewHeightOffset = 0
+        sheet.init().present()
     }
 
     /**
@@ -125,10 +125,11 @@ class Editor {
                     return button
                 }),
                 views: [this.getView(type)],
-                disappeared: () => callback(this.text)
+                dealloc: () => callback(this.text)
             })
         } else {
             const pageController = new PageController()
+            pageController.navigationController.navigationBar.contentViewHeightOffset = 0
             pageController
                 .setView(this.getView(type))
                 .navigationItem

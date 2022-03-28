@@ -86,20 +86,39 @@ class Controller {
 
 class View {
     id = uuid()
-    type = "view"
+    type
+    props
+    views
+    events
+    layout
 
-    constructor(args = {}) {
+    constructor({
+        type = "view",
+        props = {},
+        views = [],
+        events = {},
+        layout = $layout.fill
+    } = {}) {
         // 属性
-        this.type = args.type ?? "view"
-        this.props = args.props ?? {}
-        this.props.id = this.id
-        this.views = args.views ?? []
-        this.events = args.events ?? {}
-        this.layout = args.layout ?? $layout.fill
+        this.type = type
+        this.props = props
+        this.views = views
+        this.events = events
+        this.layout = layout
+
+        if (this.props.id) {
+            this.id = this.props.id
+        } else {
+            this.props.id = this.id
+        }
     }
 
-    static get(...args) {
-        return new this(...args)
+    static create(args) {
+        return new this(args)
+    }
+
+    static createByViews(views) {
+        return new this({ views })
     }
 
     setProps(props) {
@@ -127,6 +146,27 @@ class View {
         return this
     }
 
+    /**
+     * 事件中间件
+     * 
+     * 调用处理函数 `action`，第一个参数为用户定义的事件处理函数
+     * 其余参数为 JSBox 传递的参数，如 sender 等
+     * 
+     * @param {String} event 事件名称
+     * @param {Function} action 处理事件的函数
+     * @returns 
+     */
+    eventMiddleware(event, action) {
+        const old = this.events[event]
+        this.events[event] = (...args) => {
+            if (typeof old === "function") {
+                // 调用处理函数
+                action(old, ...args)
+            }
+        }
+        return this
+    }
+
     assignEvent(event, action) {
         const old = this.events[event]
         this.events[event] = (...args) => {
@@ -148,8 +188,7 @@ class View {
     }
 
     get definition() {
-        const view = this.getView()
-        return (view instanceof ContainerView) ? view.getView() : view
+        return this.getView()
     }
 }
 
@@ -327,24 +366,162 @@ class ViewController extends Controller {
     }
 }
 
-class ContainerView extends View {
-    static createByViews(views) {
-        return new this({ views })
+class Matrix extends View {
+    titleStyle = {
+        font: $font("bold", 21),
+        height: 30
+    }
+    hiddenViews
+
+    titleToData(title) {
+        if (!this.hiddenViews) {
+            this.hiddenViews = {}
+            // hide other views
+            for (let i = 0; i < this.props.template.views.length; i++) {
+                if (this.props.template.views[i]?.props?.id === undefined) {
+                    if (this.props.template.views[i].props === undefined) {
+                        this.props.template.views[i].props = {}
+                    }
+                    this.props.template.views[i].props.id = uuid()
+                }
+                this.hiddenViews[this.props.template.views[i].props.id] = {
+                    hidden: true
+                }
+            }
+        }
+
+        let hiddenViews = { ...this.hiddenViews }
+
+        // templateProps & title
+        Object.assign(hiddenViews, {
+            __templateProps: {
+                hidden: true,
+            },
+            __title: {
+                hidden: false,
+                text: title,
+                info: { title: true }
+            }
+        })
+
+        return hiddenViews
     }
 
-    static createByContainers(containers) {
-        const views = containers.map(container => container.definition)
-        return this.createByViews(views)
+    rebuildData(data = []) {
+        // rebuild data
+        const dataWithTitle = []
+        data.forEach(item => {
+            if (item.title) {
+                item.items.unshift(this.titleToData(item.title))
+            }
+            dataWithTitle.push(item)
+        })
+        return dataWithTitle
+    }
+
+    rebuildTemplate() {
+        let templateProps = {}
+        if (this.props.template.props !== undefined) {
+            templateProps = Object.assign(
+                this.props.template.props,
+                {
+                    id: "__templateProps",
+                    hidden: false
+                }
+            )
+        }
+        this.props.template.props = {}
+
+        // rebuild template
+        const templateViews = [
+            { // templateProps
+                type: "view",
+                props: templateProps,
+                layout: $layout.fill
+            },
+            { // title
+                type: "label",
+                props: {
+                    id: "__title",
+                    hidden: true,
+                    font: this.titleStyle.font
+                },
+                layout: (make, view) => {
+                    make.top.inset(-(this.titleStyle.height / 4) * 3)
+                    make.height.equalTo(this.titleStyle.height)
+                    make.width.equalTo(view.super.safeArea)
+                }
+            }
+        ].concat(this.props.template.views)
+        this.props.template.views = templateViews
+    }
+
+    insert(data, withTitleOffset = true) {
+        data.indexPath = this.indexPath(data.indexPath, withTitleOffset)
+        return $(this.id).insert(data)
+    }
+
+    delete(indexPath, withTitleOffset = true) {
+        indexPath = this.indexPath(indexPath, withTitleOffset)
+        return $(this.id).delete(indexPath)
+    }
+
+    object(indexPath, withTitleOffset = true) {
+        indexPath = this.indexPath(indexPath, withTitleOffset)
+        return $(this.id).object(indexPath)
+    }
+
+    cell(indexPath, withTitleOffset = true) {
+        indexPath = this.indexPath(indexPath, withTitleOffset)
+        return $(this.id).cell(indexPath)
+    }
+
+    /**
+     * 获得修正后的 indexPath
+     * @param {$indexPath||Number} indexPath 
+     * @param {Boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
+     * @returns 
+     */
+    indexPath(indexPath, withTitleOffset) {
+        let offset = withTitleOffset ? 0 : 1
+        if (typeof indexPath === "number") {
+            indexPath = $indexPath(0, indexPath)
+        }
+        indexPath = $indexPath(indexPath.section, indexPath.row + offset)
+        return indexPath
+    }
+
+    update(data) {
+        // TODO 刷新问题
+        this.props.data = this.rebuildData(data)
+        $(this.id).data = this.props.data
     }
 
     getView() {
-        return {
-            type: this.type,
-            props: this.props,
-            views: this.views,
-            events: this.events,
-            layout: this.layout
-        }
+        // rebuild data
+        this.props.data = this.rebuildData(this.props.data)
+
+        // rebuild template, must after rebuild data
+        this.rebuildTemplate()
+
+        // itemSize event
+        this.setEvent("itemSize", (sender, indexPath) => {
+            const info = sender.object(indexPath)?.__title?.info
+            if (info?.title) {
+                return $size(Math.max(UIKit.windowSize.width, UIKit.windowSize.height), 0)
+            }
+            const columns = this.props.columns ?? 2
+            const spacing = this.props.spacing ?? 15
+            const width = this.props.itemWidth
+                ?? this.props.itemSize?.width
+                ?? (UIKit.windowSize.width - spacing * (columns + 1)) / columns
+            const height = this.props.itemHeight
+                ?? this.props.itemSize?.height
+                ?? 100
+            return $size(width, height)
+        })
+
+        return this
     }
 }
 
@@ -365,7 +542,7 @@ class SheetViewTypeError extends ValidationError {
 class Sheet extends View {
     #present = () => { }
     #dismiss = () => { }
-    pageController = undefined
+    pageController
 
     init() {
         const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
@@ -1173,7 +1350,7 @@ class NavigationController extends Controller {
     }
 }
 
-class PageView extends ContainerView {
+class PageView extends View {
     constructor(args = {}) {
         super(args)
         this.activeStatus = true
@@ -1223,7 +1400,7 @@ class PageControllerViewTypeError extends ValidationError {
  * - onChange(from, to)
  */
 class PageController extends Controller {
-    page = undefined
+    page
     navigationItem = new NavigationItem()
     navigationController = new NavigationController()
 
@@ -1242,7 +1419,7 @@ class PageController extends Controller {
         if (typeof view !== "object") {
             throw new PageControllerViewTypeError("view", "object")
         }
-        this.view = View.get(view)
+        this.view = View.create(view)
         return this
     }
 
@@ -1274,11 +1451,14 @@ class PageController extends Controller {
             this.view.layout = (make, view) => {
                 make.left.right.equalTo(view.super.safeArea)
                 make.bottom.equalTo(view.super)
-                let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
-                if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-                    largeTitleFontSize = 0
+                let topOffset = this.navigationController.navigationBar.contentViewHeightOffset
+                if (this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever) {
+                    topOffset += this.navigationController.navigationBar.largeTitleFontSize
                 }
-                make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + largeTitleFontSize)
+                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                    topOffset += UIKit.statusBarHeight
+                }
+                make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + topOffset)
             }
         } else {
             // indicatorInsets
@@ -1293,30 +1473,31 @@ class PageController extends Controller {
             } else {
                 this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
             }
+
             // layout
             this.view.layout = (make, view) => {
                 make.left.right.equalTo(view.super.safeArea)
                 make.top.bottom.equalTo(view.super)
             }
-        }
 
-        // 重写滚动事件
-        this.view
-            .assignEvent("didScroll", sender => {
-                let contentOffset = sender.contentOffset.y
-                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
-                    contentOffset += UIKit.statusBarHeight
-                }
-                this.navigationController.didScroll(contentOffset)
-            })
-            .assignEvent("didEndDragging", (sender, decelerate) => {
-                let contentOffset = sender.contentOffset.y
-                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
-                    contentOffset += UIKit.statusBarHeight
-                }
-                this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
-            })
-            .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+            // 重写滚动事件
+            this.view
+                .assignEvent("didScroll", sender => {
+                    let contentOffset = sender.contentOffset.y
+                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                        contentOffset += UIKit.statusBarHeight
+                    }
+                    this.navigationController.didScroll(contentOffset)
+                })
+                .assignEvent("didEndDragging", (sender, decelerate) => {
+                    let contentOffset = sender.contentOffset.y
+                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                        contentOffset += UIKit.statusBarHeight
+                    }
+                    this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
+                })
+                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+        }
     }
 
     initPage() {
@@ -1350,7 +1531,7 @@ class PageController extends Controller {
     }
 }
 
-class TabBarCellView extends ContainerView {
+class TabBarCellView extends View {
     constructor(args = {}) {
         super(args)
         this.props.id = this.id
@@ -1430,7 +1611,7 @@ class TabBarController extends Controller {
 
     #pages = {}
     #cells = {}
-    #selected = undefined
+    #selected
 
     get selected() {
         return this.#selected
@@ -1580,7 +1761,7 @@ class TabBarController extends Controller {
                 UIKit.separatorLine({}, UIKit.align.top)
             ]
         }
-        return ContainerView.createByViews(this.#pageViews().concat(tabBarView))
+        return View.createByViews(this.#pageViews().concat(tabBarView))
     }
 }
 
@@ -2784,7 +2965,11 @@ class Setting extends Controller {
                                     .setTitle(title)
                                     .addPopButton()
                                     .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-                                pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                                if (this.hasSectionTitle(children)) {
+                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(-5)
+                                } else {
+                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                                }
                                 this.viewController.push(pageController)
                             }
                         }
@@ -2883,8 +3068,11 @@ class Setting extends Controller {
                 .setView(this.getListView(this.structure))
                 .navigationItem
                 .setTitle($l10n("SETTING"))
-            if (this.hasSectionTitle(this.structure))
-                pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
+            if (this.hasSectionTitle(this.structure)) {
+                pageController.navigationController.navigationBar.setContentViewHeightOffset(-5)
+            } else {
+                pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+            }
             this.viewController.setRootPageController(pageController)
         }
         return this.viewController.getRootPageController().getPage()
@@ -2897,7 +3085,7 @@ module.exports = {
     // class
     UIKit,
     ViewController,
-    ContainerView,
+    Matrix,
     Sheet,
     NavigationBar,
     BarButtonItem,
