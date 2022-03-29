@@ -67,6 +67,7 @@ class ActionManager {
         if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         return async data => {
+            // TODO 重复引用被抛弃导致无法动态重载脚本内容
             const ActionClass = require(`${basePath}/main.js`)
             const action = new ActionClass(this.kernel, config, data)
             return await action.do()
@@ -566,21 +567,22 @@ class ActionManager {
         ]
     }
 
-    getMatrixView() {
-        const actionsToData = () => { // 格式化数据供 matrix 使用
-            const data = []
-            this.getActionTypes().forEach(type => {
-                const section = {
-                    title: this.getTypeName(type), // TODO section 标题
-                    items: []
-                }
-                this.getActions(type).forEach(action => {
-                    section.items.push(this.actionToData(action))
-                })
-                data.push(section)
+    actionsToData() { // 格式化数据供 matrix 使用
+        const data = []
+        this.getActionTypes().forEach(type => {
+            const section = {
+                title: this.getTypeName(type),
+                items: []
+            }
+            this.getActions(type).forEach(action => {
+                section.items.push(this.actionToData(action))
             })
-            return data
-        }
+            data.push(section)
+        })
+        return data
+    }
+
+    getMatrixView() {
         const columns = 2
         const spacing = 15
         const itemHeight = 100
@@ -594,7 +596,7 @@ class ActionManager {
                 spacing: spacing,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 menu: { items: this.menuItems() },
-                data: actionsToData(),
+                data: this.actionsToData(),
                 template: {
                     props: {
                         smoothCorners: true,
@@ -628,7 +630,6 @@ class ActionManager {
                         { // button
                             type: "button",
                             props: {
-                                id: "button",
                                 bgcolor: $color("clear"),
                                 tintColor: UIKit.textColor,
                                 titleColor: UIKit.textColor,
@@ -685,8 +686,7 @@ class ActionManager {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    const action = this.getActionHandler(info.type, info.dir)
-                    action({
+                    this.getActionHandler(info.type, info.dir)({
                         text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
                         uuid: null
                     })
@@ -694,8 +694,7 @@ class ActionManager {
                 pulled: sender => {
                     $delay(0.5, () => {
                         sender.endRefreshing()
-                        //sender.data = this.matrix.rebuildData(actionsToData())
-                        this.matrix.update(actionsToData())
+                        this.matrix.update(this.actionsToData())
                     })
                 }
             }

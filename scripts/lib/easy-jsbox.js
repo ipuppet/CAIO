@@ -1,4 +1,4 @@
-const VERSION = "1.2.0"
+const VERSION = "1.2.1"
 
 /**
  * 对比版本号
@@ -7,10 +7,10 @@ const VERSION = "1.2.0"
  * @returns 1: preVersion 大, 0: 相等, -1: lastVersion 大
  */
 function versionCompare(preVersion = '', lastVersion = '') {
-    var sources = preVersion.split('.')
-    var dests = lastVersion.split('.')
-    var maxL = Math.max(sources.length, dests.length)
-    var result = 0
+    let sources = preVersion.split('.')
+    let dests = lastVersion.split('.')
+    let maxL = Math.max(sources.length, dests.length)
+    let result = 0
     for (let i = 0; i < maxL; i++) {
         let preValue = sources.length > i ? sources[i] : 0
         let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue)
@@ -55,6 +55,26 @@ function uuid() {
     s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
     s[8] = s[13] = s[18] = s[23] = "-"
     return s.join("")
+}
+
+function objectEqual(a, b) {
+    let aProps = Object.getOwnPropertyNames(a)
+    let bProps = Object.getOwnPropertyNames(b)
+    if (aProps.length !== bProps.length) {
+        return false
+    }
+    for (let i = 0; i < aProps.length; i++) {
+        let propName = aProps[i]
+
+        let propA = a[propName]
+        let propB = b[propName]
+        if (typeof propA === 'object') {
+            return objectEqual(propA, propB)
+        } else if (propA !== propB) {
+            return false
+        }
+    }
+    return true
 }
 
 class ValidationError extends Error {
@@ -371,31 +391,62 @@ class Matrix extends View {
         font: $font("bold", 21),
         height: 30
     }
-    hiddenViews
+    #hiddenViews
+    #templateHiddenStatus
 
-    titleToData(title) {
-        if (!this.hiddenViews) {
-            this.hiddenViews = {}
+    templateIdByIndex(i) {
+        if (this.props.template.views[i]?.props?.id === undefined) {
+            if (this.props.template.views[i].props === undefined) {
+                this.props.template.views[i].props = {}
+            }
+            this.props.template.views[i].props.id = uuid()
+        }
+
+        return this.props.template.views[i].props.id
+    }
+
+    get templateHiddenStatus() {
+        if (!this.#templateHiddenStatus) {
+            this.#templateHiddenStatus = {}
+            for (let i = 0; i < this.props.template.views.length; i++) {
+                // 未定义 id 以及 hidden 的模板默认 hidden 设置为 false
+                if (
+                    this.props.template.views[i].props.id === undefined
+                    && this.props.template.views[i].props.hidden === undefined
+                ) {
+                    this.#templateHiddenStatus[this.templateIdByIndex(i)] = false
+                }
+                // 模板中声明 hidden 的值，在数据中将会成为默认值
+                if (this.props.template.views[i].props.hidden !== undefined) {
+                    this.#templateHiddenStatus[this.templateIdByIndex(i)] = this.props.template.views[i].props.hidden
+                }
+            }
+        }
+
+        return this.#templateHiddenStatus
+    }
+
+    get hiddenViews() {
+        if (!this.#hiddenViews) {
+            this.#hiddenViews = {}
             // hide other views
             for (let i = 0; i < this.props.template.views.length; i++) {
-                if (this.props.template.views[i]?.props?.id === undefined) {
-                    if (this.props.template.views[i].props === undefined) {
-                        this.props.template.views[i].props = {}
-                    }
-                    this.props.template.views[i].props.id = uuid()
-                }
-                this.hiddenViews[this.props.template.views[i].props.id] = {
+                this.#hiddenViews[this.templateIdByIndex(i)] = {
                     hidden: true
                 }
             }
         }
 
+        return this.#hiddenViews
+    }
+
+    #titleToData(title) {
         let hiddenViews = { ...this.hiddenViews }
 
         // templateProps & title
         Object.assign(hiddenViews, {
             __templateProps: {
-                hidden: true,
+                hidden: true
             },
             __title: {
                 hidden: false,
@@ -409,14 +460,38 @@ class Matrix extends View {
 
     rebuildData(data = []) {
         // rebuild data
-        const dataWithTitle = []
-        data.forEach(item => {
-            if (item.title) {
-                item.items.unshift(this.titleToData(item.title))
+        return data.map(section => {
+            section.items = section.items.map(item => {
+                // 所有元素都重置 hidden 属性
+                Object.keys(item).forEach(key => {
+                    item[key].hidden = this.templateHiddenStatus[key] ?? false
+                })
+
+                // 修正数据
+                Object.keys(this.templateHiddenStatus).forEach(key => {
+                    if (!item[key]) {
+                        item[key] = {}
+                    }
+                    item[key].hidden = this.templateHiddenStatus[key]
+                })
+
+                item.__templateProps = {
+                    hidden: false
+                }
+                item.__title = {
+                    hidden: true
+                }
+                //console.log(item)
+
+                return item
+            })
+
+            if (section.title) {
+                section.items.unshift(this.#titleToData(section.title))
             }
-            dataWithTitle.push(item)
+
+            return section
         })
-        return dataWithTitle
     }
 
     rebuildTemplate() {
@@ -492,16 +567,15 @@ class Matrix extends View {
     }
 
     update(data) {
-        // TODO 刷新问题
         this.props.data = this.rebuildData(data)
         $(this.id).data = this.props.data
     }
 
     getView() {
-        // rebuild data
+        // rebuild data, must first
         this.props.data = this.rebuildData(this.props.data)
 
-        // rebuild template, must after rebuild data
+        // rebuild template
         this.rebuildTemplate()
 
         // itemSize event
