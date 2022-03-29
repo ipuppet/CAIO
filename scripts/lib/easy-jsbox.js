@@ -1,4 +1,4 @@
-const VERSION = "1.2.0"
+const VERSION = "1.2.1"
 
 /**
  * 对比版本号
@@ -7,10 +7,10 @@ const VERSION = "1.2.0"
  * @returns 1: preVersion 大, 0: 相等, -1: lastVersion 大
  */
 function versionCompare(preVersion = '', lastVersion = '') {
-    var sources = preVersion.split('.')
-    var dests = lastVersion.split('.')
-    var maxL = Math.max(sources.length, dests.length)
-    var result = 0
+    let sources = preVersion.split('.')
+    let dests = lastVersion.split('.')
+    let maxL = Math.max(sources.length, dests.length)
+    let result = 0
     for (let i = 0; i < maxL; i++) {
         let preValue = sources.length > i ? sources[i] : 0
         let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue)
@@ -57,6 +57,26 @@ function uuid() {
     return s.join("")
 }
 
+function objectEqual(a, b) {
+    let aProps = Object.getOwnPropertyNames(a)
+    let bProps = Object.getOwnPropertyNames(b)
+    if (aProps.length !== bProps.length) {
+        return false
+    }
+    for (let i = 0; i < aProps.length; i++) {
+        let propName = aProps[i]
+
+        let propA = a[propName]
+        let propB = b[propName]
+        if (typeof propA === 'object') {
+            return objectEqual(propA, propB)
+        } else if (propA !== propB) {
+            return false
+        }
+    }
+    return true
+}
+
 class ValidationError extends Error {
     constructor(parameter, type) {
         super(`The type of the parameter '${parameter}' must be '${type}'`)
@@ -86,14 +106,39 @@ class Controller {
 
 class View {
     id = uuid()
+    type
+    props
+    views
+    events
+    layout
 
-    constructor(args = {}) {
+    constructor({
+        type = "view",
+        props = {},
+        views = [],
+        events = {},
+        layout = $layout.fill
+    } = {}) {
         // 属性
-        this.props = args.props ?? {}
-        this.props.id = this.id
-        this.views = args.views ?? []
-        this.events = args.events ?? {}
-        this.layout = args.layout ?? $layout.fill
+        this.type = type
+        this.props = props
+        this.views = views
+        this.events = events
+        this.layout = layout
+
+        if (this.props.id) {
+            this.id = this.props.id
+        } else {
+            this.props.id = this.id
+        }
+    }
+
+    static create(args) {
+        return new this(args)
+    }
+
+    static createByViews(views) {
+        return new this({ views })
     }
 
     setProps(props) {
@@ -121,16 +166,49 @@ class View {
         return this
     }
 
+    /**
+     * 事件中间件
+     * 
+     * 调用处理函数 `action`，第一个参数为用户定义的事件处理函数
+     * 其余参数为 JSBox 传递的参数，如 sender 等
+     * 
+     * @param {String} event 事件名称
+     * @param {Function} action 处理事件的函数
+     * @returns 
+     */
+    eventMiddleware(event, action) {
+        const old = this.events[event]
+        this.events[event] = (...args) => {
+            if (typeof old === "function") {
+                // 调用处理函数
+                action(old, ...args)
+            }
+        }
+        return this
+    }
+
+    assignEvent(event, action) {
+        const old = this.events[event]
+        this.events[event] = (...args) => {
+            if (typeof old === "function") {
+                old(...args)
+            }
+            action(...args)
+        }
+        return this
+    }
+
     setLayout(layout) {
         this.layout = layout
         return this
     }
 
-    getView() { }
+    getView() {
+        return this
+    }
 
     get definition() {
-        const view = this.getView()
-        return (view instanceof ContainerView) ? view.getView() : view
+        return this.getView()
     }
 }
 
@@ -308,24 +386,216 @@ class ViewController extends Controller {
     }
 }
 
-class ContainerView extends View {
-    static createByViews(views) {
-        return new this({ views })
+class Matrix extends View {
+    titleStyle = {
+        font: $font("bold", 21),
+        height: 30
+    }
+    #hiddenViews
+    #templateHiddenStatus
+
+    templateIdByIndex(i) {
+        if (this.props.template.views[i]?.props?.id === undefined) {
+            if (this.props.template.views[i].props === undefined) {
+                this.props.template.views[i].props = {}
+            }
+            this.props.template.views[i].props.id = uuid()
+        }
+
+        return this.props.template.views[i].props.id
     }
 
-    static createByContainers(containers) {
-        const views = containers.map(container => container.definition)
-        return this.createByViews(views)
+    get templateHiddenStatus() {
+        if (!this.#templateHiddenStatus) {
+            this.#templateHiddenStatus = {}
+            for (let i = 0; i < this.props.template.views.length; i++) {
+                // 未定义 id 以及 hidden 的模板默认 hidden 设置为 false
+                if (
+                    this.props.template.views[i].props.id === undefined
+                    && this.props.template.views[i].props.hidden === undefined
+                ) {
+                    this.#templateHiddenStatus[this.templateIdByIndex(i)] = false
+                }
+                // 模板中声明 hidden 的值，在数据中将会成为默认值
+                if (this.props.template.views[i].props.hidden !== undefined) {
+                    this.#templateHiddenStatus[this.templateIdByIndex(i)] = this.props.template.views[i].props.hidden
+                }
+            }
+        }
+
+        return this.#templateHiddenStatus
+    }
+
+    get hiddenViews() {
+        if (!this.#hiddenViews) {
+            this.#hiddenViews = {}
+            // hide other views
+            for (let i = 0; i < this.props.template.views.length; i++) {
+                this.#hiddenViews[this.templateIdByIndex(i)] = {
+                    hidden: true
+                }
+            }
+        }
+
+        return this.#hiddenViews
+    }
+
+    #titleToData(title) {
+        let hiddenViews = { ...this.hiddenViews }
+
+        // templateProps & title
+        Object.assign(hiddenViews, {
+            __templateProps: {
+                hidden: true
+            },
+            __title: {
+                hidden: false,
+                text: title,
+                info: { title: true }
+            }
+        })
+
+        return hiddenViews
+    }
+
+    rebuildData(data = []) {
+        // rebuild data
+        return data.map(section => {
+            section.items = section.items.map(item => {
+                // 所有元素都重置 hidden 属性
+                Object.keys(item).forEach(key => {
+                    item[key].hidden = this.templateHiddenStatus[key] ?? false
+                })
+
+                // 修正数据
+                Object.keys(this.templateHiddenStatus).forEach(key => {
+                    if (!item[key]) {
+                        item[key] = {}
+                    }
+                    item[key].hidden = this.templateHiddenStatus[key]
+                })
+
+                item.__templateProps = {
+                    hidden: false
+                }
+                item.__title = {
+                    hidden: true
+                }
+                //console.log(item)
+
+                return item
+            })
+
+            if (section.title) {
+                section.items.unshift(this.#titleToData(section.title))
+            }
+
+            return section
+        })
+    }
+
+    rebuildTemplate() {
+        let templateProps = {}
+        if (this.props.template.props !== undefined) {
+            templateProps = Object.assign(
+                this.props.template.props,
+                {
+                    id: "__templateProps",
+                    hidden: false
+                }
+            )
+        }
+        this.props.template.props = {}
+
+        // rebuild template
+        const templateViews = [
+            { // templateProps
+                type: "view",
+                props: templateProps,
+                layout: $layout.fill
+            },
+            { // title
+                type: "label",
+                props: {
+                    id: "__title",
+                    hidden: true,
+                    font: this.titleStyle.font
+                },
+                layout: (make, view) => {
+                    make.top.inset(-(this.titleStyle.height / 4) * 3)
+                    make.height.equalTo(this.titleStyle.height)
+                    make.width.equalTo(view.super.safeArea)
+                }
+            }
+        ].concat(this.props.template.views)
+        this.props.template.views = templateViews
+    }
+
+    insert(data, withTitleOffset = true) {
+        data.indexPath = this.indexPath(data.indexPath, withTitleOffset)
+        return $(this.id).insert(data)
+    }
+
+    delete(indexPath, withTitleOffset = true) {
+        indexPath = this.indexPath(indexPath, withTitleOffset)
+        return $(this.id).delete(indexPath)
+    }
+
+    object(indexPath, withTitleOffset = true) {
+        indexPath = this.indexPath(indexPath, withTitleOffset)
+        return $(this.id).object(indexPath)
+    }
+
+    cell(indexPath, withTitleOffset = true) {
+        indexPath = this.indexPath(indexPath, withTitleOffset)
+        return $(this.id).cell(indexPath)
+    }
+
+    /**
+     * 获得修正后的 indexPath
+     * @param {$indexPath||Number} indexPath 
+     * @param {Boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
+     * @returns 
+     */
+    indexPath(indexPath, withTitleOffset) {
+        let offset = withTitleOffset ? 0 : 1
+        if (typeof indexPath === "number") {
+            indexPath = $indexPath(0, indexPath)
+        }
+        indexPath = $indexPath(indexPath.section, indexPath.row + offset)
+        return indexPath
+    }
+
+    update(data) {
+        this.props.data = this.rebuildData(data)
+        $(this.id).data = this.props.data
     }
 
     getView() {
-        return {
-            type: "view",
-            props: this.props,
-            views: this.views,
-            events: this.events,
-            layout: this.layout
-        }
+        // rebuild data, must first
+        this.props.data = this.rebuildData(this.props.data)
+
+        // rebuild template
+        this.rebuildTemplate()
+
+        // itemSize event
+        this.setEvent("itemSize", (sender, indexPath) => {
+            const info = sender.object(indexPath)?.__title?.info
+            if (info?.title) {
+                return $size(Math.max(UIKit.windowSize.width, UIKit.windowSize.height), 0)
+            }
+            const columns = this.props.columns ?? 2
+            const spacing = this.props.spacing ?? 15
+            const width = this.props.itemWidth
+                ?? this.props.itemSize?.width
+                ?? (UIKit.windowSize.width - spacing * (columns + 1)) / columns
+            const height = this.props.itemHeight
+                ?? this.props.itemSize?.height
+                ?? 100
+            return $size(width, height)
+        })
+
+        return this
     }
 }
 
@@ -346,7 +616,7 @@ class SheetViewTypeError extends ValidationError {
 class Sheet extends View {
     #present = () => { }
     #dismiss = () => { }
-    pageController = undefined
+    pageController
 
     init() {
         const UIModalPresentationStyle = { pageSheet: 1 } // TODO: sheet style
@@ -1154,7 +1424,7 @@ class NavigationController extends Controller {
     }
 }
 
-class PageView extends ContainerView {
+class PageView extends View {
     constructor(args = {}) {
         super(args)
         this.activeStatus = true
@@ -1204,7 +1474,7 @@ class PageControllerViewTypeError extends ValidationError {
  * - onChange(from, to)
  */
 class PageController extends Controller {
-    page = undefined
+    page
     navigationItem = new NavigationItem()
     navigationController = new NavigationController()
 
@@ -1220,87 +1490,93 @@ class PageController extends Controller {
      * @returns 
      */
     setView(view) {
-        if (view.props === undefined) view.props = {}
-        if (view.events === undefined) view.events = {}
-        this.view = view
+        if (typeof view !== "object") {
+            throw new PageControllerViewTypeError("view", "object")
+        }
+        this.view = View.create(view)
         return this
+    }
+
+    bindScrollEvents() {
+        if (!(this.view instanceof View)) {
+            throw new PageControllerViewTypeError("view", "View")
+        }
+
+        // 计算偏移高度
+        let height = this.navigationController.navigationBar.contentViewHeightOffset
+        if (this.navigationItem.titleView) {
+            height += this.navigationItem.titleView.height
+        }
+        if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
+            height += this.navigationController.navigationBar.navigationBarNormalHeight
+        } else {
+            height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+        }
+
+        // 修饰视图顶部偏移
+        if (!this.view.props.header) this.view.props.header = {}
+        this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
+            height: height
+        })
+
+        // 重写布局
+        if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
+            // 非滚动视图
+            this.view.layout = (make, view) => {
+                make.left.right.equalTo(view.super.safeArea)
+                make.bottom.equalTo(view.super)
+                let topOffset = this.navigationController.navigationBar.contentViewHeightOffset
+                if (this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever) {
+                    topOffset += this.navigationController.navigationBar.largeTitleFontSize
+                }
+                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                    topOffset += UIKit.statusBarHeight
+                }
+                make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + topOffset)
+            }
+        } else {
+            // indicatorInsets
+            if (this.view.props.indicatorInsets) {
+                const old = this.view.props.indicatorInsets
+                this.view.props.indicatorInsets = $insets(
+                    old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
+                    old.left,
+                    old.bottom,
+                    old.right
+                )
+            } else {
+                this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
+            }
+
+            // layout
+            this.view.layout = (make, view) => {
+                make.left.right.equalTo(view.super.safeArea)
+                make.top.bottom.equalTo(view.super)
+            }
+
+            // 重写滚动事件
+            this.view
+                .assignEvent("didScroll", sender => {
+                    let contentOffset = sender.contentOffset.y
+                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                        contentOffset += UIKit.statusBarHeight
+                    }
+                    this.navigationController.didScroll(contentOffset)
+                })
+                .assignEvent("didEndDragging", (sender, decelerate) => {
+                    let contentOffset = sender.contentOffset.y
+                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                        contentOffset += UIKit.statusBarHeight
+                    }
+                    this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
+                })
+                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+        }
     }
 
     initPage() {
         if (this.navigationController.navigationBar.prefersLargeTitles) {
-            if (typeof this.view !== "object") throw new PageControllerViewTypeError("view", "object")
-            // 计算偏移高度
-            let height = this.navigationController.navigationBar.contentViewHeightOffset
-            if (this.navigationItem.titleView) {
-                height += this.navigationItem.titleView.height
-            }
-            if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-                height += this.navigationController.navigationBar.navigationBarNormalHeight
-            } else {
-                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
-            }
-
-            // 修饰视图顶部偏移
-            if (!this.view.props.header) this.view.props.header = {}
-            this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-                height: height
-            })
-
-            // 重写布局
-            if (UIKit.scrollViewList.indexOf(this.view.type) === -1) {
-                // 非滚动视图
-                this.view.layout = (make, view) => {
-                    make.left.right.equalTo(view.super.safeArea)
-                    make.bottom.equalTo(view.super)
-                    let largeTitleFontSize = this.navigationController.navigationBar.largeTitleFontSize
-                    if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-                        largeTitleFontSize = 0
-                    }
-                    make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + largeTitleFontSize)
-                }
-            } else {
-                // indicatorInsets
-                if (this.view.props.indicatorInsets) {
-                    const old = this.view.props.indicatorInsets
-                    this.view.props.indicatorInsets = $insets(
-                        old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
-                        old.left,
-                        old.bottom,
-                        old.right
-                    )
-                } else {
-                    this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
-                }
-                // layout
-                this.view.layout = (make, view) => {
-                    make.left.right.equalTo(view.super.safeArea)
-                    make.top.bottom.equalTo(view.super)
-                }
-            }
-
-            // 重写滚动事件
-            if (!this.view.events) this.view.events = {}
-            const oldEvents = {
-                didScroll: this.view.events.didScroll,
-                didEndDragging: this.view.events.didEndDragging
-            }
-            this.view.events.didScroll = sender => {
-                let contentOffset = sender.contentOffset.y
-                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
-                    contentOffset += UIKit.statusBarHeight
-                }
-                this.navigationController.didScroll(contentOffset)
-                if (typeof oldEvents.didScroll === "function") oldEvents.didScroll(sender)
-            }
-            this.view.events.didEndDragging = (sender, decelerate) => {
-                let contentOffset = sender.contentOffset.y
-                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
-                    contentOffset += UIKit.statusBarHeight
-                }
-                this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
-                if (typeof oldEvents.didEndDragging === "function") oldEvents.didEndDragging(sender, decelerate)
-            }
-            this.view.events.didEndDecelerating = this.view.events.didEndDragging
+            this.bindScrollEvents()
 
             // 初始化 PageView
             this.page = PageView.createByViews([
@@ -1329,7 +1605,7 @@ class PageController extends Controller {
     }
 }
 
-class TabBarCellView extends ContainerView {
+class TabBarCellView extends View {
     constructor(args = {}) {
         super(args)
         this.props.id = this.id
@@ -1409,7 +1685,7 @@ class TabBarController extends Controller {
 
     #pages = {}
     #cells = {}
-    #selected = undefined
+    #selected
 
     get selected() {
         return this.#selected
@@ -1559,7 +1835,7 @@ class TabBarController extends Controller {
                 UIKit.separatorLine({}, UIKit.align.top)
             ]
         }
-        return ContainerView.createByViews(this.#pageViews().concat(tabBarView))
+        return View.createByViews(this.#pageViews().concat(tabBarView))
     }
 }
 
@@ -2763,7 +3039,11 @@ class Setting extends Controller {
                                     .setTitle(title)
                                     .addPopButton()
                                     .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-                                pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                                if (this.hasSectionTitle(children)) {
+                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(-5)
+                                } else {
+                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                                }
                                 this.viewController.push(pageController)
                             }
                         }
@@ -2862,8 +3142,11 @@ class Setting extends Controller {
                 .setView(this.getListView(this.structure))
                 .navigationItem
                 .setTitle($l10n("SETTING"))
-            if (this.hasSectionTitle(this.structure))
-                pageController.navigationController.navigationBar.setContentViewHeightOffset(0)
+            if (this.hasSectionTitle(this.structure)) {
+                pageController.navigationController.navigationBar.setContentViewHeightOffset(-5)
+            } else {
+                pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+            }
             this.viewController.setRootPageController(pageController)
         }
         return this.viewController.getRootPageController().getPage()
@@ -2876,7 +3159,7 @@ module.exports = {
     // class
     UIKit,
     ViewController,
-    ContainerView,
+    Matrix,
     Sheet,
     NavigationBar,
     BarButtonItem,

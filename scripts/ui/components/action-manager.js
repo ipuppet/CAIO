@@ -1,14 +1,19 @@
 const {
+    Matrix,
     Setting,
     PageController,
+    BarButtonItem,
     Sheet,
     UIKit
 } = require("../../lib/easy-jsbox")
 
 class ActionManager {
+    matrixId = "actions"
+    matrix
+    reorder = {}
+
     constructor(kernel) {
         this.kernel = kernel
-        this.matrixId = "actions"
         // path
         this.actionPath = "scripts/action"
         this.actionOrderFile = "order.json"
@@ -62,6 +67,7 @@ class ActionManager {
         if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         return async data => {
+            // TODO 重复引用被抛弃导致无法动态重载脚本内容
             const ActionClass = require(`${basePath}/main.js`)
             const action = new ActionClass(this.kernel, config, data)
             return await action.do()
@@ -115,6 +121,22 @@ class ActionManager {
                 : { image: $image(action.icon) },
             color: { bgcolor: $color(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
+        }
+    }
+
+    titleView(title) {
+        return {
+            name: { hidden: true },
+            icon: { hidden: true },
+            color: { hidden: true },
+            button: { hidden: true },
+            bgcolor: { hidden: true },
+            info: {
+                hidden: false,
+                info: {
+                    title: title
+                }
+            }
         }
     }
 
@@ -372,20 +394,20 @@ class ActionManager {
             return order
         }
         const updateUI = (insertFirst = true, type) => {
-            const actionsView = $(this.matrixId)
+            const actionsView = this.matrix
             const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
             if (insertFirst) {
                 actionsView.insert({
                     indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
                     value: toData
-                })
-                actionsView.delete(from)
+                }, false)
+                actionsView.delete(from, false)
             } else {
-                actionsView.delete(from)
+                actionsView.delete(from, false)
                 actionsView.insert({
                     indexPath: to,
                     value: toData
-                })
+                }, false)
             }
         }
         const fromType = this.getTypeDir(fromSection.title)
@@ -402,7 +424,7 @@ class ActionManager {
             })
         }
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
-        updateUI(from.rom < to.rom, toType)
+        updateUI(from.row < to.row, toType)
 
     }
 
@@ -468,7 +490,7 @@ class ActionManager {
                             title: $l10n("CREATE_NEW_ACTION"),
                             handler: () => {
                                 this.editActionInfoPageSheet(null, info => {
-                                    $(this.matrixId).insert({
+                                    this.matrix.insert({
                                         indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
                                         value: this.actionToData(info)
                                     })
@@ -518,16 +540,15 @@ class ActionManager {
                                     { // 删除
                                         title: "delete",
                                         handler: (sender, indexPath) => {
-                                            const matrixView = $(this.matrixId)
-                                            const info = matrixView.object(indexPath).info.info
+                                            const matrixView = this.matrix
+                                            const info = matrixView.object(indexPath, false).info.info
                                             this.delete(info)
-                                            matrixView.delete(indexPath)
+                                            matrixView.delete(indexPath, false)
                                         }
                                     }
                                 ]
                             }, {
                                 reorderBegan: indexPath => {
-                                    if (this.reorder === undefined) this.reorder = {}
                                     this.reorder.from = indexPath
                                     this.reorder.to = undefined
                                 },
@@ -546,31 +567,36 @@ class ActionManager {
         ]
     }
 
-    getMatrixView() {
-        const actionsToData = () => { // 格式化数据供 matrix 使用
-            const data = []
-            this.getActionTypes().forEach(type => {
-                const section = {
-                    title: this.getTypeName(type), // TODO section 标题
-                    items: []
-                }
-                this.getActions(type).forEach(action => {
-                    section.items.push(this.actionToData(action))
-                })
-                data.push(section)
+    actionsToData() { // 格式化数据供 matrix 使用
+        const data = []
+        this.getActionTypes().forEach(type => {
+            const section = {
+                title: this.getTypeName(type),
+                items: []
+            }
+            this.getActions(type).forEach(action => {
+                section.items.push(this.actionToData(action))
             })
-            return data
-        }
-        return {
+            data.push(section)
+        })
+        return data
+    }
+
+    getMatrixView() {
+        const columns = 2
+        const spacing = 15
+        const itemHeight = 100
+
+        this.matrix = Matrix.create({
             type: "matrix",
             props: {
                 id: this.matrixId,
-                columns: 2,
-                itemHeight: 100,
-                spacing: 15,
+                columns: columns,
+                itemHeight: itemHeight,
+                spacing: spacing,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 menu: { items: this.menuItems() },
-                data: actionsToData(),
+                data: this.actionsToData(),
                 template: {
                     props: {
                         smoothCorners: true,
@@ -601,11 +627,26 @@ class ActionManager {
                                 make.size.equalTo($size(20, 20))
                             }
                         },
-                        {
-                            type: "image",
+                        { // button
+                            type: "button",
                             props: {
-                                symbol: "ellipsis.circle"
+                                bgcolor: $color("clear"),
+                                tintColor: UIKit.textColor,
+                                titleColor: UIKit.textColor,
+                                contentEdgeInsets: $insets(0, 0, 0, 0),
+                                titleEdgeInsets: $insets(0, 0, 0, 0),
+                                imageEdgeInsets: $insets(0, 0, 0, 0)
                             },
+                            views: [{
+                                type: "image",
+                                props: {
+                                    symbol: "ellipsis.circle"
+                                },
+                                layout: (make, view) => {
+                                    make.center.equalTo(view.super)
+                                    make.size.equalTo(BarButtonItem.iconSize)
+                                }
+                            }],
                             events: {
                                 tapped: sender => {
                                     const info = sender.next.info
@@ -616,11 +657,17 @@ class ActionManager {
                                 }
                             },
                             layout: make => {
-                                make.top.right.inset(10)
-                                make.size.equalTo($size(25, 25))
+                                make.top.right.inset(0)
+                                make.size.equalTo(BarButtonItem.size)
                             }
                         },
-                        { type: "label", props: { id: "info" } }, // 仅用来保存信息
+                        { // 用来保存信息
+                            type: "view",
+                            props: {
+                                id: "info",
+                                hidden: true
+                            }
+                        },
                         {
                             type: "label",
                             props: {
@@ -639,8 +686,7 @@ class ActionManager {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    const action = this.getActionHandler(info.type, info.dir)
-                    action({
+                    this.getActionHandler(info.type, info.dir)({
                         text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
                         uuid: null
                     })
@@ -648,11 +694,13 @@ class ActionManager {
                 pulled: sender => {
                     $delay(0.5, () => {
                         sender.endRefreshing()
-                        sender.data = actionsToData()
+                        this.matrix.update(this.actionsToData())
                     })
                 }
             }
-        }
+        })
+
+        return this.matrix.definition
     }
 
     getPageView() {
