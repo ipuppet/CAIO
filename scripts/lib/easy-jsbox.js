@@ -243,7 +243,7 @@ class UIKit {
     }
 
     static get statusBarHeight() {
-        return UIKit.#sharedApplication.$statusBarFrame().height
+        return $app.isDebugging ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
     }
 
     static get statusBarOrientation() {
