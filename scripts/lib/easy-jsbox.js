@@ -648,10 +648,13 @@ class Sheet extends View {
 
     /**
      * 为 view 添加一个 navBar
-     * @param {String} title 标题
-     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
-     * @param {String} button 按钮显示的文字，默认为 "Done"
-     * @returns this
+     * @param {Object} param
+     *  {
+     *      {String} title
+     *      {Object} popButton 参数与 BarButtonItem 一致
+     *      {Array} rightButtons
+     *  } 
+     * @returns 
      */
     addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
         if (this.view === undefined) throw new SheetAddNavBarError()
