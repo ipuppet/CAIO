@@ -274,7 +274,7 @@ class UIKit {
             },
             events: {
                 draw: (view, ctx) => {
-                    ctx.strokeColor = $color("separatorColor")
+                    ctx.strokeColor = props.bgcolor ?? $color("separatorColor")
                     ctx.setLineWidth(1)
                     ctx.moveToPoint(0, 0)
                     ctx.addLineToPoint(view.frame.width, 0)
