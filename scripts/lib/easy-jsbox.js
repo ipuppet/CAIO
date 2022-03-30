@@ -1,5 +1,17 @@
 const VERSION = "1.2.1"
 
+String.prototype.trim = function (char, type) {
+    if (char) {
+        if (type == 'l') {
+            return this.replace(new RegExp('^\\' + char + '+', 'g'), '');
+        } else if (type == 'r') {
+            return this.replace(new RegExp('\\' + char + '+$', 'g'), '');
+        }
+        return this.replace(new RegExp('^\\' + char + '+|\\' + char + '+$', 'g'), '');
+    }
+    return this.replace(/^\s+|\s+$/g, '');
+}
+
 /**
  * 对比版本号
  * @param {String} preVersion 
@@ -481,7 +493,6 @@ class Matrix extends View {
                 item.__title = {
                     hidden: true
                 }
-                //console.log(item)
 
                 return item
             })
@@ -1848,6 +1859,12 @@ class Kernel {
     // 隐藏 jsbox 默认 nav 栏
     isUseJsboxNav = false
 
+    constructor() {
+        if ($app.isDebugging) {
+            this.debug()
+        }
+    }
+
     uuid() {
         return uuid()
     }
@@ -1927,6 +1944,147 @@ class Kernel {
     }
 }
 
+class FileStorageParameterError extends Error {
+    constructor(parameter) {
+        super(`Parameter [${parameter}] is required.`)
+        this.name = "FileStorageParameterError"
+    }
+}
+
+class FileStorageFileNotFoundError extends Error {
+    constructor(filePath) {
+        super(`File not found: ${filePath}`)
+        this.name = "FileStorageFileNotFoundError"
+    }
+}
+
+class FileStorage {
+    basePath
+
+    constructor({ basePath = "storage" } = {}) {
+        this.basePath = basePath
+        this.#createDirectory(this.basePath)
+    }
+
+    #createDirectory(path) {
+        if (!$file.isDirectory(path)) {
+            $file.mkdir(path)
+        }
+    }
+
+    #filePath(path = "", fileName) {
+        path = `${this.basePath}/${path.trim("/")}`.trim("/")
+
+        this.#createDirectory(path)
+
+        path = `${path}/${fileName}`
+        return path
+    }
+
+    write(path = "", fileName, data) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        if (!data) {
+            throw new FileStorageParameterError("data")
+        }
+        return $file.write({
+            data: data,
+            path: this.#filePath(path, fileName)
+        })
+    }
+
+    writeSync(path = "", fileName, data) {
+        return new Promise((resolve, reject) => {
+            try {
+                const success = this.write(path, fileName, data)
+                if (success) {
+                    resolve(success)
+                } else {
+                    reject(success)
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    read(path = "", fileName) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        path = this.#filePath(path, fileName)
+        if (!$file.exists(path)) {
+            throw new FileStorageFileNotFoundError(path)
+        }
+        if ($file.isDirectory(path)) {
+            return $file.list(path)
+        }
+        return $file.read(path)
+    }
+
+    readSync(path = "", fileName) {
+        return new Promise((resolve, reject) => {
+            try {
+                const file = this.read(path, fileName)
+                if (file) {
+                    resolve(file)
+                } else {
+                    reject()
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    readAsJSON(path = "", fileName, _default = null) {
+        try {
+            const fileString = this.read(path, fileName)?.string
+            return JSON.parse(fileString)
+        } catch (error) {
+            return _default
+        }
+    }
+
+    static readFromRoot(path) {
+        if (!path) {
+            throw new FileStorageParameterError("path")
+        }
+        if (!$file.exists(path)) {
+            throw new FileStorageFileNotFoundError(path)
+        }
+        if ($file.isDirectory(path)) {
+            return $file.list(path)
+        }
+        return $file.read(path)
+    }
+
+    static readFromRootSync(path = "") {
+        return new Promise((resolve, reject) => {
+            try {
+                const file = FileStorage.readFromRoot(path)
+                if (file) {
+                    resolve(file)
+                } else {
+                    reject()
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    static readFromRootAsJSON(path = "", _default = null) {
+        try {
+            const fileString = FileStorage.readFromRoot(path)?.string
+            return JSON.parse(fileString)
+        } catch (error) {
+            return _default
+        }
+    }
+}
+
 class SettingLoadConfigError extends Error {
     constructor() {
         super("Call loadConfig() first.")
@@ -1963,17 +2121,13 @@ class Setting extends Controller {
     constructor(args = {}) {
         super()
 
+        this.fileStorage = new FileStorage()
         // set 和 get 同时设置才会生效
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.get = args.get
         } else {
-            this.savePath = args.savePath ?? (() => {
-                if (!$file.isDirectory("storage")) {
-                    $file.mkdir("storage")
-                }
-                return "storage/setting.json"
-            })()
+            this.dataFile = args.dataFile ?? "setting.json"
         }
         if (args.structure) {
             this.setStructure(args.structure) // structure 优先级高于 structurePath
@@ -2008,9 +2162,7 @@ class Setting extends Controller {
             "script", // script 类型永远使用setting结构文件内的值
             "info"
         ]
-        if ($file.exists(this.savePath)) {
-            userData = JSON.parse($file.read(this.savePath).string)
-        }
+        userData = this.fileStorage.readAsJSON("", this.dataFile, {})
         function setValue(structure) {
             const setting = {}
             for (let section of structure) {
@@ -2092,11 +2244,6 @@ class Setting extends Controller {
         `)
     }
 
-    setSavePath(savePath) {
-        this.savePath = savePath
-        return this
-    }
-
     setStructure(structure) {
         this.structure = structure
         return this
@@ -2110,7 +2257,7 @@ class Setting extends Controller {
      */
     setStructurePath(structurePath) {
         if (!this.structure) {
-            this.setStructure(JSON.parse($file.read(structurePath)?.string))
+            this.setStructure(FileStorage.readFromRootAsJSON(structurePath))
         }
         return this
     }
@@ -2135,8 +2282,8 @@ class Setting extends Controller {
 
     get footer() {
         if (this.#footer === undefined) {
-            const info = JSON.parse($file.read("/config.json")?.string)["info"]
-            this.#footer = {
+            const info = FileStorage.readFromRootAsJSON("/config.json", {})["info"]
+            this.#footer = info ? {
                 type: "view",
                 props: { height: 130 },
                 views: [
@@ -2157,7 +2304,7 @@ class Setting extends Controller {
                         }
                     }
                 ]
-            }
+            } : {}
         }
         return this.#footer
     }
@@ -2173,10 +2320,7 @@ class Setting extends Controller {
         }
         this.#checkLoadConfigError()
         this.setting[key] = value
-        $file.write({
-            data: $data({ string: JSON.stringify(this.setting) }),
-            path: this.savePath
-        })
+        this.fileStorage.write("", this.dataFile, $data({ string: JSON.stringify(this.setting) }))
         this.callEvent("onSet", key, value)
         return true
     }
@@ -3175,5 +3319,6 @@ module.exports = {
     TabBarCellView,
     TabBarController,
     Kernel,
+    FileStorage,
     Setting
 }

@@ -4,6 +4,7 @@ const {
     Sheet,
     TabBarController,
     Kernel,
+    FileStorage,
     Setting
 } = require("./lib/easy-jsbox")
 const Storage = require("./storage")
@@ -11,15 +12,18 @@ const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
 const Editor = require("./ui/components/editor")
 
+const fileStorage = new FileStorage()
+
 class AppKernel extends Kernel {
     constructor() {
         super()
-        // this.debug()
         this.query = $context.query
         // Setting
         this.setting = new Setting()
         this.setting.loadConfig()
         this.initSettingMethods()
+        // FileStorage
+        this.fileStorage = fileStorage
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
         this.initComponents()
@@ -140,7 +144,7 @@ class AppKernel extends Kernel {
             animate.actionStart()
             // 备份动作
             const fileName = "actions.zip"
-            const tempPath = `/storage/${fileName}`
+            const tempPath = `${this.fileStorage.basePath}/${fileName}`
             $archiver.zip({
                 directory: this.actionManager.userActionPath,
                 dest: tempPath,
@@ -172,7 +176,7 @@ class AppKernel extends Kernel {
                         return
                     }
                     if (data.fileName.slice(-3) === "zip") {
-                        const path = "/storage/action_import"
+                        const path = `${this.fileStorage.basePath}/action_import`
                         $archiver.unzip({
                             file: data,
                             dest: path,
@@ -311,6 +315,53 @@ class AppKernel extends Kernel {
             })
         }
 
+        this.setting.method.keyboardBackgroundImage = animate => {
+            animate.touchHighlightStart()
+            const path = `${this.fileStorage.basePath}/keyboard`
+            const clearBackgroundImage = () => {
+                $file.list(path)?.forEach(file => {
+                    if (file.indexOf("background") > -1) {
+                        $file.delete(`${path}/${file}`)
+                    }
+                })
+            }
+            $ui.menu({
+                items: [$l10n("SELECT_IMAGE"), $l10n("CLEAR_IMAGE")],
+                handler: (title, idx) => {
+                    if (idx === 0) {
+                        animate.actionStart()
+                        $photo.pick({ format: "data" }).then(resp => {
+                            if (!resp.status) {
+                                if (resp.error.description !== "canceled") {
+                                    $ui.toast($l10n("ERROR"))
+                                    return
+                                } else {
+                                    console.log(resp.error.description)
+                                    animate.actionCancel()
+                                    return
+                                }
+                            }
+                            if (!resp.data) return
+                            // 清除旧图片
+                            clearBackgroundImage()
+                            const fileName = "background.jpg"
+                            // 控制压缩图片大小
+                            const image = this.compressImage(resp.data.image)
+                            this.fileStorage.write("keyboard", `compress.${fileName}`, image.jpg(0.8))
+                            this.fileStorage.write("keyboard", fileName, resp.data)
+                            animate.actionDone()
+                        })
+                    } else {
+                        clearBackgroundImage()
+                        animate.actionDone()
+                    }
+                },
+                finished: () => {
+                    animate.touchHighlightEnd()
+                }
+            })
+        }
+
         this.setting.method.setKeyboardQuickStart = animate => {
             animate.touchHighlight()
             const KeyboardScripts = require("./ui/components/keyboard-scripts")
@@ -438,7 +489,14 @@ class Widget {
     static renderClipboard() {
         const setting = new Setting()
         setting.loadConfig().setReadonly()
-        const widget = Widget.widgetInstance("Clipboard", setting, new Storage())
+        const widget = Widget.widgetInstance(
+            "Clipboard",
+            setting,
+            new Storage(
+                false,
+                { fileStorage: fileStorage }
+            )
+        )
         widget.render()
     }
 
@@ -454,6 +512,7 @@ class Widget {
 
 module.exports = {
     run: () => {
+        //AppUI.renderKeyboardUI(); return
         if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
         } else if ($app.env === $env.keyboard) {

@@ -236,6 +236,30 @@
                         "items": [
                             {
                                 "icon": [
+                                    "sun.min",
+                                    "#A569BD"
+                                ],
+                                "title": "BACKGROUND_COLOR",
+                                "type": "color",
+                                "key": "keyboard.background.color",
+                                "value": "#D1D3D9"
+                            },
+                            {
+                                "icon": [
+                                    "photo",
+                                    "#FFCC66"
+                                ],
+                                "title": "BACKGROUND_IMAGE",
+                                "type": "script",
+                                "key": "keyboard.background.image",
+                                "value": "this.method.keyboardBackgroundImage"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
                                     "cursor.rays",
                                     "#FF8C00"
                                 ],

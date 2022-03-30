@@ -16,6 +16,7 @@ class Keyboard extends Clipboard {
         this.top_bottom = 10 // 列表边距
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
+        this.navBarSeparatorId = "navBarSeparator"
         this.keyboardSetting()
         this.taptic = 1
         this.deleteTimer = undefined
@@ -188,6 +189,7 @@ class Keyboard extends Clipboard {
                     items: this.menuItems()
                 },
                 separatorInset: $insets(0, this.left_right, 0, this.left_right),
+                separatorColor: $color("lightGray"),
                 data: this.savedClipboard,
                 template: this.listTemplate()
             }, {}),
@@ -207,7 +209,14 @@ class Keyboard extends Clipboard {
                     } else {
                         $keyboard.insert(data.content.info.text)
                     }
-                })
+                }),
+                didScroll: sender => {
+                    if (sender.contentOffset.y > 0) {
+                        $(this.navBarSeparatorId).hidden = false
+                    } else {
+                        $(this.navBarSeparatorId).hidden = true
+                    }
+                }
             },
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
@@ -229,14 +238,29 @@ class Keyboard extends Clipboard {
     }
 
     getView() {
+        let backgroundImage
+        try {
+            backgroundImage = this.kernel.fileStorage.read("keyboard", "background.jpg")
+        } catch (error) { }
         return {
             type: "view",
-            props: { bgcolor: $color("clear") },
+            props: { bgcolor: $color("#D1D3D9") },
             views: [
+                backgroundImage !== undefined ? {
+                    type: "image",
+                    props: {
+                        data: backgroundImage
+                    },
+                    layout: $layout.fill
+                } : {},
                 this.getNavBarView(),
-                UIKit.separatorLine(),
+                UIKit.separatorLine({
+                    id: this.navBarSeparatorId,
+                    hidden: true,
+                    bgcolor: $color("lightGray")
+                }),
                 this.getListView(),
-                UIKit.separatorLine(),
+                UIKit.separatorLine({ bgcolor: $color("lightGray") }),
                 this.getBottomBarView()
             ],
             layout: $layout.fill

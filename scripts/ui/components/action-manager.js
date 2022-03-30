@@ -17,7 +17,7 @@ class ActionManager {
         // path
         this.actionPath = "scripts/action"
         this.actionOrderFile = "order.json"
-        this.userActionPath = "storage/user_action"
+        this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
         // checkUserAction
