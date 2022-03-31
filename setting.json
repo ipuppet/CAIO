@@ -246,13 +246,22 @@
                             },
                             {
                                 "icon": [
+                                    "sun.min",
+                                    "#A569BD"
+                                ],
+                                "title": "BACKGROUND_COLOR_DARK",
+                                "type": "color",
+                                "key": "keyboard.background.color.dark",
+                                "value": "#313131"
+                            },
+                            {
+                                "icon": [
                                     "photo",
                                     "#FFCC66"
                                 ],
                                 "title": "BACKGROUND_IMAGE",
-                                "type": "script",
-                                "key": "keyboard.background.image",
-                                "value": "this.method.keyboardBackgroundImage"
+                                "type": "image",
+                                "key": "keyboard.background.image"
                             }
                         ]
                     },

@@ -38,21 +38,6 @@ class AppKernel extends Kernel {
         this.editor = new Editor(this)
     }
 
-    /**
-     * 压缩图片
-     * @param {$image} image $image
-     * @param {Number} maxSize 图片最大尺寸 单位：像素
-     * @returns $image
-     */
-    compressImage(image, maxSize = 1280 * 720) {
-        const info = $imagekit.info(image)
-        if (info.height * info.width > maxSize) {
-            const scale = maxSize / (info.height * info.width)
-            image = $imagekit.scaleBy(image, scale)
-        }
-        return image
-    }
-
     deleteConfirm(message, conformAction) {
         $ui.alert({
             title: message,
@@ -315,53 +300,6 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.method.keyboardBackgroundImage = animate => {
-            animate.touchHighlightStart()
-            const path = `${this.fileStorage.basePath}/keyboard`
-            const clearBackgroundImage = () => {
-                $file.list(path)?.forEach(file => {
-                    if (file.indexOf("background") > -1) {
-                        $file.delete(`${path}/${file}`)
-                    }
-                })
-            }
-            $ui.menu({
-                items: [$l10n("SELECT_IMAGE"), $l10n("CLEAR_IMAGE")],
-                handler: (title, idx) => {
-                    if (idx === 0) {
-                        animate.actionStart()
-                        $photo.pick({ format: "data" }).then(resp => {
-                            if (!resp.status) {
-                                if (resp.error.description !== "canceled") {
-                                    $ui.toast($l10n("ERROR"))
-                                    return
-                                } else {
-                                    console.log(resp.error.description)
-                                    animate.actionCancel()
-                                    return
-                                }
-                            }
-                            if (!resp.data) return
-                            // 清除旧图片
-                            clearBackgroundImage()
-                            const fileName = "background.jpg"
-                            // 控制压缩图片大小
-                            const image = this.compressImage(resp.data.image)
-                            this.fileStorage.write("keyboard", `compress.${fileName}`, image.jpg(0.8))
-                            this.fileStorage.write("keyboard", fileName, resp.data)
-                            animate.actionDone()
-                        })
-                    } else {
-                        clearBackgroundImage()
-                        animate.actionDone()
-                    }
-                },
-                finished: () => {
-                    animate.touchHighlightEnd()
-                }
-            })
-        }
-
         this.setting.method.setKeyboardQuickStart = animate => {
             animate.touchHighlight()
             const KeyboardScripts = require("./ui/components/keyboard-scripts")
@@ -442,12 +380,7 @@ class AppUI {
         const kernel = new AppKernel()
         const Keyboard = require("./ui/keyboard")
         const keyboard = new Keyboard(kernel).getView()
-        $ui.render({
-            props: {
-                clipsToSafeArea: true
-            },
-            views: [keyboard]
-        })
+        $ui.render({ views: [keyboard] })
     }
 
     static renderUnsupported() {

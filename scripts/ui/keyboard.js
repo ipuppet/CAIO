@@ -155,6 +155,9 @@ class Keyboard extends Clipboard {
     getNavBarView() {
         return { // 顶部按钮栏
             type: "view",
+            props: {
+                bgcolor: $color("backgroundColor")
+            },
             views: [{
                 type: "view",
                 layout: $layout.fill,
@@ -238,18 +241,20 @@ class Keyboard extends Clipboard {
     }
 
     getView() {
-        let backgroundImage
-        try {
-            backgroundImage = this.kernel.fileStorage.read("keyboard", "background.jpg")
-        } catch (error) { }
+        let backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
+        const backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
+        const backgroundColorDark = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color.dark"))
         return {
             type: "view",
-            props: { bgcolor: $color("#D1D3D9") },
+            props: {
+                id: "keyboard.main",
+                bgcolor: $color(backgroundColor, backgroundColorDark)
+            },
             views: [
-                backgroundImage !== undefined ? {
+                backgroundImage !== null ? {
                     type: "image",
                     props: {
-                        data: backgroundImage
+                        image: backgroundImage
                     },
                     layout: $layout.fill
                 } : {},

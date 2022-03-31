@@ -60,9 +60,8 @@
 
 "KEYBOARD" = "Keyboard";
 "BACKGROUND_COLOR" = "Background Color";
+"BACKGROUND_COLOR_DARK" = "Dark Background Color";
 "BACKGROUND_IMAGE" = "Background Image";
-"SELECT_IMAGE" = "Select Image";
-"CLEAR_IMAGE" = "Clear Image";
 "DELETE_DELAY" = "Delete Delay";
 "JSBOX_TOOLBAR" = "JSBox Toolbar";
 "QUICK_START_SCRIPTS" = "Quick Start Scripts";

@@ -1,3 +1,5 @@
+const { compressImage } = require("./lib/easy-jsbox")
+
 class Storage {
     constructor(sync = false, kernel) {
         this.sync = sync
@@ -238,7 +240,7 @@ class Storage {
                 path: path.original
             })
             $file.write({
-                data: this.kernel.compressImage(image).jpg(0.8),
+                data: compressImage(image).jpg(0.8),
                 path: path.preview
             })
             clipboard.text = this.pathToKey(path)
