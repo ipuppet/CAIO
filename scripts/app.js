@@ -4,6 +4,7 @@ const {
     Sheet,
     TabBarController,
     Kernel,
+    FileStorage,
     Setting
 } = require("./lib/easy-jsbox")
 const Storage = require("./storage")
@@ -11,15 +12,18 @@ const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
 const Editor = require("./ui/components/editor")
 
+const fileStorage = new FileStorage()
+
 class AppKernel extends Kernel {
     constructor() {
         super()
-        // this.debug()
         this.query = $context.query
         // Setting
         this.setting = new Setting()
         this.setting.loadConfig()
         this.initSettingMethods()
+        // FileStorage
+        this.fileStorage = fileStorage
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
         this.initComponents()
@@ -32,21 +36,6 @@ class AppKernel extends Kernel {
         this.actionManager = new ActionManager(this)
         // Editor
         this.editor = new Editor(this)
-    }
-
-    /**
-     * 压缩图片
-     * @param {$image} image $image
-     * @param {Number} maxSize 图片最大尺寸 单位：像素
-     * @returns $image
-     */
-    compressImage(image, maxSize = 1280 * 720) {
-        const info = $imagekit.info(image)
-        if (info.height * info.width > maxSize) {
-            const scale = maxSize / (info.height * info.width)
-            image = $imagekit.scaleBy(image, scale)
-        }
-        return image
     }
 
     deleteConfirm(message, conformAction) {
@@ -140,7 +129,7 @@ class AppKernel extends Kernel {
             animate.actionStart()
             // 备份动作
             const fileName = "actions.zip"
-            const tempPath = `/storage/${fileName}`
+            const tempPath = `${this.fileStorage.basePath}/${fileName}`
             $archiver.zip({
                 directory: this.actionManager.userActionPath,
                 dest: tempPath,
@@ -172,7 +161,7 @@ class AppKernel extends Kernel {
                         return
                     }
                     if (data.fileName.slice(-3) === "zip") {
-                        const path = "/storage/action_import"
+                        const path = `${this.fileStorage.basePath}/action_import`
                         $archiver.unzip({
                             file: data,
                             dest: path,
@@ -391,12 +380,7 @@ class AppUI {
         const kernel = new AppKernel()
         const Keyboard = require("./ui/keyboard")
         const keyboard = new Keyboard(kernel).getView()
-        $ui.render({
-            props: {
-                clipsToSafeArea: true
-            },
-            views: [keyboard]
-        })
+        $ui.render({ views: [keyboard] })
     }
 
     static renderUnsupported() {
@@ -438,7 +422,14 @@ class Widget {
     static renderClipboard() {
         const setting = new Setting()
         setting.loadConfig().setReadonly()
-        const widget = Widget.widgetInstance("Clipboard", setting, new Storage())
+        const widget = Widget.widgetInstance(
+            "Clipboard",
+            setting,
+            new Storage(
+                false,
+                { fileStorage: fileStorage }
+            )
+        )
         widget.render()
     }
 
@@ -454,6 +445,7 @@ class Widget {
 
 module.exports = {
     run: () => {
+        //AppUI.renderKeyboardUI(); return
         if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
         } else if ($app.env === $env.keyboard) {

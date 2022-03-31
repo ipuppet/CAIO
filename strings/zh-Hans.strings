@@ -59,6 +59,9 @@
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
 
 "KEYBOARD" = "键盘";
+"BACKGROUND_COLOR" = "背景色";
+"BACKGROUND_COLOR_DARK" = "深色模式背景色";
+"BACKGROUND_IMAGE" = "背景图片";
 "DELETE_DELAY" = "删除延时";
 "JSBOX_TOOLBAR" = "JSBox 工具栏";
 "QUICK_START_SCRIPTS" = "快速启动脚本";

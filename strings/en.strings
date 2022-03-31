@@ -59,6 +59,9 @@
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 
 "KEYBOARD" = "Keyboard";
+"BACKGROUND_COLOR" = "Background Color";
+"BACKGROUND_COLOR_DARK" = "Dark Background Color";
+"BACKGROUND_IMAGE" = "Background Image";
 "DELETE_DELAY" = "Delete Delay";
 "JSBOX_TOOLBAR" = "JSBox Toolbar";
 "QUICK_START_SCRIPTS" = "Quick Start Scripts";

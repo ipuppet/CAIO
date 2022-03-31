@@ -1,5 +1,17 @@
 const VERSION = "1.2.1"
 
+String.prototype.trim = function (char, type) {
+    if (char) {
+        if (type == 'l') {
+            return this.replace(new RegExp('^\\' + char + '+', 'g'), '');
+        } else if (type == 'r') {
+            return this.replace(new RegExp('\\' + char + '+$', 'g'), '');
+        }
+        return this.replace(new RegExp('^\\' + char + '+|\\' + char + '+$', 'g'), '');
+    }
+    return this.replace(/^\s+|\s+$/g, '');
+}
+
 /**
  * 对比版本号
  * @param {String} preVersion 
@@ -75,6 +87,21 @@ function objectEqual(a, b) {
         }
     }
     return true
+}
+
+/**
+ * 压缩图片
+ * @param {$image} image $image
+ * @param {Number} maxSize 图片最大尺寸 单位：像素
+ * @returns $image
+ */
+function compressImage(image, maxSize = 1280 * 720) {
+    const info = $imagekit.info(image)
+    if (info.height * info.width > maxSize) {
+        const scale = maxSize / (info.height * info.width)
+        image = $imagekit.scaleBy(image, scale)
+    }
+    return image
 }
 
 class ValidationError extends Error {
@@ -243,7 +270,7 @@ class UIKit {
     }
 
     static get statusBarHeight() {
-        return UIKit.#sharedApplication.$statusBarFrame().height
+        return $app.isDebugging ? 0 : UIKit.#sharedApplication.$statusBarFrame().height
     }
 
     static get statusBarOrientation() {
@@ -274,7 +301,7 @@ class UIKit {
             },
             events: {
                 draw: (view, ctx) => {
-                    ctx.strokeColor = $color("separatorColor")
+                    ctx.strokeColor = props.bgcolor ?? $color("separatorColor")
                     ctx.setLineWidth(1)
                     ctx.moveToPoint(0, 0)
                     ctx.addLineToPoint(view.frame.width, 0)
@@ -481,7 +508,6 @@ class Matrix extends View {
                 item.__title = {
                     hidden: true
                 }
-                //console.log(item)
 
                 return item
             })
@@ -648,10 +674,13 @@ class Sheet extends View {
 
     /**
      * 为 view 添加一个 navBar
-     * @param {String} title 标题
-     * @param {Function} callback 按钮回调函数，若未定义则调用 this.dismiss()
-     * @param {String} button 按钮显示的文字，默认为 "Done"
-     * @returns this
+     * @param {Object} param
+     *  {
+     *      {String} title
+     *      {Object} popButton 参数与 BarButtonItem 一致
+     *      {Array} rightButtons
+     *  } 
+     * @returns 
      */
     addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
         if (this.view === undefined) throw new SheetAddNavBarError()
@@ -1845,6 +1874,12 @@ class Kernel {
     // 隐藏 jsbox 默认 nav 栏
     isUseJsboxNav = false
 
+    constructor() {
+        if ($app.isDebugging) {
+            this.debug()
+        }
+    }
+
     uuid() {
         return uuid()
     }
@@ -1924,6 +1959,151 @@ class Kernel {
     }
 }
 
+class FileStorageParameterError extends Error {
+    constructor(parameter) {
+        super(`Parameter [${parameter}] is required.`)
+        this.name = "FileStorageParameterError"
+    }
+}
+
+class FileStorageFileNotFoundError extends Error {
+    constructor(filePath) {
+        super(`File not found: ${filePath}`)
+        this.name = "FileStorageFileNotFoundError"
+    }
+}
+
+class FileStorage {
+    basePath
+
+    constructor({ basePath = "storage" } = {}) {
+        this.basePath = basePath
+        this.#createDirectory(this.basePath)
+    }
+
+    #createDirectory(path) {
+        if (!$file.isDirectory(path)) {
+            $file.mkdir(path)
+        }
+    }
+
+    #filePath(path = "", fileName) {
+        path = `${this.basePath}/${path.trim("/")}`.trim("/")
+
+        this.#createDirectory(path)
+
+        path = `${path}/${fileName}`
+        return path
+    }
+
+    write(path = "", fileName, data) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        if (!data) {
+            throw new FileStorageParameterError("data")
+        }
+        return $file.write({
+            data: data,
+            path: this.#filePath(path, fileName)
+        })
+    }
+
+    writeSync(path = "", fileName, data) {
+        return new Promise((resolve, reject) => {
+            try {
+                const success = this.write(path, fileName, data)
+                if (success) {
+                    resolve(success)
+                } else {
+                    reject(success)
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    read(path = "", fileName) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        path = this.#filePath(path, fileName)
+        if (!$file.exists(path)) {
+            throw new FileStorageFileNotFoundError(path)
+        }
+        if ($file.isDirectory(path)) {
+            return $file.list(path)
+        }
+        return $file.read(path)
+    }
+
+    readSync(path = "", fileName) {
+        return new Promise((resolve, reject) => {
+            try {
+                const file = this.read(path, fileName)
+                if (file) {
+                    resolve(file)
+                } else {
+                    reject()
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    readAsJSON(path = "", fileName, _default = null) {
+        try {
+            const fileString = this.read(path, fileName)?.string
+            return JSON.parse(fileString)
+        } catch (error) {
+            return _default
+        }
+    }
+
+    static readFromRoot(path) {
+        if (!path) {
+            throw new FileStorageParameterError("path")
+        }
+        if (!$file.exists(path)) {
+            throw new FileStorageFileNotFoundError(path)
+        }
+        if ($file.isDirectory(path)) {
+            return $file.list(path)
+        }
+        return $file.read(path)
+    }
+
+    static readFromRootSync(path = "") {
+        return new Promise((resolve, reject) => {
+            try {
+                const file = FileStorage.readFromRoot(path)
+                if (file) {
+                    resolve(file)
+                } else {
+                    reject()
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    static readFromRootAsJSON(path = "", _default = null) {
+        try {
+            const fileString = FileStorage.readFromRoot(path)?.string
+            return JSON.parse(fileString)
+        } catch (error) {
+            return _default
+        }
+    }
+
+    delete(path = "", fileName) {
+        return $file.delete(this.#filePath(path, fileName))
+    }
+}
+
 class SettingLoadConfigError extends Error {
     constructor() {
         super("Call loadConfig() first.")
@@ -1943,12 +2123,19 @@ class SettingReadonlyError extends Error {
  * - onSet(key, value)
  */
 class Setting extends Controller {
+    name
     // 存储数据
     setting = {}
+    // fileStorage
+    fileStorage = new FileStorage()
+    imagePath
     // 用来控制 child 类型
     viewController = new ViewController()
     // 用于存放 script 类型用到的方法
     method = {}
+    // style
+    rowHeight = 50
+    rightOffset = 15
     // withTouchEvents 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
     #withTouchEventsT = {}
     // read only
@@ -1960,17 +2147,13 @@ class Setting extends Controller {
     constructor(args = {}) {
         super()
 
+        this.fileStorage = args.fileStorage ?? this.fileStorage
         // set 和 get 同时设置才会生效
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.get = args.get
         } else {
-            this.savePath = args.savePath ?? (() => {
-                if (!$file.isDirectory("storage")) {
-                    $file.mkdir("storage")
-                }
-                return "storage/setting.json"
-            })()
+            this.dataFile = args.dataFile ?? "setting.json"
         }
         if (args.structure) {
             this.setStructure(args.structure) // structure 优先级高于 structurePath
@@ -1978,6 +2161,8 @@ class Setting extends Controller {
             this.setStructurePath(args.structurePath ?? "setting.json")
         }
         this.isUseJsboxNav = args.isUseJsboxNav ?? false
+        // 不能使用 uuid
+        this.imagePath = (args.name ?? "default") + ".image"
         this.setName(args.name ?? uuid())
         // l10n
         this.loadL10n()
@@ -2005,9 +2190,7 @@ class Setting extends Controller {
             "script", // script 类型永远使用setting结构文件内的值
             "info"
         ]
-        if ($file.exists(this.savePath)) {
-            userData = JSON.parse($file.read(this.savePath).string)
-        }
+        userData = this.fileStorage.readAsJSON("", this.dataFile, {})
         function setValue(structure) {
             const setting = {}
             for (let section of structure) {
@@ -2042,6 +2225,7 @@ class Setting extends Controller {
         "BACK" = "返回";
         "ERROR" = "发生错误";
         "SUCCESS" = "成功";
+        "LOADING" = "加载中";
         "INVALID_VALUE" = "非法参数";
         
         "SETTING" = "设置";
@@ -2054,7 +2238,12 @@ class Setting extends Controller {
         
         "JSBOX_ICON" = "JSBox 内置图标";
         "SF_SYMBOLS" = "SF Symbols";
-        "IMAGE_BASE64" = "图片/ base64";
+        "IMAGE_BASE64" = "图片 / base64";
+
+        "PREVIEW" = "预览";
+        "SELECT_IMAGE" = "选择图片";
+        "CLEAR_IMAGE" = "清除图片";
+        "NO_IMAGE" = "无图片";
         
         "ABOUT" = "关于";
         "VERSION" = "Version";
@@ -2068,6 +2257,7 @@ class Setting extends Controller {
         "BACK" = "Back";
         "ERROR" = "Error";
         "SUCCESS" = "Success";
+        "LOADING" = "Loading";
         "INVALID_VALUE" = "Invalid value";
 
         "SETTING" = "Setting";
@@ -2080,18 +2270,18 @@ class Setting extends Controller {
 
         "JSBOX_ICON" = "JSBox in app icon";
         "SF_SYMBOLS" = "SF Symbols";
-        "IMAGE_BASE64" = "Image/base64";
+        "IMAGE_BASE64" = "Image / base64";
+
+        "PREVIEW" = "Preview";
+        "SELECT_IMAGE" = "Select Image";
+        "CLEAR_IMAGE" = "Clear Image";
+        "NO_IMAGE" = "No Image";
 
         "ABOUT" = "About";
         "VERSION" = "Version";
         "AUTHOR" = "Author";
         "AT_BOTTOM" = "It's the end~";
         `)
-    }
-
-    setSavePath(savePath) {
-        this.savePath = savePath
-        return this
     }
 
     setStructure(structure) {
@@ -2107,7 +2297,7 @@ class Setting extends Controller {
      */
     setStructurePath(structurePath) {
         if (!this.structure) {
-            this.setStructure(JSON.parse($file.read(structurePath)?.string))
+            this.setStructure(FileStorage.readFromRootAsJSON(structurePath))
         }
         return this
     }
@@ -2132,8 +2322,8 @@ class Setting extends Controller {
 
     get footer() {
         if (this.#footer === undefined) {
-            const info = JSON.parse($file.read("/config.json")?.string)["info"]
-            this.#footer = {
+            const info = FileStorage.readFromRootAsJSON("/config.json", {})["info"]
+            this.#footer = info ? {
                 type: "view",
                 props: { height: 130 },
                 views: [
@@ -2154,7 +2344,7 @@ class Setting extends Controller {
                         }
                     }
                 ]
-            }
+            } : {}
         }
         return this.#footer
     }
@@ -2170,10 +2360,7 @@ class Setting extends Controller {
         }
         this.#checkLoadConfigError()
         this.setting[key] = value
-        $file.write({
-            data: $data({ string: JSON.stringify(this.setting) }),
-            path: this.savePath
-        })
+        this.fileStorage.write("", this.dataFile, $data({ string: JSON.stringify(this.setting) }))
         this.callEvent("onSet", key, value)
         return true
     }
@@ -2190,6 +2377,26 @@ class Setting extends Controller {
         return typeof color === "string"
             ? $color(color)
             : $rgba(color.red, color.green, color.blue, color.alpha)
+    }
+
+    getImageName(key, compress = false) {
+        let name = $text.MD5(key) + ".jpg"
+        if (compress) {
+            name = "compress." + name
+        }
+        return name
+    }
+
+    getImage(key, compress = false) {
+        try {
+            const name = this.getImageName(key, compress)
+            return this.fileStorage.read(this.imagePath, name).image
+        } catch (error) {
+            if (error instanceof FileStorageFileNotFoundError) {
+                return null
+            }
+            throw error
+        }
     }
 
     getId(type, key) {
@@ -2312,7 +2519,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(15)
+                        make.right.inset(this.rightOffset)
                         make.width.equalTo(180)
                     }
                 },
@@ -2366,7 +2573,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(15)
+                        make.right.inset(this.rightOffset)
                     }
                 }
             ],
@@ -2480,8 +2687,8 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(15)
-                        make.height.equalTo(50)
+                        make.right.inset(this.rightOffset)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(100)
                     }
                 }
@@ -2526,7 +2733,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.prev)
-                        make.right.inset(15)
+                        make.right.inset(this.rightOffset)
                     }
                 }
             ],
@@ -2655,8 +2862,8 @@ class Setting extends Controller {
                         }
                     ],
                     layout: (make, view) => {
-                        make.right.inset(15)
-                        make.height.equalTo(50)
+                        make.right.inset(this.rightOffset)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -2678,7 +2885,7 @@ class Setting extends Controller {
                         dynamicWidth: true
                     },
                     layout: (make, view) => {
-                        make.right.inset(15)
+                        make.right.inset(this.rightOffset)
                         make.centerY.equalTo(view.prev)
                     },
                     events: {
@@ -2712,7 +2919,7 @@ class Setting extends Controller {
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.right.inset(15)
+                                make.right.inset(this.rightOffset)
                                 make.size.equalTo(20)
                             }
                         },
@@ -2737,7 +2944,7 @@ class Setting extends Controller {
                         }
                     ],
                     layout: (make, view) => {
-                        make.height.equalTo(50)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -2776,8 +2983,8 @@ class Setting extends Controller {
                         }
                     ],
                     layout: (make, view) => {
-                        make.right.inset(15)
-                        make.height.equalTo(50)
+                        make.right.inset(this.rightOffset)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -2853,8 +3060,8 @@ class Setting extends Controller {
                         }
                     },
                     layout: (make, view) => {
-                        make.right.inset(15)
-                        make.height.equalTo(50)
+                        make.right.inset(this.rightOffset)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -2902,8 +3109,8 @@ class Setting extends Controller {
                         }
                     },
                     layout: (make, view) => {
-                        make.right.inset(15)
-                        make.height.equalTo(50)
+                        make.right.inset(this.rightOffset)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -2938,7 +3145,7 @@ class Setting extends Controller {
                                 smoothCorners: true
                             },
                             layout: (make, view) => {
-                                make.right.inset(15)
+                                make.right.inset(this.rightOffset)
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo($size(30, 30))
                             }
@@ -2988,7 +3195,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.right.inset(0)
-                        make.height.equalTo(50)
+                        make.height.equalTo(this.rowHeight)
                         make.width.equalTo(view.super)
                     }
                 }
@@ -3014,7 +3221,7 @@ class Setting extends Controller {
                     },
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
-                        make.right.inset(15)
+                        make.right.inset(this.rightOffset)
                         make.size.equalTo(15)
                     }
                 }
@@ -3050,6 +3257,85 @@ class Setting extends Controller {
                     })
                 }
             }, true, 0.3)
+        }
+    }
+
+    createImage(key, icon, title) {
+        const id = this.getId("image", key)
+        const lineId = `${id}-line`
+        return {
+            type: "view",
+            props: { id: lineId },
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: id,
+                                image: this.getImage(key, true) ?? $image("questionmark.square.dashed"),
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(this.rightOffset)
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo($size(30, 30))
+                            }
+                        }
+                    ],
+                    events: {
+                        tapped: () => {
+                            this.#touchHighlightStart(lineId)
+                            $ui.menu({
+                                items: [$l10n("PREVIEW"), $l10n("SELECT_IMAGE"), $l10n("CLEAR_IMAGE")],
+                                handler: (title, idx) => {
+                                    if (idx === 0) {
+                                        const image = this.getImage(key)
+                                        if (image) {
+                                            $quicklook.open({
+                                                image: image
+                                            })
+                                        } else {
+                                            $ui.toast($l10n("NO_IMAGE"))
+                                        }
+                                    } else if (idx === 1) {
+                                        $photo.pick({ format: "data" }).then(resp => {
+                                            $ui.toast($l10n("LOADING"))
+                                            if (!resp.status || !resp.data) {
+                                                if (resp?.error?.description !== "canceled") {
+                                                    $ui.toast($l10n("ERROR"))
+                                                }
+                                                return
+                                            }
+                                            // 控制压缩图片大小
+                                            const image = compressImage(resp.data.image)
+                                            this.fileStorage.write(this.imagePath, this.getImageName(key, true), image.jpg(0.8))
+                                            this.fileStorage.write(this.imagePath, this.getImageName(key), resp.data)
+                                            $(id).image = image
+                                            $ui.success($l10n("SUCCESS"))
+                                        })
+                                    } else if (idx === 2) {
+                                        this.fileStorage.delete(this.imagePath, this.getImageName(key, true))
+                                        this.fileStorage.delete(this.imagePath, this.getImageName(key))
+                                        $(id).image = $image("questionmark.square.dashed")
+                                        $ui.success($l10n("SUCCESS"))
+                                    }
+                                },
+                                finished: () => {
+                                    this.#touchHighlightEnd(lineId)
+                                }
+                            })
+                        }
+                    },
+                    layout: (make, view) => {
+                        make.right.inset(0)
+                        make.height.equalTo(this.rowHeight)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
         }
     }
 
@@ -3102,10 +3388,13 @@ class Setting extends Controller {
                         row = this.createInput(item.key, item.icon, item.title)
                         break
                     case "icon":
-                        row = this.createIcon(item.key, item.icon, item.title)
+                        row = this.createIcon(item.key, item.icon, item.title, item.bgcolor)
                         break
                     case "child":
                         row = this.createChild(item.key, item.icon, item.title, item.children)
+                        break
+                    case "image":
+                        row = this.createImage(item.key, item.icon, item.title)
                         break
                     default:
                         continue
@@ -3126,7 +3415,7 @@ class Setting extends Controller {
             props: {
                 style: 2,
                 separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                rowHeight: 50,
+                rowHeight: this.rowHeight,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 footer: footer,
                 data: this.#getSections(structure ?? this.structure)
@@ -3156,6 +3445,7 @@ class Setting extends Controller {
 module.exports = {
     VERSION,
     versionCompare,
+    compressImage,
     // class
     UIKit,
     ViewController,
@@ -3172,5 +3462,6 @@ module.exports = {
     TabBarCellView,
     TabBarController,
     Kernel,
+    FileStorage,
     Setting
 }

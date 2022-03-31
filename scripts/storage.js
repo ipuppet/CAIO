@@ -1,16 +1,18 @@
+const { compressImage } = require("./lib/easy-jsbox")
+
 class Storage {
-    constructor(sync = false, kernel = {}) {
+    constructor(sync = false, kernel) {
         this.sync = sync
         this.kernel = kernel
         this.dbName = "CAIO.db"
-        this.localDb = `storage/${this.dbName}`
+        this.localDb = `${this.kernel.fileStorage.basePath}/${this.dbName}`
         this.iCloudPath = "drive://CAIO"
         this.iCloudZipFile = `${this.iCloudPath}/CAIO.zip`
-        this.syncInfoFile = "storage/sync.json"
-        this.imagePath = "storage/image"
+        this.syncInfoFile = `${this.kernel.fileStorage.basePath}/sync.json`
+        this.imagePath = `${this.kernel.fileStorage.basePath}/image`
         this.imageOriginalPath = `${this.imagePath}/original`
         this.imagePreviewPath = `${this.imagePath}/preview`
-        this.tempPath = "storage/temp"
+        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.tempImagePath = `${this.tempPath}/image`
@@ -238,7 +240,7 @@ class Storage {
                 path: path.original
             })
             $file.write({
-                data: this.kernel.compressImage(image).jpg(0.8),
+                data: compressImage(image).jpg(0.8),
                 path: path.preview
             })
             clipboard.text = this.pathToKey(path)
