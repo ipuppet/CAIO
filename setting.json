@@ -14,6 +14,30 @@
                         "items": [
                             {
                                 "icon": [
+                                    "link",
+                                    "#FF6633"
+                                ],
+                                "title": "UNIVERSAL_CLIPBOARD",
+                                "type": "switch",
+                                "key": "clipboard.universal",
+                                "value": true
+                            },
+                            {
+                                "icon": [
+                                    "cursorarrow.rays",
+                                    "#FF6633"
+                                ],
+                                "title": "Tips",
+                                "type": "script",
+                                "key": "clipboard.tips.universal",
+                                "value": "$ui.alert({title:$l10n('UNIVERSAL_CLIPBOARD'),message:$l10n('UNIVERSAL_CLIPBOARD_TIPS')})"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
                                     "text.alignleft",
                                     "#FFCC66"
                                 ],

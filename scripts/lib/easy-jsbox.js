@@ -608,7 +608,7 @@ class Matrix extends View {
         this.setEvent("itemSize", (sender, indexPath) => {
             const info = sender.object(indexPath)?.__title?.info
             if (info?.title) {
-                return $size(Math.max(UIKit.windowSize.width, UIKit.windowSize.height), 0)
+                return $size(Math.max($device.info.screen.width, $device.info.screen.height), 0)
             }
             const columns = this.props.columns ?? 2
             const spacing = this.props.spacing ?? 15

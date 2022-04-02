@@ -29,7 +29,7 @@ class Clipboard {
             if ($context.query["copy"]) {
                 const uuid = $context.query["copy"]
                 const content = this.kernel.storage.getByUUID(uuid)
-                $clipboard.text = content.text
+                this.setClipboardText(content.text)
                 this.setCopied(uuid, this.getIndexPathByUUID(uuid))
                 $ui.success($l10n("COPIED"))
             } else if ($context.query["add"]) {
@@ -53,6 +53,14 @@ class Clipboard {
                 }
             }
         })
+    }
+
+    setClipboardText(text) {
+        if (this.kernel.setting.get("clipboard.universal")) {
+            $clipboard.text = text
+        } else {
+            $clipboard.setTextLocalOnly(text)
+        }
     }
 
     /**
@@ -236,7 +244,7 @@ class Clipboard {
         this.savedClipboard[indexPath.section].rows[indexPath.row] = lineData
         $(this.listId).data = this.savedClipboard
         if (uuid === this.copied?.uuid) {
-            $clipboard.text = text
+            this.setClipboardText(text)
         }
         try {
             indexPath.section === 0 ? this.kernel.storage.updateTextPin(uuid, text) : this.kernel.storage.updateText(uuid, text)
@@ -429,7 +437,7 @@ class Clipboard {
         if (path && $file.exists(path.original)) {
             $clipboard.image = $file.read(path.original).image
         } else {
-            $clipboard.text = text
+            this.setClipboardText(text)
         }
         const isMoveToTop = indexPath.section === 1
         // 将被复制的行移动到最前端
