@@ -18,12 +18,12 @@ class AppKernel extends Kernel {
     constructor() {
         super()
         this.query = $context.query
-        // Setting
-        this.setting = new Setting()
-        this.setting.loadConfig()
-        this.initSettingMethods()
         // FileStorage
         this.fileStorage = fileStorage
+        // Setting
+        this.setting = new Setting({ fileStorage: this.fileStorage })
+        this.setting.loadConfig()
+        this.initSettingMethods()
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
         this.initComponents()
