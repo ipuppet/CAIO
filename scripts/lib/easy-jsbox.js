@@ -2127,7 +2127,7 @@ class Setting extends Controller {
     // 存储数据
     setting = {}
     // fileStorage
-    fileStorage = new FileStorage()
+    fileStorage
     imagePath
     // 用来控制 child 类型
     viewController = new ViewController()
@@ -2147,12 +2147,12 @@ class Setting extends Controller {
     constructor(args = {}) {
         super()
 
-        this.fileStorage = args.fileStorage ?? this.fileStorage
         // set 和 get 同时设置才会生效
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.get = args.get
         } else {
+            this.fileStorage = args.fileStorage ?? new FileStorage()
             this.dataFile = args.dataFile ?? "setting.json"
         }
         if (args.structure) {
