@@ -125,7 +125,8 @@ class Editor {
                     return button
                 }),
                 views: [this.getView(type)],
-                dealloc: () => callback(this.text)
+                // dealloc: () => callback(this.text),
+                disappeared: () => callback(this.text)
             })
         } else {
             const pageController = new PageController()
