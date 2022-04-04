@@ -1890,6 +1890,7 @@ class Kernel {
 
     debug(print) {
         this.debugMode = true
+        $app.idleTimerDisabled = true
         if (typeof print === "function") {
             this.debugPrint = print
         }
