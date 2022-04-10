@@ -17,6 +17,17 @@ class Clipboard {
         this.imageContentHeight = 50
     }
 
+    loadDataWithSameHeight() {
+        // 图片高度与文字一致
+        const size = $text.sizeThatFits({
+            text: "text",
+            width: $device.info.screen.width,
+            font: $font(this.fontSize)
+        })
+        this.imageContentHeight = size.height
+        this.loadSavedClipboard()
+    }
+
     static updateMenu(kernel) {
         // TODO 更新 menu 中的动作
     }

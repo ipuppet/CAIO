@@ -23,14 +23,7 @@ class Keyboard extends Clipboard {
         this.continuousDeleteTimer = undefined
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
         this.continuousDeleteDelay = 0.5
-        // 图片高度与文字一致
-        const size = $text.sizeThatFits({
-            text: "text",
-            width: $device.info.screen.width,
-            font: $font(this.fontSize)
-        })
-        this.imageContentHeight = size.height
-        this.loadSavedClipboard()
+        this.loadDataWithSameHeight()
     }
 
     keyboardSetting() {
