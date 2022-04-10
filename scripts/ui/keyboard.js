@@ -84,6 +84,36 @@ class Keyboard extends Clipboard {
         })
     }
 
+    getNavBarView() {
+        return { // 顶部按钮栏
+            type: "view",
+            props: {
+                bgcolor: $color("backgroundColor")
+            },
+            views: [{
+                type: "view",
+                layout: $layout.fill,
+                views: [
+                    {
+                        type: "label",
+                        props: {
+                            text: $l10n("CLIPBOARD"),
+                            font: $font("bold", 20)
+                        },
+                        layout: (make, view) => {
+                            make.centerY.equalTo(view.super)
+                            make.left.equalTo(view.super).offset(this.left_right)
+                        }
+                    }
+                ].concat(this.navButtons())
+            }],
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super)
+                make.height.equalTo(this.navHeight)
+            }
+        }
+    }
+
     bottomBarButtons() {
         const navigationBar = new NavigationBar()
         const navigationItem = new NavigationItem()
@@ -152,32 +182,13 @@ class Keyboard extends Clipboard {
         return navigationBar.getNavigationBarView()
     }
 
-    getNavBarView() {
-        return { // 顶部按钮栏
+    getBottomBarView() {
+        return {
             type: "view",
-            props: {
-                bgcolor: $color("backgroundColor")
-            },
-            views: [{
-                type: "view",
-                layout: $layout.fill,
-                views: [
-                    {
-                        type: "label",
-                        props: {
-                            text: $l10n("CLIPBOARD"),
-                            font: $font("bold", 20)
-                        },
-                        layout: (make, view) => {
-                            make.centerY.equalTo(view.super)
-                            make.left.equalTo(view.super).offset(this.left_right)
-                        }
-                    }
-                ].concat(this.navButtons())
-            }],
+            views: [this.bottomBarButtons()],
             layout: (make, view) => {
-                make.top.width.equalTo(view.super)
-                make.height.equalTo(this.navHeight)
+                make.bottom.width.equalTo(view.super)
+                make.height.equalTo(this.navHeight - 3)
             }
         }
     }
@@ -205,7 +216,7 @@ class Keyboard extends Clipboard {
                 didSelect: this.keyboardTapped((sender, indexPath, data) => {
                     const content = data.content
                     const text = content.info.text
-                    const path = this.kernel.storage.ketToPath(text)
+                    const path = this.kernel.storage.keyToPath(text)
                     if (path && $file.exists(path.original)) {
                         $clipboard.image = $file.read(path.original).image
                         $ui.toast($l10n("COPIED"))
@@ -225,17 +236,6 @@ class Keyboard extends Clipboard {
                 make.top.equalTo(this.navHeight)
                 make.width.equalTo(view.super)
                 make.bottom.equalTo(view.super).offset(-this.navHeight)
-            }
-        }
-    }
-
-    getBottomBarView() {
-        return {
-            type: "view",
-            views: [this.bottomBarButtons()],
-            layout: (make, view) => {
-                make.bottom.width.equalTo(view.super)
-                make.height.equalTo(this.navHeight - 3)
             }
         }
     }

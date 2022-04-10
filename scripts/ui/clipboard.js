@@ -433,7 +433,7 @@ class Clipboard {
      * @param {Number} index 被复制的行的索引
      */
     copy(text, uuid, indexPath) {
-        const path = this.kernel.storage.ketToPath(text)
+        const path = this.kernel.storage.keyToPath(text)
         if (path && $file.exists(path.original)) {
             $clipboard.image = $file.read(path.original).image
         } else {
@@ -575,7 +575,7 @@ class Clipboard {
                         handler: (sender, indexPath) => {
                             const text = sender.object(indexPath).content.info.text
                             let shareContent = text
-                            const path = this.kernel.storage.ketToPath(text)
+                            const path = this.kernel.storage.keyToPath(text)
                             if (path && $file.exists(path.original)) {
                                 const image = $file.read(path.original)?.image?.png
                                 shareContent = {
@@ -621,7 +621,7 @@ class Clipboard {
             const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
             return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
         }
-        const path = this.kernel.storage.ketToPath(data.text)
+        const path = this.kernel.storage.keyToPath(data.text)
         if (path) {
             return {
                 copied: { hidden: !indicator },
@@ -767,7 +767,7 @@ class Clipboard {
                 didSelect: (sender, indexPath, data) => {
                     const content = data.content
                     const text = content.info.text
-                    const path = this.kernel.storage.ketToPath(text)
+                    const path = this.kernel.storage.keyToPath(text)
                     if (path && $file.exists(path.original)) {
                         $quicklook.open({
                             image: $file.read(path.original)?.image
