@@ -23,7 +23,7 @@ class Clipboard {
         this.imageContentHeight = 50
     }
 
-    loadDataWithSameHeight() {
+    loadDataWithSingleLine() {
         // 图片高度与文字一致
         this.imageContentHeight = Clipboard.singleLineHeight
         this.loadSavedClipboard()
