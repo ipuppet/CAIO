@@ -214,7 +214,7 @@ class Today extends Clipboard {
                         },
                         separatorInset: $insets(0, this.left_right, 0, this.left_right),
                         data: this.getClipboardPage(),
-                        template: this.listTemplate()
+                        template: this.listTemplate(1)
                     }, {}),
                     events: {
                         ready: () => this.ready(),
@@ -257,7 +257,6 @@ class Today extends Clipboard {
             },
             views: [this.kernel.actionManager.getActionListView({}, {
                 didSelect: (sender, indexPath, data) => {
-                    popover.dismiss()
                     const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
                     setTimeout(() => action({
                         text: $clipboard.text
