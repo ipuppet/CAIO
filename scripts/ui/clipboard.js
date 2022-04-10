@@ -844,9 +844,9 @@ class Clipboard {
                                     events: {
                                         rowHeight: (sender, indexPath) => {
                                             const obj = sender.object(indexPath)
-                                            if (!obj.image.hidden) {
+                                            if (obj.image !== undefined && !obj.image.hidden) {
                                                 // image height
-                                                return obj.content.info?.height
+                                                return obj.content?.info?.height
                                             } else {
                                                 // no image
                                                 return this.fontSize + this.edges
