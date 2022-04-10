@@ -14,16 +14,25 @@ class Clipboard {
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
         this.savedClipboard = []
         this.reorder = {}
-        this.init()
+        this.imageContentHeight = 50
     }
 
     static updateMenu(kernel) {
         // TODO 更新 menu 中的动作
     }
 
-    init() {
-        this.savedClipboard = this.getSavedClipboard()
+    setClipboardText(text) {
+        if (this.kernel.setting.get("clipboard.universal")) {
+            $clipboard.text = text
+        } else {
+            $clipboard.setTextLocalOnly(text)
+        }
+    }
 
+    /**
+     * list view
+     */
+    ready() {
         // check url scheme
         $delay(0.5, () => {
             if ($context.query["copy"]) {
@@ -43,36 +52,21 @@ class Clipboard {
             }
         })
 
+        // readClipboard
+        $delay(0.5, () => {
+            this.readClipboard()
+        })
+
         // iCloud
         $app.listen({
             syncByiCloud: object => {
                 if (object.status) {
-                    this.savedClipboard = this.getSavedClipboard()
+                    this.setSavedClipboard()
                     const view = $(this.listId)
                     if (view) view.data = this.savedClipboard
                 }
-            }
-        })
-    }
-
-    setClipboardText(text) {
-        if (this.kernel.setting.get("clipboard.universal")) {
-            $clipboard.text = text
-        } else {
-            $clipboard.setTextLocalOnly(text)
-        }
-    }
-
-    /**
-     * list view
-     */
-    ready() {
-        $delay(0.5, () => {
-            this.readClipboard()
-        })
-        $app.listen({
-            // 在应用恢复响应后调用
-            resume: () => {
+            },
+            resume: () => { // 在应用恢复响应后调用
                 $delay(0.5, () => {
                     this.readClipboard()
                 })
@@ -469,7 +463,7 @@ class Clipboard {
         })
     }
 
-    getSavedClipboard() {
+    setSavedClipboard() {
         const initData = (data, section) => {
             const dataObj = {}
             let length = 0
@@ -521,7 +515,7 @@ class Clipboard {
                 return this.lineData(data, this.copied?.uuid === data.uuid)
             })
         }
-        const data = [
+        this.savedClipboard = [
             {
                 rows: initData(this.kernel.storage.allPin(), 0) ?? []
             },
@@ -529,7 +523,6 @@ class Clipboard {
                 rows: initData(this.kernel.storage.all(), 1) ?? []
             }
         ]
-        return data
     }
 
     searchAction(text) {
@@ -616,11 +609,6 @@ class Clipboard {
     }
 
     lineData(data, indicator = false) {
-        const sliceText = text => {
-            // 显示最大长度
-            const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
-            return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
-        }
         const path = this.kernel.storage.keyToPath(data.text)
         if (path) {
             return {
@@ -635,13 +623,18 @@ class Clipboard {
                         section: data.section,
                         uuid: data.uuid,
                         md5: data.md5,
-                        height: 50,
+                        height: this.imageContentHeight,
                         prev: data.prev,
                         next: data.next
                     }
                 }
             }
         } else {
+            const sliceText = text => {
+                // 显示最大长度
+                const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
+                return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
+            }
             const text = sliceText(data.text)
             const size = $text.sizeThatFits({
                 text: text,
@@ -712,6 +705,7 @@ class Clipboard {
     }
 
     getListView() {
+        this.setSavedClipboard()
         return { // 剪切板列表
             type: "list",
             props: {

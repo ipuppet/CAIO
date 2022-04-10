@@ -23,6 +23,7 @@ class Keyboard extends Clipboard {
         this.continuousDeleteTimer = undefined
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
         this.continuousDeleteDelay = 0.5
+        this.setSavedClipboard()
     }
 
     keyboardSetting() {
