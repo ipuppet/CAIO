@@ -202,7 +202,7 @@ class Keyboard extends Clipboard {
                 separatorInset: $insets(0, this.left_right, 0, this.left_right),
                 separatorColor: $color("lightGray"),
                 data: this.savedClipboard,
-                template: this.listTemplate()
+                template: this.listTemplate(1)
             }, {}),
             events: {
                 ready: () => this.ready(),

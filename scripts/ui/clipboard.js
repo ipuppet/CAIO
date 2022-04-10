@@ -5,6 +5,8 @@ const {
 } = require("../lib/easy-jsbox")
 
 class Clipboard {
+    #loadDataWithSingleLine = false
+
     static singleLineHeight = $text.sizeThatFits({
         text: "text",
         width: $device.info.screen.width,
@@ -26,6 +28,7 @@ class Clipboard {
     loadDataWithSingleLine() {
         // 图片高度与文字一致
         this.imageContentHeight = Clipboard.singleLineHeight
+        this.#loadDataWithSingleLine = true
         this.loadSavedClipboard()
     }
 
@@ -653,11 +656,13 @@ class Clipboard {
                 return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
             }
             const text = sliceText(data.text)
-            const size = $text.sizeThatFits({
-                text: text,
-                width: $device.info.screen.width,
-                font: $font(this.fontSize)
-            })
+            const height = this.#loadDataWithSingleLine
+                ? Clipboard.singleLineHeight
+                : $text.sizeThatFits({
+                    text: text,
+                    width: $device.info.screen.width,
+                    font: $font(this.fontSize)
+                }).height
             return {
                 copied: { hidden: !indicator },
                 image: {
@@ -670,7 +675,7 @@ class Clipboard {
                         section: data.section,
                         uuid: data.uuid,
                         md5: data.md5,
-                        height: size.height,
+                        height: height,
                         prev: data.prev,
                         next: data.next
                     }
