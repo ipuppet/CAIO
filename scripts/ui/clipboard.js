@@ -5,6 +5,12 @@ const {
 } = require("../lib/easy-jsbox")
 
 class Clipboard {
+    static singleLineHeight = $text.sizeThatFits({
+        text: "text",
+        width: $device.info.screen.width,
+        font: $font(this.fontSize)
+    }).height
+
     constructor(kernel) {
         this.kernel = kernel
         this.listId = "clipboard-list"
@@ -19,12 +25,7 @@ class Clipboard {
 
     loadDataWithSameHeight() {
         // 图片高度与文字一致
-        const size = $text.sizeThatFits({
-            text: "text",
-            width: $device.info.screen.width,
-            font: $font(this.fontSize)
-        })
-        this.imageContentHeight = size.height
+        this.imageContentHeight = Clipboard.singleLineHeight
         this.loadSavedClipboard()
     }
 
