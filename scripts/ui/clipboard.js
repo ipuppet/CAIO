@@ -61,7 +61,7 @@ class Clipboard {
         $app.listen({
             syncByiCloud: object => {
                 if (object.status) {
-                    this.setSavedClipboard()
+                    this.loadSavedClipboard()
                     const view = $(this.listId)
                     if (view) view.data = this.savedClipboard
                 }
@@ -463,7 +463,7 @@ class Clipboard {
         })
     }
 
-    setSavedClipboard() {
+    loadSavedClipboard() {
         const initData = (data, section) => {
             const dataObj = {}
             let length = 0
@@ -705,7 +705,7 @@ class Clipboard {
     }
 
     getListView() {
-        this.setSavedClipboard()
+        this.loadSavedClipboard()
         return { // 剪切板列表
             type: "list",
             props: {
