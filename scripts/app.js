@@ -379,8 +379,15 @@ class AppUI {
     static renderKeyboardUI() {
         const kernel = new AppKernel()
         const Keyboard = require("./ui/keyboard")
-        const keyboard = new Keyboard(kernel).getView()
-        $ui.render({ views: [keyboard] })
+        const keyboard = new Keyboard(kernel)
+        $ui.render({ views: [keyboard.getView()] })
+    }
+
+    static renderTodayUI() {
+        const kernel = new AppKernel()
+        const Today = require("./ui/today")
+        const today = new Today(kernel)
+        $ui.render({ views: [today.getView()] })
     }
 
     static renderUnsupported() {
@@ -445,6 +452,7 @@ class Widget {
 
 module.exports = {
     run: () => {
+        //AppUI.renderTodayUI(); return
         //AppUI.renderKeyboardUI(); return
         if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
@@ -452,6 +460,8 @@ module.exports = {
             AppUI.renderKeyboardUI()
         } else if ($app.env === $env.widget) {
             Widget.render()
+        } else if ($app.env === $env.today) {
+            AppUI.renderTodayUI()
         } else {
             AppUI.renderUnsupported()
         }

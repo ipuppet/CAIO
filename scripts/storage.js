@@ -216,7 +216,7 @@ class Storage {
         return `@image=${path}`
     }
 
-    ketToPath(key) {
+    keyToPath(key) {
         if (key.startsWith("@image=")) {
             return JSON.parse(key.slice(7))
         }
@@ -286,7 +286,7 @@ class Storage {
             args: [uuid]
         })
         // delete image file
-        const path = this.ketToPath(clipboard.text)
+        const path = this.keyToPath(clipboard.text)
         if (path) {
             $file.delete(path.original)
             $file.delete(path.preview)

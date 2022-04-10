@@ -5,6 +5,12 @@ const {
 } = require("../lib/easy-jsbox")
 
 class Clipboard {
+    static singleLineHeight = $text.sizeThatFits({
+        text: "text",
+        width: $device.info.screen.width,
+        font: $font(this.fontSize)
+    }).height
+
     constructor(kernel) {
         this.kernel = kernel
         this.listId = "clipboard-list"
@@ -14,16 +20,31 @@ class Clipboard {
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
         this.savedClipboard = []
         this.reorder = {}
-        this.init()
+        this.imageContentHeight = 50
+    }
+
+    loadDataWithSingleLine() {
+        // 图片高度与文字一致
+        this.imageContentHeight = Clipboard.singleLineHeight
+        this.loadSavedClipboard()
     }
 
     static updateMenu(kernel) {
         // TODO 更新 menu 中的动作
     }
 
-    init() {
-        this.savedClipboard = this.getSavedClipboard()
+    setClipboardText(text) {
+        if (this.kernel.setting.get("clipboard.universal")) {
+            $clipboard.text = text
+        } else {
+            $clipboard.setTextLocalOnly(text)
+        }
+    }
 
+    /**
+     * list view
+     */
+    ready() {
         // check url scheme
         $delay(0.5, () => {
             if ($context.query["copy"]) {
@@ -43,36 +64,21 @@ class Clipboard {
             }
         })
 
+        // readClipboard
+        $delay(0.5, () => {
+            this.readClipboard()
+        })
+
         // iCloud
         $app.listen({
             syncByiCloud: object => {
                 if (object.status) {
-                    this.savedClipboard = this.getSavedClipboard()
+                    this.loadSavedClipboard()
                     const view = $(this.listId)
                     if (view) view.data = this.savedClipboard
                 }
-            }
-        })
-    }
-
-    setClipboardText(text) {
-        if (this.kernel.setting.get("clipboard.universal")) {
-            $clipboard.text = text
-        } else {
-            $clipboard.setTextLocalOnly(text)
-        }
-    }
-
-    /**
-     * list view
-     */
-    ready() {
-        $delay(0.5, () => {
-            this.readClipboard()
-        })
-        $app.listen({
-            // 在应用恢复响应后调用
-            resume: () => {
+            },
+            resume: () => { // 在应用恢复响应后调用
                 $delay(0.5, () => {
                     this.readClipboard()
                 })
@@ -145,7 +151,7 @@ class Clipboard {
         }
     }
 
-    add(item) {
+    add(item, uiUpdate) {
         // 元数据
         const data = {
             uuid: this.kernel.uuid(),
@@ -180,14 +186,19 @@ class Clipboard {
             // 格式化数据
             const lineData = this.lineData(data)
             this.savedClipboard[1].rows.unshift(lineData) // 保存到内存中
-            // 在列表中插入行
-            $(this.listId).insert({
-                indexPath: $indexPath(1, 0),
-                value: lineData
-            })
-            // 被复制的元素向下移动了一个单位
-            if (this.copied?.indexPath !== undefined && this.copied.indexPath.section === 1)
-                this.setCopied(this.copied.uuid, $indexPath(this.copied.indexPath.section, this.copied.indexPath.row + 1), false)
+            if (typeof uiUpdate === "function") {
+                uiUpdate(data)
+            } else {
+                // 在列表中插入行
+                $(this.listId).insert({
+                    indexPath: $indexPath(1, 0),
+                    value: lineData
+                })
+                // 被复制的元素向下移动了一个单位
+                if (this.copied?.indexPath !== undefined && this.copied.indexPath.section === 1) {
+                    this.setCopied(this.copied.uuid, $indexPath(this.copied.indexPath.section, this.copied.indexPath.row + 1), false)
+                }
+            }
         } catch (error) {
             this.kernel.storage.rollback()
             this.kernel.print(error)
@@ -433,7 +444,7 @@ class Clipboard {
      * @param {Number} index 被复制的行的索引
      */
     copy(text, uuid, indexPath) {
-        const path = this.kernel.storage.ketToPath(text)
+        const path = this.kernel.storage.keyToPath(text)
         if (path && $file.exists(path.original)) {
             $clipboard.image = $file.read(path.original).image
         } else {
@@ -469,7 +480,7 @@ class Clipboard {
         })
     }
 
-    getSavedClipboard() {
+    loadSavedClipboard() {
         const initData = (data, section) => {
             const dataObj = {}
             let length = 0
@@ -521,7 +532,7 @@ class Clipboard {
                 return this.lineData(data, this.copied?.uuid === data.uuid)
             })
         }
-        const data = [
+        this.savedClipboard = [
             {
                 rows: initData(this.kernel.storage.allPin(), 0) ?? []
             },
@@ -529,7 +540,6 @@ class Clipboard {
                 rows: initData(this.kernel.storage.all(), 1) ?? []
             }
         ]
-        return data
     }
 
     searchAction(text) {
@@ -547,7 +557,7 @@ class Clipboard {
         }
     }
 
-    menuItems() {
+    menuItems(withDefaultButtons = true) {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
@@ -575,7 +585,7 @@ class Clipboard {
                         handler: (sender, indexPath) => {
                             const text = sender.object(indexPath).content.info.text
                             let shareContent = text
-                            const path = this.kernel.storage.ketToPath(text)
+                            const path = this.kernel.storage.keyToPath(text)
                             if (path && $file.exists(path.original)) {
                                 const image = $file.read(path.original)?.image?.png
                                 shareContent = {
@@ -612,16 +622,11 @@ class Clipboard {
                 ]
             }
         ]
-        return actions.concat(defaultButtons)
+        return actions.concat(withDefaultButtons ? defaultButtons : [])
     }
 
     lineData(data, indicator = false) {
-        const sliceText = text => {
-            // 显示最大长度
-            const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
-            return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
-        }
-        const path = this.kernel.storage.ketToPath(data.text)
+        const path = this.kernel.storage.keyToPath(data.text)
         if (path) {
             return {
                 copied: { hidden: !indicator },
@@ -635,13 +640,18 @@ class Clipboard {
                         section: data.section,
                         uuid: data.uuid,
                         md5: data.md5,
-                        height: 50,
+                        height: this.imageContentHeight,
                         prev: data.prev,
                         next: data.next
                     }
                 }
             }
         } else {
+            const sliceText = text => {
+                // 显示最大长度
+                const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
+                return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
+            }
             const text = sliceText(data.text)
             const size = $text.sizeThatFits({
                 text: text,
@@ -712,6 +722,7 @@ class Clipboard {
     }
 
     getListView() {
+        this.loadSavedClipboard()
         return { // 剪切板列表
             type: "list",
             props: {
@@ -767,7 +778,7 @@ class Clipboard {
                 didSelect: (sender, indexPath, data) => {
                     const content = data.content
                     const text = content.info.text
-                    const path = this.kernel.storage.ketToPath(text)
+                    const path = this.kernel.storage.keyToPath(text)
                     if (path && $file.exists(path.original)) {
                         $quicklook.open({
                             image: $file.read(path.original)?.image
@@ -844,9 +855,9 @@ class Clipboard {
                                     events: {
                                         rowHeight: (sender, indexPath) => {
                                             const obj = sender.object(indexPath)
-                                            if (!obj.image.hidden) {
+                                            if (obj.image !== undefined && !obj.image.hidden) {
                                                 // image height
-                                                return obj.content.info?.height
+                                                return obj.content?.info?.height
                                             } else {
                                                 // no image
                                                 return this.fontSize + this.edges
