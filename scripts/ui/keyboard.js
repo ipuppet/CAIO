@@ -114,7 +114,7 @@ class Keyboard extends Clipboard {
         }
     }
 
-    bottomBarButtons() {
+    getBottomBarView() {
         const navigationBar = new NavigationBar()
         const navigationItem = new NavigationItem()
 
@@ -179,18 +179,14 @@ class Keyboard extends Clipboard {
 
         navigationBar.setNavigationItem(navigationItem)
 
-        return navigationBar.getNavigationBarView()
-    }
+        const view = navigationBar.getNavigationBarView()
 
-    getBottomBarView() {
-        return {
-            type: "view",
-            views: [this.bottomBarButtons()],
-            layout: (make, view) => {
-                make.bottom.width.equalTo(view.super)
-                make.height.equalTo(this.navHeight - 3)
-            }
+        view.layout = (make, view) => {
+            make.bottom.left.right.equalTo(view.super.safeArea)
+            make.top.equalTo(view.prev.bottom).offset(3)
         }
+
+        return view
     }
 
     getListView() {
