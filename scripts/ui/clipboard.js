@@ -150,7 +150,7 @@ class Clipboard {
         }
     }
 
-    add(item) {
+    add(item, uiUpdate) {
         // 元数据
         const data = {
             uuid: this.kernel.uuid(),
@@ -185,14 +185,19 @@ class Clipboard {
             // 格式化数据
             const lineData = this.lineData(data)
             this.savedClipboard[1].rows.unshift(lineData) // 保存到内存中
-            // 在列表中插入行
-            $(this.listId).insert({
-                indexPath: $indexPath(1, 0),
-                value: lineData
-            })
-            // 被复制的元素向下移动了一个单位
-            if (this.copied?.indexPath !== undefined && this.copied.indexPath.section === 1)
-                this.setCopied(this.copied.uuid, $indexPath(this.copied.indexPath.section, this.copied.indexPath.row + 1), false)
+            if (typeof uiUpdate === "function") {
+                uiUpdate(data)
+            } else {
+                // 在列表中插入行
+                $(this.listId).insert({
+                    indexPath: $indexPath(1, 0),
+                    value: lineData
+                })
+                // 被复制的元素向下移动了一个单位
+                if (this.copied?.indexPath !== undefined && this.copied.indexPath.section === 1) {
+                    this.setCopied(this.copied.uuid, $indexPath(this.copied.indexPath.section, this.copied.indexPath.row + 1), false)
+                }
+            }
         } catch (error) {
             this.kernel.storage.rollback()
             this.kernel.print(error)
