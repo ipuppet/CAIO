@@ -556,7 +556,7 @@ class Clipboard {
         }
     }
 
-    menuItems() {
+    menuItems(withDefaultButtons = true) {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
@@ -621,7 +621,7 @@ class Clipboard {
                 ]
             }
         ]
-        return actions.concat(defaultButtons)
+        return actions.concat(withDefaultButtons ? defaultButtons : [])
     }
 
     lineData(data, indicator = false) {
