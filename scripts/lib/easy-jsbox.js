@@ -731,158 +731,6 @@ class Sheet extends View {
     }
 }
 
-class NavigationBar extends View {
-    static pageSheetNavigationBarHeight = 56
-
-    prefersLargeTitles = true
-    largeTitleFontSize = 34
-    navigationBarTitleFontSize = 17
-    addStatusBarHeight = true
-    contentViewHeightOffset = 10
-    navigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
-    navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
-
-    pageSheetMode() {
-        this.navigationBarLargeTitleHeight -= this.navigationBarNormalHeight
-        this.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
-        this.navigationBarLargeTitleHeight += this.navigationBarNormalHeight
-        this.addStatusBarHeight = false
-        return this
-    }
-
-    withStatusBarHeight() {
-        this.addStatusBarHeight = true
-        return this
-    }
-
-    withoutStatusBarHeight() {
-        this.addStatusBarHeight = false
-        return this
-    }
-
-    setNavigationItem(navigationItem) {
-        this.navigationItem = navigationItem
-    }
-
-    setBackgroundColor(backgroundColor) {
-        this.backgroundColor = backgroundColor
-        return this
-    }
-
-    setPrefersLargeTitles(bool) {
-        this.prefersLargeTitles = bool
-        return this
-    }
-
-    setContentViewHeightOffset(offset) {
-        this.contentViewHeightOffset = offset
-        return this
-    }
-
-    /**
-     * 页面大标题
-     */
-    getLargeTitleView() {
-        return this.prefersLargeTitles
-            && this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever
-            ? {
-                type: "label",
-                props: {
-                    id: this.id + "-large-title",
-                    text: this.navigationItem.title,
-                    textColor: UIKit.textColor,
-                    align: $align.left,
-                    font: $font("bold", this.largeTitleFontSize),
-                    line: 1
-                },
-                layout: (make, view) => {
-                    make.left.equalTo(view.super.safeArea).offset(15)
-                    make.height.equalTo(this.largeTitleFontSize + 5)
-                    make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-                }
-            } : {}
-    }
-
-    getNavigationBarView() {
-        const getButtonView = (buttons, align) => {
-            return buttons.length > 0 ? {
-                type: "view",
-                views: [{
-                    type: "view",
-                    views: buttons,
-                    layout: $layout.fill
-                }],
-                layout: (make, view) => {
-                    make.top.equalTo(view.super.safeAreaTop)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-                    if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea).offset(5)
-                    else make.right.equalTo(view.super.safeArea).offset(-5)
-                    make.width.equalTo(buttons.length * BarButtonItem.size.width)
-                }
-            } : {}
-        }
-        const rightButtonView = getButtonView(this.navigationItem.rightButtons, UIKit.align.right)
-        const leftButtonView = this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
-        const isHideBackground = this.prefersLargeTitles
-        const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
-        return { // 顶部 bar
-            type: "view",
-            props: {
-                id: this.id + "-navigation",
-                bgcolor: $color("clear")
-            },
-            layout: (make, view) => {
-                make.left.top.right.inset(0)
-                make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-            },
-            views: [
-                this.backgroundColor ? {
-                    type: "view",
-                    props: {
-                        hidden: isHideBackground,
-                        bgcolor: this.backgroundColor,
-                        id: this.id + "-background"
-                    },
-                    layout: $layout.fill
-                } : UIKit.blurBox({
-                    hidden: isHideBackground,
-                    id: this.id + "-background"
-                }),
-                UIKit.separatorLine({
-                    id: this.id + "-underline",
-                    alpha: isHideBackground ? 0 : 1
-                }),
-                {
-                    type: "view",
-                    props: {
-                        hidden: true,
-                        bgcolor: $color("clear"),
-                        id: this.id + "-large-title-mask"
-                    },
-                    layout: $layout.fill
-                },
-                { // 标题
-                    type: "label",
-                    props: {
-                        id: this.id + "-small-title",
-                        alpha: isHideTitle ? 1 : 0,  // 不显示大标题则显示小标题
-                        text: this.navigationItem.title,
-                        font: $font("bold", this.navigationBarTitleFontSize),
-                        align: $align.center,
-                        bgcolor: $color("clear"),
-                        textColor: UIKit.textColor
-                    },
-                    layout: (make, view) => {
-                        make.left.right.inset(0)
-                        make.height.equalTo(20)
-                        make.centerY.equalTo(view.super.safeArea)
-                    }
-                }
-            ].concat(rightButtonView, leftButtonView)
-        }
-    }
-}
-
 /**
  * 用于创建一个靠右侧按钮（自动布局）
  * this.events.tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
@@ -1096,21 +944,31 @@ class SearchBar extends BarTitleView {
 
     getView() {
         return {
-            type: "input",
+            type: "view",
             props: {
                 id: this.id,
-                type: this.kbType,
-                placeholder: this.placeholder
+                smoothCorners: true,
+                cornerRadius: 6,
+                bgcolor: $color("#EEF1F1", "#212121")
             },
+            views: [{
+                type: "input",
+                props: {
+                    id: this.id + "-input",
+                    type: this.kbType,
+                    bgcolor: $color("clear"),
+                    placeholder: this.placeholder
+                },
+                layout: $layout.fill,
+                events: {
+                    changed: sender => this.controller.callEvent("onChange", sender.text)
+                }
+            }],
             layout: (make, view) => {
-                //make.top.equalTo(view.prev.bottom).offset(15)
                 make.top.equalTo(view.prev.bottom).offset(15)
                 make.left.equalTo(view.super.safeArea).offset(15)
                 make.right.equalTo(view.super.safeArea).offset(-15)
                 make.height.equalTo(this.height)
-            },
-            events: {
-                changed: sender => this.controller.callEvent("onChange", sender.text)
             }
         }
     }
@@ -1124,20 +982,21 @@ class SearchBarController extends Controller {
 
     updateSelector() {
         this.selector = {
-            input: $(this.searchBar.id)
+            inputBox: $(this.searchBar.id),
+            input: $(this.searchBar.id + "-input")
         }
     }
 
     hide() {
         this.updateSelector()
-        this.selector.input.updateLayout(make => {
+        this.selector.inputBox.updateLayout(make => {
             make.height.equalTo(0)
         })
     }
 
     show() {
         this.updateSelector()
-        this.selector.input.updateLayout(make => {
+        this.selector.inputBox.updateLayout(make => {
             make.height.equalTo(this.searchBar.height)
         })
     }
@@ -1147,14 +1006,15 @@ class SearchBarController extends Controller {
         // 调整大小
         let height = this.searchBar.height - contentOffset
         height = height > 0 ? (height > this.searchBar.height ? this.searchBar.height : height) : 0
-        this.selector.input.updateLayout(make => {
+        this.selector.inputBox.updateLayout(make => {
             make.height.equalTo(height)
         })
         // 隐藏内容
         if (contentOffset > 0) {
-            this.selector.input.placeholder = ""
+            const alpha = (this.searchBar.height / 2 - 5 - contentOffset) / 10
+            this.selector.input.alpha = alpha
         } else {
-            this.selector.input.placeholder = this.searchBar.placeholder
+            this.selector.input.alpha = 1
         }
     }
 
@@ -1279,6 +1139,158 @@ class NavigationItem {
     removePopButton() {
         this.popButtonView = undefined
         return this
+    }
+}
+
+class NavigationBar extends View {
+    static pageSheetNavigationBarHeight = 56
+
+    prefersLargeTitles = true
+    largeTitleFontSize = 34
+    navigationBarTitleFontSize = 17
+    addStatusBarHeight = true
+    contentViewHeightOffset = 10
+    navigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
+    navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
+
+    pageSheetMode() {
+        this.navigationBarLargeTitleHeight -= this.navigationBarNormalHeight
+        this.navigationBarNormalHeight = NavigationBar.pageSheetNavigationBarHeight
+        this.navigationBarLargeTitleHeight += this.navigationBarNormalHeight
+        this.addStatusBarHeight = false
+        return this
+    }
+
+    withStatusBarHeight() {
+        this.addStatusBarHeight = true
+        return this
+    }
+
+    withoutStatusBarHeight() {
+        this.addStatusBarHeight = false
+        return this
+    }
+
+    setNavigationItem(navigationItem) {
+        this.navigationItem = navigationItem
+    }
+
+    setBackgroundColor(backgroundColor) {
+        this.backgroundColor = backgroundColor
+        return this
+    }
+
+    setPrefersLargeTitles(bool) {
+        this.prefersLargeTitles = bool
+        return this
+    }
+
+    setContentViewHeightOffset(offset) {
+        this.contentViewHeightOffset = offset
+        return this
+    }
+
+    /**
+     * 页面大标题
+     */
+    getLargeTitleView() {
+        return this.prefersLargeTitles
+            && this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever
+            ? {
+                type: "label",
+                props: {
+                    id: this.id + "-large-title",
+                    text: this.navigationItem.title,
+                    textColor: UIKit.textColor,
+                    align: $align.left,
+                    font: $font("bold", this.largeTitleFontSize),
+                    line: 1
+                },
+                layout: (make, view) => {
+                    make.left.equalTo(view.super.safeArea).offset(15)
+                    make.height.equalTo(this.largeTitleFontSize + 5)
+                    make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+                }
+            } : {}
+    }
+
+    getNavigationBarView() {
+        const getButtonView = (buttons, align) => {
+            return buttons.length > 0 ? {
+                type: "view",
+                views: [{
+                    type: "view",
+                    views: buttons,
+                    layout: $layout.fill
+                }],
+                layout: (make, view) => {
+                    make.top.equalTo(view.super.safeAreaTop)
+                    make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+                    if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea).offset(5)
+                    else make.right.equalTo(view.super.safeArea).offset(-5)
+                    make.width.equalTo(buttons.length * BarButtonItem.size.width)
+                }
+            } : {}
+        }
+        const rightButtonView = getButtonView(this.navigationItem.rightButtons, UIKit.align.right)
+        const leftButtonView = this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
+        const isHideBackground = this.prefersLargeTitles
+        const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
+        return { // 顶部 bar
+            type: "view",
+            props: {
+                id: this.id + "-navigation",
+                bgcolor: $color("clear")
+            },
+            layout: (make, view) => {
+                make.left.top.right.inset(0)
+                make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+            },
+            views: [
+                this.backgroundColor ? {
+                    type: "view",
+                    props: {
+                        hidden: isHideBackground,
+                        bgcolor: this.backgroundColor,
+                        id: this.id + "-background"
+                    },
+                    layout: $layout.fill
+                } : UIKit.blurBox({
+                    hidden: isHideBackground,
+                    id: this.id + "-background"
+                }),
+                UIKit.separatorLine({
+                    id: this.id + "-underline",
+                    alpha: isHideBackground ? 0 : 1
+                }),
+                {
+                    type: "view",
+                    props: {
+                        hidden: true,
+                        bgcolor: $color("clear"),
+                        id: this.id + "-large-title-mask"
+                    },
+                    layout: $layout.fill
+                },
+                { // 标题
+                    type: "label",
+                    props: {
+                        id: this.id + "-small-title",
+                        alpha: isHideTitle ? 1 : 0,  // 不显示大标题则显示小标题
+                        text: this.navigationItem.title,
+                        font: $font("bold", this.navigationBarTitleFontSize),
+                        align: $align.center,
+                        bgcolor: $color("clear"),
+                        textColor: UIKit.textColor
+                    },
+                    layout: (make, view) => {
+                        make.left.right.inset(0)
+                        make.height.equalTo(20)
+                        make.centerY.equalTo(view.super.safeArea)
+                    }
+                }
+            ].concat(rightButtonView, leftButtonView)
+        }
     }
 }
 
