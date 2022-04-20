@@ -1557,7 +1557,9 @@ class PageController extends Controller {
         // 修饰视图顶部偏移
         if (!this.view.props.header) this.view.props.header = {}
         this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-            height: height
+            height: this.view.props.stickyHeader === true
+                ? height - this.navigationController.navigationBar.navigationBarNormalHeight
+                : height
         })
 
         // 重写布局
@@ -1591,8 +1593,13 @@ class PageController extends Controller {
 
             // layout
             this.view.layout = (make, view) => {
+                if (this.view.props.stickyHeader === true) {
+                    make.top.equalTo(view.super).offset(this.navigationController.navigationBar.navigationBarNormalHeight)
+                } else {
+                    make.top.equalTo(view.super)
+                }
                 make.left.right.equalTo(view.super.safeArea)
-                make.top.bottom.equalTo(view.super)
+                make.bottom.equalTo(view.super)
             }
 
             // 重写滚动事件
