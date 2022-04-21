@@ -235,7 +235,11 @@ class View {
     }
 
     get definition() {
-        return this.getView()
+        try {
+            return this.getView()
+        } catch (error) {
+            console.error(error)
+        }
     }
 }
 
@@ -290,8 +294,9 @@ class UIKit {
             type: "canvas",
             props: props,
             layout: (make, view) => {
-                if (view.prev === undefined) return false
-                if (align === UIKit.align.bottom) {
+                if (view.prev === undefined) {
+                    make.top.equalTo(view.super)
+                } else if (align === UIKit.align.bottom) {
                     make.top.equalTo(view.prev.bottom)
                 } else {
                     make.top.equalTo(view.prev.top)
@@ -920,6 +925,23 @@ class BarTitleView extends View {
     }
 }
 
+class FixedFooterView extends View {
+    height = 60
+    hasTabBar = false
+
+    getView() {
+        this.type = "view"
+        this.setProp("bgcolor", UIKit.primaryViewBackgroundColor)
+        this.layout = (make, view) => {
+            make.left.right.equalTo(view.super)
+            make.bottom.equalTo(view.super).offset(this.hasTabBar ? -TabBarController.tabBarHeight : 0)
+            make.height.equalTo(this.height)
+        }
+
+        return this
+    }
+}
+
 class SearchBar extends BarTitleView {
     height = 35
     kbType = $kbType.search
@@ -1057,6 +1079,11 @@ class NavigationItem {
 
     setLargeTitleDisplayMode(mode) {
         this.largeTitleDisplayMode = mode
+        return this
+    }
+
+    setFixedFooterView(fixedFooterView) {
+        this.fixedFooterView = fixedFooterView
         return this
     }
 
@@ -1557,9 +1584,14 @@ class PageController extends Controller {
         // 修饰视图顶部偏移
         if (!this.view.props.header) this.view.props.header = {}
         this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-            height: this.view.props.stickyHeader === true
+            height: (this.view.props.stickyHeader === true
                 ? height - this.navigationController.navigationBar.navigationBarNormalHeight
-                : height
+                : height) + (this.view.props.header.props?.height ?? 0)
+        })
+        // 修饰视图底部偏移
+        if (!this.view.props.footer) this.view.props.footer = {}
+        this.view.props.footer.props = Object.assign(this.view.props.footer.props ?? {}, {
+            height: (this.navigationItem.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
         })
 
         // 重写布局
@@ -1584,11 +1616,16 @@ class PageController extends Controller {
                 this.view.props.indicatorInsets = $insets(
                     old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
                     old.left,
-                    old.bottom,
+                    old.bottom + (this.navigationItem.fixedFooterView?.height ?? 0),
                     old.right
                 )
             } else {
-                this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
+                this.view.props.indicatorInsets = $insets(
+                    this.navigationController.navigationBar.navigationBarNormalHeight,
+                    0,
+                    this.navigationItem.fixedFooterView?.height ?? 0,
+                    0
+                )
             }
 
             // layout
@@ -1632,7 +1669,8 @@ class PageController extends Controller {
                 this.navigationController.navigationBar.getLargeTitleView(),
                 // titleView
                 this.navigationItem.titleView?.definition ?? {},
-                this.navigationController.navigationBar.getNavigationBarView()
+                this.navigationController.navigationBar.getNavigationBarView(),
+                this.navigationItem.fixedFooterView?.definition ?? {}
             ])
         } else {
             this.page = PageView.createByViews([this.view])
@@ -2042,6 +2080,19 @@ class FileStorage {
                 reject(error)
             }
         })
+    }
+
+    exists(path = "", fileName) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        path = this.#filePath(path, fileName)
+
+        if ($file.exists(path)) {
+            return path
+        }
+
+        return false
     }
 
     read(path = "", fileName) {
@@ -3473,6 +3524,7 @@ module.exports = {
     Sheet,
     NavigationBar,
     BarButtonItem,
+    FixedFooterView,
     SearchBar,
     SearchBarController,
     NavigationItem,
