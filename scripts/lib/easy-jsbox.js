@@ -1,4 +1,4 @@
-const VERSION = "1.2.1"
+const VERSION = "1.2.2"
 
 String.prototype.trim = function (char, type) {
     if (char) {
@@ -290,8 +290,9 @@ class UIKit {
             type: "canvas",
             props: props,
             layout: (make, view) => {
-                if (view.prev === undefined) return false
-                if (align === UIKit.align.bottom) {
+                if (view.prev === undefined) {
+                    make.top.equalTo(view.super)
+                } else if (align === UIKit.align.bottom) {
                     make.top.equalTo(view.prev.bottom)
                 } else {
                     make.top.equalTo(view.prev.top)
@@ -912,6 +913,8 @@ class BarButtonItem extends View {
 
 class BarTitleView extends View {
     height = 20
+    topOffset = 15
+    bottomOffset = 10
     controller = {}
 
     setController(controller) {
@@ -922,6 +925,8 @@ class BarTitleView extends View {
 
 class SearchBar extends BarTitleView {
     height = 35
+    topOffset = 15
+    bottomOffset = 10
     kbType = $kbType.search
     placeholder = $l10n("SEARCH")
 
@@ -930,6 +935,36 @@ class SearchBar extends BarTitleView {
 
         this.setController(new SearchBarController())
         this.controller.setSearchBar(this)
+
+        this.init()
+    }
+
+    init() {
+        this.props = {
+            id: this.id,
+            smoothCorners: true,
+            cornerRadius: 6,
+            bgcolor: $color("#EEF1F1", "#212121")
+        }
+        this.views = [{
+            type: "input",
+            props: {
+                id: this.id + "-input",
+                type: this.kbType,
+                bgcolor: $color("clear"),
+                placeholder: this.placeholder
+            },
+            layout: $layout.fill,
+            events: {
+                changed: sender => this.controller.callEvent("onChange", sender.text)
+            }
+        }]
+        this.layout = (make, view) => {
+            make.height.equalTo(this.height)
+            make.top.equalTo(view.super.safeArea).offset(this.topOffset)
+            make.left.equalTo(view.super.safeArea).offset(15)
+            make.right.equalTo(view.super.safeArea).offset(-15)
+        }
     }
 
     setPlaceholder(placeholder) {
@@ -940,37 +975,6 @@ class SearchBar extends BarTitleView {
     setKbType(kbType) {
         this.kbType = kbType
         return this
-    }
-
-    getView() {
-        return {
-            type: "view",
-            props: {
-                id: this.id,
-                smoothCorners: true,
-                cornerRadius: 6,
-                bgcolor: $color("#EEF1F1", "#212121")
-            },
-            views: [{
-                type: "input",
-                props: {
-                    id: this.id + "-input",
-                    type: this.kbType,
-                    bgcolor: $color("clear"),
-                    placeholder: this.placeholder
-                },
-                layout: $layout.fill,
-                events: {
-                    changed: sender => this.controller.callEvent("onChange", sender.text)
-                }
-            }],
-            layout: (make, view) => {
-                make.top.equalTo(view.prev.bottom).offset(15)
-                make.left.equalTo(view.super.safeArea).offset(15)
-                make.right.equalTo(view.super.safeArea).offset(-15)
-                make.height.equalTo(this.height)
-            }
-        }
     }
 }
 
@@ -1003,6 +1007,7 @@ class SearchBarController extends Controller {
 
     didScroll(contentOffset) {
         this.updateSelector()
+
         // 调整大小
         let height = this.searchBar.height - contentOffset
         height = height > 0 ? (height > this.searchBar.height ? this.searchBar.height : height) : 0
@@ -1020,6 +1025,7 @@ class SearchBarController extends Controller {
 
     didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset) {
         this.updateSelector()
+
         if (
             contentOffset >= 0
             && contentOffset <= this.searchBar.height
@@ -1044,6 +1050,7 @@ class NavigationItem {
     hasbutton = false
     largeTitleDisplayMode = NavigationItem.largeTitleDisplayModeAutomatic
     largeTitleHeightOffset = 20
+    isPinTitleView = false
 
     setTitle(title) {
         this.title = title
@@ -1055,8 +1062,18 @@ class NavigationItem {
         return this
     }
 
+    pinTitleView() {
+        this.isPinTitleView = true
+        return this
+    }
+
     setLargeTitleDisplayMode(mode) {
         this.largeTitleDisplayMode = mode
+        return this
+    }
+
+    setFixedFooterView(fixedFooterView) {
+        this.fixedFooterView = fixedFooterView
         return this
     }
 
@@ -1147,6 +1164,7 @@ class NavigationBar extends View {
 
     prefersLargeTitles = true
     largeTitleFontSize = 34
+    largeTitleLabelHeightOffset = 5
     navigationBarTitleFontSize = 17
     addStatusBarHeight = true
     contentViewHeightOffset = 10
@@ -1208,7 +1226,7 @@ class NavigationBar extends View {
                 },
                 layout: (make, view) => {
                     make.left.equalTo(view.super.safeArea).offset(15)
-                    make.height.equalTo(this.largeTitleFontSize + 5)
+                    make.height.equalTo(this.largeTitleFontSize + this.largeTitleLabelHeightOffset)
                     make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
                 }
             } : {}
@@ -1303,16 +1321,19 @@ class NavigationController extends Controller {
     static largeTitleViewLargeMode = 1
 
     navigationBar = new NavigationBar()
-    largeTitleScrollTrigger = this.navigationBar.largeTitleFontSize - 3
+    largeTitleScrollTrigger = this.navigationBar.navigationBarNormalHeight
 
     updateSelector() {
         this.selector = {
             navigation: $(this.navigationBar.id + "-navigation"),
             largeTitleView: $(this.navigationBar.id + "-large-title"),
             smallTitleView: $(this.navigationBar.id + "-small-title"),
-            underlineView: $(this.navigationBar.id + "-underline"),
+            underlineView: this.navigationBar?.navigationItem?.isPinTitleView
+                ? $(this.navigationBar.id + "-title-view-underline")
+                : $(this.navigationBar.id + "-underline"),
             largeTitleMaskView: $(this.navigationBar.id + "-large-title-mask"),
-            backgroundView: $(this.navigationBar.id + "-background")
+            backgroundView: $(this.navigationBar.id + "-background"),
+            titleViewBackgroundView: $(this.navigationBar.id + "-title-view-background")
         }
     }
 
@@ -1364,53 +1385,64 @@ class NavigationController extends Controller {
 
     #largeTitleScrollAction(contentOffset) {
         const titleSizeMax = 40 // 下拉放大字体最大值
+
         // 标题跟随
         this.selector.largeTitleView.updateLayout((make, view) => {
-            make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBar.navigationBarNormalHeight - contentOffset)
+            if (this.navigationBar.navigationBarNormalHeight - contentOffset > 0) {
+                // 标题上移致隐藏后停止移动
+                make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBar.navigationBarNormalHeight - contentOffset)
+            } else {
+                make.top.equalTo(view.super.safeAreaTop).offset(0)
+            }
         })
 
         if (contentOffset > 0) {
-            if (contentOffset > this.largeTitleScrollTrigger) {
+            if (contentOffset >= this.largeTitleScrollTrigger) {
                 this.#changeLargeTitleView(NavigationController.largeTitleViewSmallMode)
             } else {
                 this.#changeLargeTitleView(NavigationController.largeTitleViewLargeMode)
             }
-        } else if (contentOffset < -20) {
+        } else {
             // 切换模式
             this.#changeLargeTitleView(NavigationController.largeTitleViewLargeMode)
-            // 下拉放大字体
-            let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
-            if (size > titleSizeMax) size = titleSizeMax
-            this.selector.largeTitleView.font = $font("bold", size)
+            if (contentOffset < -20) {
+                // 下拉放大字体
+                let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
+                if (size > titleSizeMax) size = titleSizeMax
+                this.selector.largeTitleView.font = $font("bold", size)
+            }
         }
     }
 
     #navigationBarScrollAction(contentOffset) {
-        if (contentOffset > 0) {
-            let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
-                ? 5
-                : this.largeTitleScrollTrigger
-            if (contentOffset > trigger) {
-                // 隐藏遮罩
-                this.selector.largeTitleMaskView.hidden = true
-                $ui.animate({
-                    duration: 0.2,
-                    animation: () => {
-                        // 显示下划线和背景
-                        this.selector.underlineView.alpha = 1
-                        this.selector.backgroundView.hidden = false
-                    }
-                })
+        if (this.navigationBar?.navigationItem?.isPinTitleView) {
+            // titleView 背景
+            if (this.navigationBar.navigationBarNormalHeight - contentOffset > 0) {
+                this.selector.titleViewBackgroundView.hidden = true
             } else {
-                const contentViewBackgroundColor = this.selector.largeTitleView?.prev.bgcolor
-                this.selector.largeTitleMaskView.bgcolor = contentViewBackgroundColor
-                this.selector.largeTitleMaskView.hidden = false
-                // 隐藏背景
-                this.selector.underlineView.alpha = 0
-                this.selector.backgroundView.hidden = true
+                this.selector.titleViewBackgroundView.hidden = false
             }
+        }
+
+        let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
+            ? 5
+            : this.largeTitleScrollTrigger
+        if (contentOffset > trigger) {
+            // 隐藏遮罩
+            this.selector.largeTitleMaskView.hidden = true
+            $ui.animate({
+                duration: 0.2,
+                animation: () => {
+                    // 显示下划线和背景
+                    this.selector.underlineView.alpha = 1
+                    this.selector.backgroundView.hidden = false
+                }
+            })
         } else {
-            // 隐藏背景 滑动过快时， contentOffset > 0 内的隐藏背景可能失效
+            const contentViewBackgroundColor = this.selector.largeTitleView?.prev.bgcolor
+            this.selector.largeTitleMaskView.bgcolor = contentViewBackgroundColor
+            this.selector.largeTitleMaskView.hidden = false
+            // 隐藏背景
             this.selector.underlineView.alpha = 0
             this.selector.backgroundView.hidden = true
         }
@@ -1418,18 +1450,24 @@ class NavigationController extends Controller {
 
     didScroll(contentOffset) {
         if (!this.navigationBar.prefersLargeTitles) return
+
         const largeTitleDisplayMode = this.navigationBar?.navigationItem.largeTitleDisplayMode
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAlways) return
+
         this.updateSelector()
+
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAutomatic) {
-            // titleView didScroll
-            this.navigationBar?.navigationItem?.titleView?.controller.didScroll(contentOffset)
-            // 在 titleView 折叠前锁住主要视图
-            if (contentOffset > 0) {
-                const height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
-                contentOffset -= height
-                if (contentOffset < 0) contentOffset = 0
+            if (!this.navigationBar?.navigationItem?.isPinTitleView) {
+                // titleView didScroll
+                this.navigationBar?.navigationItem?.titleView?.controller.didScroll(contentOffset)
+                // 在 titleView 折叠前锁住主要视图
+                if (contentOffset > 0) {
+                    const height = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+                    contentOffset -= height
+                    if (contentOffset < 0) contentOffset = 0
+                }
             }
+
             this.#largeTitleScrollAction(contentOffset)
             this.#navigationBarScrollAction(contentOffset)
         } else if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
@@ -1437,19 +1475,21 @@ class NavigationController extends Controller {
         }
     }
 
-    didEndDragging(contentOffset, decelerate, scrollToOffset) {
+    didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset) {
         if (!this.navigationBar.prefersLargeTitles) return
         const largeTitleDisplayMode = this.navigationBar?.navigationItem.largeTitleDisplayMode
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAlways) return
         this.updateSelector()
         if (largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeAutomatic) {
-            // titleView didEndDragging
-            const zeroOffset = (!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationBar.addStatusBarHeight
-                ? UIKit.statusBarHeight
-                : 0
-            this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset)
-            const titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
-            contentOffset -= titleViewHeight
+            let titleViewHeight = 0
+            if (!this.navigationBar?.navigationItem?.isPinTitleView) {
+                // titleView didEndDragging
+                this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(
+                    contentOffset, decelerate, scrollToOffset, zeroOffset
+                )
+                titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
+                contentOffset -= titleViewHeight
+            }
             if (
                 contentOffset >= 0
                 && contentOffset <= this.navigationBar.largeTitleFontSize
@@ -1462,6 +1502,32 @@ class NavigationController extends Controller {
                 ))
             }
         }
+    }
+}
+
+class FixedFooterView extends View {
+    height = 60
+
+    getView() {
+        this.type = "view"
+        this.setProp("bgcolor", UIKit.primaryViewBackgroundColor)
+        this.layout = (make, view) => {
+            make.left.right.bottom.equalTo(view.super)
+            make.top.equalTo(view.super.safeAreaBottom).offset(-this.height)
+        }
+
+        this.views = [
+            View.create({
+                props: this.props,
+                views: this.views,
+                layout: (make, view) => {
+                    make.left.right.top.equalTo(view.super)
+                    make.height.equalTo(this.height)
+                }
+            })
+        ]
+
+        return this
     }
 }
 
@@ -1546,18 +1612,47 @@ class PageController extends Controller {
         // 计算偏移高度
         let height = this.navigationController.navigationBar.contentViewHeightOffset
         if (this.navigationItem.titleView) {
+            height += this.navigationItem.titleView.topOffset
             height += this.navigationItem.titleView.height
+            height += this.navigationItem.titleView.bottomOffset
         }
-        if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
-            height += this.navigationController.navigationBar.navigationBarNormalHeight
+        if (this.view.props.stickyHeader) {
+            height += this.navigationController.navigationBar.largeTitleFontSize
+            height += this.navigationController.navigationBar.largeTitleLabelHeightOffset
         } else {
-            height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
+                height += this.navigationController.navigationBar.navigationBarNormalHeight
+            } else {
+                height += this.navigationController.navigationBar.navigationBarLargeTitleHeight
+            }
         }
 
         // 修饰视图顶部偏移
-        if (!this.view.props.header) this.view.props.header = {}
-        this.view.props.header.props = Object.assign(this.view.props.header.props ?? {}, {
-            height: height
+        if (this.view.props.header) {
+            this.view.props.header = {
+                type: "view",
+                props: {
+                    height: height + (this.view.props.header?.props?.height ?? 0)
+                },
+                views: [{
+                    type: "view",
+                    props: { clipsToBounds: true },
+                    views: [this.view.props.header],
+                    layout: (make, view) => {
+                        make.top.inset(height)
+                        make.height.equalTo(this.view.props.header?.props?.height ?? 0)
+                        make.width.equalTo(view.super)
+                    }
+                }]
+            }
+        } else {
+            this.view.props.header = { props: { height: height } }
+        }
+
+        // 修饰视图底部偏移
+        if (!this.view.props.footer) this.view.props.footer = {}
+        this.view.props.footer.props = Object.assign(this.view.props.footer.props ?? {}, {
+            height: (this.navigationItem.fixedFooterView?.height ?? 0) + (this.view.props.footer.props?.height ?? 0)
         })
 
         // 重写布局
@@ -1570,6 +1665,9 @@ class PageController extends Controller {
                 if (this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever) {
                     topOffset += this.navigationController.navigationBar.largeTitleFontSize
                 }
+                if (this.navigationItem.titleView) {
+                    topOffset += this.navigationItem.titleView.topOffset + this.navigationItem.titleView.bottomOffset
+                }
                 if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
                     topOffset += UIKit.statusBarHeight
                 }
@@ -1577,41 +1675,71 @@ class PageController extends Controller {
             }
         } else {
             // indicatorInsets
+            const pinTitleViewOffset = this.navigationItem.isPinTitleView
+                ? this.navigationItem.titleView.height
+                + this.navigationItem.titleView.bottomOffset
+                + this.navigationController.navigationBar.contentViewHeightOffset
+                - this.navigationController.navigationBar.largeTitleLabelHeightOffset / 2 // 大标题中有额外空间用以完整显示 g y 等字符
+                : 0
             if (this.view.props.indicatorInsets) {
                 const old = this.view.props.indicatorInsets
                 this.view.props.indicatorInsets = $insets(
-                    old.top + this.navigationController.navigationBar.navigationBarNormalHeight,
+                    old.top + this.navigationController.navigationBar.navigationBarNormalHeight + pinTitleViewOffset,
                     old.left,
-                    old.bottom,
+                    old.bottom + (this.navigationItem.fixedFooterView?.height ?? 0),
                     old.right
                 )
             } else {
-                this.view.props.indicatorInsets = $insets(this.navigationController.navigationBar.navigationBarNormalHeight, 0, 0, 0)
+                this.view.props.indicatorInsets = $insets(
+                    this.navigationController.navigationBar.navigationBarNormalHeight + pinTitleViewOffset,
+                    0,
+                    this.navigationItem.fixedFooterView?.height ?? 0,
+                    0
+                )
             }
 
             // layout
             this.view.layout = (make, view) => {
+                if (this.view.props.stickyHeader) {
+                    make.top.equalTo(view.super.safeArea).offset(this.navigationController.navigationBar.navigationBarNormalHeight)
+                } else {
+                    make.top.equalTo(view.super)
+                }
                 make.left.right.equalTo(view.super.safeArea)
-                make.top.bottom.equalTo(view.super)
+                make.bottom.equalTo(view.super)
             }
 
             // 重写滚动事件
             this.view
                 .assignEvent("didScroll", sender => {
                     let contentOffset = sender.contentOffset.y
-                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                    if (
+                        (!UIKit.isHorizontal || UIKit.isLargeScreen)
+                        && this.navigationController.navigationBar.addStatusBarHeight
+                        && !this.view.props.stickyHeader
+                    ) {
                         contentOffset += UIKit.statusBarHeight
                     }
                     this.navigationController.didScroll(contentOffset)
                 })
                 .assignEvent("didEndDragging", (sender, decelerate) => {
                     let contentOffset = sender.contentOffset.y
-                    if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                    let zeroOffset = 0
+                    if (
+                        (!UIKit.isHorizontal || UIKit.isLargeScreen)
+                        && this.navigationController.navigationBar.addStatusBarHeight
+                        && !this.view.props.stickyHeader
+                    ) {
                         contentOffset += UIKit.statusBarHeight
+                        zeroOffset = UIKit.statusBarHeight
                     }
-                    this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args))
+                    this.navigationController.didEndDragging(
+                        contentOffset, decelerate,
+                        (...args) => sender.scrollToOffset(...args),
+                        zeroOffset
+                    )
                 })
-                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+                .assignEvent("willBeginDecelerating", (...args) => this.view.events?.didEndDragging(...args))
         }
     }
 
@@ -1619,13 +1747,49 @@ class PageController extends Controller {
         if (this.navigationController.navigationBar.prefersLargeTitles) {
             this.bindScrollEvents()
 
+            let titleView = {}
+            if (this.navigationItem.titleView) {
+                // 修改 titleView 背景与 navigationBar 相同
+                const isHideBackground = this.navigationController.navigationBar.prefersLargeTitles
+                titleView = View.create({
+                    views: [
+                        this.navigationController.navigationBar.backgroundColor ? {
+                            type: "view",
+                            props: {
+                                hidden: isHideBackground,
+                                bgcolor: this.navigationController.navigationBar.backgroundColor,
+                                id: this.navigationController.navigationBar.id + "-title-view-background"
+                            },
+                            layout: $layout.fill
+                        } : UIKit.blurBox({
+                            hidden: isHideBackground,
+                            id: this.navigationController.navigationBar.id + "-title-view-background"
+                        }),
+                        UIKit.separatorLine({
+                            id: this.navigationController.navigationBar.id + "-title-view-underline",
+                            alpha: isHideBackground ? 0 : 1
+                        }),
+                        this.navigationItem.titleView.definition
+                    ],
+                    layout: (make, view) => {
+                        make.top.equalTo(view.prev.bottom)
+                        make.width.equalTo(view.super)
+                        make.height.equalTo(
+                            this.navigationItem.titleView.topOffset
+                            + this.navigationItem.titleView.height
+                            + this.navigationItem.titleView.bottomOffset
+                        )
+                    }
+                })
+            }
+
             // 初始化 PageView
             this.page = PageView.createByViews([
                 this.view,
                 this.navigationController.navigationBar.getLargeTitleView(),
-                // titleView
-                this.navigationItem.titleView?.definition ?? {},
-                this.navigationController.navigationBar.getNavigationBarView()
+                titleView,
+                this.navigationController.navigationBar.getNavigationBarView(),
+                this.navigationItem.fixedFooterView?.definition ?? {}
             ])
         } else {
             this.page = PageView.createByViews([this.view])
@@ -1649,7 +1813,6 @@ class PageController extends Controller {
 class TabBarCellView extends View {
     constructor(args = {}) {
         super(args)
-        this.props.id = this.id
         this.setIcon(args.icon)
         this.setTitle(args.title)
         if (args.activeStatus !== undefined) {
@@ -1717,7 +1880,33 @@ class TabBarCellView extends View {
                 }
             }
         ]
-        return super.getView()
+        return this
+    }
+}
+
+class TabBarHeaderView extends View {
+    height = 60
+
+    getView() {
+        this.type = "view"
+        this.setProp("bgcolor", this.props.bgcolor ?? UIKit.primaryViewBackgroundColor)
+        this.layout = (make, view) => {
+            make.left.right.bottom.equalTo(view.super)
+            make.top.equalTo(view.super.safeAreaBottom).offset(-this.height - TabBarController.tabBarHeight)
+        }
+
+        this.views = [
+            View.create({
+                props: this.props,
+                views: this.views,
+                layout: (make, view) => {
+                    make.left.right.top.equalTo(view.super)
+                    make.height.equalTo(this.height)
+                }
+            })
+        ]
+
+        return this
     }
 }
 
@@ -1726,6 +1915,7 @@ class TabBarController extends Controller {
 
     #pages = {}
     #cells = {}
+    #header
     #selected
 
     get selected() {
@@ -1734,6 +1924,10 @@ class TabBarController extends Controller {
 
     set selected(selected) {
         this.switchPageTo(selected)
+    }
+
+    get contentOffset() {
+        return TabBarController.tabBarHeight + (this.#header?.height ?? 0)
     }
 
     /**
@@ -1802,6 +1996,11 @@ class TabBarController extends Controller {
         return this
     }
 
+    setHeader(view) {
+        this.#header = view
+        return this
+    }
+
     #cellViews() {
         const views = []
         Object.values(this.#cells).forEach(cell => {
@@ -1828,23 +2027,22 @@ class TabBarController extends Controller {
                     view.views[0].props.indicatorInsets = $insets(
                         old.top,
                         old.left,
-                        old.bottom + TabBarController.tabBarHeight,
+                        old.bottom + this.contentOffset,
                         old.right
                     )
                 } else {
-                    view.views[0].props.indicatorInsets = $insets(0, 0, 0, TabBarController.tabBarHeight)
+                    view.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
                 }
                 // footer
-                if (view.views[0].props.footer) {
-                    view.views[0].props.footer.height += TabBarController.tabBarHeight
+                if (view.views[0].footer === undefined) {
+                    view.views[0].footer = { props: {} }
+                } else if (view.views[0].footer.props === undefined) {
+                    view.views[0].footer.props = {}
+                }
+                if (view.views[0].props.footer.props.height) {
+                    view.views[0].props.footer.props.height += this.contentOffset
                 } else {
-                    view.views[0].props.footer = Object.assign(
-                        view.views[0].props.footer = {
-                            props: {
-                                height: TabBarController.tabBarHeight
-                            }
-                        }
-                    )
+                    view.views[0].props.footer.props.height = this.contentOffset
                 }
             }
             return view
@@ -1857,7 +2055,7 @@ class TabBarController extends Controller {
             layout: (make, view) => {
                 make.centerX.equalTo(view.super)
                 make.width.equalTo(view.super)
-                make.top.equalTo(view.super.safeAreaBottom).offset(-50)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-TabBarController.tabBarHeight)
                 make.bottom.equalTo(view.super)
             },
             views: [
@@ -1876,7 +2074,7 @@ class TabBarController extends Controller {
                 UIKit.separatorLine({}, UIKit.align.top)
             ]
         }
-        return View.createByViews(this.#pageViews().concat(tabBarView))
+        return View.createByViews(this.#pageViews().concat(this.#header?.definition ?? [], tabBarView))
     }
 }
 
@@ -1935,27 +2133,31 @@ class Kernel {
     }
 
     UIRender(view) {
-        view.props = Object.assign({
-            title: this.title,
-            navBarHidden: !this.isUseJsboxNav,
-            navButtons: this.navButtons ?? [],
-            statusBarStyle: 0
-        }, view.props)
-        if (!view.events) {
-            view.events = {}
+        try {
+            view.props = Object.assign({
+                title: this.title,
+                navBarHidden: !this.isUseJsboxNav,
+                navButtons: this.navButtons ?? [],
+                statusBarStyle: 0
+            }, view.props)
+            if (!view.events) {
+                view.events = {}
+            }
+            const oldLayoutSubviews = view.events.layoutSubviews
+            view.events.layoutSubviews = () => {
+                $app.notify({
+                    name: "interfaceOrientationEvent",
+                    object: {
+                        statusBarOrientation: UIKit.statusBarOrientation,
+                        isHorizontal: UIKit.isHorizontal
+                    }
+                })
+                if (typeof oldLayoutSubviews === "function") oldLayoutSubviews()
+            }
+            $ui.render(view)
+        } catch (error) {
+            this.print(error)
         }
-        const oldLayoutSubviews = view.events.layoutSubviews
-        view.events.layoutSubviews = () => {
-            $app.notify({
-                name: "interfaceOrientationEvent",
-                object: {
-                    statusBarOrientation: UIKit.statusBarOrientation,
-                    isHorizontal: UIKit.isHorizontal
-                }
-            })
-            if (typeof oldLayoutSubviews === "function") oldLayoutSubviews()
-        }
-        $ui.render(view)
     }
 
     async checkUpdate(callback) {
@@ -2037,6 +2239,19 @@ class FileStorage {
         })
     }
 
+    exists(path = "", fileName) {
+        if (!fileName) {
+            throw new FileStorageParameterError("fileName")
+        }
+        path = this.#filePath(path, fileName)
+
+        if ($file.exists(path)) {
+            return path
+        }
+
+        return false
+    }
+
     read(path = "", fileName) {
         if (!fileName) {
             throw new FileStorageParameterError("fileName")
@@ -2112,7 +2327,7 @@ class FileStorage {
         }
     }
 
-    delete(path = "", fileName) {
+    delete(path = "", fileName = "") {
         return $file.delete(this.#filePath(path, fileName))
     }
 }
@@ -3260,9 +3475,7 @@ class Setting extends Controller {
                                     .addPopButton()
                                     .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
                                 if (this.hasSectionTitle(children)) {
-                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(-5)
-                                } else {
-                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
                                 }
                                 this.viewController.push(pageController)
                             }
@@ -3445,9 +3658,7 @@ class Setting extends Controller {
                 .navigationItem
                 .setTitle($l10n("SETTING"))
             if (this.hasSectionTitle(this.structure)) {
-                pageController.navigationController.navigationBar.setContentViewHeightOffset(-5)
-            } else {
-                pageController.navigationController.navigationBar.setContentViewHeightOffset(30)
+                pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
             }
             this.viewController.setRootPageController(pageController)
         }
@@ -3466,6 +3677,7 @@ module.exports = {
     Sheet,
     NavigationBar,
     BarButtonItem,
+    FixedFooterView,
     SearchBar,
     SearchBarController,
     NavigationItem,
@@ -3473,6 +3685,7 @@ module.exports = {
     PageView,
     PageController,
     TabBarCellView,
+    TabBarHeaderView,
     TabBarController,
     Kernel,
     FileStorage,
