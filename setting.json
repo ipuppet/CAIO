@@ -96,8 +96,8 @@
                                 ],
                                 "title": "DELETE_ICLOUD_DATA",
                                 "type": "script",
-                                "key": "clipboard.deleteIcloudData",
-                                "value": "this.method.deleteIcloudData"
+                                "key": "clipboard.deleteICloudData",
+                                "value": "this.method.deleteICloudData"
                             }
                         ]
                     },

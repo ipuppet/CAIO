@@ -1,21 +1,26 @@
 const { compressImage } = require("./lib/easy-jsbox")
 
 class Storage {
-    constructor(sync = false, kernel) {
+    constructor(sync = false, fileStorage) {
         this.sync = sync
-        this.kernel = kernel
+        this.fileStorage = fileStorage
         this.dbName = "CAIO.db"
-        this.localDb = `${this.kernel.fileStorage.basePath}/${this.dbName}`
-        this.iCloudPath = "drive://CAIO"
-        this.iCloudZipFile = `${this.iCloudPath}/CAIO.zip`
-        this.syncInfoFile = `${this.kernel.fileStorage.basePath}/sync.json`
-        this.imagePath = `${this.kernel.fileStorage.basePath}/image`
+        this.localDb = `${this.fileStorage.basePath}/${this.dbName}`
+        this.syncInfoFile = `${this.fileStorage.basePath}/sync.json`
+        this.imagePath = `${this.fileStorage.basePath}/image`
         this.imageOriginalPath = `${this.imagePath}/original`
         this.imagePreviewPath = `${this.imagePath}/preview`
-        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
+
+        this.iCloudPath = "drive://CAIO"
+        this.iCloudSyncInfoFile = `${this.iCloudPath}/sync.json`
+        this.iCloudDbFile = `${this.iCloudPath}/${this.dbName}`
+        this.iCloudImagePath = `${this.iCloudPath}/image`
+
+        this.tempPath = `${this.fileStorage.basePath}/temp`
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.tempImagePath = `${this.tempPath}/image`
+
         this.init()
         if (this.sync) this.syncByiCloud()
     }
@@ -25,25 +30,37 @@ class Storage {
         this.sqlite = $sqlite.open(this.localDb)
         this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
         this.sqlite.update("CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
+
         // 初始化目录
-        if (!$file.exists(this.tempPath)) $file.mkdir(this.tempPath)
-        if (!$file.exists(this.iCloudPath)) $file.mkdir(this.iCloudPath)
-        // image path
-        if (!$file.isDirectory(this.imagePath)) { $file.mkdir(this.imagePath) }
-        if (!$file.isDirectory(this.imagePreviewPath)) $file.mkdir(this.imagePreviewPath)
-        if (!$file.isDirectory(this.imageOriginalPath)) $file.mkdir(this.imageOriginalPath)
+        const pathList = [
+            this.tempPath,
+            this.iCloudPath,
+            this.imagePath,
+            this.imagePreviewPath,
+            this.imageOriginalPath
+        ]
+
+        pathList.forEach(path => {
+            if (!$file.isDirectory(path)) {
+                $file.mkdir(path)
+            }
+        })
+    }
+
+    clearTemp() {
+        $file.delete(this.tempPath)
+        $file.mkdir(this.tempPath)
     }
 
     async export(callback) {
         $file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile })
         $file.copy({ src: this.localDb, dst: this.tempDbFile })
         $file.copy({ src: this.imagePath, dst: this.tempImagePath })
-        const exportFileName = "CAIO.zip"
-        const exportFile = this.tempPath + "/" + exportFileName
+        const exportFile = this.tempPath + "/" + this.iCloudZipFileName
         await $archiver.zip({ directory: this.tempPath, dest: exportFile })
         $share.sheet({
             items: [{
-                name: exportFileName,
+                name: this.iCloudZipFileName,
                 data: $data({ path: exportFile })
             }],
             handler: success => {
@@ -53,98 +70,97 @@ class Storage {
         })
     }
 
-    import(data) {
-        return new Promise(async (resolve, reject) => {
-            if (data.fileName.slice(-2) === "db") {
-                if (!$file.write({ data: data, path: this.localDb })) {
-                    reject()
-                    return
-                }
-            } else if (data.fileName.slice(-3) === "zip") {
-                const success = await $archiver.unzip({ file: data, dest: this.tempPath })
-                if (!success) {
-                    reject("UNZIP_FAILED")
-                    return
-                }
-                $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
-                // image
-                $file.move({ src: this.tempImagePath, dst: this.imagePath })
+    async import(data) {
+        if (data.fileName.slice(-2) === "db") {
+            if (!$file.write({ data: data, path: this.localDb })) {
+                throw new Error("WRITE_DB_FILE_FAILED")
             }
-            $sqlite.close(this.sqlite)
-            this.sqlite = $sqlite.open(this.localDb)
-            try {
-                await this.upload(manual)
-                resolve()
-            } finally {
-                resolve()
+        } else if (data.fileName.slice(-3) === "zip") {
+            if (!(await $archiver.unzip({ file: data, dest: this.tempPath }))) {
+                throw new Error("UNZIP_FAILED")
             }
-        })
+            $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
+            // image
+            $file.move({ src: this.tempImagePath, dst: this.imagePath })
+        }
+        $sqlite.close(this.sqlite)
+        this.sqlite = $sqlite.open(this.localDb)
+        await this.upload()
     }
 
     async upload(manual) {
         if (!this.sync && !manual) return
         if (this.all().length === 0) return
 
-        const handler = status => {
+        const fileWrite = async data => {
+            const status = await $file.write(data)
             if (!status) {
-                throw "upload failed"
+                throw new Error("FILE_WRITE_ERROR: " + data.path)
             }
         }
 
-        handler($file.write({
-            data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
+        const now = Date.now()
+
+        await fileWrite({
+            data: $data({ string: JSON.stringify({ timestamp: now }) }),
+            path: this.iCloudSyncInfoFile
+        })
+        await fileWrite({
+            data: $data({ path: this.localDb }),
+            path: this.iCloudDbFile
+        })
+        if (!$file.exists(this.iCloudImagePath)) {
+            $file.mkdir(this.iCloudImagePath)
+        }
+        await $file.copy({
+            src: this.imagePath,
+            dst: this.iCloudImagePath
+        })
+
+        // 更新同步信息
+        await $file.write({
+            data: $data({ string: JSON.stringify({ timestamp: now }) }),
             path: this.syncInfoFile
-        }))
-        handler($file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile }))
-        handler($file.copy({ src: this.localDb, dst: this.tempDbFile }))
-        handler($file.copy({ src: this.imagePath, dst: this.tempImagePath }))
-        const success = await $archiver.zip({ directory: this.tempPath, dest: this.iCloudZipFile })
-        handler(success)
-    }
-
-    syncByiCloud(manual = false) {
-        return new Promise(async (resolve, reject) => {
-            const data = await $file.download(this.iCloudZipFile)
-
-            if (data !== undefined) {
-                const success = await $archiver.unzip({ file: data, dest: this.tempPath })
-                if (!success) {
-                    reject("UNZIP_FAILED")
-                    return
-                }
-
-                const syncInfoLocal = $file.exists(this.syncInfoFile) ?
-                    JSON.parse($file.read(this.syncInfoFile).string) : {}
-                const syncInfoIcloud = JSON.parse($file.read(this.tempSyncInfoFile).string)
-
-                if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoIcloud.timestamp) {
-                    $file.write({ data: $data({ path: this.tempSyncInfoFile }), path: this.syncInfoFile })
-                    $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
-                    // image
-                    $file.move({ src: this.tempImagePath, dst: this.imagePath })
-                    // Update
-                    $sqlite.close(this.sqlite)
-                    this.sqlite = $sqlite.open(this.localDb)
-                    $app.notify({
-                        name: "syncByiCloud",
-                        object: { status: true }
-                    })
-                    resolve()
-                    return
-                }
-            }
-
-            try {
-                await this.upload(manual)
-                resolve()
-            } catch (error) {
-                reject(error)
-            }
         })
     }
 
-    deleteIcloudData() {
-        return $file.delete(this.iCloudZipFile)
+    async syncByiCloud(manual = false) {
+        if (!$file.exists(this.iCloudSyncInfoFile)) {
+            this.upload(manual)
+            return
+        }
+
+        const syncInfoLocal = $file.exists(this.syncInfoFile)
+            ? JSON.parse($file.read(this.syncInfoFile).string)
+            : {}
+        const data = await $file.download(this.iCloudSyncInfoFile)
+        const syncInfoICloud = JSON.parse(data.string)
+
+        if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoICloud.timestamp) {
+            await $file.write({
+                data: await $file.download(this.iCloudSyncInfoFile),
+                path: this.syncInfoFile
+            })
+            await $file.write({
+                data: await $file.download(this.iCloudDbFile),
+                path: this.localDb
+            })
+            // image
+            await $file.copy({ src: this.iCloudImagePath, dst: this.imagePath })
+            // Update
+            $sqlite.close(this.sqlite)
+            this.sqlite = $sqlite.open(this.localDb)
+            $app.notify({
+                name: "syncByiCloud",
+                object: { status: true }
+            })
+        }
+    }
+
+    deleteICloudData() {
+        return $file.delete(this.iCloudSyncInfoFile)
+            && $file.delete(this.iCloudDbFile)
+            && $file.delete(this.iCloudImagePath)
     }
 
     parse(result) {
