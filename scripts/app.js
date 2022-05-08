@@ -25,7 +25,7 @@ class AppKernel extends Kernel {
         this.setting.loadConfig()
         this.initSettingMethods()
         // Storage
-        this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
+        this.storage = new Storage(this.setting.get("clipboard.autoSync"), this.fileStorage)
         this.initComponents()
     }
 
@@ -108,7 +108,11 @@ class AppKernel extends Kernel {
                                                     $addin.restart()
                                                 })
                                             })
-                                            .catch(() => animate.actionCancel())
+                                            .catch(error => {
+                                                $ui.error(error)
+                                                this.print(error)
+                                                animate.actionCancel()
+                                            })
                                     } else {
                                         $ui.warning($l10n("FILE_TYPE_ERROR"))
                                         animate.actionCancel()
@@ -204,6 +208,7 @@ class AppKernel extends Kernel {
                                     })
                                     .catch(error => {
                                         $ui.error(error)
+                                        this.print(error)
                                         animate.actionCancel()
                                     })
                             }, 200)
@@ -213,9 +218,9 @@ class AppKernel extends Kernel {
             })
         }
 
-        this.setting.method.deleteIcloudData = animate => {
+        this.setting.method.deleteICloudData = animate => {
             this.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                if (this.storage.deleteIcloudData()) {
+                if (this.storage.deleteICloudData()) {
                     animate.actionDone()
                 } else {
                     $ui.toast($l10n("DELETE_ERROR"))
@@ -432,10 +437,7 @@ class Widget {
         const widget = Widget.widgetInstance(
             "Clipboard",
             setting,
-            new Storage(
-                false,
-                { fileStorage: fileStorage }
-            )
+            new Storage(false, fileStorage)
         )
         widget.render()
     }
