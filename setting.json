@@ -237,7 +237,8 @@
             },
             {
                 "icon": [
-                    "keyboard"
+                    "keyboard",
+                    "#a2a5a6"
                 ],
                 "type": "child",
                 "title": "KEYBOARD",
@@ -350,7 +351,8 @@
             },
             {
                 "icon": [
-                    "rectangle.3.offgrid.fill"
+                    "rectangle.3.offgrid.fill",
+                    "#1899c4"
                 ],
                 "type": "child",
                 "title": "WIDGET",
@@ -392,7 +394,8 @@
             },
             {
                 "icon": [
-                    "rectangle.3.offgrid.fill"
+                    "filemenu.and.selection",
+                    "#ebcc34"
                 ],
                 "type": "child",
                 "title": "TODAY_WIDGET",
