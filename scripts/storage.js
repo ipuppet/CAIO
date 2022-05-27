@@ -105,29 +105,37 @@ class Storage {
                 return
             } else {
                 await $file.write({ data: $data({ string: "" }), path: lock })
+                console.log("file locked: " + obj.path)
             }
 
-            // 清除多余文件
-            const dir = obj.path.substring(0, obj.path.lastIndexOf("/"))
-            const filename = obj.path.substring(obj.path.lastIndexOf("/") + 1, obj.path.lastIndexOf("."))
-            for (const val of ($file.list(dir) ?? [])) {
-                valName = val.substring(0, val.lastIndexOf("."))
-                if (
-                    valName === filename
-                    || valName.startsWith(filename + " ")
-                ) {
-                    $file.delete(obj.path)
+            try {
+                // 清除多余文件
+                const dir = obj.path.substring(0, obj.path.lastIndexOf("/"))
+                const filename = obj.path.substring(obj.path.lastIndexOf("/") + 1, obj.path.lastIndexOf("."))
+                for (let val of ($file.list(dir) ?? [])) {
+                    let valName = val.substring(0, val.lastIndexOf("."))
+                    if (
+                        valName === filename
+                        || valName.startsWith(filename + " ")
+                    ) {
+                        $file.delete(obj.path)
+                    }
                 }
-            }
 
-            // 写入文件
-            const status = await $file.write(obj)
-            if (!status) {
-                throw new Error("FILE_WRITE_ERROR: " + obj.path)
-            }
+                // 写入文件
+                const status = await $file.write(obj)
+                if (!status) {
+                    throw new Error("FILE_WRITE_ERROR: " + obj.path)
+                }
 
-            // 解除缩
-            $file.delete(lock)
+            } catch (error) {
+                console.error(error)
+                throw error
+            } finally {
+                // 解除缩
+                await $file.delete(lock)
+                console.log("file unlocked: " + obj.path)
+            }
         }
 
         const now = Date.now()
