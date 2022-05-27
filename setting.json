@@ -389,6 +389,29 @@
                         ]
                     }
                 ]
+            },
+            {
+                "icon": [
+                    "rectangle.3.offgrid.fill"
+                ],
+                "type": "child",
+                "title": "TODAY_WIDGET",
+                "key": "todayWidget",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "rectangle.3.offgrid.fill"
+                                ],
+                                "title": "PREVIEW",
+                                "type": "script",
+                                "key": "previewTodayWidget",
+                                "value": "this.method.previewTodayWidget"
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },

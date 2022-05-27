@@ -75,6 +75,8 @@
 "RECENT" = "最近内容";
 "CLICK_ACTION" = "点击事件";
 
+"TODAY_WIDGET" = "通知中心小组件";
+
 "DISPLAY_MODE" = "显示模式";
 "CLASSIC" = "经典";
 "MODERN" = "现代";
