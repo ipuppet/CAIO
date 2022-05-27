@@ -92,10 +92,49 @@ class Storage {
         if (!this.sync && !manual) return
         if (this.all().length === 0) return
 
-        const fileWrite = async data => {
-            const status = await $file.write(data)
-            if (!status) {
-                throw new Error("FILE_WRITE_ERROR: " + data.path)
+        const fileWrite = async obj => {
+            // 加读写锁
+            const lock = obj.path + ".lock"
+            await $file.download(lock)
+            if (await $file.exists(lock)) {
+                // 文件被锁，等待 500ms 重试
+                await new Promise(resolve => {
+                    setTimeout(() => resolve(), 500)
+                })
+                await fileWrite(obj)
+                return
+            } else {
+                await $file.write({ data: $data({ string: "" }), path: lock })
+                console.log("file locked: " + obj.path)
+            }
+
+            try {
+                // 清除多余文件
+                const dir = obj.path.substring(0, obj.path.lastIndexOf("/"))
+                const filename = obj.path.substring(obj.path.lastIndexOf("/") + 1, obj.path.lastIndexOf("."))
+                for (let val of ($file.list(dir) ?? [])) {
+                    let valName = val.substring(0, val.lastIndexOf("."))
+                    if (
+                        valName === filename
+                        || valName.startsWith(filename + " ")
+                    ) {
+                        $file.delete(obj.path)
+                    }
+                }
+
+                // 写入文件
+                const status = await $file.write(obj)
+                if (!status) {
+                    throw new Error("FILE_WRITE_ERROR: " + obj.path)
+                }
+
+            } catch (error) {
+                console.error(error)
+                throw error
+            } finally {
+                // 解除缩
+                await $file.delete(lock)
+                console.log("file unlocked: " + obj.path)
             }
         }
 

@@ -24,7 +24,7 @@ class Today extends Clipboard {
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
         this.listPageNow = [0, 0] // 剪切板当前页
-        this.listSection = 1 // 当前选中列表
+        this.listSection = this.tabIndex === 0 ? 1 : 0 // 当前选中列表
         this.loadDataWithSingleLine()
 
         // 监听展开状态
@@ -35,6 +35,16 @@ class Today extends Clipboard {
     }
 
     setClipboarPageSize(mode) {
+        if ($app.env === $env.app) {
+            const height = UIKit.windowSize.height - this.navHeight * 2 - 70
+            const f_line = height / Clipboard.singleLineHeight
+            const floor = Math.floor(f_line)
+            this.listPageSize = floor
+            if (f_line - floor >= 0.6) {
+                this.listPageSize++
+            }
+            return
+        }
         if (mode === 0) {
             this.listPageSize = 1
         } else {
@@ -87,28 +97,46 @@ class Today extends Clipboard {
         })
     }
 
+    setTabIndex(index) {
+        $cache.set("caio.today.tab.index", index)
+    }
+
+    get tabIndex() {
+        return $cache.get("caio.today.tab.index") ?? 0
+    }
+
+    get tabItems() {
+        return [$l10n("CLIPBOARD"), $l10n("PIN"), $l10n("ACTIONS")]
+    }
+
     tabView() {
+        const switchTab = index => {
+            this.setTabIndex(index)
+            if (index === 2) {
+                $(this.listContainerId).hidden = true
+                $(this.actionsId).hidden = false
+            } else {
+                if (index === 0) {
+                    this.listSection = 1
+                } else if (index === 1) {
+                    this.listSection = 0
+                }
+                $(this.actionsId).hidden = true
+                $(this.listContainerId).hidden = false
+                this.updateList()
+            }
+        }
+
         return {
             type: "tab",
             props: {
-                items: [$l10n("CLIPBOARD"), $l10n("PIN"), $l10n("ACTIONS")],
+                items: this.tabItems,
+                index: this.tabIndex,
                 dynamicWidth: true
             },
             events: {
                 changed: sender => {
-                    if (sender.index === 2) {
-                        $(this.listContainerId).hidden = true
-                        $(this.actionsId).hidden = false
-                    } else {
-                        if (sender.index === 0) {
-                            this.listSection = 1
-                        } else if (sender.index === 1) {
-                            this.listSection = 0
-                        }
-                        $(this.actionsId).hidden = true
-                        $(this.listContainerId).hidden = false
-                        this.updateList()
-                    }
+                    switchTab(sender.index)
                 }
             },
             layout: (make, view) => {
@@ -201,7 +229,10 @@ class Today extends Clipboard {
     getListView() {
         return {
             type: "view",
-            props: { id: this.listContainerId },
+            props: {
+                id: this.listContainerId,
+                hidden: this.tabIndex === 2,
+            },
             views: [
                 { // 剪切板列表
                     type: "list",
@@ -253,7 +284,7 @@ class Today extends Clipboard {
             type: "view",
             props: {
                 id: this.actionsId,
-                hidden: true
+                hidden: this.tabIndex !== 2
             },
             views: [this.kernel.actionManager.getActionListView({}, {
                 didSelect: (sender, indexPath, data) => {

@@ -314,6 +314,16 @@ class AppKernel extends Kernel {
                 this.setting.viewController.push(KeyboardScripts.getPageController())
             }
         }
+
+        this.setting.method.previewTodayWidget = animate => {
+            animate.touchHighlightStart()
+            const Today = require("./ui/today")
+            const today = new Today(this).getView()
+            UIKit.push({
+                views: [today],
+                disappeared: () => animate.touchHighlightEnd()
+            })
+        }
     }
 }
 
