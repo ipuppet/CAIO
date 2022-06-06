@@ -3,7 +3,7 @@ const {
     Sheet,
     NavigationItem,
     PageController
-} = require("../../lib/easy-jsbox")
+} = require("../../libs/easy-jsbox")
 
 class KeyboardScripts {
     constructor() {

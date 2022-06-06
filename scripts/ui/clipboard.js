@@ -2,10 +2,15 @@ const {
     UIKit,
     PageController,
     SearchBar
-} = require("../lib/easy-jsbox")
+} = require("../libs/easy-jsbox")
 
 class Clipboard {
+    copied = {}
     #loadDataWithSingleLine = false
+
+    reorder = {}
+    savedClipboard = []
+    savedClipboardIndex = {}
 
     static singleLineHeight = $text.sizeThatFits({
         text: "text",
@@ -20,8 +25,6 @@ class Clipboard {
         this.edges = 20 // 列表边距
         this.fontSize = 16 // 字体大小
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
-        this.savedClipboard = []
-        this.reorder = {}
         this.imageContentHeight = 50
     }
 
@@ -89,27 +92,38 @@ class Clipboard {
         })
     }
 
-    setCopied(uuid, indexPath, isUpdateIndicator = true) {
+    setCopied(uuid, indexPath, isUpdateIndicator = true, delay = 0.5) {
+        if (
+            uuid === this.copied.uuid
+            && indexPath.section === this.copied.indexPath?.section
+            && indexPath.row === this.copied.indexPath?.row
+        ) {
+            return
+        }
+
         if (!uuid) {
-            this.copied = undefined
+            this.copied = {}
             $clipboard.clear()
-            $cache.set("clipboard.copied", this.copied)
         } else {
             if (isUpdateIndicator) {
-                const listView = $(this.listId)
-                if (this.copied?.indexPath !== undefined) {
-                    listView.cell(this.copied.indexPath).get("copied").hidden = true
-                    this.savedClipboard[this.copied.indexPath.section].rows[this.copied.indexPath.row].copied.hidden = true
+                if (this.copied.indexPath) {
+                    this.savedClipboard[this.copied?.indexPath?.section].rows[this.copied?.indexPath?.row].copied.hidden = true
                 }
-                listView.cell(indexPath).get("copied").hidden = false
                 this.savedClipboard[indexPath.section].rows[indexPath.row].copied.hidden = false
+                $delay(delay, () => {
+                    // 直接重置数据，解决小绿点滚动到屏幕外后消失问题
+                    $(this.listId).data = this.savedClipboard
+                })
             }
-            this.copied = {
-                uuid: uuid,
-                indexPath: indexPath
+            if (this.copied.uuid !== uuid) {
+                this.copied = Object.assign(
+                    this.copied,
+                    this.kernel.storage.getByUUID(uuid) ?? {}
+                )
             }
-            $cache.set("clipboard.copied", this.copied)
+            this.copied.indexPath = indexPath
         }
+        $cache.set("clipboard.copied", this.copied)
     }
 
     /**
@@ -131,25 +145,43 @@ class Clipboard {
 
     readClipboard(manual = false) {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
-            this.kernel.print("读取剪切板")
-            if ($cache.get("clipboard.copied") && this.copied) {
-                // 只更新 uuid
-                this.copied.uuid = $cache.get("clipboard.copied").uuid
-            }
+            this.kernel.print("read clipboard")
 
-            if (manual && $clipboard.images?.length > 0) { // 仅手动模式下保存图片
+            // 仅手动模式下保存图片
+            if (manual && $clipboard.images?.length > 0) {
                 $clipboard.images.forEach(image => {
                     this.add(image)
                 })
-            } else {
-                const text = $clipboard.text
-                const md5 = $text.MD5(text)
-                const res = this.kernel.storage.getByMD5(md5)
-                if ((this.copied && res) && this.copied.uuid === res.uuid) {
-                    this.setCopied(res.uuid, this.getIndexPathByUUID(res.uuid))
-                } else if (text && res?.md5 !== md5) {
-                    this.add(text)
-                }
+
+                return
+            }
+
+            const text = String($clipboard.text ?? "").trim()
+            $clipboard.text = text // 防止重复弹窗提示读取剪切板
+            if (!text) {
+                return
+            }
+
+            // 判断 copied 是否和剪切板一致
+            if (this.copied.text === text) {
+                return
+            }
+
+            // 判断缓存是否和剪切板一致
+            const cache = $cache.get("clipboard.copied") ?? {}
+            if (text === cache.text) {
+                this.setCopied(cache.uuid, cache.indexPath)
+                return
+            }
+
+            const md5 = $text.MD5(text)
+            const res = this.kernel.storage.getByMD5(md5)
+            if (this.copied.uuid && this.copied.uuid === res?.uuid) {
+                console.log(text)
+                this.setCopied(res.uuid, this.getIndexPathByUUID(res.uuid))
+            } else if (!this.savedClipboardIndex[md5]) {
+                const data = this.add(text)
+                this.copy(text, data.uuid, data.indexPath)
             }
         }
     }
@@ -159,12 +191,14 @@ class Clipboard {
         const data = {
             uuid: this.kernel.uuid(),
             text: item,
+            md5: null,
             image: null,
             prev: null,
             next: this.savedClipboard[1].rows[0] ? this.savedClipboard[1].rows[0].content.info.uuid : null
         }
         if (typeof item === "string") {
             if (item.trim() === "") return
+            data.md5 = $text.MD5(item)
         } else if (typeof item === "object") {
             data.text = ""
             data.image = item
@@ -186,21 +220,32 @@ class Clipboard {
                 this.savedClipboard[1].rows[0].content.info.prev = data.uuid
             }
             this.kernel.storage.commit()
+
             // 格式化数据
             const lineData = this.lineData(data)
-            this.savedClipboard[1].rows.unshift(lineData) // 保存到内存中
+
+            // 保存到内存中
+            this.savedClipboard[1].rows.unshift(lineData)
+            this.savedClipboardIndex[$text.MD5(data.text)] = 1
+
             if (typeof uiUpdate === "function") {
                 uiUpdate(data)
             } else {
                 // 在列表中插入行
+                data.indexPath = $indexPath(1, 0)
                 $(this.listId).insert({
-                    indexPath: $indexPath(1, 0),
+                    indexPath: data.indexPath,
                     value: lineData
                 })
                 // 被复制的元素向下移动了一个单位
-                if (this.copied?.indexPath !== undefined && this.copied.indexPath.section === 1) {
-                    this.setCopied(this.copied.uuid, $indexPath(this.copied.indexPath.section, this.copied.indexPath.row + 1), false)
+                if (this.copied?.indexPath?.section === 1) {
+                    this.setCopied(
+                        this.copied.uuid,
+                        $indexPath(this.copied?.indexPath?.section, this.copied?.indexPath?.row + 1),
+                        false
+                    )
                 }
+                return data
             }
         } catch (error) {
             this.kernel.storage.rollback()
@@ -212,10 +257,13 @@ class Clipboard {
     delete(uuid, indexPath) {
         const section = indexPath.section
         const index = indexPath.row
+
         // 删除数据库中的值
         this.kernel.storage.beginTransaction()
         try {
-            section === 0 ? this.kernel.storage.deletePin(uuid) : this.kernel.storage.delete(uuid)
+            section === 0
+                ? this.kernel.storage.deletePin(uuid)
+                : this.kernel.storage.delete(uuid)
             // 更改指针
             if (this.savedClipboard[section].rows[index - 1]) {
                 const prevItem = {
@@ -224,7 +272,9 @@ class Clipboard {
                     prev: this.savedClipboard[section].rows[index - 1].content.info.prev,
                     next: this.savedClipboard[section].rows[index].content.info.next // next 指向被删除元素的 next
                 }
-                section === 0 ? this.kernel.storage.updatePin(prevItem) : this.kernel.storage.update(prevItem)
+                section === 0
+                    ? this.kernel.storage.updatePin(prevItem)
+                    : this.kernel.storage.update(prevItem)
                 this.savedClipboard[section].rows[index - 1] = this.lineData(prevItem)
             }
             if (this.savedClipboard[section].rows[index + 1]) {
@@ -234,15 +284,21 @@ class Clipboard {
                     prev: this.savedClipboard[section].rows[index].content.info.prev, // prev 指向被删除元素的 prev
                     next: this.savedClipboard[section].rows[index + 1].content.info.next
                 }
-                section === 0 ? this.kernel.storage.updatePin(nextItem) : this.kernel.storage.update(nextItem)
+                section === 0
+                    ? this.kernel.storage.updatePin(nextItem)
+                    : this.kernel.storage.update(nextItem)
                 this.savedClipboard[section].rows[index + 1] = this.lineData(nextItem)
             }
             this.kernel.storage.commit()
+
+            // update index
+            delete this.savedClipboardIndex[this.savedClipboard[section].rows[index].content.info.md5]
             // 删除内存中的值
             this.savedClipboard[section].rows.splice(index, 1)
+
             // 删除列表中的行
-            // 删除剪切板信息
-            if (this.copied?.uuid === uuid) {
+            if (this.copied.uuid === uuid) {
+                // 删除剪切板信息
                 this.setCopied(null)
             }
         } catch (error) {
@@ -254,14 +310,32 @@ class Clipboard {
 
     update(uuid, text, indexPath) {
         const info = $(this.listId).cell(indexPath).get("content").info
-        const lineData = this.lineData(Object.assign(info, { text, text }), info.uuid === this.copied?.uuid)
+        const newMD5 = $text.MD5(text)
+
+        // 更新索引
+        delete this.savedClipboardIndex[info.md5]
+        this.savedClipboardIndex[newMD5] = 1
+
+        // 更新内存数据
+        const lineData = this.lineData(
+            Object.assign(info, {
+                text,
+                md5: newMD5
+            }),
+            info.uuid === this.copied.uuid
+        )
         this.savedClipboard[indexPath.section].rows[indexPath.row] = lineData
+
+        // 更新列表
         $(this.listId).data = this.savedClipboard
-        if (uuid === this.copied?.uuid) {
+        if (uuid === this.copied.uuid) {
             this.setClipboardText(text)
         }
+
         try {
-            indexPath.section === 0 ? this.kernel.storage.updateTextPin(uuid, text) : this.kernel.storage.updateText(uuid, text)
+            indexPath.section === 0
+                ? this.kernel.storage.updateTextPin(uuid, text)
+                : this.kernel.storage.updateText(uuid, text)
             return true
         } catch (error) {
             this.kernel.print(error)
@@ -274,7 +348,7 @@ class Clipboard {
      * @param {Number} from 
      * @param {Number} to 
      */
-    move(from, to, section) {
+    move(from, to, section, copiedIndex = true) {
         if (from === to) return
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
         if (!this.savedClipboard[section].rows[to]) this.savedClipboard[section].rows[to] = this.lineData({
@@ -372,7 +446,7 @@ class Clipboard {
                     })
                 }
                 // 修正指示器
-                if (this.copied?.indexPath !== undefined) {
+                if (copiedIndex && this.copied.indexPath) {
                     const copiedIndex = this.copied.indexPath
                     if (copiedIndex.section === section) {
                         const copiedUUID = this.copied.uuid
@@ -398,8 +472,8 @@ class Clipboard {
 
     pin(item, indexPath) {
         if (item?.section === "pin") return
-        const res = this.kernel.storage.getByMD5(item.md5)
-        if (res?.section === "pin") {
+        const res = this.kernel.storage.getPinByMD5(item.md5)
+        if (res) {
             $ui.warning("Already exists")
             return
         }
@@ -420,13 +494,16 @@ class Clipboard {
                 this.savedClipboard[0].rows[0].content.info.prev = item.uuid
             }
             this.kernel.storage.commit()
-            // 原表数据
+
+            // 删除原表数据
+            this.delete(item.uuid, indexPath)
+
             const listUI = $(this.listId)
             const lineData = listUI.object(indexPath)
             // 保存到内存中
             this.savedClipboard[0].rows.unshift(lineData)
-            // 删除原表数据
-            this.delete(item.uuid, indexPath)
+            this.savedClipboardIndex[item.md5] = 1
+
             // UI insert
             listUI.insert({
                 indexPath: $indexPath(0, 0),
@@ -528,11 +605,9 @@ class Clipboard {
                 }
                 sorted.push(p) // 将最后一个元素推入
             }
-            return sorted.map((data, index) => {
-                if (data.uuid === this.copied?.uuid) { // 初始化索引
-                    this.setCopied(data.uuid, $indexPath(section, index), false)
-                }
-                return this.lineData(data, this.copied?.uuid === data.uuid)
+            return sorted.map(data => {
+                this.savedClipboardIndex[data.md5] = 1
+                return this.lineData(data, this.copied.uuid === data.uuid)
             })
         }
         this.savedClipboard = [
@@ -693,6 +768,7 @@ class Clipboard {
                     props: {
                         id: "copied",
                         circular: this.copiedIndicatorSize,
+                        hidden: true,
                         bgcolor: $color("green")
                     },
                     layout: (make, view) => {

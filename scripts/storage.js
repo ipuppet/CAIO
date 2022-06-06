@@ -1,4 +1,4 @@
-const { compressImage } = require("./lib/easy-jsbox")
+const { compressImage } = require("./libs/easy-jsbox")
 
 class Storage {
     constructor(sync = false, fileStorage) {
@@ -383,6 +383,14 @@ class Storage {
     }
     deletePin(uuid) {
         return this._delete("pin", uuid)
+    }
+
+    getPinByMD5(md5) {
+        const result = this.sqlite.query({
+            sql: "SELECT * FROM pin WHERE md5 = ?",
+            args: [md5]
+        })
+        return this.parse(result)[0]
     }
 }
 

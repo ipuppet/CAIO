@@ -3,7 +3,7 @@ const {
     BarButtonItem,
     NavigationItem,
     NavigationBar
-} = require("../lib/easy-jsbox")
+} = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 
 class Today extends Clipboard {
@@ -32,6 +32,13 @@ class Today extends Clipboard {
             this.setClipboarPageSize(mode)
             this.updateList()
         }
+    }
+
+    ready() {
+        // readClipboard
+        $delay(0.5, () => {
+            this.readClipboard()
+        })
     }
 
     setClipboarPageSize(mode) {

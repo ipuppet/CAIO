@@ -4,7 +4,7 @@ const {
     ViewController,
     PageController,
     Sheet
-} = require("../../lib/easy-jsbox")
+} = require("../../libs/easy-jsbox")
 
 class Editor {
     constructor(kernel) {
