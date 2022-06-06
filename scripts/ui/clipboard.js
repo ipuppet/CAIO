@@ -75,8 +75,8 @@ class Clipboard {
             this.readClipboard()
         })
 
-        // iCloud
         $app.listen({
+            // iCloud
             syncByiCloud: object => {
                 if (object.status) {
                     this.loadSavedClipboard()
@@ -86,6 +86,8 @@ class Clipboard {
             },
             resume: () => { // 在应用恢复响应后调用
                 $delay(0.5, () => {
+                    this.loadSavedClipboard()
+                    $(this.listId).data = this.savedClipboard
                     this.readClipboard()
                 })
             }
