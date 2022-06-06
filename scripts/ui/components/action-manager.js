@@ -5,7 +5,7 @@ const {
     BarButtonItem,
     Sheet,
     UIKit
-} = require("../../lib/easy-jsbox")
+} = require("../../libs/easy-jsbox")
 
 class ActionManager {
     matrixId = "actions"

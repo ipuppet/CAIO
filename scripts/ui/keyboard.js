@@ -3,11 +3,13 @@ const {
     BarButtonItem,
     NavigationItem,
     NavigationBar
-} = require("../lib/easy-jsbox")
+} = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
 class Keyboard extends Clipboard {
+    #readClipboardTimer
+
     constructor(kernel) {
         super(kernel)
         this.listId = "keyboard-clipboard-list"
@@ -24,6 +26,18 @@ class Keyboard extends Clipboard {
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
         this.continuousDeleteDelay = 0.5
         this.loadDataWithSingleLine()
+    }
+
+    ready() {
+        // readClipboard
+        if (this.kernel.setting.get("clipboard.autoSave")) {
+            this.#readClipboardTimer = $timer.schedule({
+                interval: 1,
+                handler: () => {
+                    this.readClipboard()
+                }
+            })
+        }
     }
 
     keyboardSetting() {
@@ -51,7 +65,7 @@ class Keyboard extends Clipboard {
                 symbol: "square.and.arrow.down.on.square",
                 tapped: this.keyboardTapped(animate => {
                     animate.start()
-                    this.readClipboard(true)
+                    this.readClipboard()
                     animate.done()
                 })
             },
@@ -193,7 +207,7 @@ class Keyboard extends Clipboard {
     getListView() {
         return { // 剪切板列表
             type: "list",
-            props: Object.assign({
+            props: {
                 id: this.listId,
                 bgcolor: $color("clear"),
                 menu: {
@@ -203,7 +217,7 @@ class Keyboard extends Clipboard {
                 separatorColor: $color("lightGray"),
                 data: this.savedClipboard,
                 template: this.listTemplate(1)
-            }, {}),
+            },
             events: {
                 ready: () => this.ready(),
                 rowHeight: (sender, indexPath) => {
