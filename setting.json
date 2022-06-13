@@ -409,8 +409,21 @@
                                 ],
                                 "title": "PREVIEW",
                                 "type": "script",
-                                "key": "previewTodayWidget",
+                                "key": "todayWidget.preview",
                                 "value": "this.method.previewTodayWidget"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "bolt.circle"
+                                ],
+                                "title": "ACTIONS",
+                                "type": "script",
+                                "key": "todayWidget.setTodayWidgetActions",
+                                "value": "this.method.setTodayWidgetActions"
                             }
                         ]
                     }

@@ -5,6 +5,7 @@ const {
     NavigationBar
 } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
+const TodayActions = require("./components/today-actions")
 
 class Today extends Clipboard {
     constructor(kernel) {
@@ -26,6 +27,8 @@ class Today extends Clipboard {
         this.listPageNow = [0, 0] // 剪切板当前页
         this.listSection = this.tabIndex === 0 ? 1 : 0 // 当前选中列表
         this.loadDataWithSingleLine()
+
+        this.todayActions = new TodayActions(this.kernel)
 
         // 监听展开状态
         $widget.modeChanged = mode => {
@@ -286,6 +289,87 @@ class Today extends Clipboard {
         }
     }
 
+    getMatrixView() {
+        let data = this.todayActions.getActions()
+        if (data.length === 0) {
+            data = this.todayActions.getAllActions()
+        }
+        return {
+            type: "matrix",
+            props: {
+                id: this.matrixId,
+                columns: 2,
+                itemHeight: 50,
+                spacing: 15,
+                bgcolor: UIKit.scrollViewBackgroundColor,
+                data: data.map(action => {
+                    return this.kernel.actionManager.actionToData(action)
+                }),
+                template: {
+                    props: {
+                        smoothCorners: true,
+                        cornerRadius: 10,
+                        bgcolor: $color("#ffffff", "#242424")
+                    },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: "color",
+                                cornerRadius: 8,
+                                smoothCorners: true
+                            },
+                            layout: make => {
+                                make.top.left.inset(10)
+                                make.size.equalTo($size(30, 30))
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: "icon",
+                                tintColor: $color("#ffffff"),
+                            },
+                            layout: make => {
+                                make.top.left.inset(15)
+                                make.size.equalTo($size(20, 20))
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                font: $font(14)
+                            },
+                            layout: (make, view) => {
+                                make.bottom.top.inset(10)
+                                make.left.equalTo(view.prev.prev.right).offset(10)
+                                make.right.inset(10)
+                            }
+                        },
+                        { // 用来保存信息
+                            type: "view",
+                            props: {
+                                id: "info",
+                                hidden: true
+                            }
+                        }
+                    ]
+                }
+            },
+            layout: $layout.fill,
+            events: {
+                didSelect: (sender, indexPath, data) => {
+                    const info = data.info.info
+                    this.kernel.actionManager.getActionHandler(info.type, info.dir)({
+                        text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
+                        uuid: null
+                    })
+                }
+            }
+        }
+    }
+
     getActionView() {
         return {
             type: "view",
@@ -293,14 +377,7 @@ class Today extends Clipboard {
                 id: this.actionsId,
                 hidden: this.tabIndex !== 2
             },
-            views: [this.kernel.actionManager.getActionListView({}, {
-                didSelect: (sender, indexPath, data) => {
-                    const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
-                    setTimeout(() => action({
-                        text: $clipboard.text
-                    }), 500)
-                }
-            })],
+            views: [this.getMatrixView()],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.bottom.left.right.equalTo(view.super.safeArea)

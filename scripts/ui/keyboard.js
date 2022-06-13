@@ -132,14 +132,13 @@ class Keyboard extends Clipboard {
     getBottomBarView() {
         const navigationBar = new NavigationBar()
         const navigationItem = new NavigationItem()
-
         navigationItem.setLeftButtons([
             {
                 symbol: "paperplane",
                 menu: {
                     pullDown: true,
                     asPrimary: true,
-                    items: KeyboardScripts.getAddins().map(addin => {
+                    items: KeyboardScripts.getAddins().reverse().map(addin => {
                         return {
                             title: addin,
                             handler: this.keyboardTapped(() => $addin.run(addin))
