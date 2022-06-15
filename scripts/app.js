@@ -12,6 +12,9 @@ const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
 const Editor = require("./ui/components/editor")
 
+const KeyboardScripts = require("./ui/components/keyboard-scripts")
+const TodayActions = require("./ui/components/today-actions")
+
 const fileStorage = new FileStorage()
 
 class AppKernel extends Kernel {
@@ -307,7 +310,6 @@ class AppKernel extends Kernel {
 
         this.setting.method.setKeyboardQuickStart = animate => {
             animate.touchHighlight()
-            const KeyboardScripts = require("./ui/components/keyboard-scripts")
             if (this.isUseJsboxNav) {
                 KeyboardScripts.push()
             } else {
@@ -323,6 +325,15 @@ class AppKernel extends Kernel {
                 views: [today],
                 disappeared: () => animate.touchHighlightEnd()
             })
+        }
+
+        this.setting.method.setTodayWidgetActions = animate => {
+            animate.touchHighlight()
+            if (this.isUseJsboxNav) {
+                TodayActions.push(this)
+            } else {
+                this.setting.viewController.push(TodayActions.getPageController(this))
+            }
         }
     }
 }

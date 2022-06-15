@@ -7,7 +7,7 @@ const {
 
 class KeyboardScripts {
     constructor() {
-        this.listId = "keyboard-clipboard-list"
+        this.listId = "keyboard-script-list"
     }
 
     static getAddins() {
@@ -83,6 +83,7 @@ class KeyboardScripts {
             type: "list",
             props: {
                 id: this.listId,
+                reorder: true,
                 data: KeyboardScripts.getAddins(),
                 actions: [
                     {
@@ -92,6 +93,11 @@ class KeyboardScripts {
                         }
                     }
                 ]
+            },
+            events: {
+                reorderFinished: data => {
+                    KeyboardScripts.setAddins(data)
+                }
             },
             layout: $layout.fill
         }

@@ -582,11 +582,11 @@ class ActionManager {
         return data
     }
 
-    getMatrixView() {
-        const columns = 2
-        const spacing = 15
-        const itemHeight = 100
-
+    getMatrixView({
+        columns = 2,
+        spacing = 15,
+        itemHeight = 100
+    } = {}) {
         this.matrix = Matrix.create({
             type: "matrix",
             props: {
