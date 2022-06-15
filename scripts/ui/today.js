@@ -301,7 +301,6 @@ class Today extends Clipboard {
                 columns: 2,
                 itemHeight: 50,
                 spacing: 15,
-                bgcolor: UIKit.scrollViewBackgroundColor,
                 data: data.map(action => {
                     return this.kernel.actionManager.actionToData(action)
                 }),
@@ -309,7 +308,7 @@ class Today extends Clipboard {
                     props: {
                         smoothCorners: true,
                         cornerRadius: 10,
-                        bgcolor: $color("#ffffff", "#242424")
+                        bgcolor: $color($rgba(255, 255, 255, 0.3), $rgba(0, 0, 0, 0.3))
                     },
                     views: [
                         {
