@@ -300,7 +300,7 @@ class Today extends Clipboard {
                 id: this.matrixId,
                 columns: 2,
                 itemHeight: 50,
-                spacing: 15,
+                spacing: 8,
                 data: data.map(action => {
                     return this.kernel.actionManager.actionToData(action)
                 }),
