@@ -282,6 +282,11 @@ class Storage {
         const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table}`)
         return this.parse(result)
     }
+    // 分页无法排序
+    _page(table, page, size) {
+        const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table} LIMIT ${page * size},${size}`)
+        return this.parse(result)
+    }
     _insert(table, clipboard) {
         if (clipboard.image) {
             const image = clipboard.image
@@ -356,6 +361,9 @@ class Storage {
     all() {
         return this._all("clipboard")
     }
+    page(page, size) {
+        return this._page("clipboard", page, size)
+    }
     insert(clipboard) {
         return this._insert("clipboard", clipboard)
     }
@@ -371,6 +379,9 @@ class Storage {
 
     allPin() {
         return this._all("pin")
+    }
+    pagePin(page, size) {
+        return this._page("pin", page, size)
     }
     insertPin(clipboard) {
         return this._insert("pin", clipboard)
