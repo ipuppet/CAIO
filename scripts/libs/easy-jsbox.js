@@ -174,6 +174,9 @@ class View {
     }
 
     setProp(key, prop) {
+        if (key === "id") {
+            this.id = prop
+        }
         this.props[key] = prop
         return this
     }
@@ -847,7 +850,8 @@ class BarButtonItem extends View {
                             imageEdgeInsets: $insets(0, 0, 0, 0)
                         },
                         this.menu ? { menu: this.menu } : {},
-                        this.title?.length > 0 ? { title: this.title } : {}
+                        this.title?.length > 0 ? { title: this.title } : {},
+                        this.props
                     ),
                     views: [
                         {

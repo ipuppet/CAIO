@@ -6,10 +6,10 @@ const {
 
 class Clipboard {
     copied = {}
-    #loadDataWithSingleLine = false
+    #singleLine = false
 
     reorder = {}
-    savedClipboard = []
+    #savedClipboard = []
     savedClipboardIndex = {}
 
     static singleLineHeight = $text.sizeThatFits({
@@ -28,10 +28,25 @@ class Clipboard {
         this.imageContentHeight = 50
     }
 
-    loadDataWithSingleLine() {
+    get savedClipboard() {
+        if (this.#savedClipboard.length === 0) {
+            this.loadSavedClipboard()
+        }
+        return this.#savedClipboard
+    }
+
+    set savedClipboard(savedClipboard) {
+        this.#savedClipboard = savedClipboard
+    }
+
+    setSingleLine() {
         // 图片高度与文字一致
         this.imageContentHeight = Clipboard.singleLineHeight
-        this.#loadDataWithSingleLine = true
+        this.#singleLine = true
+    }
+
+    loadDataWithSingleLine() {
+        this.setSingleLine()
         this.loadSavedClipboard()
     }
 
@@ -179,7 +194,6 @@ class Clipboard {
             const md5 = $text.MD5(text)
             const res = this.kernel.storage.getByMD5(md5)
             if (this.copied.uuid && this.copied.uuid === res?.uuid) {
-                console.log(text)
                 this.setCopied(res.uuid, this.getIndexPathByUUID(res.uuid))
             } else if (!this.savedClipboardIndex[md5]) {
                 const data = this.add(text)
@@ -563,6 +577,7 @@ class Clipboard {
     }
 
     loadSavedClipboard() {
+        this.kernel.print("load clipboard")
         const initData = (data, section) => {
             const dataObj = {}
             let length = 0
@@ -733,7 +748,7 @@ class Clipboard {
                 return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
             }
             const text = sliceText(data.text)
-            const height = this.#loadDataWithSingleLine
+            const height = this.#singleLine
                 ? Clipboard.singleLineHeight
                 : $text.sizeThatFits({
                     text: text,
