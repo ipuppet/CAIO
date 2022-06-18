@@ -65,7 +65,7 @@ class Keyboard extends Clipboard {
                 symbol: "square.and.arrow.down.on.square",
                 tapped: this.keyboardTapped(animate => {
                     animate.start()
-                    this.readClipboard()
+                    this.readClipboard(true)
                     animate.done()
                 })
             },
