@@ -14,6 +14,7 @@ class ClipboardWidget {
             topItemSize: 32, // 2x2加号和计数大小
             tipTextColor: "orange", // 2x2加号和计数大小
         }
+        this.padding = 15
     }
 
     getListMaxLength() {
@@ -68,7 +69,7 @@ class ClipboardWidget {
             props: {
                 alignment: $widget.horizontalAlignment.leading,
                 spacing: 0,
-                padding: 15,
+                padding: this.padding,
                 widgetURL: (() => {
                     switch (this.setting.get("widget.2x2.widgetURL")) {
                         case 0:
@@ -82,12 +83,30 @@ class ClipboardWidget {
             },
             views: [
                 { // 顶部
-                    type: "hstack",
+                    type: "vgrid",
+                    props: {
+                        columns: [
+                            {
+                                flexible: {
+                                    minimum: 10,
+                                    maximum: this.viewStyle.topItemSize
+                                },
+                                alignment: $widget.alignment.leading
+                            },
+                            {
+                                flexible: {
+                                    minimum: 10,
+                                    maximum: Infinity
+                                },
+                                alignment: $widget.alignment.trailing
+                            }
+                        ]
+                    },
                     views: [
                         {
                             type: "image",
                             props: {
-                                offset: $point(-3, 0), // 图标圆边与文字对齐
+                                offset: $point(-2, 0), // 图标圆边与文字对齐
                                 symbol: {
                                     glyph: "plus.circle.fill",
                                     size: this.viewStyle.topItemSize
@@ -95,7 +114,6 @@ class ClipboardWidget {
                                 color: $color("systemLink")
                             }
                         },
-                        { type: "spacer" },
                         {
                             type: "text",
                             props: {
@@ -135,12 +153,11 @@ class ClipboardWidget {
     }
 
     view2x4(clipboardList) {
-        const padding = 15
         return {
             type: "hstack",
             props: {
                 spacing: 0,
-                padding: padding,
+                padding: this.padding,
                 widgetURL: this.urlScheme.clipboard
             },
             views: [
@@ -153,7 +170,7 @@ class ClipboardWidget {
                         {
                             type: "image",
                             props: {
-                                offset: $point(-3, 0), // 图标圆边与文字对齐
+                                offset: $point(-2, 0), // 图标圆边与文字对齐
                                 symbol: {
                                     glyph: "plus.circle.fill",
                                     size: this.viewStyle.topItemSize
@@ -196,7 +213,7 @@ class ClipboardWidget {
                     },
                     views: (() => {
                         const result = []
-                        const height = (this.ctx.displaySize.height - padding) / this.getListMaxLength()
+                        const height = (this.ctx.displaySize.height - this.padding) / this.getListMaxLength()
                         clipboardList.map((item, i) => {
                             if (i !== 0 && i !== 5) {
                                 result.push({ type: "divider" })

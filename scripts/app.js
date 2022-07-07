@@ -477,6 +477,7 @@ module.exports = {
     run: () => {
         //AppUI.renderTodayUI(); return
         //AppUI.renderKeyboardUI(); return
+        //Widget.render(); return
         if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
         } else if ($app.env === $env.keyboard) {
