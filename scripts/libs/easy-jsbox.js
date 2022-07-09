@@ -2706,8 +2706,8 @@ class Setting extends Controller {
         }
     }
 
-    getId(type, key) {
-        return `setting-${this.name}-${type}-${key}`
+    getId(key) {
+        return `setting-${this.name}-${key}`
     }
 
     #touchHighlightStart(id) {
@@ -2809,14 +2809,14 @@ class Setting extends Controller {
     }
 
     createInfo(icon, title, value) {
+        // 内部随机 id
+        const id = this.getId(uuid())
         const isArray = Array.isArray(value)
         const text = isArray ? value[0] : value
         const moreInfo = isArray ? value[1] : value
-        // 内部随机 id
-        const lineId = `script-${this.name}-${uuid()}`
         return {
             type: "view",
-            props: { id: lineId },
+            props: { id: id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -2836,7 +2836,7 @@ class Setting extends Controller {
                     // 监听点击动作
                     type: "view",
                     events: this.#withTouchEvents(
-                        lineId,
+                        id,
                         {
                             tapped: () => {
                                 $ui.alert({
@@ -2868,8 +2868,10 @@ class Setting extends Controller {
     }
 
     createSwitch(key, icon, title) {
+        const id = this.getId(key)
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -2896,8 +2898,10 @@ class Setting extends Controller {
     }
 
     createString(key, icon, title) {
+        const id = this.getId(key)
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -2965,15 +2969,17 @@ class Setting extends Controller {
     }
 
     createNumber(key, icon, title) {
-        const id = this.getId("number", key)
+        const id = this.getId(key)
+        const labelId = `${id}-label`
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
                     type: "label",
                     props: {
-                        id: id,
+                        id: labelId,
                         align: $align.right,
                         text: this.get(key)
                     },
@@ -2993,7 +2999,7 @@ class Setting extends Controller {
                                         return
                                     }
                                     if (this.set(key, text)) {
-                                        $(id).text = text
+                                        $(labelId).text = text
                                     }
                                 }
                             })
@@ -3012,15 +3018,17 @@ class Setting extends Controller {
     }
 
     createStepper(key, icon, title, min, max) {
-        const id = this.getId("stepper", key)
+        const id = this.getId(key)
+        const labelId = `${id}-label`
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
                     type: "label",
                     props: {
-                        id: id,
+                        id: labelId,
                         text: this.get(key),
                         textColor: this.textColor,
                         align: $align.left
@@ -3039,9 +3047,9 @@ class Setting extends Controller {
                     },
                     events: {
                         changed: sender => {
-                            $(id).text = sender.value
+                            $(labelId).text = sender.value
                             if (!this.set(key, sender.value)) {
-                                $(id).text = this.get(key)
+                                $(labelId).text = this.get(key)
                             }
                         }
                     },
@@ -3056,27 +3064,26 @@ class Setting extends Controller {
     }
 
     createScript(key, icon, title, script) {
-        const id = this.getId("script", key)
+        const id = this.getId(key)
         const buttonId = `${id}-button`
-        const lineId = `${id}-line`
         const touchHighlight = () => {
-            this.#touchHighlightStart(lineId)
-            this.#touchHighlightEnd(lineId)
+            this.#touchHighlightStart(id)
+            this.#touchHighlightEnd(id)
         }
         const actionStart = () => {
             // 隐藏 button，显示 spinner
             $(buttonId).alpha = 0
             $(`${buttonId}-spinner`).alpha = 1
-            this.#touchHighlightStart(lineId)
+            this.#touchHighlightStart(id)
         }
         const actionCancel = () => {
             $(buttonId).alpha = 1
             $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd(lineId)
+            this.#touchHighlightEnd(id)
         }
         const actionDone = (status = true, message = $l10n("ERROR")) => {
             $(`${buttonId}-spinner`).alpha = 0
-            this.#touchHighlightEnd(lineId)
+            this.#touchHighlightEnd(id)
             const button = $(buttonId)
             if (!status) {
                 // 失败
@@ -3117,7 +3124,7 @@ class Setting extends Controller {
         }
         return {
             type: "view",
-            props: { id: lineId },
+            props: { id: id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3152,7 +3159,7 @@ class Setting extends Controller {
                         {
                             // 覆盖在图片上监听点击动作
                             type: "view",
-                            events: this.#withTouchEvents(lineId, {
+                            events: this.#withTouchEvents(id, {
                                 tapped: () => {
                                     // 生成开始事件和结束事件动画，供函数调用
                                     const animate = {
@@ -3160,8 +3167,8 @@ class Setting extends Controller {
                                         actionCancel: actionCancel, // 会直接恢复箭头图标
                                         actionDone: actionDone, // 会出现对号，然后恢复箭头
                                         touchHighlight: touchHighlight, // 被点击的一行颜色加深，然后颜色恢复
-                                        touchHighlightStart: () => this.#touchHighlightStart(lineId), // 被点击的一行颜色加深
-                                        touchHighlightEnd: () => this.#touchHighlightEnd(lineId) // 被点击的一行颜色恢复
+                                        touchHighlightStart: () => this.#touchHighlightStart(id), // 被点击的一行颜色加深
+                                        touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
                                     }
                                     // 执行代码
                                     if (script.startsWith("this")) {
@@ -3190,8 +3197,10 @@ class Setting extends Controller {
     }
 
     createTab(key, icon, title, items, withTitle) {
+        const id = this.getId(key)
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3218,8 +3227,11 @@ class Setting extends Controller {
     }
 
     createColor(key, icon, title) {
+        const id = this.getId(key)
+        const colorId = `${id}-color`
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3229,7 +3241,7 @@ class Setting extends Controller {
                             // 颜色预览以及按钮功能
                             type: "view",
                             props: {
-                                id: `setting-${this.name}-color-${key}`,
+                                id: colorId,
                                 bgcolor: this.getColor(this.get(key)),
                                 circular: true,
                                 borderWidth: 1,
@@ -3248,12 +3260,7 @@ class Setting extends Controller {
                                 tapped: async () => {
                                     const color = await $picker.color({ color: this.getColor(this.get(key)) })
                                     this.set(key, color.components)
-                                    $(`setting-${this.name}-color-${key}`).bgcolor = $rgba(
-                                        color.components.red,
-                                        color.components.green,
-                                        color.components.blue,
-                                        color.components.alpha
-                                    )
+                                    $(colorId).bgcolor = $rgba(color.components.red, color.components.green, color.components.blue, color.components.alpha)
                                 }
                             },
                             layout: (make, view) => {
@@ -3273,12 +3280,11 @@ class Setting extends Controller {
     }
 
     createMenu(key, icon, title, items, withTitle) {
-        const id = this.getId("menu", key)
+        const id = this.getId(key)
         const labelId = `${id}-label`
-        const lineId = `${id}-line`
         return {
             type: "view",
-            props: { id: lineId },
+            props: { id: id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3312,9 +3318,9 @@ class Setting extends Controller {
                     }
                 }
             ],
-            events: this.#withTouchEvents(lineId, {
+            events: this.#withTouchEvents(id, {
                 tapped: () => {
-                    this.#touchHighlightStart(lineId)
+                    this.#touchHighlightStart(id)
                     $ui.menu({
                         items: items,
                         handler: (title, idx) => {
@@ -3323,7 +3329,7 @@ class Setting extends Controller {
                             $(labelId).text = $l10n(title)
                         },
                         finished: () => {
-                            this.#touchHighlightEnd(lineId, 0.2)
+                            this.#touchHighlightEnd(id, 0.2)
                         }
                     })
                 }
@@ -3333,7 +3339,7 @@ class Setting extends Controller {
     }
 
     createDate(key, icon, title, mode = 2) {
-        const id = this.getId("date", key)
+        const id = this.getId(key)
         const getFormatDate = date => {
             let str = ""
             if (typeof date === "number") date = new Date(date)
@@ -3352,6 +3358,7 @@ class Setting extends Controller {
         }
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3395,9 +3402,10 @@ class Setting extends Controller {
     }
 
     createInput(key, icon, title) {
-        const id = this.getId("input", key)
+        const id = this.getId(key)
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3454,9 +3462,11 @@ class Setting extends Controller {
      * @returns
      */
     createIcon(key, icon, title, bgcolor) {
-        const id = this.getId("icon", key)
+        const id = this.getId(key)
+        const imageId = `${id}-image`
         return {
             type: "view",
+            props: { id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3478,7 +3488,7 @@ class Setting extends Controller {
                         {
                             type: "image",
                             props: {
-                                id: id,
+                                id: imageId,
                                 image: $image(this.get(key)),
                                 icon: $icon(this.get(key).slice(5, this.get(key).indexOf(".")), $color("#ffffff")),
                                 tintColor: $color("#ffffff")
@@ -3498,7 +3508,7 @@ class Setting extends Controller {
                                     if (idx === 0) {
                                         const icon = await $ui.selectIcon()
                                         this.set(key, icon)
-                                        $(id).icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
+                                        $(imageId).icon = $icon(icon.slice(5, icon.indexOf(".")), $color("#ffffff"))
                                     } else if (idx === 1 || idx === 2) {
                                         $input.text({
                                             text: "",
@@ -3509,8 +3519,8 @@ class Setting extends Controller {
                                                     return
                                                 }
                                                 this.set(key, text)
-                                                if (idx === 1) $(id).symbol = text
-                                                else $(id).image = $image(text)
+                                                if (idx === 1) $(imageId).symbol = text
+                                                else $(imageId).image = $image(text)
                                             }
                                         })
                                     }
@@ -3530,12 +3540,11 @@ class Setting extends Controller {
     }
 
     createChild(key, icon, title, children) {
-        const id = this.getId("child", key)
-        const lineId = `${id}-line`
+        const id = this.getId(key)
         return {
             type: "view",
             layout: $layout.fill,
-            props: { id: lineId },
+            props: { id: id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3553,7 +3562,7 @@ class Setting extends Controller {
                 }
             ],
             events: this.#withTouchEvents(
-                lineId,
+                id,
                 {
                     tapped: () => {
                         setTimeout(() => {
@@ -3589,11 +3598,11 @@ class Setting extends Controller {
     }
 
     createImage(key, icon, title) {
-        const id = this.getId("image", key)
-        const lineId = `${id}-line`
+        const id = this.getId(key)
+        const imageId = `${id}-image`
         return {
             type: "view",
-            props: { id: lineId },
+            props: { id: id },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3602,7 +3611,7 @@ class Setting extends Controller {
                         {
                             type: "image",
                             props: {
-                                id: id,
+                                id: imageId,
                                 image: this.getImage(key, true) ?? $image("questionmark.square.dashed")
                             },
                             layout: (make, view) => {
@@ -3614,7 +3623,7 @@ class Setting extends Controller {
                     ],
                     events: {
                         tapped: () => {
-                            this.#touchHighlightStart(lineId)
+                            this.#touchHighlightStart(id)
                             $ui.menu({
                                 items: [$l10n("PREVIEW"), $l10n("SELECT_IMAGE"), $l10n("CLEAR_IMAGE")],
                                 handler: (title, idx) => {
@@ -3640,18 +3649,18 @@ class Setting extends Controller {
                                             const image = compressImage(resp.data.image)
                                             this.fileStorage.write(this.imagePath, this.getImageName(key, true), image.jpg(0.8))
                                             this.fileStorage.write(this.imagePath, this.getImageName(key), resp.data)
-                                            $(id).image = image
+                                            $(imageId).image = image
                                             $ui.success($l10n("SUCCESS"))
                                         })
                                     } else if (idx === 2) {
                                         this.fileStorage.delete(this.imagePath, this.getImageName(key, true))
                                         this.fileStorage.delete(this.imagePath, this.getImageName(key))
-                                        $(id).image = $image("questionmark.square.dashed")
+                                        $(imageId).image = $image("questionmark.square.dashed")
                                         $ui.success($l10n("SUCCESS"))
                                     }
                                 },
                                 finished: () => {
-                                    this.#touchHighlightEnd(lineId)
+                                    this.#touchHighlightEnd(id)
                                 }
                             })
                         }
