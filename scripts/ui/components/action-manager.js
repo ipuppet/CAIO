@@ -307,7 +307,7 @@ class ActionManager {
                     tapped: () => {
                         this.saveActionInfo(this.editingActionInfo)
                         // 更新 clipboard 中的 menu
-                        const Clipboard = require("../clipboard");
+                        const Clipboard = require("../clipboard")
                         Clipboard.updateMenu(this.kernel)
                         if (done) done(this.editingActionInfo)
                     }
