@@ -1,15 +1,17 @@
-const {
-    UIKit,
-    BarButtonItem,
-    NavigationItem,
-    NavigationBar
-} = require("../libs/easy-jsbox")
+const { UIKit, BarButtonItem, NavigationItem, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const KeyboardScripts = require("./components/keyboard-scripts")
+
+/**
+ * @typedef {import("../app").AppKernel} AppKernel
+ */
 
 class Keyboard extends Clipboard {
     #readClipboardTimer
 
+    /**
+     * @param {AppKernel} kernel
+     */
     constructor(kernel) {
         super(kernel)
         this.listId = "keyboard-clipboard-list"
@@ -57,11 +59,13 @@ class Keyboard extends Clipboard {
 
     navButtons() {
         const buttons = [
-            { // 关闭键盘
+            {
+                // 关闭键盘
                 symbol: "keyboard.chevron.compact.down",
                 tapped: this.keyboardTapped(() => $keyboard.dismiss())
             },
-            { // 手动读取剪切板
+            {
+                // 手动读取剪切板
                 symbol: "square.and.arrow.down.on.square",
                 tapped: this.keyboardTapped(animate => {
                     animate.start()
@@ -69,59 +73,68 @@ class Keyboard extends Clipboard {
                     animate.done()
                 })
             },
-            { // Action
+            {
+                // Action
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped((animate, sender) => {
                     const popover = $ui.popover({
                         sourceView: sender,
                         directions: $popoverDirection.up,
                         size: $size(200, 300),
-                        views: [this.kernel.actionManager.getActionListView({}, {
-                            didSelect: (sender, indexPath, data) => {
-                                popover.dismiss()
-                                const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
-                                setTimeout(() => action({
-                                    text: $clipboard.text
-                                }), 500)
-                            }
-                        })]
+                        views: [
+                            this.kernel.actionManager.getActionListView(
+                                {},
+                                {
+                                    didSelect: (sender, indexPath, data) => {
+                                        popover.dismiss()
+                                        const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
+                                        setTimeout(
+                                            () =>
+                                                action({
+                                                    text: $clipboard.text
+                                                }),
+                                            500
+                                        )
+                                    }
+                                }
+                            )
+                        ]
                     })
                 })
             }
         ]
         return buttons.map(button => {
             const barButtonItem = new BarButtonItem()
-            return barButtonItem
-                .setAlign(UIKit.align.right)
-                .setSymbol(button.symbol)
-                .setEvent("tapped", button.tapped)
-                .definition
+            return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped).definition
         })
     }
 
     getNavBarView() {
-        return { // 顶部按钮栏
+        return {
+            // 顶部按钮栏
             type: "view",
             props: {
                 bgcolor: $color("backgroundColor")
             },
-            views: [{
-                type: "view",
-                layout: $layout.fill,
-                views: [
-                    {
-                        type: "label",
-                        props: {
-                            text: $l10n("CLIPBOARD"),
-                            font: $font("bold", 20)
-                        },
-                        layout: (make, view) => {
-                            make.centerY.equalTo(view.super)
-                            make.left.equalTo(view.super).offset(this.left_right)
+            views: [
+                {
+                    type: "view",
+                    layout: $layout.fill,
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: $l10n("CLIPBOARD"),
+                                font: $font("bold", 20)
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.equalTo(view.super).offset(this.left_right)
+                            }
                         }
-                    }
-                ].concat(this.navButtons())
-            }],
+                    ].concat(this.navButtons())
+                }
+            ],
             layout: (make, view) => {
                 make.top.width.equalTo(view.super)
                 make.height.equalTo(this.navHeight)
@@ -138,12 +151,14 @@ class Keyboard extends Clipboard {
                 menu: {
                     pullDown: true,
                     asPrimary: true,
-                    items: KeyboardScripts.getAddins().reverse().map(addin => {
-                        return {
-                            title: addin,
-                            handler: this.keyboardTapped(() => $addin.run(addin))
-                        }
-                    })
+                    items: KeyboardScripts.getAddins()
+                        .reverse()
+                        .map(addin => {
+                            return {
+                                title: addin,
+                                handler: this.keyboardTapped(() => $addin.run(addin))
+                            }
+                        })
                 }
             }
         ])
@@ -164,11 +179,13 @@ class Keyboard extends Clipboard {
             })
         }
         navigationItem.setRightButtons([
-            { // send
+            {
+                // send
                 title: "Send",
                 tapped: this.keyboardTapped(() => $keyboard.send())
             },
-            { // delete
+            {
+                // delete
                 symbol: "delete.left",
                 events: {
                     touchesBegan: this.keyboardTapped(() => {
@@ -176,10 +193,7 @@ class Keyboard extends Clipboard {
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
-                                handler: this.keyboardTapped(
-                                    () => $keyboard.delete(),
-                                    this.kernel.setting.get("keyboard.tapticEngineForDelete")
-                                )
+                                handler: this.keyboardTapped(() => $keyboard.delete(), this.kernel.setting.get("keyboard.tapticEngineForDelete"))
                             })
                         })
                     }),
@@ -204,7 +218,8 @@ class Keyboard extends Clipboard {
     }
 
     getListView() {
-        return { // 剪切板列表
+        return {
+            // 剪切板列表
             type: "list",
             props: {
                 id: this.listId,
@@ -261,13 +276,15 @@ class Keyboard extends Clipboard {
                 bgcolor: $color(backgroundColor, backgroundColorDark)
             },
             views: [
-                backgroundImage !== null ? {
-                    type: "image",
-                    props: {
-                        image: backgroundImage
-                    },
-                    layout: $layout.fill
-                } : {},
+                backgroundImage !== null
+                    ? {
+                          type: "image",
+                          props: {
+                              image: backgroundImage
+                          },
+                          layout: $layout.fill
+                      }
+                    : {},
                 this.getNavBarView(),
                 UIKit.separatorLine({
                     id: this.navBarSeparatorId,

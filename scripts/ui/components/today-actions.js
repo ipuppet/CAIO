@@ -1,11 +1,13 @@
-const {
-    UIKit,
-    Sheet,
-    NavigationItem,
-    PageController
-} = require("../../libs/easy-jsbox")
+const { UIKit, Sheet, NavigationItem, PageController } = require("../../libs/easy-jsbox")
+
+/**
+ * @typedef {import("../../app").AppKernel} AppKernel
+ */
 
 class TodayActions {
+    /**
+     * @param {AppKernel} kernel
+     */
     constructor(kernel) {
         this.listId = "today-action-list"
         this.kernel = kernel
@@ -55,9 +57,10 @@ class TodayActions {
                     text: action.name,
                     info: action
                 },
-                icon: action.icon.slice(0, 5) === "icon_"
-                    ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                    : { image: $image(action.icon) },
+                icon:
+                    action.icon.slice(0, 5) === "icon_"
+                        ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                        : { image: $image(action.icon) },
                 color: { bgcolor: $color(action.color) }
             }
         })
@@ -82,7 +85,7 @@ class TodayActions {
                     type: "image",
                     props: {
                         id: "icon",
-                        tintColor: $color("#ffffff"),
+                        tintColor: $color("#ffffff")
                     },
                     layout: make => {
                         make.top.left.inset(15)
@@ -178,8 +181,7 @@ class TodayActions {
         const pageController = new PageController()
         pageController
             .setView(todayActions.getListView())
-            .navigationItem
-            .setTitle($l10n("ACTIONS"))
+            .navigationItem.setTitle($l10n("ACTIONS"))
             .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(todayActions.getNavButtons())
         return pageController
