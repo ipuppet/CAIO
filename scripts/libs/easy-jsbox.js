@@ -2,9 +2,9 @@ const VERSION = "1.2.2"
 
 String.prototype.trim = function (char, type) {
     if (char) {
-        if (type == "l") {
+        if (type === "l") {
             return this.replace(new RegExp("^\\" + char + "+", "g"), "")
-        } else if (type == "r") {
+        } else if (type === "r") {
             return this.replace(new RegExp("\\" + char + "+$", "g"), "")
         }
         return this.replace(new RegExp("^\\" + char + "+|\\" + char + "+$", "g"), "")
