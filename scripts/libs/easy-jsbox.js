@@ -2,25 +2,25 @@ const VERSION = "1.2.2"
 
 String.prototype.trim = function (char, type) {
     if (char) {
-        if (type == 'l') {
-            return this.replace(new RegExp('^\\' + char + '+', 'g'), '')
-        } else if (type == 'r') {
-            return this.replace(new RegExp('\\' + char + '+$', 'g'), '')
+        if (type == "l") {
+            return this.replace(new RegExp("^\\" + char + "+", "g"), "")
+        } else if (type == "r") {
+            return this.replace(new RegExp("\\" + char + "+$", "g"), "")
         }
-        return this.replace(new RegExp('^\\' + char + '+|\\' + char + '+$', 'g'), '')
+        return this.replace(new RegExp("^\\" + char + "+|\\" + char + "+$", "g"), "")
     }
-    return this.replace(/^\s+|\s+$/g, '')
+    return this.replace(/^\s+|\s+$/g, "")
 }
 
 /**
  * 对比版本号
- * @param {String} preVersion 
- * @param {String} lastVersion 
+ * @param {String} preVersion
+ * @param {String} lastVersion
  * @returns 1: preVersion 大, 0: 相等, -1: lastVersion 大
  */
-function versionCompare(preVersion = '', lastVersion = '') {
-    let sources = preVersion.split('.')
-    let dests = lastVersion.split('.')
+function versionCompare(preVersion = "", lastVersion = "") {
+    let sources = preVersion.split(".")
+    let dests = lastVersion.split(".")
     let maxL = Math.max(sources.length, dests.length)
     let result = 0
     for (let i = 0; i < maxL; i++) {
@@ -80,7 +80,7 @@ function objectEqual(a, b) {
 
         let propA = a[propName]
         let propB = b[propName]
-        if (typeof propA === 'object') {
+        if (typeof propA === "object") {
             return objectEqual(propA, propB)
         } else if (propA !== propB) {
             return false
@@ -139,13 +139,7 @@ class View {
     events
     layout
 
-    constructor({
-        type = "view",
-        props = {},
-        views = [],
-        events = {},
-        layout = $layout.fill
-    } = {}) {
+    constructor({ type = "view", props = {}, views = [], events = {}, layout = $layout.fill } = {}) {
         // 属性
         this.type = type
         this.props = props
@@ -198,13 +192,13 @@ class View {
 
     /**
      * 事件中间件
-     * 
+     *
      * 调用处理函数 `action`，第一个参数为用户定义的事件处理函数
      * 其余参数为 JSBox 传递的参数，如 sender 等
-     * 
+     *
      * @param {String} event 事件名称
      * @param {Function} action 处理事件的函数
-     * @returns 
+     * @returns
      */
     eventMiddleware(event, action) {
         const old = this.events[event]
@@ -258,7 +252,7 @@ class UIKit {
 
     /**
      * 获取Window大小
-     * @returns 
+     * @returns
      */
     static get windowSize() {
         return $objc("UIWindow").$keyWindow().jsValue().size
@@ -289,7 +283,8 @@ class UIKit {
     }
 
     static separatorLine(props = {}, align = UIKit.align.bottom) {
-        return { // canvas
+        return {
+            // canvas
             type: "canvas",
             props: props,
             layout: (make, view) => {
@@ -318,9 +313,12 @@ class UIKit {
     static blurBox(props = {}, views = [], layout = $layout.fill) {
         return {
             type: "blur",
-            props: Object.assign({
-                style: $blurStyle.thinMaterial
-            }, props),
+            props: Object.assign(
+                {
+                    style: $blurStyle.thinMaterial
+                },
+                props
+            ),
             views: views,
             layout: layout
         }
@@ -334,14 +332,14 @@ class UIKit {
             statusBarStyle = args.statusBarStyle ?? 0,
             title = args.title ?? "",
             navButtons = args.navButtons ?? [{ title: "" }],
-            bgcolor = args.bgcolor ?? (views[0]?.props?.bgcolor ?? "primarySurface"),
+            bgcolor = args.bgcolor ?? views[0]?.props?.bgcolor ?? "primarySurface",
             disappeared = args.disappeared
         $ui.push({
             props: {
                 statusBarStyle: statusBarStyle,
                 navButtons: navButtons,
                 title: title,
-                bgcolor: typeof bgcolor === "string" ? $color(bgcolor) : bgcolor,
+                bgcolor: typeof bgcolor === "string" ? $color(bgcolor) : bgcolor
             },
             events: {
                 disappeared: () => {
@@ -367,7 +365,7 @@ class ViewController extends Controller {
     #pageControllers = []
 
     /**
-     * @param {PageController} pageController 
+     * @param {PageController} pageController
      */
     #onPop(pageController) {
         this.callEvent("onPop", pageController) // 被弹出的对象
@@ -376,7 +374,7 @@ class ViewController extends Controller {
 
     /**
      * push 新页面
-     * @param {PageController} pageController 
+     * @param {PageController} pageController
      */
     push(pageController) {
         const parent = this.#pageControllers[this.#pageControllers.length - 1]
@@ -398,9 +396,9 @@ class ViewController extends Controller {
     }
 
     /**
-     * 
-     * @param {PageController} pageController 
-     * @returns 
+     *
+     * @param {PageController} pageController
+     * @returns
      */
     setRootPageController(pageController) {
         this.#pageControllers = []
@@ -441,10 +439,7 @@ class Matrix extends View {
             this.#templateHiddenStatus = {}
             for (let i = 0; i < this.props.template.views.length; i++) {
                 // 未定义 id 以及 hidden 的模板默认 hidden 设置为 false
-                if (
-                    this.props.template.views[i].props.id === undefined
-                    && this.props.template.views[i].props.hidden === undefined
-                ) {
+                if (this.props.template.views[i].props.id === undefined && this.props.template.views[i].props.hidden === undefined) {
                     this.#templateHiddenStatus[this.templateIdByIndex(i)] = false
                 }
                 // 模板中声明 hidden 的值，在数据中将会成为默认值
@@ -527,24 +522,23 @@ class Matrix extends View {
     rebuildTemplate() {
         let templateProps = {}
         if (this.props.template.props !== undefined) {
-            templateProps = Object.assign(
-                this.props.template.props,
-                {
-                    id: "__templateProps",
-                    hidden: false
-                }
-            )
+            templateProps = Object.assign(this.props.template.props, {
+                id: "__templateProps",
+                hidden: false
+            })
         }
         this.props.template.props = {}
 
         // rebuild template
         const templateViews = [
-            { // templateProps
+            {
+                // templateProps
                 type: "view",
                 props: templateProps,
                 layout: $layout.fill
             },
-            { // title
+            {
+                // title
                 type: "label",
                 props: {
                     id: "__title",
@@ -583,9 +577,9 @@ class Matrix extends View {
 
     /**
      * 获得修正后的 indexPath
-     * @param {$indexPath||Number} indexPath 
+     * @param {$indexPath||Number} indexPath
      * @param {Boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
-     * @returns 
+     * @returns
      */
     indexPath(indexPath, withTitleOffset) {
         let offset = withTitleOffset ? 0 : 1
@@ -616,12 +610,8 @@ class Matrix extends View {
             }
             const columns = this.props.columns ?? 2
             const spacing = this.props.spacing ?? 15
-            const width = this.props.itemWidth
-                ?? this.props.itemSize?.width
-                ?? (UIKit.windowSize.width - spacing * (columns + 1)) / columns
-            const height = this.props.itemHeight
-                ?? this.props.itemSize?.height
-                ?? 100
+            const width = this.props.itemWidth ?? this.props.itemSize?.width ?? (UIKit.windowSize.width - spacing * (columns + 1)) / columns
+            const height = this.props.itemHeight ?? this.props.itemSize?.height ?? 100
             return $size(width, height)
         })
 
@@ -644,8 +634,8 @@ class SheetViewTypeError extends ValidationError {
 }
 
 class Sheet extends View {
-    #present = () => { }
-    #dismiss = () => { }
+    #present = () => {}
+    #dismiss = () => {}
     pageController
 
     init() {
@@ -683,8 +673,8 @@ class Sheet extends View {
      *      {String} title
      *      {Object} popButton 参数与 BarButtonItem 一致
      *      {Array} rightButtons
-     *  } 
-     * @returns 
+     *  }
+     * @returns
      */
     addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
         if (this.view === undefined) throw new SheetAddNavBarError()
@@ -692,12 +682,17 @@ class Sheet extends View {
         // 返回按钮
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvents(Object.assign({
-                tapped: () => {
-                    this.dismiss()
-                    if (typeof popButton.tapped === "function") popButton.tapped()
-                }
-            }, popButton.events))
+            .setEvents(
+                Object.assign(
+                    {
+                        tapped: () => {
+                            this.dismiss()
+                            if (typeof popButton.tapped === "function") popButton.tapped()
+                        }
+                    },
+                    popButton.events
+                )
+            )
             .setAlign(UIKit.align.left)
             .setSymbol(popButton.symbol)
             .setTitle(popButton.title)
@@ -712,10 +707,7 @@ class Sheet extends View {
             .setTitle(title)
             .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(rightButtons)
-        this.pageController
-            .setView(this.view)
-            .navigationController.navigationBar
-            .pageSheetMode()
+        this.pageController.setView(this.view).navigationController.navigationBar.pageSheetMode()
         this.pageController?.getPage().setProp("bgcolor", this.view.props.bgcolor)
         return this
     }
@@ -798,23 +790,25 @@ class BarButtonItem extends View {
                 checkmarkIcon.alpha = 1
             },
             completion: () => {
-                $delay(0.3, () => $ui.animate({
-                    duration: 0.6,
-                    animation: () => {
-                        checkmarkIcon.alpha = 0
-                    },
-                    completion: () => {
-                        $ui.animate({
-                            duration: 0.4,
-                            animation: () => {
-                                buttonIcon.alpha = 1
-                            },
-                            completion: () => {
-                                buttonIcon.alpha = 1
-                            }
-                        })
-                    }
-                }))
+                $delay(0.3, () =>
+                    $ui.animate({
+                        duration: 0.6,
+                        animation: () => {
+                            checkmarkIcon.alpha = 0
+                        },
+                        completion: () => {
+                            $ui.animate({
+                                duration: 0.4,
+                                animation: () => {
+                                    buttonIcon.alpha = 1
+                                },
+                                completion: () => {
+                                    buttonIcon.alpha = 1
+                                }
+                            })
+                        }
+                    })
+                )
             }
         })
     }
@@ -828,11 +822,14 @@ class BarButtonItem extends View {
         const userTapped = this.events.tapped
         this.events.tapped = sender => {
             if (!userTapped) return
-            userTapped({
-                start: () => this.#actionStart(),
-                done: () => this.#actionDone(),
-                cancel: () => this.#actionCancel()
-            }, sender)
+            userTapped(
+                {
+                    start: () => this.#actionStart(),
+                    done: () => this.#actionDone(),
+                    cancel: () => this.#actionCancel()
+                },
+                sender
+            )
         }
         return {
             type: "view",
@@ -860,13 +857,9 @@ class BarButtonItem extends View {
                                 {
                                     id: `icon-button-${this.id}`,
                                     hidden: this.symbol === undefined,
-                                    tintColor: UIKit.textColor,
+                                    tintColor: UIKit.textColor
                                 },
-                                this.symbol === undefined
-                                    ? {}
-                                    : typeof this.symbol === "string"
-                                        ? { symbol: this.symbol }
-                                        : { data: this.symbol.png }
+                                this.symbol === undefined ? {} : typeof this.symbol === "string" ? { symbol: this.symbol } : { data: this.symbol.png }
                             ),
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
@@ -950,19 +943,21 @@ class SearchBar extends BarTitleView {
             cornerRadius: 6,
             bgcolor: $color("#EEF1F1", "#212121")
         }
-        this.views = [{
-            type: "input",
-            props: {
-                id: this.id + "-input",
-                type: this.kbType,
-                bgcolor: $color("clear"),
-                placeholder: this.placeholder
-            },
-            layout: $layout.fill,
-            events: {
-                changed: sender => this.controller.callEvent("onChange", sender.text)
+        this.views = [
+            {
+                type: "input",
+                props: {
+                    id: this.id + "-input",
+                    type: this.kbType,
+                    bgcolor: $color("clear"),
+                    placeholder: this.placeholder
+                },
+                layout: $layout.fill,
+                events: {
+                    changed: sender => this.controller.callEvent("onChange", sender.text)
+                }
             }
-        }]
+        ]
         this.layout = (make, view) => {
             make.height.equalTo(this.height)
             make.top.equalTo(view.super.safeArea).offset(this.topOffset)
@@ -1030,16 +1025,8 @@ class SearchBarController extends Controller {
     didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset) {
         this.updateSelector()
 
-        if (
-            contentOffset >= 0
-            && contentOffset <= this.searchBar.height
-        ) {
-            scrollToOffset($point(
-                0,
-                contentOffset >= this.searchBar.height / 2
-                    ? this.searchBar.height - zeroOffset
-                    : -zeroOffset
-            ))
+        if (contentOffset >= 0 && contentOffset <= this.searchBar.height) {
+            scrollToOffset($point(0, contentOffset >= this.searchBar.height / 2 ? this.searchBar.height - zeroOffset : -zeroOffset))
         }
     }
 }
@@ -1101,9 +1088,14 @@ class NavigationItem {
     addRightButton({ symbol, title, tapped, menu, events }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvents(Object.assign({
-                tapped: tapped
-            }, events))
+            .setEvents(
+                Object.assign(
+                    {
+                        tapped: tapped
+                    },
+                    events
+                )
+            )
             .setAlign(UIKit.align.right)
             .setSymbol(symbol)
             .setTitle(title)
@@ -1116,9 +1108,14 @@ class NavigationItem {
     addLeftButton({ symbol, title, tapped, menu, events }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
-            .setEvents(Object.assign({
-                tapped: tapped
-            }, events))
+            .setEvents(
+                Object.assign(
+                    {
+                        tapped: tapped
+                    },
+                    events
+                )
+            )
             .setAlign(UIKit.align.left)
             .setSymbol(symbol)
             .setTitle(title)
@@ -1132,13 +1129,14 @@ class NavigationItem {
      * 覆盖左侧按钮
      * @param {String} parent 父页面标题，将会显示为文本按钮
      * @param {Object} view 自定义按钮视图
-     * @returns 
+     * @returns
      */
     addPopButton(parent, view) {
         if (!parent) {
             parent = $l10n("BACK")
         }
-        this.popButtonView = view ?? { // 返回按钮
+        this.popButtonView = view ?? {
+            // 返回按钮
             type: "button",
             props: {
                 bgcolor: $color("clear"),
@@ -1152,7 +1150,11 @@ class NavigationItem {
                 make.left.equalTo(view.super.safeArea).offset(15)
                 make.centerY.equalTo(view.super.safeArea)
             },
-            events: { tapped: () => { $ui.pop() } }
+            events: {
+                tapped: () => {
+                    $ui.pop()
+                }
+            }
         }
         return this
     }
@@ -1216,49 +1218,54 @@ class NavigationBar extends View {
      * 页面大标题
      */
     getLargeTitleView() {
-        return this.prefersLargeTitles
-            && this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever
+        return this.prefersLargeTitles && this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever
             ? {
-                type: "label",
-                props: {
-                    id: this.id + "-large-title",
-                    text: this.navigationItem.title,
-                    textColor: UIKit.textColor,
-                    align: $align.left,
-                    font: $font("bold", this.largeTitleFontSize),
-                    line: 1
-                },
-                layout: (make, view) => {
-                    make.left.equalTo(view.super.safeArea).offset(15)
-                    make.height.equalTo(this.largeTitleFontSize + this.largeTitleLabelHeightOffset)
-                    make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-                }
-            } : {}
+                  type: "label",
+                  props: {
+                      id: this.id + "-large-title",
+                      text: this.navigationItem.title,
+                      textColor: UIKit.textColor,
+                      align: $align.left,
+                      font: $font("bold", this.largeTitleFontSize),
+                      line: 1
+                  },
+                  layout: (make, view) => {
+                      make.left.equalTo(view.super.safeArea).offset(15)
+                      make.height.equalTo(this.largeTitleFontSize + this.largeTitleLabelHeightOffset)
+                      make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+                  }
+              }
+            : {}
     }
 
     getNavigationBarView() {
         const getButtonView = (buttons, align) => {
-            return buttons.length > 0 ? {
-                type: "view",
-                views: [{
-                    type: "view",
-                    views: buttons,
-                    layout: $layout.fill
-                }],
-                layout: (make, view) => {
-                    make.top.equalTo(view.super.safeAreaTop)
-                    make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-                    if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea).offset(5)
-                    else make.right.equalTo(view.super.safeArea).offset(-5)
-                    make.width.equalTo(buttons.length * BarButtonItem.size.width)
-                }
-            } : {}
+            return buttons.length > 0
+                ? {
+                      type: "view",
+                      views: [
+                          {
+                              type: "view",
+                              views: buttons,
+                              layout: $layout.fill
+                          }
+                      ],
+                      layout: (make, view) => {
+                          make.top.equalTo(view.super.safeAreaTop)
+                          make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
+                          if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea).offset(5)
+                          else make.right.equalTo(view.super.safeArea).offset(-5)
+                          make.width.equalTo(buttons.length * BarButtonItem.size.width)
+                      }
+                  }
+                : {}
         }
         const rightButtonView = getButtonView(this.navigationItem.rightButtons, UIKit.align.right)
         const leftButtonView = this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
         const isHideBackground = this.prefersLargeTitles
         const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
-        return { // 顶部 bar
+        return {
+            // 顶部 bar
             type: "view",
             props: {
                 id: this.id + "-navigation",
@@ -1269,18 +1276,20 @@ class NavigationBar extends View {
                 make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
             },
             views: [
-                this.backgroundColor ? {
-                    type: "view",
-                    props: {
-                        hidden: isHideBackground,
-                        bgcolor: this.backgroundColor,
-                        id: this.id + "-background"
-                    },
-                    layout: $layout.fill
-                } : UIKit.blurBox({
-                    hidden: isHideBackground,
-                    id: this.id + "-background"
-                }),
+                this.backgroundColor
+                    ? {
+                          type: "view",
+                          props: {
+                              hidden: isHideBackground,
+                              bgcolor: this.backgroundColor,
+                              id: this.id + "-background"
+                          },
+                          layout: $layout.fill
+                      }
+                    : UIKit.blurBox({
+                          hidden: isHideBackground,
+                          id: this.id + "-background"
+                      }),
                 UIKit.separatorLine({
                     id: this.id + "-underline",
                     alpha: isHideBackground ? 0 : 1
@@ -1294,11 +1303,12 @@ class NavigationBar extends View {
                     },
                     layout: $layout.fill
                 },
-                { // 标题
+                {
+                    // 标题
                     type: "label",
                     props: {
                         id: this.id + "-small-title",
-                        alpha: isHideTitle ? 1 : 0,  // 不显示大标题则显示小标题
+                        alpha: isHideTitle ? 1 : 0, // 不显示大标题则显示小标题
                         text: this.navigationItem.title,
                         font: $font("bold", this.navigationBarTitleFontSize),
                         align: $align.center,
@@ -1428,9 +1438,7 @@ class NavigationController extends Controller {
             }
         }
 
-        let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
-            ? 5
-            : this.largeTitleScrollTrigger
+        let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever ? 5 : this.largeTitleScrollTrigger
         if (contentOffset > trigger) {
             // 隐藏遮罩
             this.selector.largeTitleMaskView.hidden = true
@@ -1488,22 +1496,19 @@ class NavigationController extends Controller {
             let titleViewHeight = 0
             if (!this.navigationBar?.navigationItem?.isPinTitleView) {
                 // titleView didEndDragging
-                this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(
-                    contentOffset, decelerate, scrollToOffset, zeroOffset
-                )
+                this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset)
                 titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
                 contentOffset -= titleViewHeight
             }
-            if (
-                contentOffset >= 0
-                && contentOffset <= this.navigationBar.largeTitleFontSize
-            ) {
-                scrollToOffset($point(
-                    0,
-                    contentOffset >= this.navigationBar.largeTitleFontSize / 2
-                        ? this.navigationBar.navigationBarNormalHeight + titleViewHeight - zeroOffset
-                        : titleViewHeight - zeroOffset
-                ))
+            if (contentOffset >= 0 && contentOffset <= this.navigationBar.largeTitleFontSize) {
+                scrollToOffset(
+                    $point(
+                        0,
+                        contentOffset >= this.navigationBar.largeTitleFontSize / 2
+                            ? this.navigationBar.navigationBarNormalHeight + titleViewHeight - zeroOffset
+                            : titleViewHeight - zeroOffset
+                    )
+                )
             }
         }
     }
@@ -1596,9 +1601,9 @@ class PageController extends Controller {
     }
 
     /**
-     * 
-     * @param {Object} view 
-     * @returns 
+     *
+     * @param {Object} view
+     * @returns
      */
     setView(view) {
         if (typeof view !== "object") {
@@ -1638,16 +1643,18 @@ class PageController extends Controller {
                 props: {
                     height: height + (this.view.props.header?.props?.height ?? 0)
                 },
-                views: [{
-                    type: "view",
-                    props: { clipsToBounds: true },
-                    views: [this.view.props.header],
-                    layout: (make, view) => {
-                        make.top.inset(height)
-                        make.height.equalTo(this.view.props.header?.props?.height ?? 0)
-                        make.width.equalTo(view.super)
+                views: [
+                    {
+                        type: "view",
+                        props: { clipsToBounds: true },
+                        views: [this.view.props.header],
+                        layout: (make, view) => {
+                            make.top.inset(height)
+                            make.height.equalTo(this.view.props.header?.props?.height ?? 0)
+                            make.width.equalTo(view.super)
+                        }
                     }
-                }]
+                ]
             }
         } else {
             this.view.props.header = { props: { height: height } }
@@ -1680,10 +1687,10 @@ class PageController extends Controller {
         } else {
             // indicatorInsets
             const pinTitleViewOffset = this.navigationItem.isPinTitleView
-                ? this.navigationItem.titleView.height
-                + this.navigationItem.titleView.bottomOffset
-                + this.navigationController.navigationBar.contentViewHeightOffset
-                - this.navigationController.navigationBar.largeTitleLabelHeightOffset / 2 // 大标题中有额外空间用以完整显示 g y 等字符
+                ? this.navigationItem.titleView.height +
+                  this.navigationItem.titleView.bottomOffset +
+                  this.navigationController.navigationBar.contentViewHeightOffset -
+                  this.navigationController.navigationBar.largeTitleLabelHeightOffset / 2 // 大标题中有额外空间用以完整显示 g y 等字符
                 : 0
             if (this.view.props.indicatorInsets) {
                 const old = this.view.props.indicatorInsets
@@ -1718,9 +1725,9 @@ class PageController extends Controller {
                 .assignEvent("didScroll", sender => {
                     let contentOffset = sender.contentOffset.y
                     if (
-                        (!UIKit.isHorizontal || UIKit.isLargeScreen)
-                        && this.navigationController.navigationBar.addStatusBarHeight
-                        && !this.view.props.stickyHeader
+                        (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
+                        this.navigationController.navigationBar.addStatusBarHeight &&
+                        !this.view.props.stickyHeader
                     ) {
                         contentOffset += UIKit.statusBarHeight
                     }
@@ -1730,18 +1737,14 @@ class PageController extends Controller {
                     let contentOffset = sender.contentOffset.y
                     let zeroOffset = 0
                     if (
-                        (!UIKit.isHorizontal || UIKit.isLargeScreen)
-                        && this.navigationController.navigationBar.addStatusBarHeight
-                        && !this.view.props.stickyHeader
+                        (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
+                        this.navigationController.navigationBar.addStatusBarHeight &&
+                        !this.view.props.stickyHeader
                     ) {
                         contentOffset += UIKit.statusBarHeight
                         zeroOffset = UIKit.statusBarHeight
                     }
-                    this.navigationController.didEndDragging(
-                        contentOffset, decelerate,
-                        (...args) => sender.scrollToOffset(...args),
-                        zeroOffset
-                    )
+                    this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args), zeroOffset)
                 })
                 .assignEvent("willBeginDecelerating", (...args) => this.view.events?.didEndDragging(...args))
         }
@@ -1757,18 +1760,20 @@ class PageController extends Controller {
                 const isHideBackground = this.navigationController.navigationBar.prefersLargeTitles
                 titleView = View.create({
                     views: [
-                        this.navigationController.navigationBar.backgroundColor ? {
-                            type: "view",
-                            props: {
-                                hidden: isHideBackground,
-                                bgcolor: this.navigationController.navigationBar.backgroundColor,
-                                id: this.navigationController.navigationBar.id + "-title-view-background"
-                            },
-                            layout: $layout.fill
-                        } : UIKit.blurBox({
-                            hidden: isHideBackground,
-                            id: this.navigationController.navigationBar.id + "-title-view-background"
-                        }),
+                        this.navigationController.navigationBar.backgroundColor
+                            ? {
+                                  type: "view",
+                                  props: {
+                                      hidden: isHideBackground,
+                                      bgcolor: this.navigationController.navigationBar.backgroundColor,
+                                      id: this.navigationController.navigationBar.id + "-title-view-background"
+                                  },
+                                  layout: $layout.fill
+                              }
+                            : UIKit.blurBox({
+                                  hidden: isHideBackground,
+                                  id: this.navigationController.navigationBar.id + "-title-view-background"
+                              }),
                         UIKit.separatorLine({
                             id: this.navigationController.navigationBar.id + "-title-view-underline",
                             alpha: isHideBackground ? 0 : 1
@@ -1779,9 +1784,7 @@ class PageController extends Controller {
                         make.top.equalTo(view.prev.bottom)
                         make.width.equalTo(view.super)
                         make.height.equalTo(
-                            this.navigationItem.titleView.topOffset
-                            + this.navigationItem.titleView.height
-                            + this.navigationItem.titleView.bottomOffset
+                            this.navigationItem.titleView.topOffset + this.navigationItem.titleView.height + this.navigationItem.titleView.bottomOffset
                         )
                     }
                 })
@@ -1935,9 +1938,9 @@ class TabBarController extends Controller {
     }
 
     /**
-     * 
-     * @param {Object} pages 
-     * @returns 
+     *
+     * @param {Object} pages
+     * @returns
      */
     setPages(pages = {}) {
         Object.keys(pages).forEach(key => this.setPage(key, pages[key]))
@@ -1977,9 +1980,9 @@ class TabBarController extends Controller {
     }
 
     /**
-     * 
-     * @param {Object} cells 
-     * @returns 
+     *
+     * @param {Object} cells
+     * @returns
      */
     setCells(cells = {}) {
         Object.keys(cells).forEach(key => this.setCell(key, cells[key]))
@@ -2028,12 +2031,7 @@ class TabBarController extends Controller {
                 // indicatorInsets
                 if (view.views[0].props.indicatorInsets) {
                     const old = view.views[0].props.indicatorInsets
-                    view.views[0].props.indicatorInsets = $insets(
-                        old.top,
-                        old.left,
-                        old.bottom + this.contentOffset,
-                        old.right
-                    )
+                    view.views[0].props.indicatorInsets = $insets(old.top, old.left, old.bottom + this.contentOffset, old.right)
                 } else {
                     view.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
                 }
@@ -2063,18 +2061,20 @@ class TabBarController extends Controller {
                 make.bottom.equalTo(view.super)
             },
             views: [
-                UIKit.blurBox({}, [{
-                    type: "stack",
-                    layout: $layout.fillSafeArea,
-                    props: {
-                        axis: $stackViewAxis.horizontal,
-                        distribution: $stackViewDistribution.fillEqually,
-                        spacing: 0,
-                        stack: {
-                            views: this.#cellViews()
+                UIKit.blurBox({}, [
+                    {
+                        type: "stack",
+                        layout: $layout.fillSafeArea,
+                        props: {
+                            axis: $stackViewAxis.horizontal,
+                            distribution: $stackViewDistribution.fillEqually,
+                            spacing: 0,
+                            stack: {
+                                views: this.#cellViews()
+                            }
                         }
                     }
-                }]),
+                ]),
                 UIKit.separatorLine({}, UIKit.align.top)
             ]
         }
@@ -2138,12 +2138,15 @@ class Kernel {
 
     UIRender(view) {
         try {
-            view.props = Object.assign({
-                title: this.title,
-                navBarHidden: !this.isUseJsboxNav,
-                navButtons: this.navButtons ?? [],
-                statusBarStyle: 0
-            }, view.props)
+            view.props = Object.assign(
+                {
+                    title: this.title,
+                    navBarHidden: !this.isUseJsboxNav,
+                    navButtons: this.navButtons ?? [],
+                    statusBarStyle: 0
+                },
+                view.props
+            )
             if (!view.events) {
                 view.events = {}
             }
@@ -2169,7 +2172,7 @@ class Kernel {
         const res = await $http.get(`https://raw.githubusercontent.com/ipuppet/EasyJsBox/${branche}/src/easy-jsbox.js`)
         if (res.error) throw res.error
         const firstLine = res.data.split("\n")[0]
-        const latestVersion = firstLine.slice(16).replaceAll("\"", "")
+        const latestVersion = firstLine.slice(16).replaceAll('"', "")
         if (versionCompare(latestVersion, VERSION) > 0) {
             if (typeof callback === "function") {
                 callback(res.data)
@@ -2183,7 +2186,7 @@ class UILoading {
     text = ""
     interval
     fullScreen = false
-    #loop = () => { }
+    #loop = () => {}
 
     constructor() {
         this.#labelId = uuid()
@@ -2499,7 +2502,8 @@ class Setting extends Controller {
                         Object.assign(setting, child)
                     } else if (exclude.indexOf(item.type) < 0) {
                         setting[item.key] = item.key in userData ? userData[item.key] : item.value
-                    } else { // 被排除的项目直接赋值
+                    } else {
+                        // 被排除的项目直接赋值
                         setting[item.key] = item.value
                     }
                 }
@@ -2517,7 +2521,9 @@ class Setting extends Controller {
     }
 
     loadL10n() {
-        l10n("zh-Hans", `
+        l10n(
+            "zh-Hans",
+            `
         "OK" = "好";
         "CANCEL" = "取消";
         "CLEAR" = "清除";
@@ -2548,8 +2554,11 @@ class Setting extends Controller {
         "VERSION" = "Version";
         "AUTHOR" = "作者";
         "AT_BOTTOM" = "已经到底啦~";
-        `)
-        l10n("en", `
+        `
+        )
+        l10n(
+            "en",
+            `
         "OK" = "OK";
         "CANCEL" = "Cancel";
         "CLEAR" = "Clear";
@@ -2580,7 +2589,8 @@ class Setting extends Controller {
         "VERSION" = "Version";
         "AUTHOR" = "Author";
         "AT_BOTTOM" = "It's the end~";
-        `)
+        `
+        )
     }
 
     setStructure(structure) {
@@ -2591,8 +2601,8 @@ class Setting extends Controller {
     /**
      * 设置结构文件目录。
      * 若调用了 setStructure(structure) 或构造函数传递了 structure 数据，则不会加载结构文件
-     * @param {String} structurePath 
-     * @returns 
+     * @param {String} structurePath
+     * @returns
      */
     setStructurePath(structurePath) {
         if (!this.structure) {
@@ -2622,28 +2632,30 @@ class Setting extends Controller {
     get footer() {
         if (this.#footer === undefined) {
             const info = FileStorage.readFromRootAsJSON("/config.json", {})["info"]
-            this.#footer = info ? {
-                type: "view",
-                props: { height: 130 },
-                views: [
-                    {
-                        type: "label",
-                        props: {
-                            font: $font(14),
-                            text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
-                            textColor: $color({
-                                light: "#C0C0C0",
-                                dark: "#545454"
-                            }),
-                            align: $align.center
-                        },
-                        layout: make => {
-                            make.left.right.inset(0)
-                            make.top.inset(10)
-                        }
-                    }
-                ]
-            } : {}
+            this.#footer = info
+                ? {
+                      type: "view",
+                      props: { height: 130 },
+                      views: [
+                          {
+                              type: "label",
+                              props: {
+                                  font: $font(14),
+                                  text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
+                                  textColor: $color({
+                                      light: "#C0C0C0",
+                                      dark: "#545454"
+                                  }),
+                                  align: $align.center
+                              },
+                              layout: make => {
+                                  make.left.right.inset(0)
+                                  make.top.inset(10)
+                              }
+                          }
+                      ]
+                  }
+                : {}
         }
         return this.#footer
     }
@@ -2666,16 +2678,12 @@ class Setting extends Controller {
 
     get(key, _default = null) {
         this.#checkLoadConfigError()
-        if (Object.prototype.hasOwnProperty.call(this.setting, key))
-            return this.setting[key]
-        else
-            return _default
+        if (Object.prototype.hasOwnProperty.call(this.setting, key)) return this.setting[key]
+        else return _default
     }
 
     getColor(color) {
-        return typeof color === "string"
-            ? $color(color)
-            : $rgba(color.red, color.green, color.blue, color.alpha)
+        return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
     }
 
     getImageName(key, compress = false) {
@@ -2750,7 +2758,8 @@ class Setting extends Controller {
         return {
             type: "view",
             views: [
-                {// icon
+                {
+                    // icon
                     type: "view",
                     props: {
                         bgcolor: $color(icon[1][0], icon[1][1]),
@@ -2768,7 +2777,7 @@ class Setting extends Controller {
                                 make.center.equalTo(view.super)
                                 make.size.equalTo(20)
                             }
-                        },
+                        }
                     ],
                     layout: (make, view) => {
                         make.centerY.equalTo(view.super)
@@ -2776,7 +2785,8 @@ class Setting extends Controller {
                         make.left.inset(10)
                     }
                 },
-                {// title
+                {
+                    // title
                     type: "label",
                     props: {
                         text: title,
@@ -2822,26 +2832,31 @@ class Setting extends Controller {
                         make.width.equalTo(180)
                     }
                 },
-                {// 监听点击动作
+                {
+                    // 监听点击动作
                     type: "view",
-                    events: this.#withTouchEvents(lineId, {
-                        tapped: () => {
-                            $ui.alert({
-                                title: title,
-                                message: moreInfo,
-                                actions: [
-                                    {
-                                        title: $l10n("COPY"),
-                                        handler: () => {
-                                            $clipboard.text = moreInfo
-                                            $ui.toast($l10n("COPIED"))
-                                        }
-                                    },
-                                    { title: $l10n("OK") }
-                                ]
-                            })
-                        }
-                    }, true),
+                    events: this.#withTouchEvents(
+                        lineId,
+                        {
+                            tapped: () => {
+                                $ui.alert({
+                                    title: title,
+                                    message: moreInfo,
+                                    actions: [
+                                        {
+                                            title: $l10n("COPY"),
+                                            handler: () => {
+                                                $clipboard.text = moreInfo
+                                                $ui.toast($l10n("COPIED"))
+                                            }
+                                        },
+                                        { title: $l10n("OK") }
+                                    ]
+                                })
+                            }
+                        },
+                        true
+                    ),
                     layout: (make, view) => {
                         make.right.inset(0)
                         make.size.equalTo(view.super)
@@ -2968,8 +2983,8 @@ class Setting extends Controller {
                                 type: $kbType.decimal,
                                 text: this.get(key),
                                 placeholder: title,
-                                handler: (text) => {
-                                    const isNumber = (str) => {
+                                handler: text => {
+                                    const isNumber = str => {
                                         const reg = /^[0-9]+.?[0-9]*$/
                                         return reg.test(str)
                                     }
@@ -3023,7 +3038,7 @@ class Setting extends Controller {
                         value: this.get(key)
                     },
                     events: {
-                        changed: (sender) => {
+                        changed: sender => {
                             $(id).text = sender.value
                             if (!this.set(key, sender.value)) {
                                 $(id).text = this.get(key)
@@ -3063,7 +3078,8 @@ class Setting extends Controller {
             $(`${buttonId}-spinner`).alpha = 0
             this.#touchHighlightEnd(lineId)
             const button = $(buttonId)
-            if (!status) { // 失败
+            if (!status) {
+                // 失败
                 $ui.toast(message)
                 button.alpha = 1
                 return
@@ -3107,7 +3123,8 @@ class Setting extends Controller {
                 {
                     type: "view",
                     views: [
-                        {// 仅用于显示图片
+                        {
+                            // 仅用于显示图片
                             type: "image",
                             props: {
                                 id: buttonId,
@@ -3132,7 +3149,8 @@ class Setting extends Controller {
                                 make.left.top.equalTo(view.prev)
                             }
                         },
-                        {// 覆盖在图片上监听点击动作
+                        {
+                            // 覆盖在图片上监听点击动作
                             type: "view",
                             events: this.#withTouchEvents(lineId, {
                                 tapped: () => {
@@ -3188,7 +3206,7 @@ class Setting extends Controller {
                         make.centerY.equalTo(view.prev)
                     },
                     events: {
-                        changed: (sender) => {
+                        changed: sender => {
                             const value = withTitle ? [sender.index, title] : sender.index
                             this.set(key, value)
                         }
@@ -3207,7 +3225,8 @@ class Setting extends Controller {
                 {
                     type: "view",
                     views: [
-                        {// 颜色预览以及按钮功能
+                        {
+                            // 颜色预览以及按钮功能
                             type: "view",
                             props: {
                                 id: `setting-${this.name}-color-${key}`,
@@ -3222,7 +3241,8 @@ class Setting extends Controller {
                                 make.size.equalTo(20)
                             }
                         },
-                        { // 用来监听点击事件，增大可点击面积
+                        {
+                            // 用来监听点击事件，增大可点击面积
                             type: "view",
                             events: {
                                 tapped: async () => {
@@ -3267,11 +3287,15 @@ class Setting extends Controller {
                         {
                             type: "label",
                             props: {
-                                text: withTitle ? items[(() => {
-                                    const value = this.get(key)
-                                    if (typeof value === "object") return value[0]
-                                    else return value
-                                })()] : items[this.get(key)],
+                                text: withTitle
+                                    ? items[
+                                          (() => {
+                                              const value = this.get(key)
+                                              if (typeof value === "object") return value[0]
+                                              else return value
+                                          })()
+                                      ]
+                                    : items[this.get(key)],
                                 color: $color("secondaryText"),
                                 id: labelId
                             },
@@ -3332,19 +3356,20 @@ class Setting extends Controller {
                 this.createLineLabel(title, icon),
                 {
                     type: "view",
-                    views: [{
-                        type: "label",
-                        props: {
-                            id: `${id}-label`,
-                            color: $color("secondaryText"),
-                            text: this.get(key) ? getFormatDate(this.get(key)) : "None"
-                        },
-                        layout: (make, view) => {
-                            make.right.inset(0)
-                            make.height.equalTo(view.super)
-
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                id: `${id}-label`,
+                                color: $color("secondaryText"),
+                                text: this.get(key) ? getFormatDate(this.get(key)) : "None"
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.height.equalTo(view.super)
+                            }
                         }
-                    }],
+                    ],
                     events: {
                         tapped: async () => {
                             const settingData = this.get(key)
@@ -3377,25 +3402,26 @@ class Setting extends Controller {
                 this.createLineLabel(title, icon),
                 {
                     type: "view",
-                    views: [{
-                        type: "label",
-                        props: {
-                            id: `${id}-label`,
-                            color: $color("secondaryText"),
-                            text: this.get(key)
-                        },
-                        layout: (make, view) => {
-                            make.right.inset(0)
-                            make.height.equalTo(view.super)
-
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                id: `${id}-label`,
+                                color: $color("secondaryText"),
+                                text: this.get(key)
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.height.equalTo(view.super)
+                            }
                         }
-                    }],
+                    ],
                     events: {
                         tapped: async () => {
                             $input.text({
                                 text: this.get(key),
                                 placeholder: title,
-                                handler: (text) => {
+                                handler: text => {
                                     if (text === "") {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
@@ -3419,13 +3445,13 @@ class Setting extends Controller {
     }
 
     /**
-     * 
-     * @param {*} key 
-     * @param {*} icon 
-     * @param {*} title 
-     * @param {*} events 
+     *
+     * @param {*} key
+     * @param {*} icon
+     * @param {*} title
+     * @param {*} events
      * @param {String} bgcolor 指定预览时的背景色，默认 "#000000"
-     * @returns 
+     * @returns
      */
     createIcon(key, icon, title, bgcolor) {
         const id = this.getId("icon", key)
@@ -3512,7 +3538,8 @@ class Setting extends Controller {
             props: { id: lineId },
             views: [
                 this.createLineLabel(title, icon),
-                {// 仅用于显示图片
+                {
+                    // 仅用于显示图片
                     type: "image",
                     props: {
                         symbol: "chevron.right",
@@ -3525,35 +3552,39 @@ class Setting extends Controller {
                     }
                 }
             ],
-            events: this.#withTouchEvents(lineId, {
-                tapped: () => {
-                    setTimeout(() => {
-                        if (this.events?.onChildPush) {
-                            this.callEvent("onChildPush", this.getListView(children, {}), title)
-                        } else {
-                            if (this.isUseJsboxNav) {
-                                UIKit.push({
-                                    title: title,
-                                    bgcolor: UIKit.scrollViewBackgroundColor,
-                                    views: [this.getListView(children, {})]
-                                })
+            events: this.#withTouchEvents(
+                lineId,
+                {
+                    tapped: () => {
+                        setTimeout(() => {
+                            if (this.events?.onChildPush) {
+                                this.callEvent("onChildPush", this.getListView(children, {}), title)
                             } else {
-                                const pageController = new PageController()
-                                pageController
-                                    .setView(this.getListView(children, {}))
-                                    .navigationItem
-                                    .setTitle(title)
-                                    .addPopButton()
-                                    .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-                                if (this.hasSectionTitle(children)) {
-                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
+                                if (this.isUseJsboxNav) {
+                                    UIKit.push({
+                                        title: title,
+                                        bgcolor: UIKit.scrollViewBackgroundColor,
+                                        views: [this.getListView(children, {})]
+                                    })
+                                } else {
+                                    const pageController = new PageController()
+                                    pageController
+                                        .setView(this.getListView(children, {}))
+                                        .navigationItem.setTitle(title)
+                                        .addPopButton()
+                                        .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
+                                    if (this.hasSectionTitle(children)) {
+                                        pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
+                                    }
+                                    this.viewController.push(pageController)
                                 }
-                                this.viewController.push(pageController)
                             }
-                        }
-                    })
-                }
-            }, true, 0.3)
+                        })
+                    }
+                },
+                true,
+                0.3
+            )
         }
     }
 
@@ -3572,7 +3603,7 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 id: id,
-                                image: this.getImage(key, true) ?? $image("questionmark.square.dashed"),
+                                image: this.getImage(key, true) ?? $image("questionmark.square.dashed")
                             },
                             layout: (make, view) => {
                                 make.right.inset(this.rightOffset)
@@ -3724,10 +3755,7 @@ class Setting extends Controller {
     getPageView() {
         if (!this.viewController.hasRootPageController()) {
             const pageController = new PageController()
-            pageController
-                .setView(this.getListView(this.structure))
-                .navigationItem
-                .setTitle($l10n("SETTING"))
+            pageController.setView(this.getListView(this.structure)).navigationItem.setTitle($l10n("SETTING"))
             if (this.hasSectionTitle(this.structure)) {
                 pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
             }
