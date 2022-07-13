@@ -16,7 +16,7 @@ String.prototype.trim = function (char, type) {
  * 对比版本号
  * @param {String} preVersion
  * @param {String} lastVersion
- * @returns 1: preVersion 大, 0: 相等, -1: lastVersion 大
+ * @returns {Number} 1: preVersion 大, 0: 相等, -1: lastVersion 大
  */
 function versionCompare(preVersion = "", lastVersion = "") {
     let sources = preVersion.split(".")
@@ -93,7 +93,7 @@ function objectEqual(a, b) {
  * 压缩图片
  * @param {$image} image $image
  * @param {Number} maxSize 图片最大尺寸 单位：像素
- * @returns $image
+ * @returns {$image}
  */
 function compressImage(image, maxSize = 1280 * 720) {
     const info = $imagekit.info(image)
@@ -131,12 +131,44 @@ class Controller {
     }
 }
 
+/**
+ * 视图基类
+ */
 class View {
+    /**
+     * id
+     * @type {String}
+     */
     id = uuid()
+
+    /**
+     * 类型
+     * @type {String}
+     */
     type
+
+    /**
+     * 属性
+     * @type {Object}
+     */
     props
+
+    /**
+     * 子视图
+     * @type {Array}
+     */
     views
+
+    /**
+     * 事件
+     * @type {Object}
+     */
     events
+
+    /**
+     * 布局函数
+     * @type {Function}
+     */
     layout
 
     constructor({ type = "view", props = {}, views = [], events = {}, layout = $layout.fill } = {}) {
@@ -198,7 +230,7 @@ class View {
      *
      * @param {String} event 事件名称
      * @param {Function} action 处理事件的函数
-     * @returns
+     * @returns {this}
      */
     eventMiddleware(event, action) {
         const old = this.events[event]
@@ -238,21 +270,38 @@ class View {
 
 class UIKit {
     static #sharedApplication = $objc("UIApplication").$sharedApplication()
+
+    /**
+     * 对齐方式
+     */
     static align = { left: 0, right: 1, top: 2, bottom: 3 }
+
+    /**
+     * 默认文本颜色
+     */
     static textColor = $color("primaryText", "secondaryText")
+
+    /**
+     * 默认链接颜色
+     */
     static linkColor = $color("systemLink")
     static primaryViewBackgroundColor = $color("primarySurface")
     static scrollViewBackgroundColor = $color("insetGroupedBackground")
+
+    /**
+     * 可滚动视图列表
+     * @type {String[]}
+     */
     static scrollViewList = ["list", "matrix"]
 
     /**
      * 是否属于大屏设备
+     * @type {Boolean}
      */
     static isLargeScreen = $device.isIpad || $device.isIpadPro
 
     /**
      * 获取Window大小
-     * @returns
      */
     static get windowSize() {
         return $objc("UIWindow").$keyWindow().jsValue().size
@@ -260,7 +309,7 @@ class UIKit {
 
     /**
      * 判断是否是分屏模式
-     * @returns {Boolean}
+     * @type {Boolean}
      */
     static get isSplitScreenMode() {
         return UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
@@ -361,6 +410,9 @@ class UIKit {
     }
 }
 
+/**
+ * @property {function(PageController)} ViewController.events.onChange
+ */
 class ViewController extends Controller {
     #pageControllers = []
 
@@ -398,7 +450,7 @@ class ViewController extends Controller {
     /**
      *
      * @param {PageController} pageController
-     * @returns
+     * @returns {this}
      */
     setRootPageController(pageController) {
         this.#pageControllers = []
@@ -579,7 +631,7 @@ class Matrix extends View {
      * 获得修正后的 indexPath
      * @param {$indexPath||Number} indexPath
      * @param {Boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
-     * @returns
+     * @returns {$indexPath}
      */
     indexPath(indexPath, withTitleOffset) {
         let offset = withTitleOffset ? 0 : 1
@@ -658,7 +710,7 @@ class Sheet extends View {
     /**
      * 设置 view
      * @param {Object} view 视图对象
-     * @returns this
+     * @returns {this}
      */
     setView(view = {}) {
         if (typeof view !== "object") throw new SheetViewTypeError("view", "object")
@@ -674,7 +726,7 @@ class Sheet extends View {
      *      {Object} popButton 参数与 BarButtonItem 一致
      *      {Array} rightButtons
      *  }
-     * @returns
+     * @returns {this}
      */
     addNavBar({ title, popButton = { title: "Done" }, rightButtons = [] }) {
         if (this.view === undefined) throw new SheetAddNavBarError()
@@ -729,12 +781,12 @@ class Sheet extends View {
 
 /**
  * 用于创建一个靠右侧按钮（自动布局）
- * this.events.tapped 按钮点击事件，会传入三个函数，start()、done()和cancel()
+ * this.events.tapped 按钮点击事件，会传入三个函数，start()、done() 和 cancel()
  *     调用 start() 表明按钮被点击，准备开始动画
  *     调用 done() 表明您的操作已经全部完成，默认操作成功完成，播放一个按钮变成对号的动画
  *                 若第一个参数传出false则表示运行出错
  *                 第二个参数为错误原因($ui.toast(message))
- *      调用 cancel() 表示取消操作
+ *     调用 cancel() 表示取消操作
  *     示例：
  *      (start, done, cancel) => {
  *          start()
@@ -742,13 +794,20 @@ class Sheet extends View {
  *          if (upload(data)) { done() }
  *          else { done(false, "Upload Error!") }
  *      }
- * @param {String} this.align 对齐方式 View.align.right View.align.left
  */
 class BarButtonItem extends View {
     static size = $size(44, 44)
     static iconSize = $size(23, 23)
 
+    /**
+     * 标题
+     * @type {String}
+     */
     title = ""
+
+    /**
+     * 对齐方式
+     */
     align = UIKit.align.right
 
     setTitle(title = "") {
@@ -905,6 +964,36 @@ class BarButtonItem extends View {
                 }
             }
         }
+    }
+
+    /**
+     * 用于快速创建 BarButtonItem
+     * @typedef {Object} BarButtonItemProperties
+     * @property {String} title
+     * @property {String} symbol
+     * @property {Function} tapped
+     * @property {Object} menu
+     * @property {Object} events
+     *
+     * @param {BarButtonItemProperties} param0
+     * @returns {BarButtonItem}
+     */
+    static creat({ symbol, title, tapped, menu, events }) {
+        const barButtonItem = new BarButtonItem()
+        barButtonItem
+            .setEvents(
+                Object.assign(
+                    {
+                        tapped: tapped
+                    },
+                    events
+                )
+            )
+            .setAlign(UIKit.align.right)
+            .setSymbol(symbol)
+            .setTitle(title)
+            .setMenu(menu)
+        return barButtonItem
     }
 }
 
@@ -1073,54 +1162,46 @@ class NavigationItem {
         return this
     }
 
+    /**
+     *
+     * @param {BarButtonItemProperties[]} buttons
+     * @returns {this}
+     */
     setRightButtons(buttons) {
         buttons.forEach(button => this.addRightButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
+    /**
+     *
+     * @param {BarButtonItemProperties[]} buttons
+     * @returns {this}
+     */
     setLeftButtons(buttons) {
         buttons.forEach(button => this.addLeftButton(button))
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
+    /**
+     *
+     * @param {BarButtonItemProperties} param0
+     * @returns {this}
+     */
     addRightButton({ symbol, title, tapped, menu, events }) {
-        const barButtonItem = new BarButtonItem()
-        barButtonItem
-            .setEvents(
-                Object.assign(
-                    {
-                        tapped: tapped
-                    },
-                    events
-                )
-            )
-            .setAlign(UIKit.align.right)
-            .setSymbol(symbol)
-            .setTitle(title)
-            .setMenu(menu)
-        this.rightButtons.push(barButtonItem.definition)
+        this.rightButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events }).definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
 
+    /**
+     *
+     * @param {BarButtonItemProperties} param0
+     * @returns {this}
+     */
     addLeftButton({ symbol, title, tapped, menu, events }) {
-        const barButtonItem = new BarButtonItem()
-        barButtonItem
-            .setEvents(
-                Object.assign(
-                    {
-                        tapped: tapped
-                    },
-                    events
-                )
-            )
-            .setAlign(UIKit.align.left)
-            .setSymbol(symbol)
-            .setTitle(title)
-            .setMenu(menu)
-        this.leftButtons.push(barButtonItem.definition)
+        this.leftButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events }).definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -1129,7 +1210,7 @@ class NavigationItem {
      * 覆盖左侧按钮
      * @param {String} parent 父页面标题，将会显示为文本按钮
      * @param {Object} view 自定义按钮视图
-     * @returns
+     * @returns {this}
      */
     addPopButton(parent, view) {
         if (!parent) {
@@ -1326,10 +1407,6 @@ class NavigationBar extends View {
     }
 }
 
-/**
- * events:
- * - onPop(navigationView)
- */
 class NavigationController extends Controller {
     static largeTitleViewSmallMode = 0
     static largeTitleViewLargeMode = 1
@@ -1585,10 +1662,6 @@ class PageControllerViewTypeError extends ValidationError {
     }
 }
 
-/**
- * events:
- * - onChange(from, to)
- */
 class PageController extends Controller {
     page
     navigationItem = new NavigationItem()
@@ -1603,7 +1676,7 @@ class PageController extends Controller {
     /**
      *
      * @param {Object} view
-     * @returns
+     * @returns {this}
      */
     setView(view) {
         if (typeof view !== "object") {
@@ -1917,6 +1990,9 @@ class TabBarHeaderView extends View {
     }
 }
 
+/**
+ * @property {function(from: String, to: String)} TabBarController.events.onChange
+ */
 class TabBarController extends Controller {
     static tabBarHeight = 50
 
@@ -1940,7 +2016,7 @@ class TabBarController extends Controller {
     /**
      *
      * @param {Object} pages
-     * @returns
+     * @returns {this}
      */
     setPages(pages = {}) {
         Object.keys(pages).forEach(key => this.setPage(key, pages[key]))
@@ -1982,7 +2058,7 @@ class TabBarController extends Controller {
     /**
      *
      * @param {Object} cells
-     * @returns
+     * @returns {this}
      */
     setCells(cells = {}) {
         Object.keys(cells).forEach(key => this.setCell(key, cells[key]))
@@ -2421,13 +2497,15 @@ class SettingReadonlyError extends Error {
 }
 
 /**
- * events:
- * - onSet(key, value)
+ * @property {function(key: String, value: any)} Setting.events.onSet 键值发生改变
+ * @property {function(view: Object,title: String)} Setting.events.onChildPush 进入的子页面
  */
 class Setting extends Controller {
     name
     // 存储数据
     setting = {}
+    // 初始用户数据，若未定义则尝试从给定的文件读取
+    userData
     // fileStorage
     fileStorage
     imagePath
@@ -2446,6 +2524,19 @@ class Setting extends Controller {
     #loadConfigStatus = false
     #footer
 
+    /**
+     *
+     * @param {Object} args
+     * @param {Function} args.set 自定义 set 方法，定义后将忽略 fileStorage 和 dataFile
+     * @param {Function} args.get 自定义 get 方法，定义后将忽略 fileStorage 和 dataFile
+     * @param {Object} args.userData 初始用户数据，定义后将忽略 fileStorage 和 dataFile
+     * @param {FileStorage} args.fileStorage FileStorage 对象，用于文件操作
+     * @param {String} args.dataFile 持久化数据保存文件
+     * @param {Object} args.structure 设置项结构
+     * @param {String} args.structurePath 结构路径，优先级低于 structure
+     * @param {Boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
+     * @param {String} args.name 唯一名称，默认分配一个 UUID
+     */
     constructor(args = {}) {
         super()
 
@@ -2453,6 +2544,7 @@ class Setting extends Controller {
         if (typeof args.set === "function" && typeof args.get === "function") {
             this.set = args.set
             this.get = args.get
+            this.userData = args.userData
         } else {
             this.fileStorage = args.fileStorage ?? new FileStorage()
             this.dataFile = args.dataFile ?? "setting.json"
@@ -2483,16 +2575,14 @@ class Setting extends Controller {
 
     /**
      * 从 this.structure 加载数据
-     * @returns this
+     * @returns {this}
      */
     loadConfig() {
-        this.setting = {}
-        let userData = {}
         const exclude = [
             "script", // script 类型永远使用setting结构文件内的值
             "info"
         ]
-        userData = this.fileStorage.readAsJSON("", this.dataFile, {})
+        const userData = this.userData ?? this.fileStorage.readAsJSON("", this.dataFile, {})
         function setValue(structure) {
             const setting = {}
             for (let section of structure) {
@@ -2593,6 +2683,10 @@ class Setting extends Controller {
         )
     }
 
+    setUserData(userData) {
+        this.userData = userData
+    }
+
     setStructure(structure) {
         this.structure = structure
         return this
@@ -2602,7 +2696,7 @@ class Setting extends Controller {
      * 设置结构文件目录。
      * 若调用了 setStructure(structure) 或构造函数传递了 structure 数据，则不会加载结构文件
      * @param {String} structurePath
-     * @returns
+     * @returns {this}
      */
     setStructurePath(structurePath) {
         if (!this.structure) {
@@ -2882,8 +2976,12 @@ class Setting extends Controller {
                     },
                     events: {
                         changed: sender => {
-                            if (!this.set(key, sender.on)) {
+                            try {
+                                this.set(key, sender.on)
+                            } catch (error) {
+                                // 恢复开关状态
                                 sender.on = !sender.on
+                                throw error
                             }
                         }
                     },
@@ -2947,9 +3045,8 @@ class Setting extends Controller {
                                         },
                                         events: {
                                             tapped: () => {
-                                                if (this.set(key, $(`${this.name}-string-${key}`).text)) {
-                                                    popover.dismiss()
-                                                }
+                                                this.set(key, $(`${this.name}-string-${key}`).text)
+                                                popover.dismiss()
                                             }
                                         }
                                     }
@@ -2998,9 +3095,9 @@ class Setting extends Controller {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
                                     }
-                                    if (this.set(key, text)) {
-                                        $(labelId).text = text
-                                    }
+
+                                    this.set(key, text)
+                                    $(labelId).text = text
                                 }
                             })
                         }
@@ -3048,8 +3145,12 @@ class Setting extends Controller {
                     events: {
                         changed: sender => {
                             $(labelId).text = sender.value
-                            if (!this.set(key, sender.value)) {
+                            try {
+                                this.set(key, sender.value)
+                            } catch (error) {
+                                // 恢复标签显示数据
                                 $(labelId).text = this.get(key)
+                                throw error
                             }
                         }
                     },
@@ -3425,7 +3526,7 @@ class Setting extends Controller {
                         }
                     ],
                     events: {
-                        tapped: async () => {
+                        tapped: () => {
                             $input.text({
                                 text: this.get(key),
                                 placeholder: title,
@@ -3434,9 +3535,8 @@ class Setting extends Controller {
                                         $ui.toast($l10n("INVALID_VALUE"))
                                         return
                                     }
-                                    if (this.set(key, text)) {
-                                        $(`${id}-label`).text = text
-                                    }
+                                    this.set(key, text)
+                                    $(`${id}-label`).text = text
                                 }
                             })
                         }
@@ -3454,12 +3554,12 @@ class Setting extends Controller {
 
     /**
      *
-     * @param {*} key
-     * @param {*} icon
-     * @param {*} title
-     * @param {*} events
+     * @param {String} key
+     * @param {String} icon
+     * @param {String} title
+     * @param {Object} events
      * @param {String} bgcolor 指定预览时的背景色，默认 "#000000"
-     * @returns
+     * @returns {Object}
      */
     createIcon(key, icon, title, bgcolor) {
         const id = this.getId(key)
