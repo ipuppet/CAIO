@@ -1,4 +1,4 @@
-const VERSION = "1.2.2"
+const VERSION = "1.2.3"
 
 String.prototype.trim = function (char, type) {
     if (char) {
@@ -1746,7 +1746,7 @@ class PageController extends Controller {
                     }
                     this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args), zeroOffset)
                 })
-                .assignEvent("willBeginDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
         }
     }
 
@@ -2641,7 +2641,7 @@ class Setting extends Controller {
                               type: "label",
                               props: {
                                   font: $font(14),
-                                  text: `${$l10n("VERSION")} ${info.version} © ${info.author}`,
+                                  text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
                                   textColor: $color({
                                       light: "#C0C0C0",
                                       dark: "#545454"
