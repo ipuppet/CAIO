@@ -1,17 +1,17 @@
-const {
-    Matrix,
-    Setting,
-    PageController,
-    BarButtonItem,
-    Sheet,
-    UIKit
-} = require("../../libs/easy-jsbox")
+const { Matrix, Setting, PageController, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
+
+/**
+ * @typedef {import("../../app").AppKernel} AppKernel
+ */
 
 class ActionManager {
     matrixId = "actions"
     matrix
     reorder = {}
 
+    /**
+     * @param {AppKernel} kernel
+     */
     constructor(kernel) {
         this.kernel = kernel
         // path
@@ -51,10 +51,12 @@ class ActionManager {
 
     getActionTypes() {
         const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        return type.concat($file.list(this.userActionPath).filter(dir => { // 获取 type.indexOf(dir) < 0 的文件夹名
-            if ($file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0)
-                return dir
-        }))
+        return type.concat(
+            $file.list(this.userActionPath).filter(dir => {
+                // 获取 type.indexOf(dir) < 0 的文件夹名
+                if ($file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0) return dir
+            })
+        )
     }
 
     getActionOrder(type) {
@@ -82,12 +84,14 @@ class ActionManager {
             const basePath = `${typePath}/${item}/`
             if ($file.isDirectory(basePath)) {
                 const config = JSON.parse($file.read(basePath + "config.json").string)
-                actions.push(Object.assign(config, {
-                    dir: item,
-                    type: type,
-                    name: config.name ?? item,
-                    icon: config.icon
-                }))
+                actions.push(
+                    Object.assign(config, {
+                        dir: item,
+                        type: type,
+                        name: config.name ?? item,
+                        icon: config.icon
+                    })
+                )
             }
         }
         // push 有顺序的 Action
@@ -95,8 +99,7 @@ class ActionManager {
         order.forEach(item => pushAction(item))
         // push 剩下的 Action
         $file.list(typePath).forEach(item => {
-            if (order.indexOf(item) === -1)
-                pushAction(item)
+            if (order.indexOf(item) === -1) pushAction(item)
         })
         return actions
     }
@@ -116,9 +119,10 @@ class ActionManager {
     actionToData(action) {
         return {
             name: { text: action.name },
-            icon: action.icon.slice(0, 5) === "icon_"
-                ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                : { image: $image(action.icon) },
+            icon:
+                action.icon.slice(0, 5) === "icon_"
+                    ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                    : { image: $image(action.icon) },
             color: { bgcolor: $color(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
         }
@@ -159,58 +163,61 @@ class ActionManager {
                 make.bottom.inset(0)
             },
             events: events,
-            props: Object.assign({
-                reorder: false,
-                bgcolor: $color("clear"),
-                rowHeight: 60,
-                sectionTitleHeight: 30,
-                stickyHeader: true,
-                data: data,
-                template: {
-                    props: { bgcolor: $color("clear") },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                id: "color",
-                                cornerRadius: 8,
-                                smoothCorners: true
+            props: Object.assign(
+                {
+                    reorder: false,
+                    bgcolor: $color("clear"),
+                    rowHeight: 60,
+                    sectionTitleHeight: 30,
+                    stickyHeader: true,
+                    data: data,
+                    template: {
+                        props: { bgcolor: $color("clear") },
+                        views: [
+                            {
+                                type: "image",
+                                props: {
+                                    id: "color",
+                                    cornerRadius: 8,
+                                    smoothCorners: true
+                                },
+                                layout: (make, view) => {
+                                    make.centerY.equalTo(view.super)
+                                    make.left.inset(15)
+                                    make.size.equalTo($size(30, 30))
+                                }
                             },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.inset(15)
-                                make.size.equalTo($size(30, 30))
-                            }
-                        },
-                        {
-                            type: "image",
-                            props: {
-                                id: "icon",
-                                tintColor: $color("#ffffff"),
+                            {
+                                type: "image",
+                                props: {
+                                    id: "icon",
+                                    tintColor: $color("#ffffff")
+                                },
+                                layout: (make, view) => {
+                                    make.centerY.equalTo(view.super)
+                                    make.left.inset(20)
+                                    make.size.equalTo($size(20, 20))
+                                }
                             },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.inset(20)
-                                make.size.equalTo($size(20, 20))
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "name",
-                                lines: 1,
-                                font: $font(16)
+                            {
+                                type: "label",
+                                props: {
+                                    id: "name",
+                                    lines: 1,
+                                    font: $font(16)
+                                },
+                                layout: (make, view) => {
+                                    make.height.equalTo(30)
+                                    make.centerY.equalTo(view.super)
+                                    make.left.equalTo(view.prev.right).offset(15)
+                                }
                             },
-                            layout: (make, view) => {
-                                make.height.equalTo(30)
-                                make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.prev.right).offset(15)
-                            }
-                        },
-                        { type: "label", props: { id: "info" } }
-                    ]
-                }
-            }, props)
+                            { type: "label", props: { id: "info" } }
+                        ]
+                    }
+                },
+                props
+            )
         }
     }
 
@@ -226,7 +233,7 @@ class ActionManager {
             name: "MyAction",
             color: "#CC00CC",
             icon: "icon_062.png", // 默认星星图标
-            description: "",
+            description: ""
         }
         const SettingUI = new Setting({
             structure: {},
@@ -242,10 +249,8 @@ class ActionManager {
                 if (key === "type") {
                     return actionTypesIndex[this.editingActionInfo.type]
                 }
-                if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key))
-                    return this.editingActionInfo[key]
-                else
-                    return _default
+                if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key)) return this.editingActionInfo[key]
+                else return _default
             }
         })
         const nameInput = SettingUI.createInput("name", ["pencil.circle", "#FF3366"], $l10n("NAME"))
@@ -280,7 +285,7 @@ class ActionManager {
         }
         const data = [
             { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
-            { title: $l10n("DESCRIPTION"), rows: [description] },
+            { title: $l10n("DESCRIPTION"), rows: [description] }
         ]
         // 只有新建时才可选择类型
         if (!info) data[0].rows = data[0].rows.concat(typeMenu)
@@ -297,7 +302,7 @@ class ActionManager {
                 },
                 layout: $layout.fill,
                 events: {
-                    rowHeight: (sender, indexPath) => indexPath.section === 1 ? 120 : 50
+                    rowHeight: (sender, indexPath) => (indexPath.section === 1 ? 120 : 50)
                 }
             })
             .addNavBar({
@@ -307,7 +312,7 @@ class ActionManager {
                     tapped: () => {
                         this.saveActionInfo(this.editingActionInfo)
                         // 更新 clipboard 中的 menu
-                        const Clipboard = require("../clipboard");
+                        const Clipboard = require("../clipboard")
                         Clipboard.updateMenu(this.kernel)
                         if (done) done(this.editingActionInfo)
                     }
@@ -324,23 +329,25 @@ class ActionManager {
                 this.saveMainJs(info, content)
             },
             info.name,
-            [{
-                symbol: "book.circle",
-                tapped: () => {
-                    const content = $file.read("scripts/action/README.md").string
-                    const sheet = new Sheet()
-                    sheet
-                        .setView({
-                            type: "markdown",
-                            props: { content: content },
-                            layout: (make, view) => {
-                                make.size.equalTo(view.super)
-                            }
-                        })
-                        .init()
-                        .present()
+            [
+                {
+                    symbol: "book.circle",
+                    tapped: () => {
+                        const content = $file.read("scripts/action/README.md").string
+                        const sheet = new Sheet()
+                        sheet
+                            .setView({
+                                type: "markdown",
+                                props: { content: content },
+                                layout: (make, view) => {
+                                    make.size.equalTo(view.super)
+                                }
+                            })
+                            .init()
+                            .present()
+                    }
                 }
-            }],
+            ],
             "code"
         )
     }
@@ -367,7 +374,7 @@ class ActionManager {
         if (!$file.exists(path)) $file.mkdir(path)
         if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
         $file.write({
-            data: $data({ "string": content }),
+            data: $data({ string: content }),
             path: mainJsPath
         })
     }
@@ -397,17 +404,23 @@ class ActionManager {
             const actionsView = this.matrix
             const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
             if (insertFirst) {
-                actionsView.insert({
-                    indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
-                    value: toData
-                }, false)
+                actionsView.insert(
+                    {
+                        indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
+                        value: toData
+                    },
+                    false
+                )
                 actionsView.delete(from, false)
             } else {
                 actionsView.delete(from, false)
-                actionsView.insert({
-                    indexPath: to,
-                    value: toData
-                }, false)
+                actionsView.insert(
+                    {
+                        indexPath: to,
+                        value: toData
+                    },
+                    false
+                )
             }
         }
         const fromType = this.getTypeDir(fromSection.title)
@@ -415,7 +428,8 @@ class ActionManager {
         // 判断是否跨 section
         if (from.section === to.section) {
             this.saveOrder(fromType, getOrder(from.section))
-        } else { // 跨 section 则同时移动 Action 目录
+        } else {
+            // 跨 section 则同时移动 Action 目录
             this.saveOrder(fromType, getOrder(from.section))
             this.saveOrder(toType, getOrder(to.section))
             $file.move({
@@ -425,16 +439,17 @@ class ActionManager {
         }
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
         updateUI(from.row < to.row, toType)
-
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
     }
 
-    menuItems() { // 卡片长按菜单
+    menuItems() {
+        // 卡片长按菜单
         return [
-            { // 编辑信息
+            {
+                // 编辑信息
                 title: $l10n("EDIT_DETAILS"),
                 symbol: "slider.horizontal.3",
                 handler: (sender, indexPath) => {
@@ -453,7 +468,8 @@ class ActionManager {
                     })
                 }
             },
-            { // 编辑脚本
+            {
+                // 编辑脚本
                 title: $l10n("EDIT_SCRIPT"),
                 symbol: "square.and.pencil",
                 handler: (sender, indexPath, data) => {
@@ -464,7 +480,8 @@ class ActionManager {
                     this.editActionMainJs(main, info)
                 }
             },
-            { // 删除
+            {
+                // 删除
                 title: $l10n("DELETE"),
                 symbol: "trash",
                 destructive: true,
@@ -480,7 +497,8 @@ class ActionManager {
 
     getNavButtons() {
         return [
-            { // 添加
+            {
+                // 添加
                 symbol: "plus.circle",
                 menu: {
                     pullDown: true,
@@ -526,7 +544,8 @@ class ActionManager {
                     ]
                 }
             },
-            { // 排序
+            {
+                // 排序
                 symbol: "arrow.up.arrow.down.circle",
                 tapped: (animate, sender) => {
                     $ui.popover({
@@ -534,32 +553,36 @@ class ActionManager {
                         directions: $popoverDirection.up,
                         size: $size(200, 300),
                         views: [
-                            this.getActionListView({
-                                reorder: true,
-                                actions: [
-                                    { // 删除
-                                        title: "delete",
-                                        handler: (sender, indexPath) => {
-                                            const matrixView = this.matrix
-                                            const info = matrixView.object(indexPath, false).info.info
-                                            this.delete(info)
-                                            matrixView.delete(indexPath, false)
+                            this.getActionListView(
+                                {
+                                    reorder: true,
+                                    actions: [
+                                        {
+                                            // 删除
+                                            title: "delete",
+                                            handler: (sender, indexPath) => {
+                                                const matrixView = this.matrix
+                                                const info = matrixView.object(indexPath, false).info.info
+                                                this.delete(info)
+                                                matrixView.delete(indexPath, false)
+                                            }
                                         }
+                                    ]
+                                },
+                                {
+                                    reorderBegan: indexPath => {
+                                        this.reorder.from = indexPath
+                                        this.reorder.to = undefined
+                                    },
+                                    reorderMoved: (fromIndexPath, toIndexPath) => {
+                                        this.reorder.to = toIndexPath
+                                    },
+                                    reorderFinished: data => {
+                                        if (this.reorder.to === undefined) return
+                                        this.move(this.reorder.from, this.reorder.to, data)
                                     }
-                                ]
-                            }, {
-                                reorderBegan: indexPath => {
-                                    this.reorder.from = indexPath
-                                    this.reorder.to = undefined
-                                },
-                                reorderMoved: (fromIndexPath, toIndexPath) => {
-                                    this.reorder.to = toIndexPath
-                                },
-                                reorderFinished: data => {
-                                    if (this.reorder.to === undefined) return
-                                    this.move(this.reorder.from, this.reorder.to, data)
                                 }
-                            })
+                            )
                         ]
                     })
                 }
@@ -567,7 +590,8 @@ class ActionManager {
         ]
     }
 
-    actionsToData() { // 格式化数据供 matrix 使用
+    actionsToData() {
+        // 格式化数据供 matrix 使用
         const data = []
         this.getActionTypes().forEach(type => {
             const section = {
@@ -582,11 +606,7 @@ class ActionManager {
         return data
     }
 
-    getMatrixView({
-        columns = 2,
-        spacing = 15,
-        itemHeight = 100
-    } = {}) {
+    getMatrixView({ columns = 2, spacing = 15, itemHeight = 100 } = {}) {
         this.matrix = Matrix.create({
             type: "matrix",
             props: {
@@ -620,14 +640,15 @@ class ActionManager {
                             type: "image",
                             props: {
                                 id: "icon",
-                                tintColor: $color("#ffffff"),
+                                tintColor: $color("#ffffff")
                             },
                             layout: make => {
                                 make.top.left.inset(15)
                                 make.size.equalTo($size(20, 20))
                             }
                         },
-                        { // button
+                        {
+                            // button
                             type: "button",
                             props: {
                                 bgcolor: $color("clear"),
@@ -637,16 +658,18 @@ class ActionManager {
                                 titleEdgeInsets: $insets(0, 0, 0, 0),
                                 imageEdgeInsets: $insets(0, 0, 0, 0)
                             },
-                            views: [{
-                                type: "image",
-                                props: {
-                                    symbol: "ellipsis.circle"
-                                },
-                                layout: (make, view) => {
-                                    make.center.equalTo(view.super)
-                                    make.size.equalTo(BarButtonItem.iconSize)
+                            views: [
+                                {
+                                    type: "image",
+                                    props: {
+                                        symbol: "ellipsis.circle"
+                                    },
+                                    layout: (make, view) => {
+                                        make.center.equalTo(view.super)
+                                        make.size.equalTo(BarButtonItem.iconSize)
+                                    }
                                 }
-                            }],
+                            ],
                             events: {
                                 tapped: sender => {
                                     const info = sender.next.info
@@ -661,7 +684,8 @@ class ActionManager {
                                 make.size.equalTo(BarButtonItem.size)
                             }
                         },
-                        { // 用来保存信息
+                        {
+                            // 用来保存信息
                             type: "view",
                             props: {
                                 id: "info",
@@ -686,8 +710,11 @@ class ActionManager {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    this.getActionHandler(info.type, info.dir)({
-                        text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
+                    this.getActionHandler(
+                        info.type,
+                        info.dir
+                    )({
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null,
                         uuid: null
                     })
                 },
@@ -705,9 +732,7 @@ class ActionManager {
 
     getPageView() {
         const pageController = new PageController()
-        pageController.navigationItem
-            .setTitle($l10n("ACTIONS"))
-            .setRightButtons(this.getNavButtons())
+        pageController.navigationItem.setTitle($l10n("ACTIONS")).setRightButtons(this.getNavButtons())
         pageController.setView(this.getMatrixView())
         return pageController.getPage()
     }

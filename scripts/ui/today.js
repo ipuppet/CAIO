@@ -1,13 +1,15 @@
-const {
-    UIKit,
-    BarButtonItem,
-    NavigationItem,
-    NavigationBar
-} = require("../libs/easy-jsbox")
+const { UIKit, BarButtonItem, NavigationItem, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const TodayActions = require("./components/today-actions")
 
+/**
+ * @typedef {import("../app").AppKernel} AppKernel
+ */
+
 class Today extends Clipboard {
+    /**
+     * @param {AppKernel} kernel
+     */
     constructor(kernel) {
         super(kernel)
         this.actionsId = "today-list-actions"
@@ -104,7 +106,8 @@ class Today extends Clipboard {
 
     navButtons() {
         const buttons = [
-            { // 手动读取剪切板
+            {
+                // 手动读取剪切板
                 symbol: "square.and.arrow.down.on.square",
                 props: {
                     id: this.readClipboardButtonId,
@@ -184,17 +187,16 @@ class Today extends Clipboard {
     }
 
     getNavBarView() {
-        return { // 顶部按钮栏
+        return {
+            // 顶部按钮栏
             type: "view",
-            views: [{
-                type: "view",
-                layout: $layout.fill,
-                views: [
-                    this.tabView(),
-                    { type: "label" },
-                    ...this.navButtons()
-                ]
-            }],
+            views: [
+                {
+                    type: "view",
+                    layout: $layout.fill,
+                    views: [this.tabView(), { type: "label" }, ...this.navButtons()]
+                }
+            ],
             layout: (make, view) => {
                 make.top.width.equalTo(view.super)
                 make.height.equalTo(this.navHeight)
@@ -268,22 +270,26 @@ class Today extends Clipboard {
             type: "view",
             props: {
                 id: this.listContainerId,
-                hidden: this.isActionPage,
+                hidden: this.isActionPage
             },
             views: [
-                { // 剪切板列表
+                {
+                    // 剪切板列表
                     type: "list",
-                    props: Object.assign({
-                        id: this.listId,
-                        scrollEnabled: false,
-                        bgcolor: $color("clear"),
-                        menu: {
-                            items: this.menuItems(false)
+                    props: Object.assign(
+                        {
+                            id: this.listId,
+                            scrollEnabled: false,
+                            bgcolor: $color("clear"),
+                            menu: {
+                                items: this.menuItems(false)
+                            },
+                            separatorInset: $insets(0, this.left_right, 0, this.left_right),
+                            data: [],
+                            template: this.listTemplate(1)
                         },
-                        separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                        data: [],
-                        template: this.listTemplate(1)
-                    }, {}),
+                        {}
+                    ),
                     events: {
                         ready: () => this.ready(),
                         rowHeight: (sender, indexPath) => {
@@ -362,7 +368,7 @@ class Today extends Clipboard {
                             type: "image",
                             props: {
                                 id: "icon",
-                                tintColor: $color("#ffffff"),
+                                tintColor: $color("#ffffff")
                             },
                             layout: make => {
                                 make.top.left.inset(15)
@@ -381,7 +387,8 @@ class Today extends Clipboard {
                                 make.right.inset(10)
                             }
                         },
-                        { // 用来保存信息
+                        {
+                            // 用来保存信息
                             type: "view",
                             props: {
                                 id: "info",
@@ -395,8 +402,11 @@ class Today extends Clipboard {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    this.kernel.actionManager.getActionHandler(info.type, info.dir)({
-                        text: (info.type === "clipboard" || info.type === "uncategorized") ? $clipboard.text : null,
+                    this.kernel.actionManager.getActionHandler(
+                        info.type,
+                        info.dir
+                    )({
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null,
                         uuid: null
                     })
                 }
@@ -422,11 +432,7 @@ class Today extends Clipboard {
     getView() {
         return {
             type: "view",
-            views: [
-                this.getNavBarView(),
-                this.getListView(),
-                this.getActionView()
-            ],
+            views: [this.getNavBarView(), this.getListView(), this.getActionView()],
             layout: $layout.fill
         }
     }

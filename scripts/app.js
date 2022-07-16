@@ -1,12 +1,4 @@
-const {
-    versionCompare,
-    UIKit,
-    Sheet,
-    TabBarController,
-    Kernel,
-    FileStorage,
-    Setting
-} = require("./libs/easy-jsbox")
+const { versionCompare, UIKit, Sheet, TabBarController, Kernel, FileStorage, Setting } = require("./libs/easy-jsbox")
 const Storage = require("./storage")
 const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
@@ -17,6 +9,9 @@ const TodayActions = require("./ui/components/today-actions")
 
 const fileStorage = new FileStorage()
 
+/**
+ * @typedef {AppKernel} AppKernel
+ */
 class AppKernel extends Kernel {
     constructor() {
         super()
@@ -104,7 +99,8 @@ class AppKernel extends Kernel {
                                         return
                                     }
                                     if (data.fileName.slice(-2) === "db" || data.fileName.slice(-3) === "zip") {
-                                        this.storage.import(data)
+                                        this.storage
+                                            .import(data)
                                             .then(() => {
                                                 animate.actionDone()
                                                 $delay(0.3, () => {
@@ -142,10 +138,12 @@ class AppKernel extends Kernel {
                 dest: tempPath,
                 handler: () => {
                     $share.sheet({
-                        items: [{
-                            name: fileName,
-                            data: $data({ path: tempPath })
-                        }],
+                        items: [
+                            {
+                                name: fileName,
+                                data: $data({ path: tempPath })
+                            }
+                        ],
                         handler: success => {
                             if (success) {
                                 animate.actionDone()
@@ -263,8 +261,8 @@ class AppKernel extends Kernel {
                                         $addin.run({
                                             name: "Erots",
                                             query: {
-                                                "q": "show",
-                                                "objectId": "603e6eaaca0dd64fcef93e2d"
+                                                q: "show",
+                                                objectId: "603e6eaaca0dd64fcef93e2d"
                                             }
                                         })
                                     }
@@ -388,15 +386,17 @@ class AppUI {
             kernel.tabBarController = new TabBarController()
             const clipboardPageController = kernel.clipboard.getPageController()
             kernel.editor.viewController.setRootPageController(clipboardPageController)
-            kernel.tabBarController.setPages({
-                clipboard: clipboardPageController.getPage(),
-                actions: kernel.actionManager.getPageView(),
-                setting: kernel.setting.getPageView()
-            }).setCells({
-                clipboard: buttons.clipboard,
-                actions: buttons.actions,
-                setting: buttons.setting
-            })
+            kernel.tabBarController
+                .setPages({
+                    clipboard: clipboardPageController.getPage(),
+                    actions: kernel.actionManager.getPageView(),
+                    setting: kernel.setting.getPageView()
+                })
+                .setCells({
+                    clipboard: buttons.clipboard,
+                    actions: buttons.actions,
+                    setting: buttons.setting
+                })
 
             kernel.UIRender(kernel.tabBarController.generateView().definition)
         }
@@ -419,14 +419,16 @@ class AppUI {
     static renderUnsupported() {
         $intents.finish("不支持在此环境中运行")
         $ui.render({
-            views: [{
-                type: "label",
-                props: {
-                    text: "不支持在此环境中运行",
-                    align: $align.center
-                },
-                layout: $layout.fill
-            }]
+            views: [
+                {
+                    type: "label",
+                    props: {
+                        text: "不支持在此环境中运行",
+                        align: $align.center
+                    },
+                    layout: $layout.fill
+                }
+            ]
         })
     }
 }
@@ -455,11 +457,7 @@ class Widget {
     static renderClipboard() {
         const setting = new Setting()
         setting.loadConfig().setReadonly()
-        const widget = Widget.widgetInstance(
-            "Clipboard",
-            setting,
-            new Storage(false, fileStorage)
-        )
+        const widget = Widget.widgetInstance("Clipboard", setting, new Storage(false, fileStorage))
         widget.render()
     }
 

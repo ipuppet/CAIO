@@ -1,12 +1,13 @@
-const {
-    UIKit,
-    NavigationItem,
-    ViewController,
-    PageController,
-    Sheet
-} = require("../../libs/easy-jsbox")
+const { UIKit, NavigationItem, ViewController, PageController, Sheet } = require("../../libs/easy-jsbox")
+
+/**
+ * @typedef {import("../../app").AppKernel} AppKernel
+ */
 
 class Editor {
+    /**
+     * @param {AppKernel} kernel
+     */
     constructor(kernel) {
         this.kernel = kernel
         this.id = "editor"
@@ -47,13 +48,18 @@ class Editor {
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
-                    views: [this.kernel.actionManager.getActionListView({}, {
-                        didSelect: (sender, indexPath, data) => {
-                            popover.dismiss()
-                            const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
-                            setTimeout(() => action(content), 500)
-                        }
-                    })]
+                    views: [
+                        this.kernel.actionManager.getActionListView(
+                            {},
+                            {
+                                didSelect: (sender, indexPath, data) => {
+                                    popover.dismiss()
+                                    const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
+                                    setTimeout(() => action(content), 500)
+                                }
+                            }
+                        )
+                    ]
                 })
             }
         }
@@ -77,7 +83,8 @@ class Editor {
             },
             events: {
                 ready: sender => {
-                    if (this.text === "") // 自动弹出键盘
+                    if (this.text === "")
+                        // 自动弹出键盘
                         setTimeout(() => sender.focus(), 500)
                 },
                 didChange: sender => {
@@ -91,27 +98,25 @@ class Editor {
         this.text = text
         navButtons.unshift(this.getActionButton())
         const sheet = new Sheet()
-        sheet
-            .setView(this.getView(type))
-            .addNavBar({
-                title,
-                popButton: {
-                    title: $l10n("DONE"),
-                    tapped: () => callback(this.text)
-                },
-                rightButtons: navButtons
-            })
+        sheet.setView(this.getView(type)).addNavBar({
+            title,
+            popButton: {
+                title: $l10n("DONE"),
+                tapped: () => callback(this.text)
+            },
+            rightButtons: navButtons
+        })
         sheet.pageController.navigationController.navigationBar.contentViewHeightOffset = 0
         sheet.init().present()
     }
 
     /**
-     * 
-     * @param {*} text 
-     * @param {*} callback 
-     * @param {*} title 
+     *
+     * @param {*} text
+     * @param {*} callback
+     * @param {*} title
      * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 this.kernel.editor.text
-     * @param {*} type 
+     * @param {*} type
      */
     push(text = "", callback, title, navButtons = [], type = "text") {
         this.text = text
@@ -133,8 +138,7 @@ class Editor {
             pageController.navigationController.navigationBar.contentViewHeightOffset = 0
             pageController
                 .setView(this.getView(type))
-                .navigationItem
-                .setTitle(title)
+                .navigationItem.setTitle(title)
                 .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
                 .setRightButtons(navButtons)
             this.viewController.setEvent("onPop", () => callback(this.text))

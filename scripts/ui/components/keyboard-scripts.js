@@ -1,9 +1,4 @@
-const {
-    UIKit,
-    Sheet,
-    NavigationItem,
-    PageController
-} = require("../../libs/easy-jsbox")
+const { UIKit, Sheet, NavigationItem, PageController } = require("../../libs/easy-jsbox")
 
 class KeyboardScripts {
     constructor() {
@@ -108,8 +103,7 @@ class KeyboardScripts {
         const pageController = new PageController()
         pageController
             .setView(keyboardScripts.getListView())
-            .navigationItem
-            .setTitle($l10n("QUICK_START_SCRIPTS"))
+            .navigationItem.setTitle($l10n("QUICK_START_SCRIPTS"))
             .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(keyboardScripts.getNavButtons())
         return pageController
