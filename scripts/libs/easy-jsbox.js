@@ -3526,6 +3526,12 @@ class Setting extends Controller {
                                 make.size.equalTo(view.super)
                             },
                             events: {
+                                didBeginEditing: () => {
+                                    // 防止键盘遮挡
+                                    if (!$app.autoKeyboardEnabled) {
+                                        $app.autoKeyboardEnabled = true
+                                    }
+                                },
                                 returned: sender => {
                                     // 结束编辑，由 didEndEditing 进行保存
                                     sender.blur()
