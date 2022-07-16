@@ -3298,8 +3298,9 @@ class Setting extends Controller {
         }
     }
 
-    createTab(key, icon, title, items, withTitle) {
+    createTab(key, icon, title, items = [], values = []) {
         const id = this.getId(key)
+        const isCustomizeValues = values.length === items.length
         return {
             type: "view",
             props: { id },
@@ -3309,7 +3310,7 @@ class Setting extends Controller {
                     type: "tab",
                     props: {
                         items: items,
-                        index: this.get(key),
+                        index: isCustomizeValues ? values.indexOf(this.get(key)) : this.get(key),
                         dynamicWidth: true
                     },
                     layout: (make, view) => {
@@ -3318,12 +3319,70 @@ class Setting extends Controller {
                     },
                     events: {
                         changed: sender => {
-                            const value = withTitle ? [sender.index, title] : sender.index
-                            this.set(key, value)
+                            if (isCustomizeValues) {
+                                this.set(key, values[sender.index])
+                            } else {
+                                this.set(key, sender.index)
+                            }
                         }
                     }
                 }
             ],
+            layout: $layout.fill
+        }
+    }
+
+    createMenu(key, icon, title, items = [], values = []) {
+        const id = this.getId(key)
+        const labelId = `${id}-label`
+        const isCustomizeValues = values.length === items.length
+        return {
+            type: "view",
+            props: { id: id },
+            views: [
+                this.createLineLabel(title, icon),
+                {
+                    type: "view",
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: isCustomizeValues ? items[values.indexOf(this.get(key))] : items[this.get(key)],
+                                color: $color("secondaryText"),
+                                id: labelId
+                            },
+                            layout: (make, view) => {
+                                make.right.inset(0)
+                                make.height.equalTo(view.super)
+                            }
+                        }
+                    ],
+                    layout: (make, view) => {
+                        make.right.inset(this.edgeOffset)
+                        make.height.equalTo(this.rowHeight)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            events: this.#withTouchEvents(id, {
+                tapped: () => {
+                    this.#touchHighlightStart(id)
+                    $ui.menu({
+                        items: items,
+                        handler: (title, idx) => {
+                            if (isCustomizeValues) {
+                                this.set(key, values[idx])
+                            } else {
+                                this.set(key, idx)
+                            }
+                            $(labelId).text = $l10n(title)
+                        },
+                        finished: () => {
+                            this.#touchHighlightEnd(id, 0.2)
+                        }
+                    })
+                }
+            }),
             layout: $layout.fill
         }
     }
@@ -3377,65 +3436,6 @@ class Setting extends Controller {
                     }
                 }
             ],
-            layout: $layout.fill
-        }
-    }
-
-    createMenu(key, icon, title, items, withTitle) {
-        const id = this.getId(key)
-        const labelId = `${id}-label`
-        return {
-            type: "view",
-            props: { id: id },
-            views: [
-                this.createLineLabel(title, icon),
-                {
-                    type: "view",
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                text: withTitle
-                                    ? items[
-                                          (() => {
-                                              const value = this.get(key)
-                                              if (typeof value === "object") return value[0]
-                                              else return value
-                                          })()
-                                      ]
-                                    : items[this.get(key)],
-                                color: $color("secondaryText"),
-                                id: labelId
-                            },
-                            layout: (make, view) => {
-                                make.right.inset(0)
-                                make.height.equalTo(view.super)
-                            }
-                        }
-                    ],
-                    layout: (make, view) => {
-                        make.right.inset(this.edgeOffset)
-                        make.height.equalTo(this.rowHeight)
-                        make.width.equalTo(view.super)
-                    }
-                }
-            ],
-            events: this.#withTouchEvents(id, {
-                tapped: () => {
-                    this.#touchHighlightStart(id)
-                    $ui.menu({
-                        items: items,
-                        handler: (title, idx) => {
-                            const value = withTitle ? [idx, title] : idx
-                            this.set(key, value)
-                            $(labelId).text = $l10n(title)
-                        },
-                        finished: () => {
-                            this.#touchHighlightEnd(id, 0.2)
-                        }
-                    })
-                }
-            }),
             layout: $layout.fill
         }
     }
@@ -3810,16 +3810,25 @@ class Setting extends Controller {
                         row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
-                        row = this.createTab(item.key, item.icon, item.title, item.items, item.withTitle)
-                        break
-                    case "color":
-                        row = this.createColor(item.key, item.icon, item.title)
+                        if (typeof item.items === "string") {
+                            item.items = eval(`(()=>{return ${item.items}()})()`)
+                        }
+                        if (typeof item.values === "string") {
+                            item.values = eval(`(()=>{return ${item.values}()})()`)
+                        }
+                        row = this.createTab(item.key, item.icon, item.title, item.items, item.values)
                         break
                     case "menu":
                         if (typeof item.items === "string") {
                             item.items = eval(`(()=>{return ${item.items}()})()`)
                         }
-                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.withTitle)
+                        if (typeof item.values === "string") {
+                            item.values = eval(`(()=>{return ${item.values}()})()`)
+                        }
+                        row = this.createMenu(item.key, item.icon, item.title, item.items, item.values)
+                        break
+                    case "color":
+                        row = this.createColor(item.key, item.icon, item.title)
                         break
                     case "date":
                         row = this.createDate(item.key, item.icon, item.title, item.mode)
