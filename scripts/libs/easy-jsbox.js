@@ -3300,7 +3300,7 @@ class Setting extends Controller {
 
     createTab(key, icon, title, items = [], values = []) {
         const id = this.getId(key)
-        const isCustomizeValues = values.length === items.length
+        const isCustomizeValues = items.length > 0 && values.length === items.length
         return {
             type: "view",
             props: { id },
@@ -3335,7 +3335,7 @@ class Setting extends Controller {
     createMenu(key, icon, title, items = [], values = []) {
         const id = this.getId(key)
         const labelId = `${id}-label`
-        const isCustomizeValues = values.length === items.length
+        const isCustomizeValues = items.length > 0 && values.length === items.length
         return {
             type: "view",
             props: { id: id },
