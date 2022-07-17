@@ -14,9 +14,9 @@ String.prototype.trim = function (char, type) {
 
 /**
  * 对比版本号
- * @param {String} preVersion
- * @param {String} lastVersion
- * @returns {Number} 1: preVersion 大, 0: 相等, -1: lastVersion 大
+ * @param {string} preVersion
+ * @param {string} lastVersion
+ * @returns {number} 1: preVersion 大, 0: 相等, -1: lastVersion 大
  */
 function versionCompare(preVersion = "", lastVersion = "") {
     let sources = preVersion.split(".")
@@ -92,7 +92,7 @@ function objectEqual(a, b) {
 /**
  * 压缩图片
  * @param {$image} image $image
- * @param {Number} maxSize 图片最大尺寸 单位：像素
+ * @param {number} maxSize 图片最大尺寸 单位：像素
  * @returns {$image}
  */
 function compressImage(image, maxSize = 1280 * 720) {
@@ -137,13 +137,13 @@ class Controller {
 class View {
     /**
      * id
-     * @type {String}
+     * @type {string}
      */
     id = uuid()
 
     /**
      * 类型
-     * @type {String}
+     * @type {string}
      */
     type
 
@@ -228,7 +228,7 @@ class View {
      * 调用处理函数 `action`，第一个参数为用户定义的事件处理函数
      * 其余参数为 JSBox 传递的参数，如 sender 等
      *
-     * @param {String} event 事件名称
+     * @param {string} event 事件名称
      * @param {Function} action 处理事件的函数
      * @returns {this}
      */
@@ -290,7 +290,7 @@ class UIKit {
 
     /**
      * 可滚动视图列表
-     * @type {String[]}
+     * @type {string[]}
      */
     static scrollViewList = ["list", "matrix"]
 
@@ -629,7 +629,7 @@ class Matrix extends View {
 
     /**
      * 获得修正后的 indexPath
-     * @param {$indexPath||Number} indexPath
+     * @param {$indexPath||number} indexPath
      * @param {Boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
      * @returns {$indexPath}
      */
@@ -722,7 +722,7 @@ class Sheet extends View {
      * 为 view 添加一个 navBar
      * @param {Object} param
      *  {
-     *      {String} title
+     *      {string} title
      *      {Object} popButton 参数与 BarButtonItem 一致
      *      {Array} rightButtons
      *  }
@@ -801,7 +801,7 @@ class BarButtonItem extends View {
 
     /**
      * 标题
-     * @type {String}
+     * @type {string}
      */
     title = ""
 
@@ -969,8 +969,8 @@ class BarButtonItem extends View {
     /**
      * 用于快速创建 BarButtonItem
      * @typedef {Object} BarButtonItemProperties
-     * @property {String} title
-     * @property {String} symbol
+     * @property {string} title
+     * @property {string} symbol
      * @property {Function} tapped
      * @property {Object} menu
      * @property {Object} events
@@ -1208,7 +1208,7 @@ class NavigationItem {
 
     /**
      * 覆盖左侧按钮
-     * @param {String} parent 父页面标题，将会显示为文本按钮
+     * @param {string} parent 父页面标题，将会显示为文本按钮
      * @param {Object} view 自定义按钮视图
      * @returns {this}
      */
@@ -1991,7 +1991,7 @@ class TabBarHeaderView extends View {
 }
 
 /**
- * @property {function(from: String, to: String)} TabBarController.events.onChange
+ * @property {function(from: string, to: string)} TabBarController.events.onChange
  */
 class TabBarController extends Controller {
     static tabBarHeight = 50
@@ -2497,8 +2497,8 @@ class SettingReadonlyError extends Error {
 }
 
 /**
- * @property {function(key: String, value: any)} Setting.events.onSet 键值发生改变
- * @property {function(view: Object,title: String)} Setting.events.onChildPush 进入的子页面
+ * @property {function(key: string, value: any)} Setting.events.onSet 键值发生改变
+ * @property {function(view: Object,title: string)} Setting.events.onChildPush 进入的子页面
  */
 class Setting extends Controller {
     name
@@ -2532,11 +2532,11 @@ class Setting extends Controller {
      * @param {Function} args.get 自定义 get 方法，定义后将忽略 fileStorage 和 dataFile
      * @param {Object} args.userData 初始用户数据，定义后将忽略 fileStorage 和 dataFile
      * @param {FileStorage} args.fileStorage FileStorage 对象，用于文件操作
-     * @param {String} args.dataFile 持久化数据保存文件
+     * @param {string} args.dataFile 持久化数据保存文件
      * @param {Object} args.structure 设置项结构
-     * @param {String} args.structurePath 结构路径，优先级低于 structure
+     * @param {string} args.structurePath 结构路径，优先级低于 structure
      * @param {Boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
-     * @param {String} args.name 唯一名称，默认分配一个 UUID
+     * @param {string} args.name 唯一名称，默认分配一个 UUID
      */
     constructor(args = {}) {
         super()
@@ -2696,7 +2696,7 @@ class Setting extends Controller {
     /**
      * 设置结构文件目录。
      * 若调用了 setStructure(structure) 或构造函数传递了 structure 数据，则不会加载结构文件
-     * @param {String} structurePath
+     * @param {string} structurePath
      * @returns {this}
      */
     setStructurePath(structurePath) {
@@ -2708,7 +2708,7 @@ class Setting extends Controller {
 
     /**
      * 设置一个独一无二的名字，防止多个 Setting 导致 UI 冲突
-     * @param {String} name 名字
+     * @param {string} name 名字
      */
     setName(name) {
         this.name = name
@@ -3557,11 +3557,11 @@ class Setting extends Controller {
 
     /**
      *
-     * @param {String} key
-     * @param {String} icon
-     * @param {String} title
+     * @param {string} key
+     * @param {string} icon
+     * @param {string} title
      * @param {Object} events
-     * @param {String} bgcolor 指定预览时的背景色，默认 "#000000"
+     * @param {string} bgcolor 指定预览时的背景色，默认 "#000000"
      * @returns {Object}
      */
     createIcon(key, icon, title, bgcolor) {
