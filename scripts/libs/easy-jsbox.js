@@ -296,7 +296,7 @@ class UIKit {
 
     /**
      * 是否属于大屏设备
-     * @type {Boolean}
+     * @type {boolean}
      */
     static isLargeScreen = $device.isIpad || $device.isIpadPro
 
@@ -309,7 +309,7 @@ class UIKit {
 
     /**
      * 判断是否是分屏模式
-     * @type {Boolean}
+     * @type {boolean}
      */
     static get isSplitScreenMode() {
         return UIKit.isLargeScreen && $device.info.screen.width !== UIKit.windowSize.width
@@ -630,7 +630,7 @@ class Matrix extends View {
     /**
      * 获得修正后的 indexPath
      * @param {$indexPath||number} indexPath
-     * @param {Boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
+     * @param {boolean} withTitleOffset 输入的 indexPath 是否已经包含了标题列。通常自身事件返回的 indexPath 视为已包含，使用默认值即可。
      * @returns {$indexPath}
      */
     indexPath(indexPath, withTitleOffset) {
@@ -2535,7 +2535,7 @@ class Setting extends Controller {
      * @param {string} args.dataFile 持久化数据保存文件
      * @param {Object} args.structure 设置项结构
      * @param {string} args.structurePath 结构路径，优先级低于 structure
-     * @param {Boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
+     * @param {boolean} args.isUseJsboxNav 是否使用 JSBox 默认 nav 样式
      * @param {string} args.name 唯一名称，默认分配一个 UUID
      */
     constructor(args = {}) {
