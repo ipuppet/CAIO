@@ -57,7 +57,6 @@ class AppKernel extends Kernel {
      */
     initSettingMethods() {
         this.setting.method.readme = animate => {
-            animate.touchHighlight()
             const content = $file.read("/README.md").string
             const sheet = new Sheet()
             sheet
@@ -278,7 +277,6 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.previewWidget = animate => {
-            animate.touchHighlight()
             const widgets = {}
             try {
                 JSON.parse($file.read("widget-options.json").string).forEach(item => {
@@ -307,7 +305,6 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.setKeyboardQuickStart = animate => {
-            animate.touchHighlight()
             if (this.isUseJsboxNav) {
                 KeyboardScripts.push()
             } else {
@@ -326,7 +323,6 @@ class AppKernel extends Kernel {
         }
 
         this.setting.method.setTodayWidgetActions = animate => {
-            animate.touchHighlight()
             if (this.isUseJsboxNav) {
                 TodayActions.push(this)
             } else {

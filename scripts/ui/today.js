@@ -130,7 +130,6 @@ class Today extends Clipboard {
                 .setSymbol(button.symbol)
                 .setEvent("tapped", button.tapped)
                 .setProps(button.props ?? {})
-            console.log(barButtonItem)
             return barButtonItem.definition
         })
     }

@@ -2591,7 +2591,7 @@ class Setting extends Controller {
                     if (item.type === "child") {
                         const child = setValue(item.children)
                         Object.assign(setting, child)
-                    } else if (exclude.indexOf(item.type) < 0) {
+                    } else if (exclude.indexOf(item.type) === -1) {
                         setting[item.key] = item.key in userData ? userData[item.key] : item.value
                     } else {
                         // 被排除的项目直接赋值
@@ -2806,36 +2806,40 @@ class Setting extends Controller {
     }
 
     #touchHighlightStart(id) {
-        $(id).bgcolor = $color("insetGroupedBackground")
+        $(id).bgcolor = $color("systemFill")
     }
 
     #touchHighlightEnd(id, duration = 0.3) {
-        $ui.animate({
-            duration: duration,
-            animation: () => {
-                $(id).bgcolor = $color("clear")
-            }
-        })
+        if (duration === 0) {
+            $(id).bgcolor = $color("clear")
+        } else {
+            $ui.animate({
+                duration: duration,
+                animation: () => {
+                    $(id).bgcolor = $color("clear")
+                }
+            })
+        }
     }
 
-    #withTouchEvents(lineId, events, withTappedHighlight = false, highlightEndDelay = 0) {
+    #withTouchEvents(id, events, withTappedHighlight = false, highlightEndDelay = 0) {
         events = Object.assign(events, {
             touchesBegan: () => {
-                this.#touchHighlightStart(lineId)
+                this.#touchHighlightStart(id)
                 // 延时自动关闭高亮，防止 touchesMoved 事件未正常调用
-                this.#withTouchEventsT[lineId] = $delay(1, () => this.#touchHighlightEnd(lineId, 0))
+                this.#withTouchEventsT[id] = $delay(1, () => this.#touchHighlightEnd(id, 0))
             },
             touchesMoved: () => {
-                this.#withTouchEventsT[lineId]?.cancel()
-                this.#touchHighlightEnd(lineId, 0)
+                this.#withTouchEventsT[id]?.cancel()
+                this.#touchHighlightEnd(id, 0)
             }
         })
         if (withTappedHighlight) {
             const tapped = events.tapped
             events.tapped = () => {
                 // highlight
-                this.#touchHighlightStart(lineId)
-                setTimeout(() => this.#touchHighlightEnd(lineId), highlightEndDelay * 1000)
+                this.#touchHighlightStart(id)
+                setTimeout(() => this.#touchHighlightEnd(id), highlightEndDelay * 1000)
                 if (typeof tapped === "function") tapped()
             }
         }
@@ -2904,14 +2908,14 @@ class Setting extends Controller {
     }
 
     createInfo(icon, title, value) {
-        // 内部随机 id
-        const id = this.getId(uuid())
         const isArray = Array.isArray(value)
         const text = isArray ? value[0] : value
         const moreInfo = isArray ? value[1] : value
         return {
             type: "view",
-            props: { id: id },
+            props: {
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -2930,28 +2934,24 @@ class Setting extends Controller {
                 {
                     // 监听点击动作
                     type: "view",
-                    events: this.#withTouchEvents(
-                        id,
-                        {
-                            tapped: () => {
-                                $ui.alert({
-                                    title: title,
-                                    message: moreInfo,
-                                    actions: [
-                                        {
-                                            title: $l10n("COPY"),
-                                            handler: () => {
-                                                $clipboard.text = moreInfo
-                                                $ui.toast($l10n("COPIED"))
-                                            }
-                                        },
-                                        { title: $l10n("OK") }
-                                    ]
-                                })
-                            }
-                        },
-                        true
-                    ),
+                    events: {
+                        tapped: () => {
+                            $ui.alert({
+                                title: title,
+                                message: moreInfo,
+                                actions: [
+                                    {
+                                        title: $l10n("COPY"),
+                                        handler: () => {
+                                            $clipboard.text = moreInfo
+                                            $ui.toast($l10n("COPIED"))
+                                        }
+                                    },
+                                    { title: $l10n("OK") }
+                                ]
+                            })
+                        }
+                    },
                     layout: (make, view) => {
                         make.right.inset(0)
                         make.size.equalTo(view.super)
@@ -2966,7 +2966,10 @@ class Setting extends Controller {
         const id = this.getId(key)
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3000,7 +3003,10 @@ class Setting extends Controller {
         const id = this.getId(key)
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3071,7 +3077,10 @@ class Setting extends Controller {
         const labelId = `${id}-label`
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3120,7 +3129,10 @@ class Setting extends Controller {
         const labelId = `${id}-label`
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3168,10 +3180,6 @@ class Setting extends Controller {
     createScript(key, icon, title, script) {
         const id = this.getId(key)
         const buttonId = `${id}-button`
-        const touchHighlight = () => {
-            this.#touchHighlightStart(id)
-            this.#touchHighlightEnd(id)
-        }
         const actionStart = () => {
             // 隐藏 button，显示 spinner
             $(buttonId).alpha = 0
@@ -3226,7 +3234,9 @@ class Setting extends Controller {
         }
         return {
             type: "view",
-            props: { id: id },
+            props: {
+                id
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3257,34 +3267,6 @@ class Setting extends Controller {
                                 make.size.equalTo(view.prev)
                                 make.left.top.equalTo(view.prev)
                             }
-                        },
-                        {
-                            // 覆盖在图片上监听点击动作
-                            type: "view",
-                            events: this.#withTouchEvents(id, {
-                                tapped: () => {
-                                    // 生成开始事件和结束事件动画，供函数调用
-                                    const animate = {
-                                        actionStart: actionStart, // 会出现加载动画
-                                        actionCancel: actionCancel, // 会直接恢复箭头图标
-                                        actionDone: actionDone, // 会出现对号，然后恢复箭头
-                                        touchHighlight: touchHighlight, // 被点击的一行颜色加深，然后颜色恢复
-                                        touchHighlightStart: () => this.#touchHighlightStart(id), // 被点击的一行颜色加深
-                                        touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
-                                    }
-                                    // 执行代码
-                                    if (script.startsWith("this")) {
-                                        // 传递 animate 对象
-                                        eval(`(()=>{return ${script}(animate)})()`)
-                                    } else {
-                                        eval(script)
-                                    }
-                                }
-                            }),
-                            layout: (make, view) => {
-                                make.right.inset(0)
-                                make.size.equalTo(view.super)
-                            }
                         }
                     ],
                     layout: (make, view) => {
@@ -3294,6 +3276,25 @@ class Setting extends Controller {
                     }
                 }
             ],
+            events: this.#withTouchEvents(id, {
+                tapped: () => {
+                    // 生成开始事件和结束事件动画，供函数调用
+                    const animate = {
+                        actionStart: actionStart, // 会出现加载动画
+                        actionCancel: actionCancel, // 会直接恢复箭头图标
+                        actionDone: actionDone, // 会出现对号，然后恢复箭头
+                        touchHighlightStart: () => this.#touchHighlightStart(id), // 被点击的一行颜色加深
+                        touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
+                    }
+                    // 执行代码
+                    if (script.startsWith("this")) {
+                        // 传递 animate 对象
+                        eval(`(()=>{return ${script}(animate)})()`)
+                    } else {
+                        eval(script)
+                    }
+                }
+            }),
             layout: $layout.fill
         }
     }
@@ -3303,7 +3304,10 @@ class Setting extends Controller {
         const isCustomizeValues = items.length > 0 && values.length === items.length
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3338,7 +3342,10 @@ class Setting extends Controller {
         const isCustomizeValues = items.length > 0 && values.length === items.length
         return {
             type: "view",
-            props: { id: id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3364,9 +3371,8 @@ class Setting extends Controller {
                     }
                 }
             ],
-            events: this.#withTouchEvents(id, {
+            events: {
                 tapped: () => {
-                    this.#touchHighlightStart(id)
                     $ui.menu({
                         items: items,
                         handler: (title, idx) => {
@@ -3376,13 +3382,10 @@ class Setting extends Controller {
                                 this.set(key, idx)
                             }
                             $(labelId).text = $l10n(title)
-                        },
-                        finished: () => {
-                            this.#touchHighlightEnd(id, 0.2)
                         }
                     })
                 }
-            }),
+            },
             layout: $layout.fill
         }
     }
@@ -3392,7 +3395,10 @@ class Setting extends Controller {
         const colorId = `${id}-color`
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3460,7 +3466,10 @@ class Setting extends Controller {
         }
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3507,7 +3516,10 @@ class Setting extends Controller {
         const id = this.getId(key)
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3569,7 +3581,10 @@ class Setting extends Controller {
         const imageId = `${id}-image`
         return {
             type: "view",
-            props: { id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3647,7 +3662,10 @@ class Setting extends Controller {
         return {
             type: "view",
             layout: $layout.fill,
-            props: { id: id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3664,39 +3682,34 @@ class Setting extends Controller {
                     }
                 }
             ],
-            events: this.#withTouchEvents(
-                id,
-                {
-                    tapped: () => {
-                        setTimeout(() => {
-                            if (this.events?.onChildPush) {
-                                this.callEvent("onChildPush", this.getListView(children, {}), title)
+            events: {
+                tapped: () => {
+                    setTimeout(() => {
+                        if (this.events?.onChildPush) {
+                            this.callEvent("onChildPush", this.getListView(children, {}), title)
+                        } else {
+                            if (this.isUseJsboxNav) {
+                                UIKit.push({
+                                    title: title,
+                                    bgcolor: UIKit.scrollViewBackgroundColor,
+                                    views: [this.getListView(children, {})]
+                                })
                             } else {
-                                if (this.isUseJsboxNav) {
-                                    UIKit.push({
-                                        title: title,
-                                        bgcolor: UIKit.scrollViewBackgroundColor,
-                                        views: [this.getListView(children, {})]
-                                    })
-                                } else {
-                                    const pageController = new PageController()
-                                    pageController
-                                        .setView(this.getListView(children, {}))
-                                        .navigationItem.setTitle(title)
-                                        .addPopButton()
-                                        .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-                                    if (this.hasSectionTitle(children)) {
-                                        pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
-                                    }
-                                    this.viewController.push(pageController)
+                                const pageController = new PageController()
+                                pageController
+                                    .setView(this.getListView(children, {}))
+                                    .navigationItem.setTitle(title)
+                                    .addPopButton()
+                                    .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
+                                if (this.hasSectionTitle(children)) {
+                                    pageController.navigationController.navigationBar.setContentViewHeightOffset(-10)
                                 }
+                                this.viewController.push(pageController)
                             }
-                        })
-                    }
-                },
-                true,
-                0.3
-            )
+                        }
+                    })
+                }
+            }
         }
     }
 
@@ -3705,7 +3718,10 @@ class Setting extends Controller {
         const imageId = `${id}-image`
         return {
             type: "view",
-            props: { id: id },
+            props: {
+                id,
+                selectable: true
+            },
             views: [
                 this.createLineLabel(title, icon),
                 {
@@ -3862,14 +3878,20 @@ class Setting extends Controller {
         return {
             type: "list",
             props: {
+                id: this.name,
                 style: 2,
                 separatorInset: $insets(0, this.iconSize + this.edgeOffset * 2, 0, this.edgeOffset), // 分割线边距
-                rowHeight: this.rowHeight,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 footer: footer,
                 data: this.#getSections(structure ?? this.structure)
             },
-            layout: $layout.fill
+            layout: $layout.fill,
+            events: {
+                rowHeight: (sender, indexPath) => {
+                    const info = sender.object(indexPath)?.props?.info ?? {}
+                    return info.rowHeight ?? this.rowHeight
+                }
+            }
         }
     }
 
