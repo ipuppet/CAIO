@@ -307,6 +307,9 @@ class UIKit {
         return $objc("UIWindow").$keyWindow().jsValue().size
     }
 
+    static NavigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
+    static NavigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + UIKit.NavigationBarNormalHeight
+
     /**
      * 判断是否是分屏模式
      * @type {boolean}
@@ -796,8 +799,9 @@ class Sheet extends View {
  *      }
  */
 class BarButtonItem extends View {
-    static size = $size(44, 44)
-    static iconSize = $size(23, 23)
+    static size = $size(38, 38)
+    static iconSize = $size(23, 23) // 比 size 小 edges
+    static edges = 15
 
     /**
      * 标题
@@ -959,8 +963,10 @@ class BarButtonItem extends View {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
                 } else {
-                    if (this.align === UIKit.align.right) make.right.inset(0)
-                    else make.left.inset(0)
+                    // 图片类型留一半边距，图标和按钮边距是另一半
+                    const edges = this.symbol ? BarButtonItem.edges / 2 : BarButtonItem.edges
+                    if (this.align === UIKit.align.right) make.right.inset(edges)
+                    else make.left.inset(edges)
                 }
             }
         }
@@ -1228,7 +1234,7 @@ class NavigationItem {
                 font: $font("bold", 16)
             },
             layout: (make, view) => {
-                make.left.equalTo(view.super.safeArea).offset(15)
+                make.left.equalTo(view.super.safeArea).offset(BarButtonItem.edges)
                 make.centerY.equalTo(view.super.safeArea)
             },
             events: {
@@ -1255,8 +1261,8 @@ class NavigationBar extends View {
     navigationBarTitleFontSize = 17
     addStatusBarHeight = true
     contentViewHeightOffset = 10
-    navigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
-    navigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + this.navigationBarNormalHeight
+    navigationBarNormalHeight = UIKit.NavigationBarNormalHeight
+    navigationBarLargeTitleHeight = UIKit.NavigationBarLargeTitleHeight
 
     pageSheetMode() {
         this.navigationBarLargeTitleHeight -= this.navigationBarNormalHeight
@@ -1334,8 +1340,8 @@ class NavigationBar extends View {
                       layout: (make, view) => {
                           make.top.equalTo(view.super.safeAreaTop)
                           make.bottom.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
-                          if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea).offset(5)
-                          else make.right.equalTo(view.super.safeArea).offset(-5)
+                          if (align === UIKit.align.left) make.left.equalTo(view.super.safeArea)
+                          else make.right.equalTo(view.super.safeArea)
                           make.width.equalTo(buttons.length * BarButtonItem.size.width)
                       }
                   }
