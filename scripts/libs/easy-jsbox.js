@@ -962,6 +962,8 @@ class BarButtonItem extends View {
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
+                    console.log(this.symbol)
+                    console.log(this.align === UIKit.align.right)
                 } else {
                     // 图片类型留一半边距，图标和按钮边距是另一半
                     const edges = this.symbol ? BarButtonItem.edges / 2 : BarButtonItem.edges
@@ -984,7 +986,7 @@ class BarButtonItem extends View {
      * @param {BarButtonItemProperties} param0
      * @returns {BarButtonItem}
      */
-    static creat({ symbol, title, tapped, menu, events }) {
+    static creat({ symbol, title, tapped, menu, events, align = UIKit.align.right }) {
         const barButtonItem = new BarButtonItem()
         barButtonItem
             .setEvents(
@@ -995,7 +997,7 @@ class BarButtonItem extends View {
                     events
                 )
             )
-            .setAlign(UIKit.align.right)
+            .setAlign(align)
             .setSymbol(symbol)
             .setTitle(title)
             .setMenu(menu)
@@ -1196,7 +1198,7 @@ class NavigationItem {
      * @returns {this}
      */
     addRightButton({ symbol, title, tapped, menu, events }) {
-        this.rightButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events }).definition)
+        this.rightButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }).definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -1207,7 +1209,7 @@ class NavigationItem {
      * @returns {this}
      */
     addLeftButton({ symbol, title, tapped, menu, events }) {
-        this.leftButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events }).definition)
+        this.leftButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }).definition)
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
