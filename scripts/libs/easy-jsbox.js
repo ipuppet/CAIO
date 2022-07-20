@@ -763,7 +763,9 @@ class Sheet extends View {
             .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
             .setRightButtons(rightButtons)
         this.pageController.setView(this.view).navigationController.navigationBar.pageSheetMode()
-        this.pageController?.getPage().setProp("bgcolor", this.view.props.bgcolor)
+        if (this.view.props?.bgcolor) {
+            this.pageController?.getPage().setProp("bgcolor", this.view.props?.bgcolor)
+        }
         return this
     }
 
@@ -962,8 +964,6 @@ class BarButtonItem extends View {
                 if (view.prev && view.prev.id !== "label" && view.prev.id !== undefined) {
                     if (this.align === UIKit.align.right) make.right.equalTo(view.prev.left)
                     else make.left.equalTo(view.prev.right)
-                    console.log(this.symbol)
-                    console.log(this.align === UIKit.align.right)
                 } else {
                     // 图片类型留一半边距，图标和按钮边距是另一半
                     const edges = this.symbol ? BarButtonItem.edges / 2 : BarButtonItem.edges
