@@ -52,7 +52,7 @@ class Today extends Clipboard {
     }
 
     readClipboard(manual = false) {
-        if (this.isActionPage || manual) {
+        if (this.isActionPage) {
             return false
         }
         this.listSection = 1
