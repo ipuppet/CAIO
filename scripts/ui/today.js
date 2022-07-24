@@ -52,7 +52,7 @@ class Today extends Clipboard {
     }
 
     readClipboard(manual = false) {
-        if (this.isActionPage || manual) {
+        if (this.isActionPage) {
             return false
         }
         this.listSection = 1
@@ -130,7 +130,6 @@ class Today extends Clipboard {
                 .setSymbol(button.symbol)
                 .setEvent("tapped", button.tapped)
                 .setProps(button.props ?? {})
-            console.log(barButtonItem)
             return barButtonItem.definition
         })
     }
@@ -276,20 +275,17 @@ class Today extends Clipboard {
                 {
                     // 剪切板列表
                     type: "list",
-                    props: Object.assign(
-                        {
-                            id: this.listId,
-                            scrollEnabled: false,
-                            bgcolor: $color("clear"),
-                            menu: {
-                                items: this.menuItems(false)
-                            },
-                            separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                            data: [],
-                            template: this.listTemplate(1)
+                    props: {
+                        id: this.listId,
+                        scrollEnabled: false,
+                        bgcolor: $color("clear"),
+                        menu: {
+                            items: this.menuItems(false)
                         },
-                        {}
-                    ),
+                        separatorInset: $insets(0, this.left_right, 0, this.left_right),
+                        data: [],
+                        template: this.listTemplate(1)
+                    },
                     events: {
                         ready: () => this.ready(),
                         rowHeight: (sender, indexPath) => {
@@ -303,7 +299,14 @@ class Today extends Clipboard {
                             if (path && $file.exists(path.original)) {
                                 $clipboard.image = $file.read(path.original).image
                             } else {
-                                this.setCopied(data.content.info.uuid, indexPath)
+                                // 修正 indexPath
+                                let section
+                                if (indexPath.section === 0) {
+                                    section = 1
+                                } else if (indexPath.section === 1) {
+                                    section = 0
+                                }
+                                this.setCopied(data.content.info.uuid, $indexPath(section, indexPath.row))
                                 this.setClipboardText(data.content.info.text)
                             }
                             $ui.toast($l10n("COPIED"))

@@ -32,7 +32,7 @@ class Keyboard extends Clipboard {
 
     ready() {
         // readClipboard
-        if (this.kernel.setting.get("clipboard.autoSave")) {
+        if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
             this.#readClipboardTimer = $timer.schedule({
                 interval: 1,
                 handler: () => {
