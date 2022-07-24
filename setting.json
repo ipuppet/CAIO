@@ -144,7 +144,7 @@
                                     "#FF6633"
                                 ],
                                 "title": "TEXT_INSETS",
-                                "type": "input",
+                                "type": "number",
                                 "key": "editor.text.insets",
                                 "value": 300
                             }
