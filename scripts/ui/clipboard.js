@@ -124,7 +124,7 @@ class Clipboard {
         } else {
             if (isUpdateIndicator) {
                 if (this.copied.indexPath) {
-                    this.savedClipboard[this.copied?.indexPath?.section].rows[this.copied?.indexPath?.row].copied.hidden = true
+                    this.savedClipboard[this.copied.indexPath.section].rows[this.copied.indexPath.row].copied.hidden = true
                 }
                 this.savedClipboard[indexPath.section].rows[indexPath.row].copied.hidden = false
                 $delay(delay, () => {
