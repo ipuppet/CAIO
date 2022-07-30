@@ -330,6 +330,44 @@ class UIKit {
         return UIKit.statusBarOrientation === 3 || UIKit.statusBarOrientation === 4
     }
 
+    static loading() {
+        const loading = $ui.create(
+            UIKit.blurBox(
+                {
+                    cornerRadius: 15
+                },
+                [
+                    {
+                        type: "spinner",
+                        props: {
+                            loading: true,
+                            style: 0
+                        },
+                        layout: (make, view) => {
+                            make.size.equalTo(view.prev)
+                            make.center.equalTo(view.super)
+                        }
+                    }
+                ]
+            )
+        )
+
+        return {
+            start: () => {
+                $ui.controller.view.insertAtIndex(loading, 0)
+                loading.layout((make, view) => {
+                    make.center.equalTo(view.super)
+                    const width = Math.min(UIKit.windowSize.width * 0.6, 300)
+                    make.size.equalTo($size(width, width))
+                })
+                loading.moveToFront()
+            },
+            end: () => {
+                loading.remove()
+            }
+        }
+    }
+
     static defaultBackgroundColor(type) {
         return UIKit.scrollViewList.indexOf(type) > -1 ? UIKit.scrollViewBackgroundColor : UIKit.primaryViewBackgroundColor
     }
