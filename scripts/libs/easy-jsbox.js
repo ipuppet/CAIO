@@ -3353,9 +3353,20 @@ class Setting extends Controller {
         }
     }
 
-    createTab(key, icon, title, items = [], values = []) {
+    createTab(key, icon, title, items, values) {
+        if (typeof items === "string") {
+            items = eval(`(()=>{return ${items}()})()`)
+        } else if (typeof items === "function") {
+            items = items()
+        }
+        if (typeof values === "string") {
+            values = eval(`(()=>{return ${values}()})()`)
+        } else if (typeof values === "function") {
+            values = values()
+        }
+
         const id = this.getId(key)
-        const isCustomizeValues = items.length > 0 && values.length === items.length
+        const isCustomizeValues = items?.length > 0 && values?.length === items?.length
         return {
             type: "view",
             props: {
@@ -3367,7 +3378,7 @@ class Setting extends Controller {
                 {
                     type: "tab",
                     props: {
-                        items: items,
+                        items: items ?? [],
                         index: isCustomizeValues ? values.indexOf(this.get(key)) : this.get(key),
                         dynamicWidth: true
                     },
@@ -3390,10 +3401,39 @@ class Setting extends Controller {
         }
     }
 
-    createMenu(key, icon, title, items = [], values = []) {
+    createMenu(key, icon, title, items, values) {
         const id = this.getId(key)
         const labelId = `${id}-label`
-        const isCustomizeValues = items.length > 0 && values.length === items.length
+
+        // 数据生成函数
+        const getItems = () => {
+            let res
+            if (typeof items === "string") {
+                res = eval(`(()=>{return ${items}()})()`)
+            } else if (typeof items === "function") {
+                res = items()
+            } else {
+                res = items ?? []
+            }
+            return res
+        }
+        const getValues = () => {
+            let res
+            if (typeof values === "string") {
+                values = eval(`(()=>{return ${values}()})()`)
+            } else if (typeof values === "function") {
+                values = values()
+            } else {
+                res = values
+            }
+            return res
+        }
+
+        const tmpItems = getItems()
+        const tmpValues = getValues()
+
+        const isCustomizeValues = tmpItems?.length > 0 && tmpValues?.length === tmpItems?.length
+
         return {
             type: "view",
             props: {
@@ -3408,7 +3448,7 @@ class Setting extends Controller {
                         {
                             type: "label",
                             props: {
-                                text: isCustomizeValues ? items[values.indexOf(this.get(key))] : items[this.get(key)],
+                                text: isCustomizeValues ? tmpItems[tmpValues.indexOf(this.get(key))] : tmpItems[this.get(key)],
                                 color: $color("secondaryText"),
                                 id: labelId
                             },
@@ -3427,11 +3467,13 @@ class Setting extends Controller {
             ],
             events: {
                 tapped: () => {
+                    const tmpItems = getItems()
+                    const tmpValues = getValues()
                     $ui.menu({
-                        items: items,
+                        items: tmpItems,
                         handler: (title, idx) => {
                             if (isCustomizeValues) {
-                                this.set(key, values[idx])
+                                this.set(key, tmpValues[idx])
                             } else {
                                 this.set(key, idx)
                             }
@@ -3880,21 +3922,9 @@ class Setting extends Controller {
                         row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
-                        if (typeof item.items === "string") {
-                            item.items = eval(`(()=>{return ${item.items}()})()`)
-                        }
-                        if (typeof item.values === "string") {
-                            item.values = eval(`(()=>{return ${item.values}()})()`)
-                        }
                         row = this.createTab(item.key, item.icon, item.title, item.items, item.values)
                         break
                     case "menu":
-                        if (typeof item.items === "string") {
-                            item.items = eval(`(()=>{return ${item.items}()})()`)
-                        }
-                        if (typeof item.values === "string") {
-                            item.values = eval(`(()=>{return ${item.values}()})()`)
-                        }
                         row = this.createMenu(item.key, item.icon, item.title, item.items, item.values)
                         break
                     case "color":
