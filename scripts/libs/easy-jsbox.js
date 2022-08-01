@@ -80,7 +80,13 @@ function objectEqual(a, b) {
 
         let propA = a[propName]
         let propB = b[propName]
-        if (typeof propA === "object") {
+        if (Array.isArray(propA)) {
+            for (let i = 0; i < propA.length; i++) {
+                if (!objectEqual(propA[i], propB[i])) {
+                    return false
+                }
+            }
+        } else if (typeof propA === "object") {
             return objectEqual(propA, propB)
         } else if (propA !== propB) {
             return false
