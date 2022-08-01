@@ -3339,7 +3339,9 @@ class Setting extends Controller {
                         touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
                     }
                     // 执行代码
-                    if (script.startsWith("this")) {
+                    if (typeof script === "function") {
+                        script(animate)
+                    } else if (script.startsWith("this")) {
                         // 传递 animate 对象
                         eval(`(()=>{return ${script}(animate)})()`)
                     } else {
