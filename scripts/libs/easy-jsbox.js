@@ -3420,9 +3420,9 @@ class Setting extends Controller {
         const getValues = () => {
             let res
             if (typeof values === "string") {
-                values = eval(`(()=>{return ${values}()})()`)
+                res = eval(`(()=>{return ${values}()})()`)
             } else if (typeof values === "function") {
-                values = values()
+                res = values()
             } else {
                 res = values
             }
