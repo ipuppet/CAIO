@@ -3958,6 +3958,7 @@ module.exports = {
     VERSION,
     versionCompare,
     compressImage,
+    objectEqual,
     // class
     View,
     UIKit,
