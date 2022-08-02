@@ -12,16 +12,19 @@ class ClipboardWidget {
         this.length = 0 // 统计剪切板总数
         this.viewStyle = {
             topItemSize: 32, // 2x2加号和计数大小
-            tipTextColor: "orange", // 2x2加号和计数大小
+            tipTextColor: "orange" // 2x2加号和计数大小
         }
         this.padding = 15
     }
 
     getListMaxLength() {
         switch (this.ctx.family) {
-            case 0: return 1
-            case 1: return 5
-            case 2: return 10
+            case 0:
+                return 1
+            case 1:
+                return 5
+            case 2:
+                return 10
         }
     }
 
@@ -82,7 +85,8 @@ class ClipboardWidget {
                 })()
             },
             views: [
-                { // 顶部
+                {
+                    // 顶部
                     type: "vgrid",
                     props: {
                         columns: [
@@ -124,7 +128,8 @@ class ClipboardWidget {
                     ]
                 },
                 { type: "spacer" },
-                { // 底部
+                {
+                    // 底部
                     type: "vstack",
                     props: {
                         alignment: $widget.horizontalAlignment.leading,
@@ -161,7 +166,8 @@ class ClipboardWidget {
                 widgetURL: this.urlScheme.clipboard
             },
             views: [
-                { // 左侧
+                {
+                    // 左侧
                     type: "vstack",
                     props: {
                         alignment: $widget.horizontalAlignment.leading
@@ -187,7 +193,8 @@ class ClipboardWidget {
                                 text: String(this.length)
                             }
                         },
-                        { // 提示文字
+                        {
+                            // 提示文字
                             type: "text",
                             props: {
                                 color: $color(this.viewStyle.tipTextColor),
@@ -201,7 +208,8 @@ class ClipboardWidget {
                     type: "spacer",
                     props: { frame: { maxWidth: clipboardList.length > 0 ? 25 : Infinity } }
                 },
-                { // 右侧
+                {
+                    // 右侧
                     type: "vstack",
                     props: {
                         spacing: 0,
@@ -246,7 +254,7 @@ class ClipboardWidget {
 
     render() {
         const nowDate = Date.now()
-        const expireDate = new Date(nowDate + 1000 * 60 * 10)// 每十分钟切换
+        const expireDate = new Date(nowDate + 1000 * 60 * 10) // 每十分钟切换
         $widget.setTimeline({
             entries: [
                 {

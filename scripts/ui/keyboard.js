@@ -87,7 +87,10 @@ class Keyboard extends Clipboard {
                                 {
                                     didSelect: (sender, indexPath, data) => {
                                         popover.dismiss()
-                                        const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
+                                        const action = this.kernel.actionManager.getActionHandler(
+                                            data.info.info.type,
+                                            data.info.info.dir
+                                        )
                                         setTimeout(
                                             () =>
                                                 action({
@@ -105,7 +108,8 @@ class Keyboard extends Clipboard {
         ]
         return buttons.map(button => {
             const barButtonItem = new BarButtonItem()
-            return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped).definition
+            return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped)
+                .definition
         })
     }
 
@@ -193,7 +197,10 @@ class Keyboard extends Clipboard {
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
-                                handler: this.keyboardTapped(() => $keyboard.delete(), this.kernel.setting.get("keyboard.tapticEngineForDelete"))
+                                handler: this.keyboardTapped(
+                                    () => $keyboard.delete(),
+                                    this.kernel.setting.get("keyboard.tapticEngineForDelete")
+                                )
                             })
                         })
                     }),
@@ -268,7 +275,9 @@ class Keyboard extends Clipboard {
     getView() {
         let backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
         const backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
-        const backgroundColorDark = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color.dark"))
+        const backgroundColorDark = this.kernel.setting.getColor(
+            this.kernel.setting.get("keyboard.background.color.dark")
+        )
         return {
             type: "view",
             props: {

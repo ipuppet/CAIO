@@ -28,17 +28,15 @@ class Storage {
     init() {
         // 初始化表
         this.sqlite = $sqlite.open(this.localDb)
-        this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
-        this.sqlite.update("CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
+        this.sqlite.update(
+            "CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
+        )
+        this.sqlite.update(
+            "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
+        )
 
         // 初始化目录
-        const pathList = [
-            this.tempPath,
-            this.iCloudPath,
-            this.imagePath,
-            this.imagePreviewPath,
-            this.imageOriginalPath
-        ]
+        const pathList = [this.tempPath, this.iCloudPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
 
         pathList.forEach(path => {
             if (!$file.isDirectory(path)) {
@@ -59,10 +57,12 @@ class Storage {
         const exportFile = this.tempPath + "/" + this.iCloudZipFileName
         await $archiver.zip({ directory: this.tempPath, dest: exportFile })
         $share.sheet({
-            items: [{
-                name: this.iCloudZipFileName,
-                data: $data({ path: exportFile })
-            }],
+            items: [
+                {
+                    name: this.iCloudZipFileName,
+                    data: $data({ path: exportFile })
+                }
+            ],
             handler: success => {
                 $file.delete(exportFile)
                 callback(success)
@@ -112,12 +112,9 @@ class Storage {
                 // 清除多余文件
                 const dir = obj.path.substring(0, obj.path.lastIndexOf("/"))
                 const filename = obj.path.substring(obj.path.lastIndexOf("/") + 1, obj.path.lastIndexOf("."))
-                for (let val of ($file.list(dir) ?? [])) {
+                for (let val of $file.list(dir) ?? []) {
                     let valName = val.substring(0, val.lastIndexOf("."))
-                    if (
-                        valName === filename
-                        || valName.startsWith(filename + " ")
-                    ) {
+                    if (valName === filename || valName.startsWith(filename + " ")) {
                         $file.delete(obj.path)
                     }
                 }
@@ -127,7 +124,6 @@ class Storage {
                 if (!status) {
                     throw new Error("FILE_WRITE_ERROR: " + obj.path)
                 }
-
             } catch (error) {
                 console.error(error)
                 throw error
@@ -169,9 +165,7 @@ class Storage {
             return
         }
 
-        const syncInfoLocal = $file.exists(this.syncInfoFile)
-            ? JSON.parse($file.read(this.syncInfoFile).string)
-            : {}
+        const syncInfoLocal = $file.exists(this.syncInfoFile) ? JSON.parse($file.read(this.syncInfoFile).string) : {}
         const data = await $file.download(this.iCloudSyncInfoFile)
         const syncInfoICloud = JSON.parse(data.string)
 
@@ -197,9 +191,11 @@ class Storage {
     }
 
     deleteICloudData() {
-        return $file.delete(this.iCloudSyncInfoFile)
-            && $file.delete(this.iCloudDbFile)
-            && $file.delete(this.iCloudImagePath)
+        return (
+            $file.delete(this.iCloudSyncInfoFile) &&
+            $file.delete(this.iCloudDbFile) &&
+            $file.delete(this.iCloudImagePath)
+        )
     }
 
     parse(result) {
