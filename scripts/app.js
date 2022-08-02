@@ -32,8 +32,6 @@ class AppKernel extends Kernel {
         this.clipboard = new Clipboard(this)
         // ActionManager
         this.actionManager = new ActionManager(this)
-        // Editor
-        this.editor = new Editor(this)
     }
 
     deleteConfirm(message, conformAction) {
@@ -381,7 +379,6 @@ class AppUI {
         } else {
             kernel.tabBarController = new TabBarController()
             const clipboardPageController = kernel.clipboard.getPageController()
-            kernel.editor.viewController.setRootPageController(clipboardPageController)
             kernel.tabBarController
                 .setPages({
                     clipboard: clipboardPageController.getPage(),

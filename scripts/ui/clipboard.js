@@ -1,4 +1,5 @@
-const { UIKit, PageController, SearchBar } = require("../libs/easy-jsbox")
+const { UIKit, ViewController, PageController, SearchBar } = require("../libs/easy-jsbox")
+const Editor = require("./components/editor")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -29,6 +30,8 @@ class Clipboard {
         this.fontSize = 16 // 字体大小
         this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
         this.imageContentHeight = 50
+
+        this.viewController = new ViewController()
     }
 
     get savedClipboard() {
@@ -114,7 +117,11 @@ class Clipboard {
     }
 
     setCopied(uuid, indexPath, isUpdateIndicator = true, delay = 0.5) {
-        if (uuid === this.copied.uuid && indexPath.section === this.copied.indexPath?.section && indexPath.row === this.copied.indexPath?.row) {
+        if (
+            uuid === this.copied.uuid &&
+            indexPath.section === this.copied.indexPath?.section &&
+            indexPath.row === this.copied.indexPath?.row
+        ) {
             return
         }
 
@@ -124,7 +131,9 @@ class Clipboard {
         } else {
             if (isUpdateIndicator) {
                 if (this.copied.indexPath) {
-                    this.savedClipboard[this.copied.indexPath.section].rows[this.copied.indexPath.row].copied.hidden = true
+                    this.savedClipboard[this.copied.indexPath.section].rows[
+                        this.copied.indexPath.row
+                    ].copied.hidden = true
                 }
                 this.savedClipboard[indexPath.section].rows[indexPath.row].copied.hidden = false
                 $delay(delay, () => {
@@ -252,7 +261,11 @@ class Clipboard {
                 })
                 // 被复制的元素向下移动了一个单位
                 if (this.copied?.indexPath?.section === 1) {
-                    this.setCopied(this.copied.uuid, $indexPath(this.copied?.indexPath?.section, this.copied?.indexPath?.row + 1), false)
+                    this.setCopied(
+                        this.copied.uuid,
+                        $indexPath(this.copied?.indexPath?.section, this.copied?.indexPath?.row + 1),
+                        false
+                    )
                 }
                 return data
             }
@@ -336,7 +349,9 @@ class Clipboard {
         }
 
         try {
-            indexPath.section === 0 ? this.kernel.storage.updateTextPin(uuid, text) : this.kernel.storage.updateText(uuid, text)
+            indexPath.section === 0
+                ? this.kernel.storage.updateTextPin(uuid, text)
+                : this.kernel.storage.updateText(uuid, text)
             return true
         } catch (error) {
             this.kernel.print(error)
@@ -379,7 +394,9 @@ class Clipboard {
                         prev: this.savedClipboard[section].rows[from - 1].content.info.prev,
                         next: this.savedClipboard[section].rows[from].content.info.next
                     }
-                    section === 0 ? this.kernel.storage.updatePin(fromPrevItem) : this.kernel.storage.update(fromPrevItem)
+                    section === 0
+                        ? this.kernel.storage.updatePin(fromPrevItem)
+                        : this.kernel.storage.update(fromPrevItem)
                     this.savedClipboard[section].rows[from - 1] = this.lineData(fromPrevItem)
                 }
                 if (this.savedClipboard[section].rows[from + 1]) {
@@ -390,7 +407,9 @@ class Clipboard {
                         prev: this.savedClipboard[section].rows[from].content.info.prev,
                         next: this.savedClipboard[section].rows[from + 1].content.info.next
                     }
-                    section === 0 ? this.kernel.storage.updatePin(fromNextItem) : this.kernel.storage.update(fromNextItem)
+                    section === 0
+                        ? this.kernel.storage.updatePin(fromNextItem)
+                        : this.kernel.storage.update(fromNextItem)
                     this.savedClipboard[section].rows[from + 1] = this.lineData(fromNextItem)
                 }
             }
@@ -473,7 +492,10 @@ class Clipboard {
                         ) {
                             // 被复制的行介于 from 和 _to 之间或等于 _to
                             // 从上往下移动则 -1 否则 +1
-                            this.setCopied(copiedUUID, $indexPath(section, from < _to ? copiedIndex.row - 1 : copiedIndex.row + 1))
+                            this.setCopied(
+                                copiedUUID,
+                                $indexPath(section, from < _to ? copiedIndex.row - 1 : copiedIndex.row + 1)
+                            )
                         }
                     }
                 }
@@ -553,25 +575,27 @@ class Clipboard {
     }
 
     edit(text, callback) {
-        this.kernel.editor.push(
-            text,
-            text => {
-                callback(text)
-            },
-            "",
-            [
-                {
-                    symbol: "square.and.arrow.up",
-                    tapped: () => {
-                        if (this.kernel.editor.text) {
-                            $share.sheet(this.kernel.editor.text)
-                        } else {
-                            $ui.warning($l10n("NONE"))
-                        }
+        const editor = new Editor(this.kernel)
+        const navButtons = [
+            {
+                symbol: "square.and.arrow.up",
+                tapped: () => {
+                    if (editor.text) {
+                        $share.sheet(editor.text)
+                    } else {
+                        $ui.warning($l10n("NONE"))
                     }
                 }
-            ]
-        )
+            }
+        ]
+
+        if (this.kernel.isUseJsboxNav) {
+            editor.uikitPush(text, () => callback(editor.text), navButtons)
+        } else {
+            const pageController = editor.getPageController(text, navButtons)
+            this.viewController.setEvent("onPop", () => callback(editor.text))
+            this.viewController.push(pageController)
+        }
     }
 
     getAddTextView() {
@@ -964,8 +988,10 @@ class Clipboard {
                                         },
                                         reorderBegan: indexPath => {
                                             // 用于纠正 rowHeight 高度计算
-                                            this.reorder.content = this.savedClipboard[indexPath.section].rows[indexPath.row].content
-                                            this.reorder.image = this.savedClipboard[indexPath.section].rows[indexPath.row].image
+                                            this.reorder.content =
+                                                this.savedClipboard[indexPath.section].rows[indexPath.row].content
+                                            this.reorder.image =
+                                                this.savedClipboard[indexPath.section].rows[indexPath.row].image
                                             this.reorder.section = indexPath.section
                                             this.reorder.from = indexPath.row
                                             this.reorder.to = undefined
@@ -1003,6 +1029,7 @@ class Clipboard {
             pageController.navigationController.navigationBar.withoutStatusBarHeight()
         }
         pageController.setView(this.getListView())
+
         return pageController
     }
 }
