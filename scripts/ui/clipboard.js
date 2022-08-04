@@ -233,13 +233,8 @@ class Clipboard {
             this.kernel.storage.insert(data)
             if (data.next) {
                 // 更改指针
-                this.kernel.storage.update({
-                    uuid: this.savedClipboard[1].rows[0].content.info.uuid,
-                    text: this.savedClipboard[1].rows[0].content.info.text,
-                    prev: data.uuid,
-                    next: this.savedClipboard[1].rows[0].content.info.next
-                })
                 this.savedClipboard[1].rows[0].content.info.prev = data.uuid
+                this.kernel.storage.update(this.savedClipboard[1].rows[0].content.info)
             }
             this.kernel.storage.commit()
 
@@ -626,10 +621,11 @@ class Clipboard {
                             {
                                 title: $l10n("OK"),
                                 handler: () => {
-                                    this.kernel.storage.backup(() => {
-                                        $file.delete(this.kernel.storage.localDb)
-                                        $addin.restart()
-                                    })
+                                    const loading = UIKit.loading()
+                                    loading.start()
+                                    this.kernel.storage.rebuild()
+                                    loading.end()
+                                    $delay(0.8, () => $addin.restart())
                                 }
                             },
                             { title: $l10n("CANCEL") }

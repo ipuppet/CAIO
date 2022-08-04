@@ -45,6 +45,59 @@ class Storage {
         })
     }
 
+    rebuild() {
+        const db = this.tempPath + "/rebuild.db"
+        $file.delete(db)
+        const storage = new Storage(false, this.fileStorage)
+        storage.localDb = db
+        storage.init()
+
+        const action = (data, flag = true) => {
+            const rebuildData = []
+            data.forEach(item => {
+                const data = {
+                    uuid: item.uuid,
+                    text: item.text,
+                    md5: item.md5,
+                    image: item.image,
+                    prev: null,
+                    next: rebuildData[0]?.uuid ?? null
+                }
+                storage.beginTransaction()
+                try {
+                    if (flag) {
+                        storage.insert(data)
+                    } else {
+                        storage.insertPin(data)
+                    }
+                    if (data.next) {
+                        // 更改指针
+                        rebuildData[0].prev = data.uuid
+                        if (flag) {
+                            storage.update(rebuildData[0])
+                        } else {
+                            storage.updatePin(rebuildData[0])
+                        }
+                    }
+                    storage.commit()
+                    rebuildData.unshift(data)
+                } catch (error) {
+                    storage.rollback()
+                    console.error(error)
+                    throw error
+                }
+            })
+        }
+
+        action(this.all())
+        action(this.allPin(), false)
+
+        $file.copy({
+            src: db,
+            dst: this.localDb
+        })
+    }
+
     clearTemp() {
         $file.delete(this.tempPath)
         $file.mkdir(this.tempPath)

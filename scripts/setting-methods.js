@@ -8,9 +8,11 @@ const TodayActions = require("./ui/components/today-actions")
  */
 
 /**
- * @param {AppKernel} kernel
+ * @type {AppKernel}
  */
-function clipboard(kernel) {
+let kernel
+
+function clipboard() {
     kernel.setting.method.exportClipboard = animate => {
         animate.actionStart()
         kernel.storage.export(success => {
@@ -104,12 +106,36 @@ function clipboard(kernel) {
             }
         })
     }
+
+    kernel.setting.method.rebuildDatabase = animate => {
+        animate.actionStart()
+        const rebuildDatabase = () => {
+            try {
+                kernel.storage.rebuild()
+                animate.actionDone()
+                $delay(0.8, () => $addin.restart())
+            } catch (error) {
+                animate.actionCancel()
+                $ui.alert(error)
+            }
+        }
+        $ui.alert({
+            title: $l10n("REBUILD_DATABASE_ALERT"),
+            actions: [
+                {
+                    title: $l10n("REBUILD"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        rebuildDatabase()
+                    }
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+    }
 }
 
-/**
- * @param {AppKernel} kernel
- */
-function action(kernel) {
+function action() {
     kernel.setting.method.exportAction = animate => {
         animate.actionStart()
         // 备份动作
@@ -180,10 +206,7 @@ function action(kernel) {
     }
 }
 
-/**
- * @param {AppKernel} kernel
- */
-function keyboard(kernel) {
+function keyboard() {
     kernel.setting.method.previewKeyboard = animate => {
         animate.touchHighlightStart()
         const Keyboard = require("./ui/keyboard")
@@ -203,10 +226,7 @@ function keyboard(kernel) {
     }
 }
 
-/**
- * @param {AppKernel} kernel
- */
-function todayWidget(kernel) {
+function todayWidget() {
     kernel.setting.method.previewTodayWidget = animate => {
         animate.touchHighlightStart()
         const Today = require("./ui/today")
@@ -230,7 +250,9 @@ function todayWidget(kernel) {
  * 注入设置中的脚本类型方法
  * @param {AppKernel} kernel
  */
-function settingMethods(kernel) {
+function settingMethods(appKernel) {
+    kernel = appKernel
+
     kernel.setting.method.readme = animate => {
         const content = $file.read("/README.md").string
         const sheet = new Sheet()
@@ -306,13 +328,13 @@ function settingMethods(kernel) {
         })
     }
 
-    clipboard(kernel)
+    clipboard()
 
-    action(kernel)
+    action()
 
-    keyboard(kernel)
+    keyboard()
 
-    todayWidget(kernel)
+    todayWidget()
 }
 
 module.exports = settingMethods

@@ -105,6 +105,20 @@
                         "items": [
                             {
                                 "icon": [
+                                    "arrow.2.circlepath",
+                                    "red"
+                                ],
+                                "title": "REBUILD_DATABASE",
+                                "type": "script",
+                                "key": "clipboard.rebuildDatabase",
+                                "value": "this.method.rebuildDatabase"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
                                     "square.and.arrow.up"
                                 ],
                                 "title": "EXPORT",
