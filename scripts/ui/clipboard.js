@@ -514,7 +514,7 @@ class Clipboard {
             $ui.warning("Already exists")
             return
         }
-        item.next = this.savedClipboard[0].rows[0] ? this.savedClipboard[0].rows[0].content.info.uuid : null
+        item.next = this.savedClipboard[0].rows[0]?.content?.info?.uuid ?? null
         item.prev = null
         // 写入数据库
         this.kernel.storage.beginTransaction()
@@ -522,13 +522,8 @@ class Clipboard {
             this.kernel.storage.insertPin(item)
             if (item.next) {
                 // 更改指针
-                this.kernel.storage.updatePin({
-                    uuid: this.savedClipboard[0].rows[0].content.info.uuid,
-                    text: this.savedClipboard[0].rows[0].content.info.text,
-                    prev: item.uuid,
-                    next: this.savedClipboard[0].rows[0].content.info.next
-                })
                 this.savedClipboard[0].rows[0].content.info.prev = item.uuid
+                this.kernel.storage.updatePin(this.savedClipboard[0].rows[0].content.info)
             }
             this.kernel.storage.commit()
 

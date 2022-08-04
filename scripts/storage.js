@@ -312,7 +312,7 @@ class Storage {
         }
     }
     _update(table, clipboard) {
-        if (Object.keys(clipboard).length !== 4 || typeof clipboard.uuid !== "string") return
+        if (Object.keys(clipboard).length < 4 || typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
             args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
