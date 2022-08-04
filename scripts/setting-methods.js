@@ -204,6 +204,25 @@ function action() {
         kernel.actionManager.importExampleAction()
         animate.actionDone()
     }
+
+    kernel.setting.method.rebuildAction = animate => {
+        animate.actionStart()
+        $ui.alert({
+            title: $l10n("REBUILD_ACTION_DATABASE_ALERT"),
+            actions: [
+                {
+                    title: $l10n("REBUILD"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        $file.delete(kernel.actionManager.userActionPath)
+                        animate.actionDone()
+                        $delay(0.8, () => $addin.restart())
+                    }
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+    }
 }
 
 function keyboard() {

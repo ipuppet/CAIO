@@ -58,6 +58,8 @@
 "DELETE_ERROR" = "删除失败";
 
 "IMPORT_EXAMPLE_ACTIONS" = "导入示例动作";
+"REBUILD_ACTION_DATABASE" = "重建动作库";
+"REBUILD_ACTION_DATABASE_ALERT" = "您确认要重建？";
 "EXPORT" = "导出";
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";

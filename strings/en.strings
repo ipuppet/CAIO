@@ -58,6 +58,8 @@
 "DELETE_ERROR" = "Delete failed";
 
 "IMPORT_EXAMPLE_ACTIONS" = "Import example actions";
+"REBUILD_ACTION_DATABASE" = "Rebuild Action Database";
+"REBUILD_ACTION_DATABASE_ALERT" = "Are you sure you want to rebuild?";
 "EXPORT" = "Export";
 "IMPORT" = "Import";
 "FILE_TYPE_ERROR" = "File type does not match";

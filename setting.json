@@ -142,6 +142,68 @@
             },
             {
                 "icon": [
+                    "bolt.circle",
+                    "#FF6633"
+                ],
+                "type": "child",
+                "title": "ACTIONS",
+                "key": "action",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "bolt.circle",
+                                    "#FF6633"
+                                ],
+                                "title": "IMPORT_EXAMPLE_ACTIONS",
+                                "type": "script",
+                                "key": "action.importExampleAction",
+                                "value": "this.method.importExampleAction"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "arrow.2.circlepath",
+                                    "red"
+                                ],
+                                "title": "REBUILD_ACTION_DATABASE",
+                                "type": "script",
+                                "key": "action.rebuildAction",
+                                "value": "this.method.rebuildAction"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "square.and.arrow.up"
+                                ],
+                                "title": "EXPORT",
+                                "type": "script",
+                                "key": "action.export",
+                                "value": "this.method.exportAction"
+                            },
+                            {
+                                "icon": [
+                                    "square.and.arrow.down",
+                                    "#FFCC33"
+                                ],
+                                "title": "IMPORT",
+                                "type": "script",
+                                "key": "action.import",
+                                "value": "this.method.importAction"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "icon": [
                     "pencil.circle",
                     "#CC0099"
                 ],
@@ -196,54 +258,6 @@
                                 "type": "input",
                                 "key": "editor.code.darkTheme",
                                 "value": "atom-one-dark"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "icon": [
-                    "bolt.circle",
-                    "#FF6633"
-                ],
-                "type": "child",
-                "title": "ACTIONS",
-                "key": "action",
-                "children": [
-                    {
-                        "items": [
-                            {
-                                "icon": [
-                                    "bolt.circle",
-                                    "#FF6633"
-                                ],
-                                "title": "IMPORT_EXAMPLE_ACTIONS",
-                                "type": "script",
-                                "key": "action.importExampleAction",
-                                "value": "this.method.importExampleAction"
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": [
-                                    "square.and.arrow.up"
-                                ],
-                                "title": "EXPORT",
-                                "type": "script",
-                                "key": "action.export",
-                                "value": "this.method.exportAction"
-                            },
-                            {
-                                "icon": [
-                                    "square.and.arrow.down",
-                                    "#FFCC33"
-                                ],
-                                "title": "IMPORT",
-                                "type": "script",
-                                "key": "action.import",
-                                "value": "this.method.importAction"
                             }
                         ]
                     }
