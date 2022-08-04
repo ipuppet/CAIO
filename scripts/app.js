@@ -20,7 +20,7 @@ class AppKernel extends Kernel {
         this.setting = new Setting({ fileStorage: this.fileStorage })
         this.setting.loadConfig()
         // Storage
-        this.storage = new Storage(this.setting.get("clipboard.autoSync"), this.fileStorage)
+        this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
         this.initComponents()
 
         settingMethods(this)

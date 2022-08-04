@@ -1,13 +1,22 @@
 const { compressImage } = require("./libs/easy-jsbox")
 
+/**
+ * @typedef {import("./app").AppKernel} AppKernel
+ */
+
 class Storage {
-    constructor(sync = false, fileStorage) {
+    /**
+     *
+     * @param {boolean} sync
+     * @param {AppKernel} kernel
+     */
+    constructor(sync = false, kernel) {
         this.sync = sync
-        this.fileStorage = fileStorage
+        this.kernel = kernel
         this.dbName = "CAIO.db"
-        this.localDb = `${this.fileStorage.basePath}/${this.dbName}`
-        this.syncInfoFile = `${this.fileStorage.basePath}/sync.json`
-        this.imagePath = `${this.fileStorage.basePath}/image`
+        this.localDb = `${this.kernel.fileStorage.basePath}/${this.dbName}`
+        this.syncInfoFile = `${this.kernel.fileStorage.basePath}/sync.json`
+        this.imagePath = `${this.kernel.fileStorage.basePath}/image`
         this.imageOriginalPath = `${this.imagePath}/original`
         this.imagePreviewPath = `${this.imagePath}/preview`
 
@@ -16,7 +25,7 @@ class Storage {
         this.iCloudDbFile = `${this.iCloudPath}/${this.dbName}`
         this.iCloudImagePath = `${this.iCloudPath}/image`
 
-        this.tempPath = `${this.fileStorage.basePath}/temp`
+        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.tempImagePath = `${this.tempPath}/image`
@@ -48,7 +57,7 @@ class Storage {
     rebuild() {
         const db = this.tempPath + "/rebuild.db"
         $file.delete(db)
-        const storage = new Storage(false, this.fileStorage)
+        const storage = new Storage(false, this.kernel.fileStorage)
         storage.localDb = db
         storage.init()
 
@@ -83,20 +92,31 @@ class Storage {
                     rebuildData.unshift(data)
                 } catch (error) {
                     storage.rollback()
-                    console.error(error)
+                    this.kernel.error(error)
                     throw error
                 }
             })
         }
 
+        let data
         try {
-            action(this.sort(this.all()).reverse())
-        } catch (error) {
+            data = this.all()
+            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+            if (sorted.length > data.length) {
+                throw new Error()
+            }
+            action(sorted.reverse())
+        } catch {
             action(this.all())
         }
         try {
-            action(this.sort(this.allPin()).reverse(), false)
-        } catch (error) {
+            data = this.allPin()
+            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+            if (sorted.length > data.length) {
+                throw new Error()
+            }
+            action(sorted.reverse(), false)
+        } catch {
             action(this.allPin(), false)
         }
 
@@ -166,7 +186,7 @@ class Storage {
                 return
             } else {
                 await $file.write({ data: $data({ string: "" }), path: lock })
-                console.log("file locked: " + obj.path)
+                this.kernel.print("file locked: " + obj.path)
             }
 
             try {
@@ -186,12 +206,12 @@ class Storage {
                     throw new Error("FILE_WRITE_ERROR: " + obj.path)
                 }
             } catch (error) {
-                console.error(error)
+                this.kernel.error(error)
                 throw error
             } finally {
                 // 解除缩
                 await $file.delete(lock)
-                console.log("file unlocked: " + obj.path)
+                this.kernel.print("file unlocked: " + obj.path)
             }
         }
 

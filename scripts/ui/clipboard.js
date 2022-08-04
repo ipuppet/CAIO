@@ -266,7 +266,7 @@ class Clipboard {
             }
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.print(error)
+            this.kernel.error(error)
             $ui.alert(error)
         }
     }
@@ -314,7 +314,7 @@ class Clipboard {
             }
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.print(error)
+            this.kernel.error(error)
             $ui.alert(error)
         }
     }
@@ -349,7 +349,7 @@ class Clipboard {
                 : this.kernel.storage.updateText(uuid, text)
             return true
         } catch (error) {
-            this.kernel.print(error)
+            this.kernel.error(error)
             return false
         }
     }
@@ -497,7 +497,7 @@ class Clipboard {
             }
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.print(error)
+            this.kernel.error(error)
             $ui.alert(error)
         }
     }
@@ -511,7 +511,6 @@ class Clipboard {
         }
         item.next = this.savedClipboard[0].rows[0]?.content?.info?.uuid ?? null
         item.prev = null
-        console.log(this.savedClipboard[0].rows[0]?.content?.info)
         // 写入数据库
         this.kernel.storage.beginTransaction()
         try {
@@ -527,7 +526,7 @@ class Clipboard {
             this.delete(item.uuid, indexPath)
 
             const listUI = $(this.listId)
-            const lineData = listUI.object(indexPath)
+            const lineData = this.lineData(item)
             // 保存到内存中
             this.savedClipboard[0].rows.unshift(lineData)
             this.savedClipboardIndex[item.md5] = 1
@@ -540,7 +539,7 @@ class Clipboard {
             listUI.delete(indexPath)
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.print(error)
+            this.kernel.error(error)
             $ui.alert(error)
         }
     }
@@ -622,7 +621,7 @@ class Clipboard {
                         { title: $l10n("CANCEL") }
                     ]
                 })
-                this.kernel.print(error)
+                this.kernel.error(error)
             }
         }
         this.savedClipboard = [
