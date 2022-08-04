@@ -599,7 +599,7 @@ class Clipboard {
         this.kernel.print("load clipboard")
         const initData = data => {
             try {
-                const sorted = this.kernel.storage.sort(data)
+                const sorted = this.kernel.storage.sort(data, this.kernel.setting.get("clipboard.maxItemLength"))
                 return sorted.map(data => {
                     this.savedClipboardIndex[data.md5] = 1
                     return this.lineData(data, this.copied.uuid === data.uuid)

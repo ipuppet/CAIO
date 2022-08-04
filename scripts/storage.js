@@ -89,8 +89,16 @@ class Storage {
             })
         }
 
-        action(this.all())
-        action(this.allPin(), false)
+        try {
+            action(this.sort(this.all()).reverse())
+        } catch (error) {
+            action(this.all())
+        }
+        try {
+            action(this.sort(this.allPin()).reverse(), false)
+        } catch (error) {
+            action(this.allPin(), false)
+        }
 
         $file.copy({
             src: db,
