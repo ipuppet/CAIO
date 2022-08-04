@@ -57,7 +57,7 @@ class Storage {
     rebuild() {
         const db = this.tempPath + "/rebuild.db"
         $file.delete(db)
-        const storage = new Storage(false, this.kernel.fileStorage)
+        const storage = new Storage(false, this.kernel)
         storage.localDb = db
         storage.init()
 
