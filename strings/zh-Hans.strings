@@ -9,7 +9,6 @@
 "UNIVERSAL_CLIPBOARD" = "通用剪贴板";
 "UNIVERSAL_CLIPBOARD_TIPS" = "用剪贴板允许您在iPhone上复制某些内容，然后使用iCloud将其粘贴到Mac上(反之亦然)。";
 "CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";
-"BACKUP_AND_REBUILD_DATABASE" = "备份并且重建数据库";
 "ADD" = "添加";
 "EDIT" = "编辑";
 "SEARCH" = "搜索";

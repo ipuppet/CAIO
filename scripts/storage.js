@@ -1,13 +1,22 @@
 const { compressImage } = require("./libs/easy-jsbox")
 
+/**
+ * @typedef {import("./app").AppKernel} AppKernel
+ */
+
 class Storage {
-    constructor(sync = false, fileStorage) {
+    /**
+     *
+     * @param {boolean} sync
+     * @param {AppKernel} kernel
+     */
+    constructor(sync = false, kernel) {
         this.sync = sync
-        this.fileStorage = fileStorage
+        this.kernel = kernel
         this.dbName = "CAIO.db"
-        this.localDb = `${this.fileStorage.basePath}/${this.dbName}`
-        this.syncInfoFile = `${this.fileStorage.basePath}/sync.json`
-        this.imagePath = `${this.fileStorage.basePath}/image`
+        this.localDb = `${this.kernel.fileStorage.basePath}/${this.dbName}`
+        this.syncInfoFile = `${this.kernel.fileStorage.basePath}/sync.json`
+        this.imagePath = `${this.kernel.fileStorage.basePath}/image`
         this.imageOriginalPath = `${this.imagePath}/original`
         this.imagePreviewPath = `${this.imagePath}/preview`
 
@@ -16,7 +25,7 @@ class Storage {
         this.iCloudDbFile = `${this.iCloudPath}/${this.dbName}`
         this.iCloudImagePath = `${this.iCloudPath}/image`
 
-        this.tempPath = `${this.fileStorage.basePath}/temp`
+        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.tempImagePath = `${this.tempPath}/image`
@@ -48,7 +57,7 @@ class Storage {
     rebuild() {
         const db = this.tempPath + "/rebuild.db"
         $file.delete(db)
-        const storage = new Storage(false, this.fileStorage)
+        const storage = new Storage(false, this.kernel.fileStorage)
         storage.localDb = db
         storage.init()
 
@@ -83,14 +92,33 @@ class Storage {
                     rebuildData.unshift(data)
                 } catch (error) {
                     storage.rollback()
-                    console.error(error)
+                    this.kernel.error(error)
                     throw error
                 }
             })
         }
 
-        action(this.all())
-        action(this.allPin(), false)
+        let data
+        try {
+            data = this.all()
+            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+            if (sorted.length > data.length) {
+                throw new Error()
+            }
+            action(sorted.reverse())
+        } catch {
+            action(this.all())
+        }
+        try {
+            data = this.allPin()
+            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+            if (sorted.length > data.length) {
+                throw new Error()
+            }
+            action(sorted.reverse(), false)
+        } catch {
+            action(this.allPin(), false)
+        }
 
         $file.copy({
             src: db,
@@ -158,7 +186,7 @@ class Storage {
                 return
             } else {
                 await $file.write({ data: $data({ string: "" }), path: lock })
-                console.log("file locked: " + obj.path)
+                this.kernel.print("file locked: " + obj.path)
             }
 
             try {
@@ -178,12 +206,12 @@ class Storage {
                     throw new Error("FILE_WRITE_ERROR: " + obj.path)
                 }
             } catch (error) {
-                console.error(error)
+                this.kernel.error(error)
                 throw error
             } finally {
                 // 解除缩
                 await $file.delete(lock)
-                console.log("file unlocked: " + obj.path)
+                this.kernel.print("file unlocked: " + obj.path)
             }
         }
 
@@ -249,6 +277,39 @@ class Storage {
             $file.delete(this.iCloudDbFile) &&
             $file.delete(this.iCloudImagePath)
         )
+    }
+
+    sort(data, maxLoop = 9000) {
+        const dataObj = {}
+        let length = 0
+        let header = null
+        data.forEach(item => {
+            // 构建结构
+            dataObj[item.uuid] = item
+            // 寻找头节点
+            if (item.prev === null) {
+                header = item.uuid
+            }
+            // 统计长度
+            length++
+        })
+        // 排序
+        const sorted = []
+        if (length > 0) {
+            try {
+                let p = dataObj[header]
+                while (p.next !== null && maxLoop > 0) {
+                    maxLoop--
+                    sorted.push(p)
+                    p = dataObj[p.next]
+                }
+                sorted.push(p) // 将最后一个元素推入
+            } catch (error) {
+                throw "Unable to sort: " + error
+            }
+        }
+
+        return sorted
     }
 
     parse(result) {
