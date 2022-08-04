@@ -511,6 +511,7 @@ class Clipboard {
         }
         item.next = this.savedClipboard[0].rows[0]?.content?.info?.uuid ?? null
         item.prev = null
+        console.log(this.savedClipboard[0].rows[0]?.content?.info)
         // 写入数据库
         this.kernel.storage.beginTransaction()
         try {
@@ -596,62 +597,40 @@ class Clipboard {
 
     loadSavedClipboard() {
         this.kernel.print("load clipboard")
-        const initData = (data, section) => {
-            const dataObj = {}
-            let length = 0
-            let header = null
-            data.forEach(item => {
-                // 构建结构
-                dataObj[item.uuid] = item
-                // 寻找头节点
-                if (item.prev === null) {
-                    header = item.uuid
-                }
-                // 统计长度
-                length++
-            })
-            // 排序
-            const sorted = []
-            if (length > 0) {
-                let p = dataObj[header]
-                if (p === undefined) {
-                    $ui.alert({
-                        title: $l10n("BACKUP_AND_REBUILD_DATABASE"),
-                        actions: [
-                            {
-                                title: $l10n("OK"),
-                                handler: () => {
-                                    const loading = UIKit.loading()
-                                    loading.start()
-                                    this.kernel.storage.rebuild()
-                                    loading.end()
-                                    $delay(0.8, () => $addin.restart())
-                                }
-                            },
-                            { title: $l10n("CANCEL") }
-                        ]
-                    })
-                    throw $l10n("CLIPBOARD_STRUCTURE_ERROR")
-                }
-                let maxLoop = this.kernel.setting.get("clipboard.maxItemLength") // 控制显示行数
-                while (p.next !== null && maxLoop > 0) {
-                    maxLoop--
-                    sorted.push(p)
-                    p = dataObj[p.next]
-                }
-                sorted.push(p) // 将最后一个元素推入
+        const initData = data => {
+            try {
+                const sorted = this.kernel.storage.sort(data)
+                return sorted.map(data => {
+                    this.savedClipboardIndex[data.md5] = 1
+                    return this.lineData(data, this.copied.uuid === data.uuid)
+                })
+            } catch (error) {
+                $ui.alert({
+                    title: $l10n("REBUILD_DATABASE"),
+                    message: $l10n("CLIPBOARD_STRUCTURE_ERROR"),
+                    actions: [
+                        {
+                            title: $l10n("OK"),
+                            handler: () => {
+                                const loading = UIKit.loading()
+                                loading.start()
+                                this.kernel.storage.rebuild()
+                                loading.end()
+                                $delay(0.8, () => $addin.restart())
+                            }
+                        },
+                        { title: $l10n("CANCEL") }
+                    ]
+                })
+                this.kernel.print(error)
             }
-            return sorted.map(data => {
-                this.savedClipboardIndex[data.md5] = 1
-                return this.lineData(data, this.copied.uuid === data.uuid)
-            })
         }
         this.savedClipboard = [
             {
-                rows: initData(this.kernel.storage.allPin(), 0) ?? []
+                rows: initData(this.kernel.storage.allPin()) ?? []
             },
             {
-                rows: initData(this.kernel.storage.all(), 1) ?? []
+                rows: initData(this.kernel.storage.all()) ?? []
             }
         ]
     }

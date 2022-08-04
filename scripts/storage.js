@@ -251,6 +251,39 @@ class Storage {
         )
     }
 
+    sort(data, maxLoop = 9000) {
+        const dataObj = {}
+        let length = 0
+        let header = null
+        data.forEach(item => {
+            // 构建结构
+            dataObj[item.uuid] = item
+            // 寻找头节点
+            if (item.prev === null) {
+                header = item.uuid
+            }
+            // 统计长度
+            length++
+        })
+        // 排序
+        const sorted = []
+        if (length > 0) {
+            try {
+                let p = dataObj[header]
+                while (p.next !== null && maxLoop > 0) {
+                    maxLoop--
+                    sorted.push(p)
+                    p = dataObj[p.next]
+                }
+                sorted.push(p) // 将最后一个元素推入
+            } catch (error) {
+                throw "Unable to sort: " + error
+            }
+        }
+
+        return sorted
+    }
+
     parse(result) {
         if (result.error !== null) {
             throw result.error
