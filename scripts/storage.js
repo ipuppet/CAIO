@@ -28,22 +28,73 @@ class Storage {
     init() {
         // 初始化表
         this.sqlite = $sqlite.open(this.localDb)
-        this.sqlite.update("CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
-        this.sqlite.update("CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)")
+        this.sqlite.update(
+            "CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
+        )
+        this.sqlite.update(
+            "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
+        )
 
         // 初始化目录
-        const pathList = [
-            this.tempPath,
-            this.iCloudPath,
-            this.imagePath,
-            this.imagePreviewPath,
-            this.imageOriginalPath
-        ]
+        const pathList = [this.tempPath, this.iCloudPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
 
         pathList.forEach(path => {
             if (!$file.isDirectory(path)) {
                 $file.mkdir(path)
             }
+        })
+    }
+
+    rebuild() {
+        const db = this.tempPath + "/rebuild.db"
+        $file.delete(db)
+        const storage = new Storage(false, this.fileStorage)
+        storage.localDb = db
+        storage.init()
+
+        const action = (data, flag = true) => {
+            const rebuildData = []
+            data.forEach(item => {
+                const data = {
+                    uuid: item.uuid,
+                    text: item.text,
+                    md5: item.md5,
+                    image: item.image,
+                    prev: null,
+                    next: rebuildData[0]?.uuid ?? null
+                }
+                storage.beginTransaction()
+                try {
+                    if (flag) {
+                        storage.insert(data)
+                    } else {
+                        storage.insertPin(data)
+                    }
+                    if (data.next) {
+                        // 更改指针
+                        rebuildData[0].prev = data.uuid
+                        if (flag) {
+                            storage.update(rebuildData[0])
+                        } else {
+                            storage.updatePin(rebuildData[0])
+                        }
+                    }
+                    storage.commit()
+                    rebuildData.unshift(data)
+                } catch (error) {
+                    storage.rollback()
+                    console.error(error)
+                    throw error
+                }
+            })
+        }
+
+        action(this.all())
+        action(this.allPin(), false)
+
+        $file.copy({
+            src: db,
+            dst: this.localDb
         })
     }
 
@@ -59,10 +110,12 @@ class Storage {
         const exportFile = this.tempPath + "/" + this.iCloudZipFileName
         await $archiver.zip({ directory: this.tempPath, dest: exportFile })
         $share.sheet({
-            items: [{
-                name: this.iCloudZipFileName,
-                data: $data({ path: exportFile })
-            }],
+            items: [
+                {
+                    name: this.iCloudZipFileName,
+                    data: $data({ path: exportFile })
+                }
+            ],
             handler: success => {
                 $file.delete(exportFile)
                 callback(success)
@@ -112,12 +165,9 @@ class Storage {
                 // 清除多余文件
                 const dir = obj.path.substring(0, obj.path.lastIndexOf("/"))
                 const filename = obj.path.substring(obj.path.lastIndexOf("/") + 1, obj.path.lastIndexOf("."))
-                for (let val of ($file.list(dir) ?? [])) {
+                for (let val of $file.list(dir) ?? []) {
                     let valName = val.substring(0, val.lastIndexOf("."))
-                    if (
-                        valName === filename
-                        || valName.startsWith(filename + " ")
-                    ) {
+                    if (valName === filename || valName.startsWith(filename + " ")) {
                         $file.delete(obj.path)
                     }
                 }
@@ -127,7 +177,6 @@ class Storage {
                 if (!status) {
                     throw new Error("FILE_WRITE_ERROR: " + obj.path)
                 }
-
             } catch (error) {
                 console.error(error)
                 throw error
@@ -169,9 +218,7 @@ class Storage {
             return
         }
 
-        const syncInfoLocal = $file.exists(this.syncInfoFile)
-            ? JSON.parse($file.read(this.syncInfoFile).string)
-            : {}
+        const syncInfoLocal = $file.exists(this.syncInfoFile) ? JSON.parse($file.read(this.syncInfoFile).string) : {}
         const data = await $file.download(this.iCloudSyncInfoFile)
         const syncInfoICloud = JSON.parse(data.string)
 
@@ -197,9 +244,11 @@ class Storage {
     }
 
     deleteICloudData() {
-        return $file.delete(this.iCloudSyncInfoFile)
-            && $file.delete(this.iCloudDbFile)
-            && $file.delete(this.iCloudImagePath)
+        return (
+            $file.delete(this.iCloudSyncInfoFile) &&
+            $file.delete(this.iCloudDbFile) &&
+            $file.delete(this.iCloudImagePath)
+        )
     }
 
     parse(result) {
@@ -316,7 +365,7 @@ class Storage {
         }
     }
     _update(table, clipboard) {
-        if (Object.keys(clipboard).length !== 4 || typeof clipboard.uuid !== "string") return
+        if (Object.keys(clipboard).length < 4 || typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
             args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]

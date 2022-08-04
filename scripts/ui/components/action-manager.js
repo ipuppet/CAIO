@@ -1,4 +1,5 @@
 const { Matrix, Setting, PageController, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
+const Editor = require("./editor")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -249,13 +250,19 @@ class ActionManager {
                 if (key === "type") {
                     return actionTypesIndex[this.editingActionInfo.type]
                 }
-                if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key)) return this.editingActionInfo[key]
+                if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key))
+                    return this.editingActionInfo[key]
                 else return _default
             }
         })
         const nameInput = SettingUI.createInput("name", ["pencil.circle", "#FF3366"], $l10n("NAME"))
         const createColor = SettingUI.createColor("color", ["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
-        const iconInput = SettingUI.createIcon("icon", ["star.circle", "#FF9933"], $l10n("ICON"), this.editingActionInfo.color)
+        const iconInput = SettingUI.createIcon(
+            "icon",
+            ["star.circle", "#FF9933"],
+            $l10n("ICON"),
+            this.editingActionInfo.color
+        )
         const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, true)
         const description = {
             type: "view",
@@ -323,7 +330,8 @@ class ActionManager {
     }
 
     editActionMainJs(text = "", info) {
-        this.kernel.editor.pageSheet(
+        const editor = new Editor(this.kernel)
+        editor.pageSheet(
             text,
             content => {
                 this.saveMainJs(info, content)

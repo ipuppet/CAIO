@@ -1,4 +1,4 @@
-const { UIKit, NavigationItem, ViewController, PageController, Sheet } = require("../../libs/easy-jsbox")
+const { UIKit, NavigationItem, PageController, Sheet } = require("../../libs/easy-jsbox")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -11,7 +11,6 @@ class Editor {
     constructor(kernel) {
         this.kernel = kernel
         this.id = "editor"
-        this.viewController = new ViewController()
         // 原始数据
         this.originalContent = undefined
     }
@@ -54,7 +53,10 @@ class Editor {
                             {
                                 didSelect: (sender, indexPath, data) => {
                                     popover.dismiss()
-                                    const action = this.kernel.actionManager.getActionHandler(data.info.info.type, data.info.info.dir)
+                                    const action = this.kernel.actionManager.getActionHandler(
+                                        data.info.info.type,
+                                        data.info.info.dir
+                                    )
                                     setTimeout(() => action(content), 500)
                                 }
                             }
@@ -114,36 +116,45 @@ class Editor {
      *
      * @param {*} text
      * @param {*} callback
-     * @param {*} title
-     * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 this.kernel.editor.text
+     * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 editor.text
      * @param {*} type
      */
-    push(text = "", callback, title, navButtons = [], type = "text") {
+    uikitPush(text = "", callback, navButtons = [], type = "text") {
         this.text = text
         navButtons.unshift(this.getActionButton())
-        if (this.kernel.isUseJsboxNav) {
-            UIKit.push({
-                title: title,
-                navButtons: navButtons.map(button => {
-                    button.handler = button.tapped
-                    button.tapped = undefined
-                    return button
-                }),
-                views: [this.getView(type)],
-                // dealloc: () => callback(this.text),
-                disappeared: () => callback(this.text)
-            })
-        } else {
-            const pageController = new PageController()
-            pageController.navigationController.navigationBar.contentViewHeightOffset = 0
-            pageController
-                .setView(this.getView(type))
-                .navigationItem.setTitle(title)
-                .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-                .setRightButtons(navButtons)
-            this.viewController.setEvent("onPop", () => callback(this.text))
-            this.viewController.push(pageController)
-        }
+
+        UIKit.push({
+            title: "",
+            navButtons: navButtons.map(button => {
+                button.handler = button.tapped
+                button.tapped = undefined
+                return button
+            }),
+            views: [this.getView(type)],
+            // dealloc: () => callback(this.text),
+            disappeared: () => callback(this.text)
+        })
+    }
+
+    /**
+     *
+     * @param {*} text
+     * @param {*} callback
+     * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 editor.text
+     * @param {*} type
+     */
+    getPageController(text = "", navButtons = [], type = "text") {
+        this.text = text
+        navButtons.unshift(this.getActionButton())
+
+        const pageController = new PageController()
+        pageController.navigationController.navigationBar.contentViewHeightOffset = 0
+        pageController.setView(this.getView(type))
+        pageController.navigationItem
+            .setTitle("")
+            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
+            .setRightButtons(navButtons)
+        return pageController
     }
 }
 

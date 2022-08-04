@@ -80,7 +80,13 @@ function objectEqual(a, b) {
 
         let propA = a[propName]
         let propB = b[propName]
-        if (typeof propA === "object") {
+        if (Array.isArray(propA)) {
+            for (let i = 0; i < propA.length; i++) {
+                if (!objectEqual(propA[i], propB[i])) {
+                    return false
+                }
+            }
+        } else if (typeof propA === "object") {
             return objectEqual(propA, propB)
         } else if (propA !== propB) {
             return false
@@ -307,8 +313,11 @@ class UIKit {
         return $objc("UIWindow").$keyWindow().jsValue().size
     }
 
-    static NavigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue().frame.height
-    static NavigationBarLargeTitleHeight = $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height + UIKit.NavigationBarNormalHeight
+    static NavigationBarNormalHeight = $objc("UINavigationController").invoke("alloc.init").$navigationBar().jsValue()
+        .frame.height
+    static NavigationBarLargeTitleHeight =
+        $objc("UITabBarController").invoke("alloc.init").$tabBar().jsValue().frame.height +
+        UIKit.NavigationBarNormalHeight
 
     /**
      * 判断是否是分屏模式
@@ -330,8 +339,48 @@ class UIKit {
         return UIKit.statusBarOrientation === 3 || UIKit.statusBarOrientation === 4
     }
 
+    static loading() {
+        const loading = $ui.create(
+            UIKit.blurBox(
+                {
+                    cornerRadius: 15
+                },
+                [
+                    {
+                        type: "spinner",
+                        props: {
+                            loading: true,
+                            style: 0
+                        },
+                        layout: (make, view) => {
+                            make.size.equalTo(view.prev)
+                            make.center.equalTo(view.super)
+                        }
+                    }
+                ]
+            )
+        )
+
+        return {
+            start: () => {
+                $ui.controller.view.insertAtIndex(loading, 0)
+                loading.layout((make, view) => {
+                    make.center.equalTo(view.super)
+                    const width = Math.min(UIKit.windowSize.width * 0.6, 300)
+                    make.size.equalTo($size(width, width))
+                })
+                loading.moveToFront()
+            },
+            end: () => {
+                loading.remove()
+            }
+        }
+    }
+
     static defaultBackgroundColor(type) {
-        return UIKit.scrollViewList.indexOf(type) > -1 ? UIKit.scrollViewBackgroundColor : UIKit.primaryViewBackgroundColor
+        return UIKit.scrollViewList.indexOf(type) > -1
+            ? UIKit.scrollViewBackgroundColor
+            : UIKit.primaryViewBackgroundColor
     }
 
     static separatorLine(props = {}, align = UIKit.align.bottom) {
@@ -494,7 +543,10 @@ class Matrix extends View {
             this.#templateHiddenStatus = {}
             for (let i = 0; i < this.props.template.views.length; i++) {
                 // 未定义 id 以及 hidden 的模板默认 hidden 设置为 false
-                if (this.props.template.views[i].props.id === undefined && this.props.template.views[i].props.hidden === undefined) {
+                if (
+                    this.props.template.views[i].props.id === undefined &&
+                    this.props.template.views[i].props.hidden === undefined
+                ) {
                     this.#templateHiddenStatus[this.templateIdByIndex(i)] = false
                 }
                 // 模板中声明 hidden 的值，在数据中将会成为默认值
@@ -665,7 +717,10 @@ class Matrix extends View {
             }
             const columns = this.props.columns ?? 2
             const spacing = this.props.spacing ?? 15
-            const width = this.props.itemWidth ?? this.props.itemSize?.width ?? (UIKit.windowSize.width - spacing * (columns + 1)) / columns
+            const width =
+                this.props.itemWidth ??
+                this.props.itemSize?.width ??
+                (UIKit.windowSize.width - spacing * (columns + 1)) / columns
             const height = this.props.itemHeight ?? this.props.itemSize?.height ?? 100
             return $size(width, height)
         })
@@ -924,7 +979,11 @@ class BarButtonItem extends View {
                                     hidden: this.symbol === undefined,
                                     tintColor: UIKit.textColor
                                 },
-                                this.symbol === undefined ? {} : typeof this.symbol === "string" ? { symbol: this.symbol } : { data: this.symbol.png }
+                                this.symbol === undefined
+                                    ? {}
+                                    : typeof this.symbol === "string"
+                                    ? { symbol: this.symbol }
+                                    : { data: this.symbol.png }
                             ),
                             layout: (make, view) => {
                                 make.center.equalTo(view.super)
@@ -1123,7 +1182,9 @@ class SearchBarController extends Controller {
         this.updateSelector()
 
         if (contentOffset >= 0 && contentOffset <= this.searchBar.height) {
-            scrollToOffset($point(0, contentOffset >= this.searchBar.height / 2 ? this.searchBar.height - zeroOffset : -zeroOffset))
+            scrollToOffset(
+                $point(0, contentOffset >= this.searchBar.height / 2 ? this.searchBar.height - zeroOffset : -zeroOffset)
+            )
         }
     }
 }
@@ -1198,7 +1259,9 @@ class NavigationItem {
      * @returns {this}
      */
     addRightButton({ symbol, title, tapped, menu, events }) {
-        this.rightButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }).definition)
+        this.rightButtons.push(
+            BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.right }).definition
+        )
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -1209,7 +1272,9 @@ class NavigationItem {
      * @returns {this}
      */
     addLeftButton({ symbol, title, tapped, menu, events }) {
-        this.leftButtons.push(BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }).definition)
+        this.leftButtons.push(
+            BarButtonItem.creat({ symbol, title, tapped, menu, events, align: UIKit.align.left }).definition
+        )
         if (!this.hasbutton) this.hasbutton = true
         return this
     }
@@ -1307,7 +1372,8 @@ class NavigationBar extends View {
      * 页面大标题
      */
     getLargeTitleView() {
-        return this.prefersLargeTitles && this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever
+        return this.prefersLargeTitles &&
+            this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever
             ? {
                   type: "label",
                   props: {
@@ -1350,9 +1416,12 @@ class NavigationBar extends View {
                 : {}
         }
         const rightButtonView = getButtonView(this.navigationItem.rightButtons, UIKit.align.right)
-        const leftButtonView = this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
+        const leftButtonView =
+            this.navigationItem.popButtonView ?? getButtonView(this.navigationItem.leftButtons, UIKit.align.left)
         const isHideBackground = this.prefersLargeTitles
-        const isHideTitle = !this.prefersLargeTitles || this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
+        const isHideTitle =
+            !this.prefersLargeTitles ||
+            this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
         return {
             // 顶部 bar
             type: "view",
@@ -1489,7 +1558,9 @@ class NavigationController extends Controller {
         this.selector.largeTitleView.updateLayout((make, view) => {
             if (this.navigationBar.navigationBarNormalHeight - contentOffset > 0) {
                 // 标题上移致隐藏后停止移动
-                make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBar.navigationBarNormalHeight - contentOffset)
+                make.top
+                    .equalTo(view.super.safeAreaTop)
+                    .offset(this.navigationBar.navigationBarNormalHeight - contentOffset)
             } else {
                 make.top.equalTo(view.super.safeAreaTop).offset(0)
             }
@@ -1523,7 +1594,10 @@ class NavigationController extends Controller {
             }
         }
 
-        let trigger = this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever ? 5 : this.largeTitleScrollTrigger
+        let trigger =
+            this.navigationBar.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever
+                ? 5
+                : this.largeTitleScrollTrigger
         if (contentOffset > trigger) {
             // 隐藏遮罩
             this.selector.largeTitleMaskView.hidden = true
@@ -1581,7 +1655,12 @@ class NavigationController extends Controller {
             let titleViewHeight = 0
             if (!this.navigationBar?.navigationItem?.isPinTitleView) {
                 // titleView didEndDragging
-                this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(contentOffset, decelerate, scrollToOffset, zeroOffset)
+                this.navigationBar?.navigationItem?.titleView?.controller.didEndDragging(
+                    contentOffset,
+                    decelerate,
+                    scrollToOffset,
+                    zeroOffset
+                )
                 titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
                 contentOffset -= titleViewHeight
             }
@@ -1760,7 +1839,10 @@ class PageController extends Controller {
                 if (this.navigationItem.titleView) {
                     topOffset += this.navigationItem.titleView.topOffset + this.navigationItem.titleView.bottomOffset
                 }
-                if ((!UIKit.isHorizontal || UIKit.isLargeScreen) && this.navigationController.navigationBar.addStatusBarHeight) {
+                if (
+                    (!UIKit.isHorizontal || UIKit.isLargeScreen) &&
+                    this.navigationController.navigationBar.addStatusBarHeight
+                ) {
                     topOffset += UIKit.statusBarHeight
                 }
                 make.top.equalTo(this.navigationController.navigationBar.navigationBarNormalHeight + topOffset)
@@ -1793,7 +1875,9 @@ class PageController extends Controller {
             // layout
             this.view.layout = (make, view) => {
                 if (this.view.props.stickyHeader) {
-                    make.top.equalTo(view.super.safeArea).offset(this.navigationController.navigationBar.navigationBarNormalHeight)
+                    make.top
+                        .equalTo(view.super.safeArea)
+                        .offset(this.navigationController.navigationBar.navigationBarNormalHeight)
                 } else {
                     make.top.equalTo(view.super)
                 }
@@ -1825,7 +1909,12 @@ class PageController extends Controller {
                         contentOffset += UIKit.statusBarHeight
                         zeroOffset = UIKit.statusBarHeight
                     }
-                    this.navigationController.didEndDragging(contentOffset, decelerate, (...args) => sender.scrollToOffset(...args), zeroOffset)
+                    this.navigationController.didEndDragging(
+                        contentOffset,
+                        decelerate,
+                        (...args) => sender.scrollToOffset(...args),
+                        zeroOffset
+                    )
                 })
                 .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
         }
@@ -1865,7 +1954,9 @@ class PageController extends Controller {
                         make.top.equalTo(view.prev.bottom)
                         make.width.equalTo(view.super)
                         make.height.equalTo(
-                            this.navigationItem.titleView.topOffset + this.navigationItem.titleView.height + this.navigationItem.titleView.bottomOffset
+                            this.navigationItem.titleView.topOffset +
+                                this.navigationItem.titleView.height +
+                                this.navigationItem.titleView.bottomOffset
                         )
                     }
                 })
@@ -2115,7 +2206,12 @@ class TabBarController extends Controller {
                 // indicatorInsets
                 if (view.views[0].props.indicatorInsets) {
                     const old = view.views[0].props.indicatorInsets
-                    view.views[0].props.indicatorInsets = $insets(old.top, old.left, old.bottom + this.contentOffset, old.right)
+                    view.views[0].props.indicatorInsets = $insets(
+                        old.top,
+                        old.left,
+                        old.bottom + this.contentOffset,
+                        old.right
+                    )
                 } else {
                     view.views[0].props.indicatorInsets = $insets(0, 0, 0, this.contentOffset)
                 }
@@ -3295,7 +3391,9 @@ class Setting extends Controller {
                         touchHighlightEnd: () => this.#touchHighlightEnd(id) // 被点击的一行颜色恢复
                     }
                     // 执行代码
-                    if (script.startsWith("this")) {
+                    if (typeof script === "function") {
+                        script(animate)
+                    } else if (script.startsWith("this")) {
                         // 传递 animate 对象
                         eval(`(()=>{return ${script}(animate)})()`)
                     } else {
@@ -3307,9 +3405,20 @@ class Setting extends Controller {
         }
     }
 
-    createTab(key, icon, title, items = [], values = []) {
+    createTab(key, icon, title, items, values) {
+        if (typeof items === "string") {
+            items = eval(`(()=>{return ${items}()})()`)
+        } else if (typeof items === "function") {
+            items = items()
+        }
+        if (typeof values === "string") {
+            values = eval(`(()=>{return ${values}()})()`)
+        } else if (typeof values === "function") {
+            values = values()
+        }
+
         const id = this.getId(key)
-        const isCustomizeValues = items.length > 0 && values.length === items.length
+        const isCustomizeValues = items?.length > 0 && values?.length === items?.length
         return {
             type: "view",
             props: {
@@ -3321,7 +3430,7 @@ class Setting extends Controller {
                 {
                     type: "tab",
                     props: {
-                        items: items,
+                        items: items ?? [],
                         index: isCustomizeValues ? values.indexOf(this.get(key)) : this.get(key),
                         dynamicWidth: true
                     },
@@ -3344,10 +3453,39 @@ class Setting extends Controller {
         }
     }
 
-    createMenu(key, icon, title, items = [], values = []) {
+    createMenu(key, icon, title, items, values) {
         const id = this.getId(key)
         const labelId = `${id}-label`
-        const isCustomizeValues = items.length > 0 && values.length === items.length
+
+        // 数据生成函数
+        const getItems = () => {
+            let res
+            if (typeof items === "string") {
+                res = eval(`(()=>{return ${items}()})()`)
+            } else if (typeof items === "function") {
+                res = items()
+            } else {
+                res = items ?? []
+            }
+            return res
+        }
+        const getValues = () => {
+            let res
+            if (typeof values === "string") {
+                res = eval(`(()=>{return ${values}()})()`)
+            } else if (typeof values === "function") {
+                res = values()
+            } else {
+                res = values
+            }
+            return res
+        }
+
+        const tmpItems = getItems()
+        const tmpValues = getValues()
+
+        const isCustomizeValues = tmpItems?.length > 0 && tmpValues?.length === tmpItems?.length
+
         return {
             type: "view",
             props: {
@@ -3362,7 +3500,9 @@ class Setting extends Controller {
                         {
                             type: "label",
                             props: {
-                                text: isCustomizeValues ? items[values.indexOf(this.get(key))] : items[this.get(key)],
+                                text: isCustomizeValues
+                                    ? tmpItems[tmpValues.indexOf(this.get(key))]
+                                    : tmpItems[this.get(key)],
                                 color: $color("secondaryText"),
                                 id: labelId
                             },
@@ -3381,11 +3521,13 @@ class Setting extends Controller {
             ],
             events: {
                 tapped: () => {
+                    const tmpItems = getItems()
+                    const tmpValues = getValues()
                     $ui.menu({
-                        items: items,
+                        items: tmpItems,
                         handler: (title, idx) => {
                             if (isCustomizeValues) {
-                                this.set(key, values[idx])
+                                this.set(key, tmpValues[idx])
                             } else {
                                 this.set(key, idx)
                             }
@@ -3435,7 +3577,12 @@ class Setting extends Controller {
                                 tapped: async () => {
                                     const color = await $picker.color({ color: this.getColor(this.get(key)) })
                                     this.set(key, color.components)
-                                    $(colorId).bgcolor = $rgba(color.components.red, color.components.green, color.components.blue, color.components.alpha)
+                                    $(colorId).bgcolor = $rgba(
+                                        color.components.red,
+                                        color.components.green,
+                                        color.components.blue,
+                                        color.components.alpha
+                                    )
                                 }
                             },
                             layout: (make, view) => {
@@ -3774,7 +3921,11 @@ class Setting extends Controller {
                                             }
                                             // 控制压缩图片大小
                                             const image = compressImage(resp.data.image)
-                                            this.fileStorage.write(this.imagePath, this.getImageName(key, true), image.jpg(0.8))
+                                            this.fileStorage.write(
+                                                this.imagePath,
+                                                this.getImageName(key, true),
+                                                image.jpg(0.8)
+                                            )
                                             this.fileStorage.write(this.imagePath, this.getImageName(key), resp.data)
                                             $(imageId).image = image
                                             $ui.success($l10n("SUCCESS"))
@@ -3834,21 +3985,9 @@ class Setting extends Controller {
                         row = this.createScript(item.key, item.icon, item.title, value)
                         break
                     case "tab":
-                        if (typeof item.items === "string") {
-                            item.items = eval(`(()=>{return ${item.items}()})()`)
-                        }
-                        if (typeof item.values === "string") {
-                            item.values = eval(`(()=>{return ${item.values}()})()`)
-                        }
                         row = this.createTab(item.key, item.icon, item.title, item.items, item.values)
                         break
                     case "menu":
-                        if (typeof item.items === "string") {
-                            item.items = eval(`(()=>{return ${item.items}()})()`)
-                        }
-                        if (typeof item.values === "string") {
-                            item.values = eval(`(()=>{return ${item.values}()})()`)
-                        }
                         row = this.createMenu(item.key, item.icon, item.title, item.items, item.values)
                         break
                     case "color":
@@ -3920,6 +4059,7 @@ module.exports = {
     VERSION,
     versionCompare,
     compressImage,
+    objectEqual,
     // class
     View,
     UIKit,
