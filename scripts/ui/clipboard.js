@@ -6,18 +6,12 @@ const Editor = require("./components/editor")
  */
 
 class Clipboard {
-    copied = {}
+    copied = $cache.get("clipboard.copied") ?? {}
     #singleLine = false
 
     reorder = {}
     #savedClipboard = []
     savedClipboardIndex = {}
-
-    static singleLineHeight = $text.sizeThatFits({
-        text: "text",
-        width: $device.info.screen.width,
-        font: $font(this.fontSize)
-    }).height
 
     /**
      * @param {AppKernel} kernel
@@ -45,9 +39,17 @@ class Clipboard {
         this.#savedClipboard = savedClipboard
     }
 
+    getSingleLineHeight() {
+        return $text.sizeThatFits({
+            text: "A",
+            width: this.fontSize,
+            font: $font(this.fontSize)
+        }).height
+    }
+
     setSingleLine() {
         // 图片高度与文字一致
-        this.imageContentHeight = Clipboard.singleLineHeight
+        this.imageContentHeight = this.getSingleLineHeight()
         this.#singleLine = true
     }
 
@@ -71,7 +73,7 @@ class Clipboard {
     /**
      * list view
      */
-    ready() {
+    listReady() {
         // check url scheme
         $delay(0.5, () => {
             if ($context.query["copy"]) {
@@ -109,23 +111,43 @@ class Clipboard {
                 // 在应用恢复响应后调用
                 $delay(0.5, () => {
                     this.loadSavedClipboard()
-                    $(this.listId).data = this.savedClipboard
+                    this.updateList()
                     this.readClipboard()
                 })
             }
         })
     }
 
-    setCopied(uuid, indexPath, isUpdateIndicator = true, delay = 0.5) {
+    updateList() {
+        // 直接重置数据，解决小绿点滚动到屏幕外后消失问题
+        $(this.listId).data = this.savedClipboard
+    }
+
+    /**
+     *
+     * @param {string} uuid
+     * @param {$indexPath} indexPath
+     * @param {boolean} isUpdateIndicator
+     * @returns
+     */
+    setCopied(uuid, indexPath, isUpdateIndicator = true) {
         if (
             uuid === this.copied.uuid &&
-            indexPath.section === this.copied.indexPath?.section &&
-            indexPath.row === this.copied.indexPath?.row
+            indexPath?.section === this.copied.indexPath?.section &&
+            indexPath?.row === this.copied.indexPath?.row
         ) {
             return
         }
 
         if (!uuid) {
+            if (isUpdateIndicator) {
+                if (this.copied.indexPath) {
+                    this.savedClipboard[this.copied.indexPath.section].rows[
+                        this.copied.indexPath.row
+                    ].copied.hidden = true
+                }
+                $delay(0.3, () => this.updateList())
+            }
             this.copied = {}
             $clipboard.clear()
         } else {
@@ -136,10 +158,7 @@ class Clipboard {
                     ].copied.hidden = true
                 }
                 this.savedClipboard[indexPath.section].rows[indexPath.row].copied.hidden = false
-                $delay(delay, () => {
-                    // 直接重置数据，解决小绿点滚动到屏幕外后消失问题
-                    $(this.listId).data = this.savedClipboard
-                })
+                $delay(0.3, () => this.updateList())
             }
             if (this.copied.uuid !== uuid) {
                 this.copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
@@ -176,25 +195,20 @@ class Clipboard {
                     this.add(image)
                 })
 
-                return
+                return true
             }
 
-            const text = String($clipboard.text ?? "").trim()
-            $clipboard.text = text // 防止重复弹窗提示读取剪切板
-            if (!text) {
-                return
+            const text = $clipboard.text
+            if (!text || text === "") {
+                this.setCopied() // 清空剪切板
+                return false
             }
+
+            $clipboard.text = text // 防止重复弹窗提示从其他 App 读取剪切板
 
             // 判断 copied 是否和剪切板一致
             if (this.copied.text === text) {
-                return
-            }
-
-            // 判断缓存是否和剪切板一致
-            const cache = $cache.get("clipboard.copied") ?? {}
-            if (text === cache.text) {
-                this.setCopied(cache.uuid, cache.indexPath)
-                return
+                return false
             }
 
             const md5 = $text.MD5(text)
@@ -205,7 +219,11 @@ class Clipboard {
                 const data = this.add(text)
                 this.copy(text, data.uuid, data.indexPath)
             }
+
+            return true
         }
+
+        return false
     }
 
     add(item, uiUpdate) {
@@ -338,7 +356,7 @@ class Clipboard {
         this.savedClipboard[indexPath.section].rows[indexPath.row] = lineData
 
         // 更新列表
-        $(this.listId).data = this.savedClipboard
+        this.updateList()
         if (uuid === this.copied.uuid) {
             this.setClipboardText(text)
         }
@@ -637,13 +655,13 @@ class Clipboard {
     searchAction(text) {
         try {
             if (text === "") {
-                $(this.listId).data = this.savedClipboard
+                this.updateList()
             } else {
                 const res = this.kernel.storage.search(text)
                 if (res && res.length > 0) $(this.listId).data = res.map(data => this.lineData(data))
             }
         } catch (error) {
-            $(this.listId).data = this.savedClipboard
+            this.updateList()
             throw error
         }
     }
@@ -741,13 +759,11 @@ class Clipboard {
                 return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
             }
             const text = sliceText(data.text)
-            const height = this.#singleLine
-                ? Clipboard.singleLineHeight
-                : $text.sizeThatFits({
-                      text: text,
-                      width: $device.info.screen.width,
-                      font: $font(this.fontSize)
-                  }).height
+            const height = $text.sizeThatFits({
+                text: text,
+                width: UIKit.windowSize.width - this.edges * 2,
+                font: $font(this.fontSize)
+            }).height
             return {
                 copied: { hidden: !indicator },
                 image: {
@@ -862,10 +878,10 @@ class Clipboard {
             },
             layout: $layout.fill,
             events: {
-                ready: () => this.ready(),
+                ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const content = sender.object(indexPath).content
-                    return content.info.height + this.edges * 2 + 1
+                    return content.info.height + this.edges * 2
                 },
                 didSelect: (sender, indexPath, data) => {
                     const content = data.content
