@@ -124,7 +124,7 @@ class ActionManager {
                 action.icon.slice(0, 5) === "icon_"
                     ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
                     : { image: $image(action.icon) },
-            color: { bgcolor: $color(action.color) },
+            color: { bgcolor: this.kernel.setting.getColor(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
         }
     }
@@ -261,7 +261,7 @@ class ActionManager {
             "icon",
             ["star.circle", "#FF9933"],
             $l10n("ICON"),
-            this.editingActionInfo.color
+            this.kernel.setting.getColor(this.editingActionInfo.color)
         )
         const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, true)
         const description = {

@@ -170,7 +170,9 @@ class Widget {
     static renderClipboard() {
         const setting = new Setting()
         setting.loadConfig().setReadonly()
-        const widget = Widget.widgetInstance("Clipboard", setting, new Storage(false, fileStorage))
+
+        const widget = Widget.widgetInstance("Clipboard", setting, new Storage(false, { fileStorage }))
+
         widget.render()
     }
 

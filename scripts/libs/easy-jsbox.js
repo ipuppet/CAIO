@@ -3740,10 +3740,10 @@ class Setting extends Controller {
      * @param {string} icon
      * @param {string} title
      * @param {Object} events
-     * @param {string} bgcolor 指定预览时的背景色，默认 "#000000"
+     * @param {string|Object} bgcolor 指定预览时的背景色，默认 "#000000"
      * @returns {Object}
      */
-    createIcon(key, icon, title, bgcolor) {
+    createIcon(key, icon, title, bgcolor = "#000000") {
         const id = this.getId(key)
         const imageId = `${id}-image`
         return {
@@ -3761,7 +3761,7 @@ class Setting extends Controller {
                             type: "image",
                             props: {
                                 cornerRadius: 8,
-                                bgcolor: $color(bgcolor ?? "#000000"),
+                                bgcolor: typeof bgcolor === "string" ? $color(bgcolor) : bgcolor,
                                 smoothCorners: true
                             },
                             layout: (make, view) => {
@@ -3779,7 +3779,7 @@ class Setting extends Controller {
                                 tintColor: $color("#ffffff")
                             },
                             layout: (make, view) => {
-                                make.right.inset(20)
+                                make.right.equalTo(view.prev).offset(-5)
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo($size(20, 20))
                             }

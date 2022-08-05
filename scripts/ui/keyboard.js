@@ -30,7 +30,7 @@ class Keyboard extends Clipboard {
         this.loadDataWithSingleLine()
     }
 
-    ready() {
+    listReady() {
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
             this.#readClipboardTimer = $timer.schedule({
@@ -240,7 +240,7 @@ class Keyboard extends Clipboard {
                 template: this.listTemplate(1)
             },
             events: {
-                ready: () => this.ready(),
+                ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const content = sender.object(indexPath).content
                     return content.info.height + this.top_bottom * 2 + 1
