@@ -237,11 +237,7 @@ function keyboard() {
     }
 
     kernel.setting.method.setKeyboardQuickStart = animate => {
-        if (kernel.isUseJsboxNav) {
-            KeyboardScripts.push()
-        } else {
-            kernel.setting.viewController.push(KeyboardScripts.getPageController())
-        }
+        KeyboardScripts.sheet()
     }
 }
 
@@ -257,11 +253,7 @@ function todayWidget() {
     }
 
     kernel.setting.method.setTodayWidgetActions = animate => {
-        if (kernel.isUseJsboxNav) {
-            TodayActions.push(kernel)
-        } else {
-            kernel.setting.viewController.push(TodayActions.getPageController(kernel))
-        }
+        TodayActions.sheet(kernel)
     }
 }
 

@@ -98,28 +98,16 @@ class KeyboardScripts {
         }
     }
 
-    static getPageController() {
+    static sheet() {
+        const sheet = new Sheet()
         const keyboardScripts = new KeyboardScripts()
-        const pageController = new PageController()
-        pageController
-            .setView(keyboardScripts.getListView())
-            .navigationItem.setTitle($l10n("QUICK_START_SCRIPTS"))
-            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-            .setRightButtons(keyboardScripts.getNavButtons())
-        return pageController
-    }
+        sheet.setView(keyboardScripts.getListView()).addNavBar({
+            title: $l10n("QUICK_START_SCRIPTS"),
+            popButton: { title: $l10n("CANCEL") },
+            rightButtons: keyboardScripts.getNavButtons()
+        })
 
-    static push() {
-        const keyboardScripts = new KeyboardScripts()
-        const navButtons = keyboardScripts.getNavButtons().map(item => {
-            item.handler = item.tapped
-            delete item.tapped
-            return item
-        })
-        UIKit.push({
-            navButtons: navButtons,
-            views: [keyboardScripts.getListView()]
-        })
+        sheet.init().present()
     }
 }
 

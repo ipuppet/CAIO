@@ -189,28 +189,16 @@ class TodayActions {
         }
     }
 
-    static getPageController(kernel) {
+    static sheet(kernel) {
+        const sheet = new Sheet()
         const todayActions = new TodayActions(kernel)
-        const pageController = new PageController()
-        pageController
-            .setView(todayActions.getListView())
-            .navigationItem.setTitle($l10n("ACTIONS"))
-            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-            .setRightButtons(todayActions.getNavButtons())
-        return pageController
-    }
+        sheet.setView(todayActions.getListView()).addNavBar({
+            title: $l10n("ACTIONS"),
+            popButton: { title: $l10n("CANCEL") },
+            rightButtons: todayActions.getNavButtons()
+        })
 
-    static push(kernel) {
-        const todayActions = new TodayActions(kernel)
-        const navButtons = todayActions.getNavButtons().map(item => {
-            item.handler = item.tapped
-            delete item.tapped
-            return item
-        })
-        UIKit.push({
-            navButtons: navButtons,
-            views: [todayActions.getListView()]
-        })
+        sheet.init().present()
     }
 }
 
