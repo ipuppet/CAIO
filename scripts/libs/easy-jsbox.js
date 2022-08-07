@@ -1324,7 +1324,12 @@ class NavigationBar extends View {
 
     prefersLargeTitles = true
     largeTitleFontSize = 34
-    largeTitleLabelHeightOffset = 5
+    largeTitleFontFamily = "bold"
+    largeTitleFontHeight = $text.sizeThatFits({
+        text: "A",
+        width: 100,
+        font: $font(this.largeTitleFontFamily, this.largeTitleFontSize)
+    }).height
     navigationBarTitleFontSize = 17
     addStatusBarHeight = true
     contentViewHeightOffset = 10
@@ -1381,12 +1386,12 @@ class NavigationBar extends View {
                       text: this.navigationItem.title,
                       textColor: UIKit.textColor,
                       align: $align.left,
-                      font: $font("bold", this.largeTitleFontSize),
+                      font: $font(this.largeTitleFontFamily, this.largeTitleFontSize),
                       line: 1
                   },
                   layout: (make, view) => {
                       make.left.equalTo(view.super.safeArea).offset(15)
-                      make.height.equalTo(this.largeTitleFontSize + this.largeTitleLabelHeightOffset)
+                      make.height.equalTo(this.largeTitleFontHeight)
                       make.top.equalTo(view.super.safeAreaTop).offset(this.navigationBarNormalHeight)
                   }
               }
@@ -1468,7 +1473,7 @@ class NavigationBar extends View {
                         id: this.id + "-small-title",
                         alpha: isHideTitle ? 1 : 0, // 不显示大标题则显示小标题
                         text: this.navigationItem.title,
-                        font: $font("bold", this.navigationBarTitleFontSize),
+                        font: $font(this.largeTitleFontFamily, this.navigationBarTitleFontSize),
                         align: $align.center,
                         bgcolor: $color("clear"),
                         textColor: UIKit.textColor
@@ -1579,7 +1584,7 @@ class NavigationController extends Controller {
                 // 下拉放大字体
                 let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
                 if (size > titleSizeMax) size = titleSizeMax
-                this.selector.largeTitleView.font = $font("bold", size)
+                this.selector.largeTitleView.font = $font(this.navigationBar.largeTitleFontFamily, size)
             }
         }
     }
@@ -1664,11 +1669,11 @@ class NavigationController extends Controller {
                 titleViewHeight = this.navigationBar?.navigationItem?.titleView?.height ?? 0
                 contentOffset -= titleViewHeight
             }
-            if (contentOffset >= 0 && contentOffset <= this.navigationBar.largeTitleFontSize) {
+            if (contentOffset >= 0 && contentOffset <= this.navigationBar.largeTitleFontHeight) {
                 scrollToOffset(
                     $point(
                         0,
-                        contentOffset >= this.navigationBar.largeTitleFontSize / 2
+                        contentOffset >= this.navigationBar.largeTitleFontHeight / 2
                             ? this.navigationBar.navigationBarNormalHeight + titleViewHeight - zeroOffset
                             : titleViewHeight - zeroOffset
                     )
@@ -1786,8 +1791,7 @@ class PageController extends Controller {
             height += this.navigationItem.titleView.bottomOffset
         }
         if (this.view.props.stickyHeader) {
-            height += this.navigationController.navigationBar.largeTitleFontSize
-            height += this.navigationController.navigationBar.largeTitleLabelHeightOffset
+            height += this.navigationController.navigationBar.largeTitleFontHeight
         } else {
             if (this.navigationItem.largeTitleDisplayMode === NavigationItem.largeTitleDisplayModeNever) {
                 height += this.navigationController.navigationBar.navigationBarNormalHeight
@@ -1834,7 +1838,7 @@ class PageController extends Controller {
                 make.bottom.equalTo(view.super)
                 let topOffset = this.navigationController.navigationBar.contentViewHeightOffset
                 if (this.navigationItem.largeTitleDisplayMode !== NavigationItem.largeTitleDisplayModeNever) {
-                    topOffset += this.navigationController.navigationBar.largeTitleFontSize
+                    topOffset += this.navigationController.navigationBar.largeTitleFontHeight
                 }
                 if (this.navigationItem.titleView) {
                     topOffset += this.navigationItem.titleView.topOffset + this.navigationItem.titleView.bottomOffset
@@ -1852,8 +1856,7 @@ class PageController extends Controller {
             const pinTitleViewOffset = this.navigationItem.isPinTitleView
                 ? this.navigationItem.titleView.height +
                   this.navigationItem.titleView.bottomOffset +
-                  this.navigationController.navigationBar.contentViewHeightOffset -
-                  this.navigationController.navigationBar.largeTitleLabelHeightOffset / 2 // 大标题中有额外空间用以完整显示 g y 等字符
+                  this.navigationController.navigationBar.contentViewHeightOffset
                 : 0
             if (this.view.props.indicatorInsets) {
                 const old = this.view.props.indicatorInsets
@@ -1916,7 +1919,12 @@ class PageController extends Controller {
                         zeroOffset
                     )
                 })
-                .assignEvent("didEndDecelerating", (...args) => this.view.events?.didEndDragging(...args))
+                .assignEvent("didEndDecelerating", (...args) => {
+                    if (args[0].tracking) {
+                        return
+                    }
+                    this.view.events?.didEndDragging(...args)
+                })
         }
     }
 
