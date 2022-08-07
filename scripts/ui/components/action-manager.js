@@ -466,7 +466,7 @@ class ActionManager {
                     this.editActionInfoPageSheet(oldInfo, info => {
                         // 更新视图信息
                         view.get("info").info = info
-                        view.get("color").bgcolor = $color(info.color)
+                        view.get("color").bgcolor = this.kernel.setting.getColor(info.color)
                         view.get("name").text = info.name
                         if (info.icon.slice(0, 5) === "icon_") {
                             view.get("icon").icon = $icon(info.icon.slice(5, info.icon.indexOf(".")), $color("#ffffff"))
