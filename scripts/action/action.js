@@ -1,10 +1,30 @@
 const { Sheet } = require("../libs/easy-jsbox")
 
+/**
+ * @typedef {import("../app").AppKernel} AppKernel
+ */
+
 class Action {
+    /**
+     *
+     * @param {AppKernel} kernel
+     * @param {*} config
+     * @param {*} data
+     */
     constructor(kernel, config, data) {
         this.kernel = kernel
         this.config = config
+
         Object.assign(this, data)
+
+        const l10n = this.l10n()
+        Object.keys(l10n).forEach(language => {
+            this.kernel.l10n(language, l10n[language])
+        })
+    }
+
+    l10n() {
+        return {}
     }
 
     push(args) {

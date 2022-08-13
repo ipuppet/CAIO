@@ -80,6 +80,8 @@
 "CLICK_ACTION" = "点击事件";
 
 "TODAY_WIDGET" = "通知中心小组件";
+"PREV_PAGE" = "上一页";
+"NEXT_PAGE" = "下一页";
 
 "DISPLAY_MODE" = "显示模式";
 "CLASSIC" = "经典";

@@ -39,7 +39,7 @@ function versionCompare(preVersion = "", lastVersion = "") {
     return result
 }
 
-function l10n(language, content) {
+function l10n(language, content, override = true) {
     if (typeof content === "string") {
         const strings = {}
         const strArr = content.split(";")
@@ -53,7 +53,11 @@ function l10n(language, content) {
         content = strings
     }
     const strings = $app.strings
-    strings[language] = Object.assign(content, $app.strings[language])
+    if (override) {
+        strings[language] = Object.assign($app.strings[language], content)
+    } else {
+        strings[language] = Object.assign(content, $app.strings[language])
+    }
     $app.strings = strings
 }
 
@@ -2284,8 +2288,8 @@ class Kernel {
         return uuid()
     }
 
-    l10n(language, content) {
-        l10n(language, content)
+    l10n(language, content, override = true) {
+        l10n(language, content, override)
     }
 
     debug(print, error) {
@@ -2737,72 +2741,74 @@ class Setting extends Controller {
         l10n(
             "zh-Hans",
             `
-        "OK" = "好";
-        "CANCEL" = "取消";
-        "CLEAR" = "清除";
-        "BACK" = "返回";
-        "ERROR" = "发生错误";
-        "SUCCESS" = "成功";
-        "LOADING" = "加载中";
-        "INVALID_VALUE" = "非法参数";
-        
-        "SETTING" = "设置";
-        "GENERAL" = "一般";
-        "ADVANCED" = "高级";
-        "TIPS" = "小贴士";
-        "COLOR" = "颜色";
-        "COPY" = "复制";
-        "COPIED" = "复制成功";
-        
-        "JSBOX_ICON" = "JSBox 内置图标";
-        "SF_SYMBOLS" = "SF Symbols";
-        "IMAGE_BASE64" = "图片 / base64";
+            "OK" = "好";
+            "CANCEL" = "取消";
+            "CLEAR" = "清除";
+            "BACK" = "返回";
+            "ERROR" = "发生错误";
+            "SUCCESS" = "成功";
+            "LOADING" = "加载中";
+            "INVALID_VALUE" = "非法参数";
+            
+            "SETTING" = "设置";
+            "GENERAL" = "一般";
+            "ADVANCED" = "高级";
+            "TIPS" = "小贴士";
+            "COLOR" = "颜色";
+            "COPY" = "复制";
+            "COPIED" = "复制成功";
+            
+            "JSBOX_ICON" = "JSBox 内置图标";
+            "SF_SYMBOLS" = "SF Symbols";
+            "IMAGE_BASE64" = "图片 / base64";
 
-        "PREVIEW" = "预览";
-        "SELECT_IMAGE" = "选择图片";
-        "CLEAR_IMAGE" = "清除图片";
-        "NO_IMAGE" = "无图片";
-        
-        "ABOUT" = "关于";
-        "VERSION" = "Version";
-        "AUTHOR" = "作者";
-        "AT_BOTTOM" = "已经到底啦~";
-        `
+            "PREVIEW" = "预览";
+            "SELECT_IMAGE" = "选择图片";
+            "CLEAR_IMAGE" = "清除图片";
+            "NO_IMAGE" = "无图片";
+            
+            "ABOUT" = "关于";
+            "VERSION" = "Version";
+            "AUTHOR" = "作者";
+            "AT_BOTTOM" = "已经到底啦~";
+            `,
+            false
         )
         l10n(
             "en",
             `
-        "OK" = "OK";
-        "CANCEL" = "Cancel";
-        "CLEAR" = "Clear";
-        "BACK" = "Back";
-        "ERROR" = "Error";
-        "SUCCESS" = "Success";
-        "LOADING" = "Loading";
-        "INVALID_VALUE" = "Invalid value";
+            "OK" = "OK";
+            "CANCEL" = "Cancel";
+            "CLEAR" = "Clear";
+            "BACK" = "Back";
+            "ERROR" = "Error";
+            "SUCCESS" = "Success";
+            "LOADING" = "Loading";
+            "INVALID_VALUE" = "Invalid value";
 
-        "SETTING" = "Setting";
-        "GENERAL" = "General";
-        "ADVANCED" = "Advanced";
-        "TIPS" = "Tips";
-        "COLOR" = "Color";
-        "COPY" = "Copy";
-        "COPIED" = "Copide";
+            "SETTING" = "Setting";
+            "GENERAL" = "General";
+            "ADVANCED" = "Advanced";
+            "TIPS" = "Tips";
+            "COLOR" = "Color";
+            "COPY" = "Copy";
+            "COPIED" = "Copide";
 
-        "JSBOX_ICON" = "JSBox in app icon";
-        "SF_SYMBOLS" = "SF Symbols";
-        "IMAGE_BASE64" = "Image / base64";
+            "JSBOX_ICON" = "JSBox in app icon";
+            "SF_SYMBOLS" = "SF Symbols";
+            "IMAGE_BASE64" = "Image / base64";
 
-        "PREVIEW" = "Preview";
-        "SELECT_IMAGE" = "Select Image";
-        "CLEAR_IMAGE" = "Clear Image";
-        "NO_IMAGE" = "No Image";
+            "PREVIEW" = "Preview";
+            "SELECT_IMAGE" = "Select Image";
+            "CLEAR_IMAGE" = "Clear Image";
+            "NO_IMAGE" = "No Image";
 
-        "ABOUT" = "About";
-        "VERSION" = "Version";
-        "AUTHOR" = "Author";
-        "AT_BOTTOM" = "It's the end~";
-        `
+            "ABOUT" = "About";
+            "VERSION" = "Version";
+            "AUTHOR" = "Author";
+            "AT_BOTTOM" = "It's the end~";
+            `,
+            false
         )
     }
 

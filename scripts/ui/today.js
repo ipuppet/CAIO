@@ -186,7 +186,7 @@ class Today extends Clipboard {
         navigationItem
             .setLeftButtons([
                 {
-                    title: "Prev",
+                    title: $l10n("PREV_PAGE"),
                     tapped: this.buttonTapped(() => {
                         this.clipboardPrevPage()
                     })
@@ -194,7 +194,7 @@ class Today extends Clipboard {
             ])
             .setRightButtons([
                 {
-                    title: "Next",
+                    title: $l10n("NEXT_PAGE"),
                     tapped: this.buttonTapped(() => {
                         this.clipboardNextPage()
                     })

@@ -80,6 +80,8 @@
 "CLICK_ACTION" = "Click Action";
 
 "TODAY_WIDGET" = "Today Widget";
+"PREV_PAGE" = "Prev";
+"NEXT_PAGE" = "Next";
 
 "DISPLAY_MODE" = "Display Mode";
 "CLASSIC" = "Classic";

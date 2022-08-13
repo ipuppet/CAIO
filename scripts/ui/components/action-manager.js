@@ -70,10 +70,14 @@ class ActionManager {
         if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         return async data => {
-            // TODO 重复引用被抛弃导致无法动态重载脚本内容
-            const ActionClass = require(`${basePath}/main.js`)
-            const action = new ActionClass(this.kernel, config, data)
-            return await action.do()
+            // TODO 无法重复引用导致无法动态重载脚本内容
+            try {
+                const ActionClass = require(`${basePath}/main.js`)
+                const action = new ActionClass(this.kernel, config, data)
+                return await action.do()
+            } catch (error) {
+                this.kernel.error(error)
+            }
         }
     }
 
