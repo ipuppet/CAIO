@@ -187,6 +187,7 @@ class Widget {
 }
 
 module.exports = {
+    Widget,
     run: () => {
         //AppUI.renderTodayUI(); return
         //AppUI.renderKeyboardUI(); return

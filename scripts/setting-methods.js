@@ -237,11 +237,7 @@ function keyboard() {
     }
 
     kernel.setting.method.setKeyboardQuickStart = animate => {
-        if (kernel.isUseJsboxNav) {
-            KeyboardScripts.push()
-        } else {
-            kernel.setting.viewController.push(KeyboardScripts.getPageController())
-        }
+        KeyboardScripts.sheet()
     }
 }
 
@@ -257,11 +253,7 @@ function todayWidget() {
     }
 
     kernel.setting.method.setTodayWidgetActions = animate => {
-        if (kernel.isUseJsboxNav) {
-            TodayActions.push(kernel)
-        } else {
-            kernel.setting.viewController.push(TodayActions.getPageController(kernel))
-        }
+        TodayActions.sheet(kernel)
     }
 }
 
@@ -330,6 +322,7 @@ function settingMethods(appKernel) {
     }
 
     kernel.setting.method.previewWidget = animate => {
+        const { Widget } = require("./app")
         const widgets = {}
         try {
             JSON.parse($file.read("widget-options.json").string).forEach(item => {

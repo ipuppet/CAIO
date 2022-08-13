@@ -14,11 +14,24 @@ class TodayActions {
     }
 
     getActions() {
-        const actions = $cache.get("today.actions")
-        if (actions === undefined) {
-            return []
+        let cache = $cache.get("today.actions") ?? []
+        if (typeof cache === "string") {
+            cache = JSON.parse(cache)
+            this.setActions(cache)
         }
-        return JSON.parse(actions)
+        const actions = {}
+        this.kernel.actionManager.getActionTypes().forEach(type => {
+            this.kernel.actionManager.getActions(type).forEach(action => {
+                actions[action.type + action.dir] = action
+            })
+        })
+
+        const savedActions = []
+        cache.forEach(action => {
+            savedActions.push(actions[action.type + action.dir])
+        })
+
+        return savedActions
     }
 
     setActions(list = []) {
@@ -27,7 +40,7 @@ class TodayActions {
                 list.splice(i, 1)
             }
         })
-        $cache.set("today.actions", JSON.stringify(list))
+        $cache.set("today.actions", list)
     }
 
     getAllActions() {
@@ -61,7 +74,7 @@ class TodayActions {
                     action.icon.slice(0, 5) === "icon_"
                         ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
                         : { image: $image(action.icon) },
-                color: { bgcolor: $color(action.color) }
+                color: { bgcolor: this.kernel.setting.getColor(action.color) }
             }
         })
     }
@@ -176,28 +189,16 @@ class TodayActions {
         }
     }
 
-    static getPageController(kernel) {
+    static sheet(kernel) {
+        const sheet = new Sheet()
         const todayActions = new TodayActions(kernel)
-        const pageController = new PageController()
-        pageController
-            .setView(todayActions.getListView())
-            .navigationItem.setTitle($l10n("ACTIONS"))
-            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-            .setRightButtons(todayActions.getNavButtons())
-        return pageController
-    }
+        sheet.setView(todayActions.getListView()).addNavBar({
+            title: $l10n("ACTIONS"),
+            popButton: { title: $l10n("CANCEL") },
+            rightButtons: todayActions.getNavButtons()
+        })
 
-    static push(kernel) {
-        const todayActions = new TodayActions(kernel)
-        const navButtons = todayActions.getNavButtons().map(item => {
-            item.handler = item.tapped
-            delete item.tapped
-            return item
-        })
-        UIKit.push({
-            navButtons: navButtons,
-            views: [todayActions.getListView()]
-        })
+        sheet.init().present()
     }
 }
 
