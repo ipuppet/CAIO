@@ -720,7 +720,7 @@ class Matrix extends View {
             const width =
                 this.props.itemWidth ??
                 this.props.itemSize?.width ??
-                (UIKit.windowSize.width - spacing * (columns + 1)) / columns
+                (sender.super.frame.width - spacing * (columns + 1)) / columns
             const height = this.props.itemHeight ?? this.props.itemSize?.height ?? 100
             return $size(width, height)
         })
@@ -1580,12 +1580,10 @@ class NavigationController extends Controller {
         } else {
             // 切换模式
             this.#changeLargeTitleView(NavigationController.largeTitleViewLargeMode)
-            if (contentOffset < -20) {
-                // 下拉放大字体
-                let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
-                if (size > titleSizeMax) size = titleSizeMax
-                this.selector.largeTitleView.font = $font(this.navigationBar.largeTitleFontFamily, size)
-            }
+            // 下拉放大字体
+            let size = this.navigationBar.largeTitleFontSize - contentOffset * 0.04
+            if (size > titleSizeMax) size = titleSizeMax
+            this.selector.largeTitleView.font = $font(this.navigationBar.largeTitleFontFamily, size)
         }
     }
 

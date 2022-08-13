@@ -909,6 +909,7 @@ class Clipboard {
         pageController.navigationItem
             .setTitle($l10n("CLIPBOARD"))
             .setTitleView(searchBar)
+            .pinTitleView()
             .setRightButtons([
                 {
                     symbol: "plus.circle",
