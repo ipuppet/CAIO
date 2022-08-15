@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 class MyAction extends Action {
     openUrl(url) {
         $app.openURL(url.trim())
@@ -23,5 +21,3 @@ class MyAction extends Action {
         }
     }
 }
-
-module.exports = MyAction

@@ -2854,31 +2854,32 @@ class Setting extends Controller {
 
     get footer() {
         if (this.#footer === undefined) {
-            const info = FileStorage.readFromRootAsJSON("/config.json", {})["info"]
-            this.#footer = info
-                ? {
-                      type: "view",
-                      props: { height: 130 },
-                      views: [
-                          {
-                              type: "label",
-                              props: {
-                                  font: $font(14),
-                                  text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
-                                  textColor: $color({
-                                      light: "#C0C0C0",
-                                      dark: "#545454"
-                                  }),
-                                  align: $align.center
-                              },
-                              layout: make => {
-                                  make.left.right.inset(0)
-                                  make.top.inset(10)
+            const info = $app.info
+            this.#footer =
+                info.version && info.author
+                    ? {
+                          type: "view",
+                          props: { height: 130 },
+                          views: [
+                              {
+                                  type: "label",
+                                  props: {
+                                      font: $font(14),
+                                      text: `${$l10n("VERSION")} ${info.version} ♥ ${info.author}`,
+                                      textColor: $color({
+                                          light: "#C0C0C0",
+                                          dark: "#545454"
+                                      }),
+                                      align: $align.center
+                                  },
+                                  layout: make => {
+                                      make.left.right.inset(0)
+                                      make.top.inset(10)
+                                  }
                               }
-                          }
-                      ]
-                  }
-                : {}
+                          ]
+                      }
+                    : {}
         }
         return this.#footer
     }

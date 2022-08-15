@@ -1,0 +1,11 @@
+{
+    "license": "MIT",
+    "devDependencies": {
+        "@parcel/core": "2.3.2",
+        "@parcel/config-default": "2.3.2"
+    },
+    "dependencies": {},
+    "scripts": {
+        "build": "node build.js"
+    }
+}

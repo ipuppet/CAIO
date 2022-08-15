@@ -4,6 +4,9 @@ const { Sheet } = require("../libs/easy-jsbox")
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
+/**
+ * @typedef {Action} Action
+ */
 class Action {
     /**
      *

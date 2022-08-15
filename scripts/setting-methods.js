@@ -265,7 +265,14 @@ function settingMethods(appKernel) {
     kernel = appKernel
 
     kernel.setting.method.readme = animate => {
-        const content = $file.read("/README.md").string
+        const content = (() => {
+            const file = $device.info?.language?.startsWith("zh") ? "README_CN.md" : "README.md"
+            try {
+                return __README__[file]
+            } catch {
+                return $file.read(file).string
+            }
+        })()
         const sheet = new Sheet()
         sheet
             .setView({

@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 class MyAction extends Action {
     getView() {
         const color = {
@@ -90,5 +88,3 @@ class MyAction extends Action {
         })
     }
 }
-
-module.exports = MyAction

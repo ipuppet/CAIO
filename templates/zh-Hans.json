@@ -1,0 +1,29 @@
+{
+    "actions": [
+        {
+            "type": "@comment",
+            "parameters": {
+                "text": {
+                    "value": "GitHub: https://github.com/ipuppet/CAIO"
+                }
+            }
+        },
+        {
+            "type": "@flow.javascript",
+            "parameters": {
+                "script": {
+                    "value": ""
+                }
+            }
+        }
+    ],
+    "buildVersion": 1,
+    "name": "CAIO",
+    "clientMinVersion": 1,
+    "summary": "",
+    "icon": {
+        "glyph": "icloud.and.arrow.up",
+        "color": "#7881FA"
+    },
+    "clientVersion": 592
+}

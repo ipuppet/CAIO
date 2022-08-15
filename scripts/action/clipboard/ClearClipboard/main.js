@@ -1,5 +1,6 @@
-const Action = require("scripts/action/action.js")
-
+/**
+ * @typedef {import("../../action").Action} Action
+ */
 class MyAction extends Action {
     l10n() {
         return {
@@ -20,5 +21,3 @@ class MyAction extends Action {
         $ui.success($l10n("clipboard.clear.success"))
     }
 }
-
-module.exports = MyAction

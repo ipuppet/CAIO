@@ -1,6 +1,6 @@
 # Action
 
-所有 `Action` 保存在 `storage/user_action` 目录下，按照文件夹分类
+所有 Action 保存在 `storage/user_action` 目录下，按照文件夹分类
 
 `Action` 结构如下：
 
@@ -18,9 +18,15 @@
 
 ### `main.js` 入口文件
 
-```js
-const Action = require("/scripts/action/action.js")
+创建名为 `MyAction` 的类并继承 `Action` 类
 
+```js
+/**
+ * @typedef {import("scripts/action/action.js").Action} Action
+ */
+/**
+ * 必须为 MyAction
+ */
 class MyAction extends Action {
     /**
      * 系统会调用 do() 方法
@@ -29,8 +35,6 @@ class MyAction extends Action {
         console.log(this.text)
     }
 }
-
-module.exports = MyAction
 ```
 
 父类 `Action` 的属性：
@@ -42,6 +46,21 @@ module.exports = MyAction
 
 父类的方法：
 ```js
+/**
+ * 重写该防范返回 l10n 对象可注入 l10n
+ * l10n() {
+        return {
+            "zh-Hans": {
+                "clipboard.clear.success": "剪切板已清空"
+            },
+            en: {
+                "clipboard.clear.success": "Clipboard is cleared"
+            }
+        }
+    }
+ */
+l10n()
+
 /**
  * page sheet
  * @param {*} args 
