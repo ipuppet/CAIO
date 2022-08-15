@@ -53,12 +53,11 @@ function injectContent() {
 
     const stringsText = `$app.strings = ${JSON.stringify(localizedText)};`
 
-    const configFile = fs.readFileSync(path.join(__dirname, "config.json"), "utf-8")
-    const configDict = JSON.parse(configFile).settings
-    const configText = Object.keys(configDict)
+    const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"))
+    const configSettings = Object.keys(config.settings)
         .map(key => {
             const value = (() => {
-                const value = configDict[key]
+                const value = config.settings[key]
                 if (typeof value === "string") {
                     return `"${value}"`
                 } else {
@@ -68,6 +67,7 @@ function injectContent() {
             return `$app.${key} = ${value};`
         })
         .join("\n")
+    const configInfo = `__INFO__ = ${JSON.stringify(config.info)};`
 
     const readmeText = (() => {
         const files = {}
@@ -121,7 +121,7 @@ function injectContent() {
         }
     })()
 
-    const contents = [stringsText, configText, readmeText, settingStructure, actions, entryFileContent]
+    const contents = [stringsText, configSettings, configInfo, readmeText, settingStructure, actions, entryFileContent]
 
     fs.writeFileSync(entryFilePath, contents.join("\n\n"))
 }

@@ -2854,7 +2854,12 @@ class Setting extends Controller {
 
     get footer() {
         if (this.#footer === undefined) {
-            const info = $app.info
+            let info = FileStorage.readFromRootAsJSON("config.json", {})["info"] ?? {}
+            if (!info.version || !info.author) {
+                try {
+                    info = __INFO__
+                } catch {}
+            }
             this.#footer =
                 info.version && info.author
                     ? {

@@ -2568,7 +2568,13 @@ class SettingReadonlyError extends Error {
     }
     get footer() {
         if (this.#footer === undefined) {
-            const info = $app.info;
+            let info = FileStorage.readFromRootAsJSON("config.json", {
+            })["info"] ?? {
+            };
+            if (!info.version || !info.author) try {
+                info = __INFO__;
+            } catch  {
+            }
             this.#footer = info.version && info.author ? {
                 type: "view",
                 props: {
@@ -7705,6 +7711,12 @@ $app.minOSVer = "14.0.0";
 $app.idleTimerDisabled = false;
 $app.keyboardToolbarEnabled = true;
 $app.rotateDisabled = false;
+__INFO__ = {
+    "name": "CAIO",
+    "version": "1.6.0",
+    "author": "ipuppet",
+    "module": false
+};
 __README__ = {
     "README.md": "# CAIO\n\n> Clipboard all in one.\n> \n> A Clipboard tool based on JSBox.\n\n支持桌面小组件和通知中心小组件\n\n## Actions\n\n> 编写方式详见 `scripts/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。\n\n### 不同环境中 `Action` 数据区别\n\n- 首页顶部 `Action` 按钮处理的数据为当前复制的内容\n- 长按列表弹出的 `Action` 菜单处理的数据为被选中的内容\n- 编辑器中顶部 `Action` 按钮（闪电图形按钮）处理的数据为正在编辑的所有内容\n\n\n## Today Widget\n\n> 点击复制，长按触发动作。\n\n请尽量避免在 JSBox 运行 CAIO 时使用 Today Widget",
     "README_CN.md": "# CAIO\n\n> Clipboard all in one.\n> \n> A Clipboard tool based on JSBox.\n\n支持桌面小组件和通知中心小组件\n\n## Actions\n\n> 编写方式详见 `scripts/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。\n\n### 不同环境中 `Action` 数据区别\n\n- 首页顶部 `Action` 按钮处理的数据为当前复制的内容\n- 长按列表弹出的 `Action` 菜单处理的数据为被选中的内容\n- 编辑器中顶部 `Action` 按钮（闪电图形按钮）处理的数据为正在编辑的所有内容\n\n\n## Today Widget\n\n> 点击复制，长按触发动作。\n\n请尽量避免在 JSBox 运行 CAIO 时使用 Today Widget"
