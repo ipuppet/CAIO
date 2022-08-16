@@ -102,13 +102,13 @@ class AppUI {
                 }
             ])
 
-            kernel.UIRender(kernel.clipboard.getPageController().getPage())
+            kernel.UIRender(kernel.clipboard.getNavigationView().getPage())
         } else {
             kernel.tabBarController = new TabBarController()
-            const clipboardPageController = kernel.clipboard.getPageController()
+            const clipboardNavigationView = kernel.clipboard.getNavigationView()
             kernel.tabBarController
                 .setPages({
-                    clipboard: clipboardPageController.getPage(),
+                    clipboard: clipboardNavigationView.getPage(),
                     actions: kernel.actionManager.getPageView(),
                     setting: kernel.setting.getPageView()
                 })

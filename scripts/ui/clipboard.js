@@ -1,4 +1,4 @@
-const { UIKit, ViewController, PageController, SearchBar } = require("../libs/easy-jsbox")
+const { UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 
 /**
@@ -600,9 +600,9 @@ class Clipboard {
         if (this.kernel.isUseJsboxNav) {
             editor.uikitPush(text, () => callback(editor.text), navButtons)
         } else {
-            const pageController = editor.getPageController(text, navButtons)
+            const navigationView = editor.getNavigationView(text, navButtons)
             this.viewController.setEvent("onPop", () => callback(editor.text))
-            this.viewController.push(pageController)
+            this.viewController.push(navigationView)
         }
     }
 
@@ -901,13 +901,14 @@ class Clipboard {
         }
     }
 
-    getPageController() {
+    getNavigationView() {
         const searchBar = new SearchBar()
         // 初始化搜索功能
         searchBar.controller.setEvent("onChange", text => this.searchAction(text))
-        const pageController = new PageController()
-        pageController.navigationItem
-            .setTitle($l10n("CLIPBOARD"))
+
+        const navigationView = new NavigationView()
+        navigationView.navigationBarTitle($l10n("CLIPBOARD"))
+        navigationView.navigationBarItems
             .setTitleView(searchBar)
             .pinTitleView()
             .setRightButtons([
@@ -1010,13 +1011,15 @@ class Clipboard {
                     }
                 }
             ])
-        pageController.navigationController.navigationBar.setBackgroundColor(UIKit.primaryViewBackgroundColor)
-        if (this.kernel.isUseJsboxNav) {
-            pageController.navigationController.navigationBar.withoutStatusBarHeight()
-        }
-        pageController.setView(this.getListView())
 
-        return pageController
+        navigationView.navigationBar.setBackgroundColor(UIKit.primaryViewBackgroundColor)
+
+        if (this.kernel.isUseJsboxNav) {
+            navigationView.navigationBar.withoutStatusBarHeight()
+        }
+        navigationView.setView(this.getListView())
+
+        return navigationView
     }
 }
 

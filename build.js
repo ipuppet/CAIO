@@ -21,7 +21,7 @@ const bundler = new Parcel({
         }
     },
     defaultTargetOptions: {
-        shouldOptimize: false,
+        shouldOptimize: true,
         shouldScopeHoist: true,
         sourceMaps: false
     }
@@ -128,7 +128,6 @@ function injectContent() {
 
 function cleanUp() {
     fs.writeFileSync(entryFilePath, entryFileContent)
-    fs.rmSync(path.join(__dirname, distDir, distEntry))
 }
 
 function buildTextActions() {
@@ -150,14 +149,9 @@ function buildTextActions() {
     })
 }
 
-function buildJSBox() {
-    const script = fs.readFileSync(path.join(__dirname, distDir, distEntry), "utf-8")
-    const outputPath = path.join(__dirname, `dist/${outputName}-JSBox.js`)
-    fs.writeFileSync(outputPath, script)
-}
-
 async function build() {
     injectContent()
+
     try {
         const { bundleGraph, buildTime } = await bundler.run()
         const bundles = bundleGraph.getBundles()
@@ -167,7 +161,6 @@ async function build() {
     }
 
     buildTextActions()
-    buildJSBox()
     cleanUp()
 }
 

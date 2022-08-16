@@ -299,8 +299,13 @@ function settingMethods(appKernel) {
             url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json",
             handler: resp => {
                 const version = resp.data?.info.version
-                const config = JSON.parse($file.read("config.json").string)
-                if (versionCompare(version, config.info.version) > 0) {
+                let info
+                try {
+                    info = __INFO__
+                } catch {
+                    info = JSON.parse($file.read("config.json").string).info
+                }
+                if (versionCompare(version, info.version) > 0) {
                     $ui.alert({
                         title: "New Version",
                         message: `New version found: ${version}\nUpdate via Github or click the button to open Erots.`,

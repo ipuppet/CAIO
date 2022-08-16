@@ -1,4 +1,4 @@
-const { UIKit, Sheet, NavigationItem, PageController } = require("../../libs/easy-jsbox")
+const { Sheet } = require("../../libs/easy-jsbox")
 
 class KeyboardScripts {
     constructor() {

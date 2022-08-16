@@ -1,4 +1,4 @@
-const { UIKit, NavigationItem, PageController, Sheet } = require("../../libs/easy-jsbox")
+const { UIKit, NavigationBar, NavigationView, Sheet } = require("../../libs/easy-jsbox")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -108,7 +108,7 @@ class Editor {
             },
             rightButtons: navButtons
         })
-        sheet.pageController.navigationController.navigationBar.contentViewHeightOffset = 0
+        sheet.NavigationView.navigationBar.contentViewHeightOffset = 0
         sheet.init().present()
     }
 
@@ -143,18 +143,17 @@ class Editor {
      * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 editor.text
      * @param {*} type
      */
-    getPageController(text = "", navButtons = [], type = "text") {
+    getNavigationView(text = "", navButtons = [], type = "text") {
         this.text = text
         navButtons.unshift(this.getActionButton())
 
-        const pageController = new PageController()
-        pageController.navigationController.navigationBar.contentViewHeightOffset = 0
-        pageController.setView(this.getView(type))
-        pageController.navigationItem
-            .setTitle("")
-            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-            .setRightButtons(navButtons)
-        return pageController
+        const navigationView = new NavigationView()
+        navigationView.navigationBar.contentViewHeightOffset = 0
+        navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
+        navigationView.navigationBarItems.setRightButtons(navButtons)
+        navigationView.setView(this.getView(type)).navigationBarTitle("")
+
+        return navigationView
     }
 }
 

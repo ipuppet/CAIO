@@ -1,4 +1,4 @@
-const { Matrix, Setting, PageController, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
+const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
 const Action = require("../../action/action")
 
@@ -770,10 +770,10 @@ class ActionManager {
     }
 
     getPageView() {
-        const pageController = new PageController()
-        pageController.navigationItem.setTitle($l10n("ACTIONS")).setRightButtons(this.getNavButtons())
-        pageController.setView(this.getMatrixView())
-        return pageController.getPage()
+        const navigationView = new NavigationView()
+        navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
+        navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))
+        return navigationView.getPage()
     }
 
     present() {
