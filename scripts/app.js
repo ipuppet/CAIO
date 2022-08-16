@@ -5,12 +5,7 @@ const ActionManager = require("./ui/components/action-manager")
 
 const settingMethods = require("./setting-methods")
 
-let basePath = "storage"
-// 尝试从 Taio 读取路径
-if ($actions.getVar("sourceFilePath") && $actions.getVar("sourceFilePath") !== "") {
-    basePath = $actions.getVar("sourceFilePath")
-}
-const fileStorage = new FileStorage({ basePath })
+const fileStorage = new FileStorage()
 
 /**
  * @typedef {AppKernel} AppKernel
