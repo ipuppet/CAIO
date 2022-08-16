@@ -260,7 +260,7 @@ class ActionManager {
             actionTypesIndex[key] = index
         })
         this.editingActionInfo = info ?? {
-            dir: this.kernel.uuid(), // 随机生成文件夹名
+            dir: $text.uuid, // 随机生成文件夹名
             type: "clipboard",
             name: "MyAction",
             color: "#CC00CC",

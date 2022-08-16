@@ -229,7 +229,7 @@ class Clipboard {
     add(item, uiUpdate) {
         // 元数据
         const data = {
-            uuid: this.kernel.uuid(),
+            uuid: $text.uuid,
             text: item,
             md5: null,
             image: null,
