@@ -1,4 +1,4 @@
-const { UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
+const { isTaio, UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 
 /**
@@ -74,6 +74,9 @@ class Clipboard {
      * list view
      */
     listReady() {
+        if (isTaio) {
+            return
+        }
         // check url scheme
         $delay(0.5, () => {
             if ($context.query["copy"]) {
