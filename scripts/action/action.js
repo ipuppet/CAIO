@@ -1,4 +1,4 @@
-const { Sheet } = require("../libs/easy-jsbox")
+const { Kernel, Sheet } = require("../libs/easy-jsbox")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -22,7 +22,7 @@ class Action {
 
         const l10n = this.l10n()
         Object.keys(l10n).forEach(language => {
-            this.kernel.l10n(language, l10n[language])
+            Kernel.l10n(language, l10n[language])
         })
     }
 

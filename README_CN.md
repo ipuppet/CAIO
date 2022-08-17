@@ -6,6 +6,14 @@
 
 支持桌面小组件和通知中心小组件
 
+## 构建 Taio 动作
+
+构建脚本依赖 [Parcel](https://parceljs.org/)
+
+`yarn build`
+
+您也可以直接使用已打包好的文件 [dist/CAIO-zh-Hans.json](./dist/CAIO-zh-Hans.json)
+
 ## Actions
 
 > 编写方式详见 `scripts/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。

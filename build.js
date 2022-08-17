@@ -1,31 +1,11 @@
-const { Parcel } = require("@parcel/core")
 const fs = require("fs")
 const path = require("path")
+const process = require("child_process")
 
 const outputName = "CAIO"
-const distDir = "dist"
-const distEntry = `${outputName}.js`
+const distEntry = `dist/${outputName}.js`
 const entryFilePath = path.join(__dirname, "main.js")
 const entryFileContent = fs.readFileSync(entryFilePath, "utf-8")
-
-const bundler = new Parcel({
-    entries: "main.js",
-    defaultConfig: "@parcel/config-default",
-    mode: "production",
-    targets: {
-        main: {
-            engines: {}, // Parcel just need this, not sure why
-            distDir,
-            distEntry,
-            includeNodeModules: false
-        }
-    },
-    defaultTargetOptions: {
-        shouldOptimize: true,
-        shouldScopeHoist: true,
-        sourceMaps: false
-    }
-})
 
 function injectContent() {
     const stringsFolder = path.join(__dirname, "strings")
@@ -126,12 +106,8 @@ function injectContent() {
     fs.writeFileSync(entryFilePath, contents.join("\n\n"))
 }
 
-function cleanUp() {
-    fs.writeFileSync(entryFilePath, entryFileContent)
-}
-
 function buildTextActions() {
-    const script = fs.readFileSync(path.join(__dirname, distDir, distEntry), "utf-8")
+    const script = fs.readFileSync(path.join(__dirname, distEntry), "utf-8")
     const folder = path.join(__dirname, "templates")
     const templates = fs.readdirSync(folder)
     templates.forEach(fileName => {
@@ -150,18 +126,22 @@ function buildTextActions() {
 }
 
 async function build() {
-    injectContent()
-
     try {
-        const { bundleGraph, buildTime } = await bundler.run()
-        const bundles = bundleGraph.getBundles()
-        console.log(`🔥 Built ${bundles.length} bundles in ${buildTime}ms!`)
-    } catch (error) {
-        console.error(error.diagnostics)
+        injectContent()
+        process.execSync(`npx parcel build`, (err, stdout, stderr) => {
+            if (err) {
+                console.log(err)
+                return
+            }
+            console.log(`${stdout}`)
+            console.log(`${stderr}`)
+        })
+    } finally {
+        // 恢复文件内容
+        fs.writeFileSync(entryFilePath, entryFileContent)
     }
 
     buildTextActions()
-    cleanUp()
 }
 
 build()

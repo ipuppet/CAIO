@@ -1,4 +1,4 @@
-const { versionCompare, UIKit, Sheet } = require("./libs/easy-jsbox")
+const { Kernel, UIKit, Sheet } = require("./libs/easy-jsbox")
 
 const KeyboardScripts = require("./ui/components/keyboard-scripts")
 const TodayActions = require("./ui/components/today-actions")
@@ -286,15 +286,23 @@ function settingMethods(appKernel) {
             .present()
     }
 
-    kernel.setting.method.checkUpdate = animate => {
+    kernel.setting.method.checkUpdate = async animate => {
         animate.actionStart()
-        kernel.checkUpdate(content => {
-            $file.write({
-                data: $data({ string: content }),
-                path: "scripts/libs/easy-jsbox.js"
-            })
-            $ui.toast("The framework has been updated.")
-        })
+
+        const easyJsboxPath = "scripts/libs/easy-jsbox.js"
+        if ($file.exists(easyJsboxPath)) {
+            try {
+                const res = await kernel.checkUpdate()
+                if (res) {
+                    $file.write({
+                        data: $data({ string: res }),
+                        path: easyJsboxPath
+                    })
+                    $ui.toast("The framework has been updated.")
+                }
+            } catch {}
+        }
+
         $http.get({
             url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json",
             handler: resp => {
@@ -305,7 +313,7 @@ function settingMethods(appKernel) {
                 } catch {
                     info = JSON.parse($file.read("config.json").string).info
                 }
-                if (versionCompare(version, info.version) > 0) {
+                if (Kernel.versionCompare(version, info.version) > 0) {
                     $ui.alert({
                         title: "New Version",
                         message: `New version found: ${version}\nUpdate via Github or click the button to open Erots.`,

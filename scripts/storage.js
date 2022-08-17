@@ -1,4 +1,4 @@
-const { compressImage } = require("./libs/easy-jsbox")
+const { Kernel } = require("./libs/easy-jsbox")
 
 /**
  * @typedef {import("./app").AppKernel} AppKernel
@@ -410,7 +410,7 @@ class Storage {
                 path: path.original
             })
             $file.write({
-                data: compressImage(image).jpg(0.8),
+                data: Kernel.compressImage(image).jpg(0.8),
                 path: path.preview
             })
             clipboard.text = this.pathToKey(path)

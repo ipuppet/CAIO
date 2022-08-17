@@ -108,7 +108,7 @@ class Editor {
             },
             rightButtons: navButtons
         })
-        sheet.NavigationView.navigationBar.contentViewHeightOffset = 0
+        sheet.navigationView.navigationBar.contentViewHeightOffset = 0
         sheet.init().present()
     }
 
