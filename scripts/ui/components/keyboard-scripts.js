@@ -103,7 +103,7 @@ class KeyboardScripts {
         const keyboardScripts = new KeyboardScripts()
         sheet.setView(keyboardScripts.getListView()).addNavBar({
             title: $l10n("QUICK_START_SCRIPTS"),
-            popButton: { title: $l10n("CANCEL") },
+            popButton: { title: $l10n("DONE") },
             rightButtons: keyboardScripts.getNavButtons()
         })
 

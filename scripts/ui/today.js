@@ -1,4 +1,4 @@
-const { UIKit, BarButtonItem, NavigationItem, NavigationBar } = require("../libs/easy-jsbox")
+const { UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const TodayActions = require("./components/today-actions")
 
@@ -16,7 +16,10 @@ class Today extends Clipboard {
         this.listContainerId = "today-list-container"
         this.readClipboardButtonId = "today-nav-readClipboard"
         this.listId = "today-list"
+
+        this.navigationBarItems = new NavigationBarItems()
         this.bottomBar = new NavigationBar()
+        this.bottomBar.navigationBarItems = this.navigationBarItems
 
         // 剪贴板列个性化设置
         this.left_right = 20 // 列表边距
@@ -181,9 +184,7 @@ class Today extends Clipboard {
     }
 
     getBottomBarView() {
-        const navigationItem = new NavigationItem()
-
-        navigationItem
+        this.navigationBarItems
             .setLeftButtons([
                 {
                     title: $l10n("PREV_PAGE"),
@@ -200,10 +201,9 @@ class Today extends Clipboard {
                     })
                 }
             ])
+        this.bottomBar
             .setTitle(this.listPageNow[this.listSection] + 1)
-            .setLargeTitleDisplayMode(NavigationItem.largeTitleDisplayModeNever)
-
-        this.bottomBar.setNavigationItem(navigationItem)
+            .setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
 
         const view = this.bottomBar.getNavigationBarView()
 
