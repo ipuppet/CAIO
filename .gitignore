@@ -1,2 +1,5 @@
 .output
 .idea
+.vscode
+node_modules
+.parcel-cache

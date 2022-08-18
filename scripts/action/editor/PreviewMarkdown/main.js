@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 class MyAction extends Action {
     do() {
         this.pageSheet({
@@ -11,5 +9,3 @@ class MyAction extends Action {
         })
     }
 }
-
-module.exports = MyAction

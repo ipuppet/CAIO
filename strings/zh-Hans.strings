@@ -1,5 +1,6 @@
 "ALERT_INFO" = "提示";
 "NONE" = "什么都没有";
+"DONE" = "完成";
 "FAILED_TO_LOAD_VIEW" = "加载视图失败";
 "VIEW_NOT_PROVIDED" = "未提供该视图";
 "UNCATEGORIZED" = "未分类";
@@ -80,7 +81,11 @@
 "CLICK_ACTION" = "点击事件";
 
 "TODAY_WIDGET" = "通知中心小组件";
+"PREV_PAGE" = "上一页";
+"NEXT_PAGE" = "下一页";
 
 "DISPLAY_MODE" = "显示模式";
 "CLASSIC" = "经典";
 "MODERN" = "现代";
+
+"FILE_MANAGEMENT" = "文件管理";

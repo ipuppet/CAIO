@@ -1,5 +1,6 @@
 "ALERT_INFO" = "Alert";
 "NONE" = "None";
+"DONE" = "Done";
 "FAILED_TO_LOAD_VIEW" = "Faild to load view";
 "VIEW_NOT_PROVIDED" = "The view is not provided";
 "UNCATEGORIZED" = "Uncategorized";
@@ -80,7 +81,11 @@
 "CLICK_ACTION" = "Click Action";
 
 "TODAY_WIDGET" = "Today Widget";
+"PREV_PAGE" = "Prev";
+"NEXT_PAGE" = "Next";
 
 "DISPLAY_MODE" = "Display Mode";
 "CLASSIC" = "Classic";
 "MODERN" = "Modern";
+
+"FILE_MANAGEMENT" = "File Management";

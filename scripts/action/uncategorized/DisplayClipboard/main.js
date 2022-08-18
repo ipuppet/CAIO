@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 class MyAction extends Action {
     /**
      * 系统会调用 do() 方法
@@ -17,5 +15,3 @@ class MyAction extends Action {
         })
     }
 }
-
-module.exports = MyAction

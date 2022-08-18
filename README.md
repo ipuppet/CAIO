@@ -4,21 +4,29 @@
 > 
 > A Clipboard tool based on JSBox.
 
-支持桌面小组件和通知中心小组件
+Support for home widget and notification center widgets.
+
+## Build Taio Action
+
+Build scripts depend on [Parcel](https://parceljs.org/).
+
+`yarn build`
+
+You can also use the packaged files directly [dist/CAIO-en.json](./dist/CAIO-en.json).
 
 ## Actions
 
-> 编写方式详见 `scripts/action/README.md` 或应用内 `Action` 编辑页面右上角图书按钮。
+> For details on how to write, see `scripts/action/README.md` or the book button in the upper right corner of the `Action` edit page in the app.
 
-### 不同环境中 `Action` 数据区别
+### `Action` data difference in different environments
 
-- 首页顶部 `Action` 按钮处理的数据为当前复制的内容
-- 长按列表弹出的 `Action` 菜单处理的数据为被选中的内容
-- 编辑器中顶部 `Action` 按钮（闪电图形按钮）处理的数据为正在编辑的所有内容
+- The data processed by the `Action` button at the top of the home page is the currently copied content.
+- The data processed by the `Action` menu that pops up by long-pressing the list is the selected content.
+- The data processed by the `Action` button in the editor is whatever is being edited.
 
 
 ## Today Widget
 
-> 点击复制，长按触发动作。
+> Click to copy, long press to trigger the action.
 
-请尽量避免在 JSBox 运行 CAIO 时使用 Today Widget
+Please try to avoid using the Today Widget when JSBox is running CAIO.

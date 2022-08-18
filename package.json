@@ -1,0 +1,15 @@
+{
+    "license": "MIT",
+    "scripts": {
+        "build": "node build.js"
+    },
+    "jsbox": "dist/CAIO.js",
+    "targets": {
+        "jsbox": {
+            "source": "main.js",
+            "includeNodeModules": false,
+            "sourceMap": false,
+            "outputFormat": "global"
+        }
+    }
+}

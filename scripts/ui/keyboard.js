@@ -1,4 +1,4 @@
-const { UIKit, BarButtonItem, NavigationItem, NavigationBar } = require("../libs/easy-jsbox")
+const { UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -147,9 +147,9 @@ class Keyboard extends Clipboard {
     }
 
     getBottomBarView() {
-        const navigationBar = new NavigationBar()
-        const navigationItem = new NavigationItem()
-        navigationItem.setLeftButtons([
+        const navigationBarItems = new NavigationBarItems()
+
+        navigationBarItems.setLeftButtons([
             {
                 symbol: "paperplane",
                 menu: {
@@ -168,7 +168,7 @@ class Keyboard extends Clipboard {
         ])
         if (!$device.isIphoneX) {
             // TODO 切换键盘
-            navigationItem.addLeftButton({
+            navigationBarItems.addLeftButton({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
                 menu: {
@@ -182,7 +182,7 @@ class Keyboard extends Clipboard {
                 }
             })
         }
-        navigationItem.setRightButtons([
+        navigationBarItems.setRightButtons([
             {
                 // send
                 title: "Send",
@@ -212,7 +212,8 @@ class Keyboard extends Clipboard {
             }
         ])
 
-        navigationBar.setNavigationItem(navigationItem)
+        const navigationBar = new NavigationBar()
+        navigationBar.navigationBarItems = navigationBarItems
 
         const view = navigationBar.getNavigationBarView()
 

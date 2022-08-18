@@ -1,5 +1,6 @@
-const { Matrix, Setting, PageController, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
+const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
+const Action = require("../../action/action")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -26,21 +27,46 @@ class ActionManager {
     }
 
     importExampleAction() {
-        $file.list(this.actionPath).forEach(type => {
-            const actionTypePath = `${this.actionPath}/${type}`
-            if ($file.isDirectory(actionTypePath)) {
+        try {
+            Object.keys(__ACTIONS__).forEach(type => {
                 const userActionTypePath = `${this.userActionPath}/${type}`
-                $file.list(actionTypePath).forEach(item => {
-                    if (!$file.exists(`${userActionTypePath}/${item}/main.js`)) {
+                Object.keys(__ACTIONS__[type]).forEach(name => {
+                    if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
                         $file.mkdir(userActionTypePath)
-                        $file.copy({
-                            src: `${actionTypePath}/${item}`,
-                            dst: `${userActionTypePath}/${item}`
+                        $file.mkdir(`${userActionTypePath}/${name}`)
+
+                        $file.write({
+                            data: $data({ string: __ACTIONS__[type][name]["main.js"] }),
+                            path: `${userActionTypePath}/${name}/main.js`
+                        })
+                        $file.write({
+                            data: $data({ string: __ACTIONS__[type][name]["config.json"] }),
+                            path: `${userActionTypePath}/${name}/config.json`
+                        })
+                        $file.write({
+                            data: $data({ string: __ACTIONS__[type][name]["README.md"] }),
+                            path: `${userActionTypePath}/${name}/README.md`
                         })
                     }
                 })
-            }
-        })
+            })
+        } catch {
+            $file.list(this.actionPath).forEach(type => {
+                const actionTypePath = `${this.actionPath}/${type}`
+                if ($file.isDirectory(actionTypePath)) {
+                    const userActionTypePath = `${this.userActionPath}/${type}`
+                    $file.list(actionTypePath).forEach(name => {
+                        if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
+                            $file.mkdir(userActionTypePath)
+                            $file.copy({
+                                src: `${actionTypePath}/${name}`,
+                                dst: `${userActionTypePath}/${name}`
+                            })
+                        }
+                    })
+                }
+            })
+        }
     }
 
     checkUserAction() {
@@ -70,10 +96,15 @@ class ActionManager {
         if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         return async data => {
-            // TODO 重复引用被抛弃导致无法动态重载脚本内容
-            const ActionClass = require(`${basePath}/main.js`)
-            const action = new ActionClass(this.kernel, config, data)
-            return await action.do()
+            try {
+                const script = $file.read(`${basePath}/main.js`).string
+                const MyAction = new Function("Action", `${script}\n return MyAction`)(Action)
+                const action = new MyAction(this.kernel, config, data)
+                return await action.do()
+            } catch (error) {
+                $ui.error(error)
+                this.kernel.error(error)
+            }
         }
     }
 
@@ -229,7 +260,7 @@ class ActionManager {
             actionTypesIndex[key] = index
         })
         this.editingActionInfo = info ?? {
-            dir: this.kernel.uuid(), // 随机生成文件夹名
+            dir: $text.uuid, // 随机生成文件夹名
             type: "clipboard",
             name: "MyAction",
             color: "#CC00CC",
@@ -739,10 +770,10 @@ class ActionManager {
     }
 
     getPageView() {
-        const pageController = new PageController()
-        pageController.navigationItem.setTitle($l10n("ACTIONS")).setRightButtons(this.getNavButtons())
-        pageController.setView(this.getMatrixView())
-        return pageController.getPage()
+        const navigationView = new NavigationView()
+        navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
+        navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))
+        return navigationView.getPage()
     }
 
     present() {

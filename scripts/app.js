@@ -1,4 +1,12 @@
-const { UIKit, TabBarController, Kernel, FileStorage, Setting } = require("./libs/easy-jsbox")
+const {
+    UIKit,
+    ViewController,
+    TabBarController,
+    Kernel,
+    FileStorage,
+    Setting,
+    FileManager
+} = require("./libs/easy-jsbox")
 const Storage = require("./storage")
 const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
@@ -17,7 +25,14 @@ class AppKernel extends Kernel {
         // FileStorage
         this.fileStorage = fileStorage
         // Setting
-        this.setting = new Setting({ fileStorage: this.fileStorage })
+        let structure
+        try {
+            structure = __SETTING__
+        } catch {}
+        this.setting = new Setting({
+            fileStorage: this.fileStorage,
+            structure
+        })
         this.setting.loadConfig()
         // Storage
         this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
@@ -31,6 +46,8 @@ class AppKernel extends Kernel {
         this.clipboard = new Clipboard(this)
         // ActionManager
         this.actionManager = new ActionManager(this)
+        // FileManager
+        this.fileManager = new FileManager()
     }
 
     deleteConfirm(message, conformAction) {
@@ -95,13 +112,17 @@ class AppUI {
                 }
             ])
 
-            kernel.UIRender(kernel.clipboard.getPageController().getPage())
+            kernel.UIRender(kernel.clipboard.getNavigationView().getPage())
         } else {
+            kernel.fileManager.setViewController(new ViewController())
+
             kernel.tabBarController = new TabBarController()
-            const clipboardPageController = kernel.clipboard.getPageController()
+
+            const clipboardNavigationView = kernel.clipboard.getNavigationView()
+
             kernel.tabBarController
                 .setPages({
-                    clipboard: clipboardPageController.getPage(),
+                    clipboard: clipboardNavigationView.getPage(),
                     actions: kernel.actionManager.getPageView(),
                     setting: kernel.setting.getPageView()
                 })

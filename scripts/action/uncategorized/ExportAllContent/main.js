@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 class MyAction extends Action {
     do() {
         const data = this.getAllContent().join("\n")
@@ -7,5 +5,3 @@ class MyAction extends Action {
         else $ui.alert("无数据")
     }
 }
-
-module.exports = MyAction

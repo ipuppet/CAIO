@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 function HtmlTemplate(html) {
     return `
 <html>
@@ -54,5 +52,3 @@ class MyAction extends Action {
         // this.setContent("Hello world!")
     }
 }
-
-module.exports = MyAction

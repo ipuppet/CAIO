@@ -1,5 +1,3 @@
-const Action = require("scripts/action/action.js")
-
 class MyAction extends Action {
     async downloadContent(url) {
         const response = await $http.get({
@@ -38,5 +36,3 @@ class MyAction extends Action {
         return response
     }
 }
-
-module.exports = MyAction

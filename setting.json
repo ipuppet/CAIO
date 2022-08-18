@@ -474,6 +474,16 @@
                     "MODERN"
                 ],
                 "value": 0
+            },
+            {
+                "icon": [
+                    "folder.fill",
+                    "#FF9900"
+                ],
+                "title": "FILE_MANAGEMENT",
+                "type": "script",
+                "key": "fileManager",
+                "value": "this.method.fileManager"
             }
         ]
     },

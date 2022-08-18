@@ -1,4 +1,4 @@
-const { versionCompare, UIKit, Sheet } = require("./libs/easy-jsbox")
+const { Kernel, UIKit, Sheet } = require("./libs/easy-jsbox")
 
 const KeyboardScripts = require("./ui/components/keyboard-scripts")
 const TodayActions = require("./ui/components/today-actions")
@@ -265,7 +265,14 @@ function settingMethods(appKernel) {
     kernel = appKernel
 
     kernel.setting.method.readme = animate => {
-        const content = $file.read("/README.md").string
+        const content = (() => {
+            const file = $device.info?.language?.startsWith("zh") ? "README_CN.md" : "README.md"
+            try {
+                return __README__[file]
+            } catch {
+                return $file.read(file).string
+            }
+        })()
         const sheet = new Sheet()
         sheet
             .setView({
@@ -279,21 +286,34 @@ function settingMethods(appKernel) {
             .present()
     }
 
-    kernel.setting.method.checkUpdate = animate => {
+    kernel.setting.method.checkUpdate = async animate => {
         animate.actionStart()
-        kernel.checkUpdate(content => {
-            $file.write({
-                data: $data({ string: content }),
-                path: "scripts/libs/easy-jsbox.js"
-            })
-            $ui.toast("The framework has been updated.")
-        })
+
+        const easyJsboxPath = "scripts/libs/easy-jsbox.js"
+        if ($file.exists(easyJsboxPath)) {
+            try {
+                const res = await kernel.checkUpdate()
+                if (res) {
+                    $file.write({
+                        data: $data({ string: res }),
+                        path: easyJsboxPath
+                    })
+                    $ui.toast("The framework has been updated.")
+                }
+            } catch {}
+        }
+
         $http.get({
             url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json",
             handler: resp => {
                 const version = resp.data?.info.version
-                const config = JSON.parse($file.read("config.json").string)
-                if (versionCompare(version, config.info.version) > 0) {
+                let info
+                try {
+                    info = __INFO__
+                } catch {
+                    info = JSON.parse($file.read("config.json").string).info
+                }
+                if (Kernel.versionCompare(version, info.version) > 0) {
                     $ui.alert({
                         title: "New Version",
                         message: `New version found: ${version}\nUpdate via Github or click the button to open Erots.`,
@@ -338,6 +358,10 @@ function settingMethods(appKernel) {
                 Widget.render(widgets[name])
             }
         })
+    }
+
+    kernel.setting.method.fileManager = () => {
+        kernel.fileManager.push("storage")
     }
 
     clipboard()
