@@ -1,4 +1,12 @@
-const { UIKit, TabBarController, Kernel, FileStorage, Setting } = require("./libs/easy-jsbox")
+const {
+    UIKit,
+    ViewController,
+    TabBarController,
+    Kernel,
+    FileStorage,
+    Setting,
+    FileManager
+} = require("./libs/easy-jsbox")
 const Storage = require("./storage")
 const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
@@ -38,6 +46,8 @@ class AppKernel extends Kernel {
         this.clipboard = new Clipboard(this)
         // ActionManager
         this.actionManager = new ActionManager(this)
+        // FileManager
+        this.fileManager = new FileManager()
     }
 
     deleteConfirm(message, conformAction) {
@@ -104,8 +114,12 @@ class AppUI {
 
             kernel.UIRender(kernel.clipboard.getNavigationView().getPage())
         } else {
+            kernel.fileManager.setViewController(new ViewController())
+
             kernel.tabBarController = new TabBarController()
+
             const clipboardNavigationView = kernel.clipboard.getNavigationView()
+
             kernel.tabBarController
                 .setPages({
                     clipboard: clipboardNavigationView.getPage(),

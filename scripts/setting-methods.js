@@ -360,6 +360,10 @@ function settingMethods(appKernel) {
         })
     }
 
+    kernel.setting.method.fileManager = () => {
+        kernel.fileManager.push("storage")
+    }
+
     clipboard()
 
     action()
