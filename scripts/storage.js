@@ -20,18 +20,20 @@ class Storage {
         this.imageOriginalPath = `${this.imagePath}/original`
         this.imagePreviewPath = `${this.imagePath}/preview`
 
-        this.iCloudPath = "drive://CAIO"
-        this.iCloudSyncInfoFile = `${this.iCloudPath}/sync.json`
-        this.iCloudDbFile = `${this.iCloudPath}/${this.dbName}`
-        this.iCloudImagePath = `${this.iCloudPath}/image`
+        this.icloudPath = "CAIO"
+        this.icloudSyncInfoFile = `${this.icloudPath}/sync.json`
+        this.icloudDbFile = `${this.icloudPath}/${this.dbName}`
+        this.icloudImagePath = `${this.icloudPath}/image`
 
         this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.tempSyncInfoFile = `${this.tempPath}/sync.json`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.tempImagePath = `${this.tempPath}/image`
 
+        this.exportFileName = "CAIO.zip"
+
         this.init()
-        if (this.sync) this.syncByiCloud()
+        if (this.sync) this.syncByIcloud()
     }
 
     init() {
@@ -45,13 +47,17 @@ class Storage {
         )
 
         // 初始化目录
-        const pathList = [this.tempPath, this.iCloudPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
+        const pathList = [this.tempPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
 
         pathList.forEach(path => {
-            if (!$file.isDirectory(path)) {
+            if (!$file.exists(path)) {
                 $file.mkdir(path)
             }
         })
+
+        if (!$drive.exists(this.icloudPath)) {
+            $drive.mkdir(this.icloudPath)
+        }
     }
 
     rebuild() {
@@ -135,12 +141,12 @@ class Storage {
         $file.copy({ src: this.syncInfoFile, dst: this.tempSyncInfoFile })
         $file.copy({ src: this.localDb, dst: this.tempDbFile })
         $file.copy({ src: this.imagePath, dst: this.tempImagePath })
-        const exportFile = this.tempPath + "/" + this.iCloudZipFileName
+        const exportFile = this.tempPath + "/" + this.exportFileName
         await $archiver.zip({ directory: this.tempPath, dest: exportFile })
         $share.sheet({
             items: [
                 {
-                    name: this.iCloudZipFileName,
+                    name: this.exportFileName,
                     data: $data({ path: exportFile })
                 }
             ],
@@ -169,49 +175,55 @@ class Storage {
         await this.upload()
     }
 
-    async upload(manual) {
+    async upload(manual = false) {
         if (!this.sync && !manual) return
         if (this.all().length === 0) return
 
-        const fileWrite = async obj => {
+        const fileWrite = async item => {
             // 加读写锁
-            const lock = obj.path + ".lock"
-            await $file.download(lock)
-            if (await $file.exists(lock)) {
+            const lock = item.path + ".lock"
+            const lockIcloud = item.path + ".lock.icloud"
+            const isLocked = $drive.exists(lock)
+            const isLockedIcloud = $drive.exists(lockIcloud)
+            if (isLocked || isLockedIcloud) {
                 // 文件被锁，等待 500ms 重试
                 await new Promise(resolve => {
                     setTimeout(() => resolve(), 500)
                 })
-                await fileWrite(obj)
+                await fileWrite(item)
                 return
             } else {
-                await $file.write({ data: $data({ string: "" }), path: lock })
-                this.kernel.print("file locked: " + obj.path)
+                await $drive.write({ data: $data({ string: "" }), path: lock })
+                this.kernel.print("file locked: " + item.path)
             }
 
             try {
                 // 清除多余文件
-                const dir = obj.path.substring(0, obj.path.lastIndexOf("/"))
-                const filename = obj.path.substring(obj.path.lastIndexOf("/") + 1, obj.path.lastIndexOf("."))
-                for (let val of $file.list(dir) ?? []) {
-                    let valName = val.substring(0, val.lastIndexOf("."))
-                    if (valName === filename || valName.startsWith(filename + " ")) {
-                        $file.delete(obj.path)
+                const dir = item.path.substring(0, item.path.lastIndexOf("/") + 1)
+                const file = item.path.substring(item.path.lastIndexOf("/") + 1)
+                const filename = file.substring(0, file.lastIndexOf("."))
+
+                for (let icloudFile of $drive.list(dir) ?? []) {
+                    if (icloudFile === file || icloudFile.startsWith(filename + " ")) {
+                        $drive.delete(dir + icloudFile)
+                    }
+                    if ($drive.exists(file + ".icloud")) {
+                        $drive.delete(dir + file + ".icloud")
                     }
                 }
 
                 // 写入文件
-                const status = await $file.write(obj)
+                const status = await $drive.write(item)
                 if (!status) {
-                    throw new Error("FILE_WRITE_ERROR: " + obj.path)
+                    throw new Error("FILE_WRITE_ERROR: " + item.path)
                 }
             } catch (error) {
                 this.kernel.error(error)
                 throw error
             } finally {
-                // 解除缩
-                await $file.delete(lock)
-                this.kernel.print("file unlocked: " + obj.path)
+                // 解除锁
+                await $drive.delete(lock)
+                this.kernel.print("file unlocked: " + item.path)
             }
         }
 
@@ -219,63 +231,78 @@ class Storage {
 
         await fileWrite({
             data: $data({ string: JSON.stringify({ timestamp: now }) }),
-            path: this.iCloudSyncInfoFile
+            path: this.icloudSyncInfoFile
         })
         await fileWrite({
             data: $data({ path: this.localDb }),
-            path: this.iCloudDbFile
+            path: this.icloudDbFile
         })
-        if (!$file.exists(this.iCloudImagePath)) {
-            $file.mkdir(this.iCloudImagePath)
+        if (!$drive.exists(this.icloudImagePath)) {
+            $drive.mkdir(this.icloudImagePath)
         }
-        await $file.copy({
+        await $drive.copy({
             src: this.imagePath,
-            dst: this.iCloudImagePath
+            dst: this.icloudImagePath
         })
 
         // 更新同步信息
-        await $file.write({
+        await $drive.write({
             data: $data({ string: JSON.stringify({ timestamp: now }) }),
             path: this.syncInfoFile
         })
     }
 
-    async syncByiCloud(manual = false) {
-        if (!$file.exists(this.iCloudSyncInfoFile)) {
-            this.upload(manual)
+    async syncByIcloud() {
+        if ($drive.exists(this.icloudSyncInfoFile + ".icloud")) {
+            await $drive.download(this.icloudSyncInfoFile)
+        }
+        if (!$drive.exists(this.icloudSyncInfoFile)) {
+            await this.upload(true)
             return
         }
 
-        const syncInfoLocal = $file.exists(this.syncInfoFile) ? JSON.parse($file.read(this.syncInfoFile).string) : {}
-        const data = await $file.download(this.iCloudSyncInfoFile)
+        const data = await $drive.read(this.icloudSyncInfoFile)
         const syncInfoICloud = JSON.parse(data.string)
+        const syncInfoLocal = $file.exists(this.syncInfoFile) ? JSON.parse($file.read(this.syncInfoFile).string) : {}
 
-        if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoICloud.timestamp) {
-            await $file.write({
-                data: await $file.download(this.iCloudSyncInfoFile),
-                path: this.syncInfoFile
-            })
-            await $file.write({
-                data: await $file.download(this.iCloudDbFile),
-                path: this.localDb
-            })
-            // image
-            await $file.copy({ src: this.iCloudImagePath, dst: this.imagePath })
-            // Update
-            $sqlite.close(this.sqlite)
-            this.sqlite = $sqlite.open(this.localDb)
+        let syncStatus = { status: true }
+        try {
+            if (!syncInfoLocal.timestamp || syncInfoLocal.timestamp < syncInfoICloud.timestamp) {
+                let data = await $drive.download(this.icloudSyncInfoFile)
+                await $file.write({
+                    data,
+                    path: this.syncInfoFile
+                })
+                data = await $drive.download(this.icloudDbFile)
+                await $file.write({
+                    data,
+                    path: this.localDb
+                })
+                // image
+                await $file.copy({ src: "drive://" + this.icloudImagePath, dst: this.imagePath })
+                // Update
+                $sqlite.close(this.sqlite)
+                this.sqlite = $sqlite.open(this.localDb)
+            } else {
+                await this.upload(true)
+            }
+        } catch (error) {
+            syncStatus.status = false
+            syncStatus.error = error
+            throw error
+        } finally {
             $app.notify({
-                name: "syncByiCloud",
-                object: { status: true }
+                name: "syncByIcloud",
+                object: syncStatus
             })
         }
     }
 
-    deleteICloudData() {
+    deleteIcloudData() {
         return (
-            $file.delete(this.iCloudSyncInfoFile) &&
-            $file.delete(this.iCloudDbFile) &&
-            $file.delete(this.iCloudImagePath)
+            $drive.delete(this.icloudSyncInfoFile) &&
+            $drive.delete(this.icloudDbFile) &&
+            $drive.delete(this.icloudImagePath)
         )
     }
 
