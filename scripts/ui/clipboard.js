@@ -53,11 +53,6 @@ class Clipboard {
         this.#singleLine = true
     }
 
-    loadDataWithSingleLine() {
-        this.setSingleLine()
-        this.loadSavedClipboard()
-    }
-
     static updateMenu(kernel) {
         // TODO 更新 menu 中的动作
     }
@@ -70,13 +65,35 @@ class Clipboard {
         }
     }
 
+    appListen() {
+        $app.listen({
+            // iCloud
+            syncByIcloud: object => {
+                if (object.status) {
+                    this.loadSavedClipboard()
+                    const view = $(this.listId)
+                    if (view) view.data = this.savedClipboard
+                } else {
+                    $ui.error(object.error)
+                }
+            },
+            resume: () => {
+                // 在应用恢复响应后调用
+                this.loadSavedClipboard()
+                this.updateList()
+                $delay(0.5, () => {
+                    this.readClipboard()
+                })
+            }
+        })
+    }
+
     /**
-     * list view
+     * list view ready event
      */
     listReady() {
-        if (isTaio) {
-            return
-        }
+        if (isTaio) return
+
         // check url scheme
         $delay(0.5, () => {
             if ($context.query["copy"]) {
@@ -101,24 +118,7 @@ class Clipboard {
             this.readClipboard()
         })
 
-        $app.listen({
-            // iCloud
-            syncByiCloud: object => {
-                if (object.status) {
-                    this.loadSavedClipboard()
-                    const view = $(this.listId)
-                    if (view) view.data = this.savedClipboard
-                }
-            },
-            resume: () => {
-                // 在应用恢复响应后调用
-                $delay(0.5, () => {
-                    this.loadSavedClipboard()
-                    this.updateList()
-                    this.readClipboard()
-                })
-            }
-        })
+        this.appListen()
     }
 
     updateList() {
@@ -127,8 +127,8 @@ class Clipboard {
     }
 
     /**
-     *
-     * @param {string} uuid
+     * 将元素标记为 copied
+     * @param {string|undefined} uuid 若为 undefined 则清空剪切板
      * @param {$indexPath} indexPath
      * @param {boolean} isUpdateIndicator
      * @returns
@@ -142,31 +142,30 @@ class Clipboard {
             return
         }
 
-        if (!uuid) {
-            if (isUpdateIndicator) {
-                if (this.copied.indexPath) {
+        if (isUpdateIndicator) {
+            if (this.copied.indexPath) {
+                try {
                     this.savedClipboard[this.copied.indexPath.section].rows[
                         this.copied.indexPath.row
                     ].copied.hidden = true
+                } catch {
+                    // 清空剪切板
+                    uuid = undefined
                 }
-                $delay(0.3, () => this.updateList())
             }
-            this.copied = {}
-            $clipboard.clear()
-        } else {
-            if (isUpdateIndicator) {
-                if (this.copied.indexPath) {
-                    this.savedClipboard[this.copied.indexPath.section].rows[
-                        this.copied.indexPath.row
-                    ].copied.hidden = true
-                }
+            if (uuid) {
                 this.savedClipboard[indexPath.section].rows[indexPath.row].copied.hidden = false
-                $delay(0.3, () => this.updateList())
             }
+            $delay(0.3, () => this.updateList())
+        }
+        if (uuid) {
             if (this.copied.uuid !== uuid) {
                 this.copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
             }
             this.copied.indexPath = indexPath
+        } else {
+            this.copied = {}
+            $clipboard.clear()
         }
         $cache.set("clipboard.copied", this.copied)
     }
@@ -203,7 +202,8 @@ class Clipboard {
 
             const text = $clipboard.text
             if (!text || text === "") {
-                this.setCopied() // 清空剪切板
+                // 删除剪切板信息
+                this.setCopied()
                 return false
             }
 
@@ -331,7 +331,7 @@ class Clipboard {
             // 删除列表中的行
             if (this.copied.uuid === uuid) {
                 // 删除剪切板信息
-                this.setCopied(null)
+                this.setCopied()
             }
         } catch (error) {
             this.kernel.storage.rollback()

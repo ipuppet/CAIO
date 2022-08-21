@@ -81,7 +81,7 @@ function clipboard() {
                         animate.actionStart()
                         setTimeout(() => {
                             kernel.storage
-                                .syncByiCloud(true)
+                                .syncByIcloud()
                                 .then(() => {
                                     animate.actionDone()
                                 })
@@ -99,7 +99,7 @@ function clipboard() {
 
     kernel.setting.method.deleteICloudData = animate => {
         kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-            if (kernel.storage.deleteICloudData()) {
+            if (kernel.storage.deleteIcloudData()) {
                 animate.actionDone()
             } else {
                 $ui.toast($l10n("DELETE_ERROR"))

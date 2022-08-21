@@ -20,6 +20,7 @@ class Today extends Clipboard {
         this.navigationBarItems = new NavigationBarItems()
         this.bottomBar = new NavigationBar()
         this.bottomBar.navigationBarItems = this.navigationBarItems
+        this.todayActions = new TodayActions(this.kernel)
 
         // 剪贴板列个性化设置
         this.left_right = 20 // 列表边距
@@ -27,20 +28,13 @@ class Today extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 38
         this.taptic = 1
-        this.setSingleLine()
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
         this.listPageNow = [0, 0] // 剪切板当前页
         this.listSection = Math.min(this.tabIndex, 1) // 当前选中列表，只取 0 或 1，默认 1
 
-        this.todayActions = new TodayActions(this.kernel)
-
-        // 监听展开状态
-        $widget.modeChanged = mode => {
-            this.setClipboarPageSize(mode)
-            this.updateList()
-        }
+        this.setSingleLine()
     }
 
     get isActionPage() {
@@ -60,7 +54,14 @@ class Today extends Clipboard {
     }
 
     listReady() {
+        this.loadSavedClipboard()
         this.updateList()
+        this.appListen()
+        // 监听展开状态
+        $widget.modeChanged = mode => {
+            this.setClipboarPageSize(mode)
+            this.updateList()
+        }
         $delay(0.5, () => this.readClipboard())
     }
 

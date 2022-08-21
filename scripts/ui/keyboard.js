@@ -21,16 +21,20 @@ class Keyboard extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
         this.navBarSeparatorId = "navBarSeparator"
-        this.keyboardSetting()
         this.taptic = 1
         this.deleteTimer = undefined
         this.continuousDeleteTimer = undefined
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
         this.continuousDeleteDelay = 0.5
-        this.loadDataWithSingleLine()
+
+        this.keyboardSetting()
+        this.setSingleLine()
     }
 
     listReady() {
+        this.loadSavedClipboard()
+        this.updateList()
+        this.appListen()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
             this.#readClipboardTimer = $timer.schedule({
