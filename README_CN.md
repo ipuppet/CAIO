@@ -11,7 +11,7 @@
 构建脚本依赖 [Parcel](https://parceljs.org/)
 
 ```shell
-npm install -g parcel
+npm i -g parcel
 npm run build
 ```
 

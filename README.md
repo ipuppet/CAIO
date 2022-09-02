@@ -11,7 +11,7 @@ Support for home widget and notification center widgets.
 Build script depend on [Parcel](https://parceljs.org/).
 
 ```shell
-npm install -g parcel
+npm i -g parcel
 npm run build
 ```
 
