@@ -66,6 +66,7 @@ class Clipboard {
     }
 
     appListen() {
+        if (isTaio) return
         $app.listen({
             // iCloud
             syncByIcloud: object => {
