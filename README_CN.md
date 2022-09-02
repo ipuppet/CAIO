@@ -10,7 +10,10 @@
 
 构建脚本依赖 [Parcel](https://parceljs.org/)
 
-`yarn build`
+```shell
+npm install -g parcel
+npm run build
+```
 
 您也可以直接使用已打包好的文件 [dist/CAIO-zh-Hans.json](./dist/CAIO-zh-Hans.json)
 
