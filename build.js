@@ -128,7 +128,8 @@ function buildTextActions() {
 async function build() {
     try {
         injectContent()
-        process.execSync(`parcel build`)
+        const stdout = process.execSync(`parcel build package.json`)
+        console.log(stdout.toString())
     } catch (error) {
         console.log(error.stdout.toString())
     } finally {
