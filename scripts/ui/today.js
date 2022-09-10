@@ -188,7 +188,7 @@ class Today extends Clipboard {
         this.navigationBarItems
             .setLeftButtons([
                 {
-                    title: $l10n("PREV_PAGE"),
+                    symbol: "arrowtriangle.backward",
                     tapped: this.buttonTapped(() => {
                         this.clipboardPrevPage()
                     })
@@ -196,7 +196,7 @@ class Today extends Clipboard {
             ])
             .setRightButtons([
                 {
-                    title: $l10n("NEXT_PAGE"),
+                    symbol: "arrowtriangle.forward",
                     tapped: this.buttonTapped(() => {
                         this.clipboardNextPage()
                     })

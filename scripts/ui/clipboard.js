@@ -68,16 +68,6 @@ class Clipboard {
     appListen() {
         if (isTaio) return
         $app.listen({
-            // iCloud
-            syncByIcloud: object => {
-                if (object.status) {
-                    this.loadSavedClipboard()
-                    const view = $(this.listId)
-                    if (view) view.data = this.savedClipboard
-                } else {
-                    $ui.error(object.error)
-                }
-            },
             resume: () => {
                 // 在应用恢复响应后调用
                 this.loadSavedClipboard()

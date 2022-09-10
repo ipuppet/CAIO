@@ -69,44 +69,6 @@ function clipboard() {
         })
     }
 
-    kernel.setting.method.sync = animate => {
-        $ui.alert({
-            title: $l10n("SYNC_NOW"),
-            message: $l10n("SYNC_ALERT_INFO"),
-            actions: [
-                { title: $l10n("CANCEL") },
-                {
-                    title: $l10n("OK"),
-                    handler: () => {
-                        animate.actionStart()
-                        setTimeout(() => {
-                            kernel.storage
-                                .syncByIcloud()
-                                .then(() => {
-                                    animate.actionDone()
-                                })
-                                .catch(error => {
-                                    $ui.error(error)
-                                    kernel.print(error)
-                                    animate.actionCancel()
-                                })
-                        }, 200)
-                    }
-                }
-            ]
-        })
-    }
-
-    kernel.setting.method.deleteICloudData = animate => {
-        kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-            if (kernel.storage.deleteIcloudData()) {
-                animate.actionDone()
-            } else {
-                $ui.toast($l10n("DELETE_ERROR"))
-            }
-        })
-    }
-
     kernel.setting.method.rebuildDatabase = animate => {
         animate.actionStart()
         const rebuildDatabase = () => {

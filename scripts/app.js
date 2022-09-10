@@ -35,7 +35,7 @@ class AppKernel extends Kernel {
         })
         this.setting.loadConfig()
         // Storage
-        this.storage = new Storage(this.setting.get("clipboard.autoSync"), this)
+        this.storage = new Storage(this)
         this.initComponents()
 
         settingMethods(this)
@@ -192,7 +192,7 @@ class Widget {
         const setting = new Setting()
         setting.loadConfig().setReadonly()
 
-        const widget = Widget.widgetInstance("Clipboard", setting, new Storage(false, { fileStorage }))
+        const widget = Widget.widgetInstance("Clipboard", setting, new Storage({ fileStorage }))
 
         widget.render()
     }

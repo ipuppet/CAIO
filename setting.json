@@ -72,53 +72,6 @@
                         "items": [
                             {
                                 "icon": [
-                                    "arrow.2.circlepath"
-                                ],
-                                "title": "AUTO_SYNC",
-                                "type": "switch",
-                                "key": "clipboard.autoSync",
-                                "value": false
-                            },
-                            {
-                                "icon": [
-                                    "arrow.2.circlepath",
-                                    "#FFCC66"
-                                ],
-                                "title": "SYNC_NOW",
-                                "type": "script",
-                                "key": "clipboard.sync",
-                                "value": "this.method.sync"
-                            },
-                            {
-                                "icon": [
-                                    "trash",
-                                    "red"
-                                ],
-                                "title": "DELETE_ICLOUD_DATA",
-                                "type": "script",
-                                "key": "clipboard.deleteICloudData",
-                                "value": "this.method.deleteICloudData"
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": [
-                                    "arrow.2.circlepath",
-                                    "red"
-                                ],
-                                "title": "REBUILD_DATABASE",
-                                "type": "script",
-                                "key": "clipboard.rebuildDatabase",
-                                "value": "this.method.rebuildDatabase"
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": [
                                     "square.and.arrow.up"
                                 ],
                                 "title": "EXPORT",
@@ -135,6 +88,20 @@
                                 "type": "script",
                                 "key": "clipboard.import",
                                 "value": "this.method.importClipboard"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "arrow.2.circlepath",
+                                    "red"
+                                ],
+                                "title": "REBUILD_DATABASE",
+                                "type": "script",
+                                "key": "clipboard.rebuildDatabase",
+                                "value": "this.method.rebuildDatabase"
                             }
                         ]
                     }
@@ -167,20 +134,6 @@
                         "items": [
                             {
                                 "icon": [
-                                    "arrow.2.circlepath",
-                                    "red"
-                                ],
-                                "title": "REBUILD_ACTION_DATABASE",
-                                "type": "script",
-                                "key": "action.rebuildAction",
-                                "value": "this.method.rebuildAction"
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": [
                                     "square.and.arrow.up"
                                 ],
                                 "title": "EXPORT",
@@ -197,6 +150,20 @@
                                 "type": "script",
                                 "key": "action.import",
                                 "value": "this.method.importAction"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "arrow.2.circlepath",
+                                    "red"
+                                ],
+                                "title": "REBUILD_ACTION_DATABASE",
+                                "type": "script",
+                                "key": "action.rebuildAction",
+                                "value": "this.method.rebuildAction"
                             }
                         ]
                     }
