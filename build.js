@@ -128,14 +128,10 @@ function buildTextActions() {
 async function build() {
     try {
         injectContent()
-        process.execSync(`npx parcel build`, (err, stdout, stderr) => {
-            if (err) {
-                console.log(err)
-                return
-            }
-            console.log(`${stdout}`)
-            console.log(`${stderr}`)
-        })
+        const stdout = process.execSync(`parcel build`)
+        console.log(stdout.toString())
+    } catch (error) {
+        console.log(error.stdout.toString())
     } finally {
         // 恢复文件内容
         fs.writeFileSync(entryFilePath, entryFileContent)

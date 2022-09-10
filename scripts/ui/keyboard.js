@@ -171,7 +171,7 @@ class Keyboard extends Clipboard {
             }
         ])
         if (!$device.isIphoneX) {
-            // TODO 切换键盘
+            // 切换键盘
             navigationBarItems.addLeftButton({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),

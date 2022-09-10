@@ -8,9 +8,12 @@ Support for home widget and notification center widgets.
 
 ## Build Taio Action
 
-Build scripts depend on [Parcel](https://parceljs.org/).
+Build script depend on [Parcel](https://parceljs.org/).
 
-`yarn build`
+```shell
+npm i -g parcel
+npm run build
+```
 
 You can also use the packaged files directly [dist/CAIO-en.json](./dist/CAIO-en.json).
 
