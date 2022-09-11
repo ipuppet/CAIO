@@ -157,7 +157,6 @@ class Storage {
         }
         $sqlite.close(this.sqlite)
         this.sqlite = $sqlite.open(this.localDb)
-        await this.upload()
     }
 
     sort(data, maxLoop = 9000) {
@@ -218,7 +217,6 @@ class Storage {
 
     commit() {
         this.sqlite.commit()
-        this.upload()
     }
 
     rollback() {
@@ -300,9 +298,7 @@ class Storage {
             sql: `INSERT INTO ${table} (uuid, text, md5, prev, next) values (?, ?, ?, ?, ?)`,
             args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
         })
-        if (result.result) {
-            this.upload()
-        } else {
+        if (!result.result) {
             throw result.error
         }
     }
@@ -312,9 +308,7 @@ class Storage {
             sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
             args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
         })
-        if (result.result) {
-            this.upload()
-        } else {
+        if (!result.result) {
             throw result.error
         }
     }
@@ -324,9 +318,7 @@ class Storage {
             sql: `UPDATE ${table} SET text = ?, md5 = ? WHERE uuid = ?`,
             args: [text, $text.MD5(text), uuid]
         })
-        if (result.result) {
-            this.upload()
-        } else {
+        if (!result.result) {
             throw result.error
         }
     }
@@ -342,9 +334,7 @@ class Storage {
             $file.delete(path.original)
             $file.delete(path.preview)
         }
-        if (result.result) {
-            this.upload()
-        } else {
+        if (!result.result) {
             throw result.error
         }
     }
