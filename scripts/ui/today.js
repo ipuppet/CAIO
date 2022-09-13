@@ -190,7 +190,7 @@ class Today extends Clipboard {
         this.navigationBarItems
             .setLeftButtons([
                 {
-                    symbol: "chevron.backward",
+                    symbol: "chevron.backward.circle",
                     tapped: this.buttonTapped(() => {
                         this.clipboardPrevPage()
                     })
@@ -198,7 +198,7 @@ class Today extends Clipboard {
             ])
             .setRightButtons([
                 {
-                    symbol: "chevron.forward",
+                    symbol: "chevron.forward.circle",
                     tapped: this.buttonTapped(() => {
                         this.clipboardNextPage()
                     })
