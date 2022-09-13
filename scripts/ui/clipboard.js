@@ -7,10 +7,10 @@ const Editor = require("./components/editor")
 
 class Clipboard {
     copied = $cache.get("clipboard.copied") ?? {}
-    #singleLine = false
 
     reorder = {}
     #savedClipboard = []
+    // 键为 md5，值为 1 或 undefined 用来判断某个 md5 是否已经存在
     savedClipboardIndex = {}
 
     /**
@@ -50,7 +50,6 @@ class Clipboard {
     setSingleLine() {
         // 图片高度与文字一致
         this.imageContentHeight = this.getSingleLineHeight()
-        this.#singleLine = true
     }
 
     static updateMenu(kernel) {
@@ -206,15 +205,13 @@ class Clipboard {
             }
 
             const md5 = $text.MD5(text)
-            const res = this.kernel.storage.getByMD5(md5)
-            if (this.copied.uuid && this.copied.uuid === res?.uuid) {
+            if (this.savedClipboardIndex[md5]) {
+                const res = this.kernel.storage.getByMD5(md5)
                 this.setCopied(res.uuid, this.getIndexPathByUUID(res.uuid))
-            } else if (!this.savedClipboardIndex[md5]) {
+            } else {
                 const data = this.add(text)
                 this.copy(text, data.uuid, data.indexPath)
             }
-
-            return true
         }
 
         return false
