@@ -54,14 +54,16 @@ class Today extends Clipboard {
     }
 
     listReady() {
-        this.loadSavedClipboard()
-        this.updateList()
-        this.appListen()
         // 监听展开状态
         $widget.modeChanged = mode => {
             this.setClipboarPageSize(mode)
             this.updateList()
         }
+
+        this.loadSavedClipboard()
+        this.updateList()
+        this.appListen()
+
         $delay(0.5, () => this.readClipboard())
     }
 
@@ -188,7 +190,7 @@ class Today extends Clipboard {
         this.navigationBarItems
             .setLeftButtons([
                 {
-                    symbol: "arrowtriangle.backward",
+                    symbol: "chevron.backward",
                     tapped: this.buttonTapped(() => {
                         this.clipboardPrevPage()
                     })
@@ -196,7 +198,7 @@ class Today extends Clipboard {
             ])
             .setRightButtons([
                 {
-                    symbol: "arrowtriangle.forward",
+                    symbol: "chevron.forward",
                     tapped: this.buttonTapped(() => {
                         this.clipboardNextPage()
                     })
@@ -217,7 +219,10 @@ class Today extends Clipboard {
     }
 
     updateList() {
-        $(this.listId).data = this.getClipboardPage()
+        const start = this.listPageNow[this.listSection] * this.listPageSize
+        const end = start + this.listPageSize
+        $(this.listId).data = this.savedClipboard[this.listSection].rows.slice(start, end)
+        // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
 
@@ -234,12 +239,6 @@ class Today extends Clipboard {
             this.listPageNow[this.listSection]++
             this.updateList()
         }
-    }
-
-    getClipboardPage() {
-        const start = this.listPageNow[this.listSection] * this.listPageSize
-        const end = start + this.listPageSize
-        return this.savedClipboard[this.listSection].rows.slice(start, end)
     }
 
     getListView() {

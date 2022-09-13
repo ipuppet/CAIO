@@ -239,9 +239,10 @@ class Clipboard {
         } else {
             return
         }
-        // 写入数据库
-        this.kernel.storage.beginTransaction()
+
         try {
+            // 写入数据库
+            this.kernel.storage.beginTransaction()
             this.kernel.storage.insert(data)
             if (data.next) {
                 // 更改指针
@@ -277,8 +278,8 @@ class Clipboard {
                 return data
             }
         } catch (error) {
-            this.kernel.storage.rollback()
             this.kernel.error(error)
+            this.kernel.storage.rollback()
             $ui.alert(error)
         }
     }
@@ -287,9 +288,9 @@ class Clipboard {
         const section = indexPath.section
         const index = indexPath.row
 
-        // 删除数据库中的值
-        this.kernel.storage.beginTransaction()
         try {
+            // 删除数据库中的值
+            this.kernel.storage.beginTransaction()
             section === 0 ? this.kernel.storage.deletePin(uuid) : this.kernel.storage.delete(uuid)
             // 更改指针
             if (this.savedClipboard[section].rows[index - 1]) {
@@ -325,8 +326,8 @@ class Clipboard {
                 this.setCopied()
             }
         } catch (error) {
-            this.kernel.storage.rollback()
             this.kernel.error(error)
+            this.kernel.storage.rollback()
             $ui.alert(error)
         }
     }
@@ -381,8 +382,9 @@ class Clipboard {
                 next: null,
                 prev: this.savedClipboard[section].rows[to - 1].content.info.uuid
             })
-        this.kernel.storage.beginTransaction() // 开启事务
+
         try {
+            this.kernel.storage.beginTransaction() // 开启事务
             const oldFromItem = {
                 uuid: this.savedClipboard[section].rows[from].content.info.uuid,
                 text: this.savedClipboard[section].rows[from].content.info.text
@@ -508,8 +510,8 @@ class Clipboard {
                 }
             }
         } catch (error) {
-            this.kernel.storage.rollback()
             this.kernel.error(error)
+            this.kernel.storage.rollback()
             $ui.alert(error)
         }
     }
@@ -523,9 +525,10 @@ class Clipboard {
         }
         item.next = this.savedClipboard[0].rows[0]?.content?.info?.uuid ?? null
         item.prev = null
-        // 写入数据库
-        this.kernel.storage.beginTransaction()
+
         try {
+            // 写入数据库
+            this.kernel.storage.beginTransaction()
             this.kernel.storage.insertPin(item)
             if (item.next) {
                 // 更改指针
@@ -550,8 +553,8 @@ class Clipboard {
             })
             listUI.delete(indexPath)
         } catch (error) {
-            this.kernel.storage.rollback()
             this.kernel.error(error)
+            this.kernel.storage.rollback()
             $ui.alert(error)
         }
     }
