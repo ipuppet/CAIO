@@ -855,18 +855,6 @@ class Clipboard {
                             delete content.height
                             this.pin(content, indexPath)
                         }
-                    },
-                    {
-                        // 删除
-                        title: " " + $l10n("DELETE") + " ", // 防止JSBox自动更改成默认的删除操作
-                        color: $color("red"),
-                        handler: (sender, indexPath) => {
-                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                const data = sender.object(indexPath)
-                                this.delete(data.content.info.uuid, indexPath)
-                                sender.delete(indexPath)
-                            })
-                        }
                     }
                 ]
             },
