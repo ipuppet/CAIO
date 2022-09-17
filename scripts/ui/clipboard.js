@@ -1,4 +1,4 @@
-const { isTaio, UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
+const { Kernel, UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 
 /**
@@ -65,7 +65,7 @@ class Clipboard {
     }
 
     appListen() {
-        if (isTaio) return
+        if (Kernel.isTaio) return
         $app.listen({
             resume: () => {
                 // 在应用恢复响应后调用
@@ -82,7 +82,7 @@ class Clipboard {
      * list view ready event
      */
     listReady() {
-        if (isTaio) return
+        if (Kernel.isTaio) return
 
         // check url scheme
         $delay(0.5, () => {
@@ -854,18 +854,6 @@ class Clipboard {
                             const content = sender.object(indexPath).content.info
                             delete content.height
                             this.pin(content, indexPath)
-                        }
-                    },
-                    {
-                        // 删除
-                        title: " " + $l10n("DELETE") + " ", // 防止JSBox自动更改成默认的删除操作
-                        color: $color("red"),
-                        handler: (sender, indexPath) => {
-                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                const data = sender.object(indexPath)
-                                this.delete(data.content.info.uuid, indexPath)
-                                sender.delete(indexPath)
-                            })
                         }
                     }
                 ]
