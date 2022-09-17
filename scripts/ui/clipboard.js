@@ -1,4 +1,4 @@
-const { isTaio, UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
+const { Kernel, UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 
 /**
@@ -65,7 +65,7 @@ class Clipboard {
     }
 
     appListen() {
-        if (isTaio) return
+        if (Kernel.isTaio) return
         $app.listen({
             resume: () => {
                 // 在应用恢复响应后调用
@@ -82,7 +82,7 @@ class Clipboard {
      * list view ready event
      */
     listReady() {
-        if (isTaio) return
+        if (Kernel.isTaio) return
 
         // check url scheme
         $delay(0.5, () => {
