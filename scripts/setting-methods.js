@@ -226,28 +226,6 @@ function todayWidget() {
 function settingMethods(appKernel) {
     kernel = appKernel
 
-    kernel.setting.method.readme = animate => {
-        const content = (() => {
-            const file = $device.info?.language?.startsWith("zh") ? "README_CN.md" : "README.md"
-            try {
-                return __README__[file]
-            } catch {
-                return $file.read(file).string
-            }
-        })()
-        const sheet = new Sheet()
-        sheet
-            .setView({
-                type: "markdown",
-                props: { content: content },
-                layout: (make, view) => {
-                    make.size.equalTo(view.super)
-                }
-            })
-            .init()
-            .present()
-    }
-
     kernel.setting.method.checkUpdate = async animate => {
         animate.actionStart()
 
