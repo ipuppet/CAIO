@@ -346,7 +346,7 @@ class ActionManager {
             .addNavBar({
                 title: "",
                 popButton: {
-                    title: "Done",
+                    title: $l10n("DONE"),
                     tapped: () => {
                         this.saveActionInfo(this.editingActionInfo)
                         // 更新 clipboard 中的 menu
