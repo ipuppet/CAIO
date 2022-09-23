@@ -1,4 +1,4 @@
-const { Kernel, UIKit, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
+const { Kernel, UIKit, Sheet, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 
 /**
@@ -822,6 +822,69 @@ class Clipboard {
         }
     }
 
+    getReorderView() {
+        const reorderView = {
+            type: "list",
+            props: {
+                bgcolor: UIKit.primaryViewBackgroundColor,
+                separatorInset: $insets(0, this.edges, 0, 0),
+                data: this.savedClipboard,
+                template: this.listTemplate(),
+                reorder: true,
+                actions: [
+                    {
+                        // 删除
+                        title: "delete",
+                        handler: (sender, indexPath) => {
+                            const listView = $(this.listId)
+                            const data = listView.object(indexPath)
+                            this.delete(data.content.info.uuid, indexPath)
+                            listView.delete(indexPath)
+                        }
+                    }
+                ]
+            },
+            events: {
+                rowHeight: (sender, indexPath) => {
+                    const content = sender.object(indexPath).content
+                    if (content) {
+                        return content.info.height + this.edges * 2
+                    }
+
+                    return this.fontSize + this.edges
+                },
+                reorderBegan: indexPath => {
+                    // 用于纠正 rowHeight 高度计算
+                    this.reorder.content = this.savedClipboard[indexPath.section].rows[indexPath.row].content
+                    this.reorder.image = this.savedClipboard[indexPath.section].rows[indexPath.row].image
+                    this.reorder.section = indexPath.section
+                    this.reorder.from = indexPath.row
+                    this.reorder.to = undefined
+                },
+                reorderMoved: (fromIndexPath, toIndexPath) => {
+                    this.reorder.section = toIndexPath.section
+                    this.reorder.to = toIndexPath.row
+                },
+                reorderFinished: () => {
+                    if (this.reorder.to === undefined) return
+                    this.move(this.reorder.from, this.reorder.to, this.reorder.section)
+                }
+            },
+            layout: $layout.fill
+        }
+
+        const sheet = new Sheet()
+        sheet
+            .setView(reorderView)
+            .addNavBar({
+                title: "",
+                popButton: { title: $l10n("DONE") }
+            })
+            .preventDismiss()
+            .init()
+            .present()
+    }
+
     getListView() {
         this.loadSavedClipboard()
         return {
@@ -901,88 +964,9 @@ class Clipboard {
             ])
             .setLeftButtons([
                 {
-                    symbol: "arrow.up.arrow.down.circle",
-                    tapped: (animate, sender) => {
-                        $ui.popover({
-                            sourceView: sender,
-                            directions: $popoverDirection.up,
-                            size: $size(200, 300),
-                            views: [
-                                {
-                                    type: "label",
-                                    props: {
-                                        text: $l10n("SORT"),
-                                        color: $color("secondaryText"),
-                                        font: $font(14)
-                                    },
-                                    layout: (make, view) => {
-                                        make.top.equalTo(view.super.safeArea).offset(0)
-                                        make.height.equalTo(40)
-                                        make.left.inset(20)
-                                    }
-                                },
-                                UIKit.separatorLine(),
-                                {
-                                    type: "list",
-                                    props: {
-                                        id: "clipboard-list-sort",
-                                        reorder: true,
-                                        crossSections: false,
-                                        bgcolor: $color("clear"),
-                                        data: this.savedClipboard,
-                                        template: this.listTemplate(1),
-                                        actions: [
-                                            {
-                                                // 删除
-                                                title: "delete",
-                                                handler: (sender, indexPath) => {
-                                                    const listView = $(this.listId)
-                                                    const data = listView.object(indexPath)
-                                                    this.delete(data.content.info.uuid, indexPath)
-                                                    listView.delete(indexPath)
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    events: {
-                                        rowHeight: (sender, indexPath) => {
-                                            const obj = sender.object(indexPath)
-                                            if (obj.image !== undefined && !obj.image.hidden) {
-                                                // image height
-                                                return obj.content?.info?.height
-                                            } else {
-                                                // no image
-                                                return this.fontSize + this.edges
-                                            }
-                                        },
-                                        reorderBegan: indexPath => {
-                                            // 用于纠正 rowHeight 高度计算
-                                            this.reorder.content =
-                                                this.savedClipboard[indexPath.section].rows[indexPath.row].content
-                                            this.reorder.image =
-                                                this.savedClipboard[indexPath.section].rows[indexPath.row].image
-                                            this.reorder.section = indexPath.section
-                                            this.reorder.from = indexPath.row
-                                            this.reorder.to = undefined
-                                        },
-                                        reorderMoved: (fromIndexPath, toIndexPath) => {
-                                            this.reorder.section = toIndexPath.section
-                                            this.reorder.to = toIndexPath.row
-                                        },
-                                        reorderFinished: () => {
-                                            if (this.reorder.to === undefined) return
-                                            this.move(this.reorder.from, this.reorder.to, this.reorder.section)
-                                        }
-                                    },
-                                    layout: (make, view) => {
-                                        make.width.equalTo(view.super)
-                                        make.top.equalTo(view.prev.bottom)
-                                        make.bottom.inset(0)
-                                    }
-                                }
-                            ]
-                        })
-                    }
+                    title: $l10n("EDIT"),
+                    //symbol: "arrow.up.arrow.down.circle",
+                    tapped: () => this.getReorderView()
                 },
                 {
                     symbol: "square.and.arrow.down.on.square",
