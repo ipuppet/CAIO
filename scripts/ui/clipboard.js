@@ -846,12 +846,9 @@ class Clipboard {
             },
             events: {
                 rowHeight: (sender, indexPath) => {
-                    const content = sender.object(indexPath).content
-                    if (content) {
-                        return content.info.height + this.edges * 2
-                    }
-
-                    return this.fontSize + this.edges
+                    // sender 取不到值时代表此项为占位符，从原列表取值
+                    const content = sender.object(indexPath).content ?? $(this.listId).object(indexPath).content
+                    return content.info.height + this.edges * 2
                 },
                 reorderBegan: indexPath => {
                     // 用于纠正 rowHeight 高度计算
