@@ -151,28 +151,12 @@ class Keyboard extends Clipboard {
     }
 
     getBottomBarView() {
-        const navigationBarItems = new NavigationBarItems()
+        const leftButtons = []
+        const rightButtons = []
 
-        navigationBarItems.setLeftButtons([
-            {
-                symbol: "paperplane",
-                menu: {
-                    pullDown: true,
-                    asPrimary: true,
-                    items: KeyboardScripts.getAddins()
-                        .reverse()
-                        .map(addin => {
-                            return {
-                                title: addin,
-                                handler: this.keyboardTapped(() => $addin.run(addin))
-                            }
-                        })
-                }
-            }
-        ])
+        // 切换键盘
         if (!$device.isIphoneX) {
-            // 切换键盘
-            navigationBarItems.addLeftButton({
+            leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
                 menu: {
@@ -186,10 +170,25 @@ class Keyboard extends Clipboard {
                 }
             })
         }
-        navigationBarItems.setRightButtons([
+        leftButtons.push({
+            symbol: "paperplane",
+            menu: {
+                pullDown: true,
+                asPrimary: true,
+                items: KeyboardScripts.getAddins()
+                    .reverse()
+                    .map(addin => {
+                        return {
+                            title: addin,
+                            handler: this.keyboardTapped(() => $addin.run(addin))
+                        }
+                    })
+            }
+        })
+        rightButtons.push(
             {
                 // send
-                title: "Send",
+                title: $l10n("SEND"),
                 tapped: this.keyboardTapped(() => $keyboard.send())
             },
             {
@@ -214,19 +213,68 @@ class Keyboard extends Clipboard {
                     }
                 }
             }
-        ])
+        )
 
-        const navigationBar = new NavigationBar()
-        navigationBar.navigationBarItems = navigationBarItems
-
-        const view = navigationBar.getNavigationBarView()
-
-        view.layout = (make, view) => {
-            make.bottom.left.right.equalTo(view.super.safeArea)
-            make.top.equalTo(view.prev.bottom).offset(3)
+        const getButtonView = (button, align) => {
+            const size = $size(38, 38)
+            const edges = 15
+            return {
+                type: "button",
+                props: Object.assign(
+                    {
+                        symbol: button.symbol,
+                        title: button.title,
+                        font: $font(16),
+                        bgcolor: $color("clear"),
+                        tintColor: UIKit.textColor,
+                        titleColor: UIKit.textColor,
+                        contentEdgeInsets: $insets(0, 0, 0, 0),
+                        titleEdgeInsets: $insets(0, 0, 0, 0),
+                        imageEdgeInsets: $insets(0, 0, 0, 0),
+                        info: { align }
+                    },
+                    button.menu ? { menu: button.menu } : {}
+                ),
+                events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
+                layout: (make, view) => {
+                    if (button.title) {
+                        const width = $text.sizeThatFits({
+                            text: button.title,
+                            width: UIKit.windowSize.width,
+                            font: $font(16)
+                        })
+                        make.size.equalTo($size(Math.ceil(width.width), size.height))
+                    } else {
+                        make.size.equalTo(size)
+                    }
+                    make.centerY.equalTo(view.super)
+                    if (view.prev && view.prev.info.align === align) {
+                        if (align === UIKit.align.right) make.right.equalTo(view.prev.left)
+                        else make.left.equalTo(view.prev.right)
+                    } else {
+                        // 图片类型留一半边距，图标和按钮边距是另一半
+                        const thisEdges = button.symbol ? edges / 2 : edges
+                        if (align === UIKit.align.right) make.right.inset(thisEdges)
+                        else make.left.inset(thisEdges)
+                    }
+                }
+            }
         }
 
-        return view
+        return {
+            type: "view",
+            props: {
+                bgcolor: $color("clear")
+            },
+            views: [
+                ...leftButtons.map(btn => getButtonView(btn, UIKit.align.left)),
+                ...rightButtons.map(btn => getButtonView(btn, UIKit.align.right))
+            ],
+            layout: (make, view) => {
+                make.bottom.left.right.equalTo(view.super.safeArea)
+                make.top.equalTo(view.prev.bottom).offset(3)
+            }
+        }
     }
 
     getListView() {

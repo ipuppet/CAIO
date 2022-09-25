@@ -72,6 +72,7 @@
 "DELETE_DELAY" = "Delete Delay";
 "JSBOX_TOOLBAR" = "JSBox Toolbar";
 "QUICK_START_SCRIPTS" = "Quick Start Scripts";
+"SEND" = "Send";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
