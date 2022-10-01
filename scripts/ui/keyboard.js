@@ -228,9 +228,6 @@ class Keyboard extends Clipboard {
                         bgcolor: $color("clear"),
                         tintColor: UIKit.textColor,
                         titleColor: UIKit.textColor,
-                        contentEdgeInsets: $insets(0, 0, 0, 0),
-                        titleEdgeInsets: $insets(0, 0, 0, 0),
-                        imageEdgeInsets: $insets(0, 0, 0, 0),
                         info: { align }
                     },
                     button.menu ? { menu: button.menu } : {}
@@ -238,12 +235,13 @@ class Keyboard extends Clipboard {
                 events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
                 layout: (make, view) => {
                     if (button.title) {
-                        const width = $text.sizeThatFits({
+                        const fontSize = $text.sizeThatFits({
                             text: button.title,
                             width: UIKit.windowSize.width,
                             font: $font(16)
                         })
-                        make.size.equalTo($size(Math.ceil(width.width), size.height))
+                        const width = Math.ceil(fontSize.width) + edges // 文本按钮增加内边距
+                        make.size.equalTo($size(width, size.height))
                     } else {
                         make.size.equalTo(size)
                     }
@@ -252,8 +250,8 @@ class Keyboard extends Clipboard {
                         if (align === UIKit.align.right) make.right.equalTo(view.prev.left)
                         else make.left.equalTo(view.prev.right)
                     } else {
-                        // 图片类型留一半边距，图标和按钮边距是另一半
-                        const thisEdges = button.symbol ? edges / 2 : edges
+                        // 留一半边距，按钮内边距是另一半
+                        const thisEdges = edges / 2
                         if (align === UIKit.align.right) make.right.inset(thisEdges)
                         else make.left.inset(thisEdges)
                     }
@@ -272,7 +270,7 @@ class Keyboard extends Clipboard {
             ],
             layout: (make, view) => {
                 make.bottom.left.right.equalTo(view.super.safeArea)
-                make.top.equalTo(view.prev.bottom).offset(3)
+                make.top.equalTo(view.prev.bottom)
             }
         }
     }
@@ -320,7 +318,7 @@ class Keyboard extends Clipboard {
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.width.equalTo(view.super)
-                make.bottom.equalTo(view.super).offset(-this.navHeight)
+                make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
             }
         }
     }
