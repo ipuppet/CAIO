@@ -978,7 +978,7 @@ class Clipboard {
         navigationView.navigationBar.setBackgroundColor(UIKit.primaryViewBackgroundColor)
 
         if (this.kernel.isUseJsboxNav) {
-            navigationView.navigationBar.withoutStatusBarHeight()
+            navigationView.navigationBar.removeTopSafeArea()
         }
         navigationView.setView(this.getListView())
 
