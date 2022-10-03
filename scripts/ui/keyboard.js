@@ -95,13 +95,7 @@ class Keyboard extends Clipboard {
                                             data.info.info.type,
                                             data.info.info.dir
                                         )
-                                        setTimeout(
-                                            () =>
-                                                action({
-                                                    text: $clipboard.text
-                                                }),
-                                            500
-                                        )
+                                        $delay(0.5, () => action({ text: $clipboard.text }))
                                     }
                                 }
                             )
