@@ -833,6 +833,7 @@ class Clipboard {
                 data: this.savedClipboard,
                 template: this.listTemplate(),
                 reorder: true,
+                crossSections: false,
                 actions: [
                     {
                         // 删除
