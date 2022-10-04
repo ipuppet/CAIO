@@ -73,6 +73,8 @@
 "JSBOX_TOOLBAR" = "JSBox 工具栏";
 "QUICK_START_SCRIPTS" = "快速启动脚本";
 "SEND" = "发送";
+"OPEN_IN_JSBOX" = "在 JSBox 中打开";
+"SWITCH_KEYBOARD" = "切换键盘";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";

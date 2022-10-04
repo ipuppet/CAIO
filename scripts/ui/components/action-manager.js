@@ -769,7 +769,7 @@ class ActionManager {
         return this.matrix.definition
     }
 
-    getPageView() {
+    getPage() {
         const navigationView = new NavigationView()
         navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
         navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))

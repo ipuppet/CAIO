@@ -162,7 +162,7 @@ class Clipboard {
 
     /**
      * 警告！该方法可能消耗大量资源
-     * @param {String} uuid
+     * @param {string} uuid
      */
     getIndexPathByUUID(uuid) {
         const data = $(this.listId).data
@@ -366,8 +366,10 @@ class Clipboard {
 
     /**
      * 将from位置的元素移动到to位置
-     * @param {Number} from
-     * @param {Number} to
+     * @param {number} from
+     * @param {number} to
+     * @param {number} section
+     * @param {boolean} copiedIndex
      */
     move(from, to, section, copiedIndex = true) {
         if (from === to) return
@@ -560,7 +562,7 @@ class Clipboard {
      * 复制
      * @param {*} text
      * @param {*} uuid
-     * @param {Number} index 被复制的行的索引
+     * @param {number} index 被复制的行的索引
      */
     copy(text, uuid, indexPath) {
         const path = this.kernel.storage.keyToPath(text)
@@ -831,6 +833,7 @@ class Clipboard {
                 data: this.savedClipboard,
                 template: this.listTemplate(),
                 reorder: true,
+                crossSections: false,
                 actions: [
                     {
                         // 删除

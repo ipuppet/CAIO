@@ -95,13 +95,7 @@ class Keyboard extends Clipboard {
                                             data.info.info.type,
                                             data.info.info.dir
                                         )
-                                        setTimeout(
-                                            () =>
-                                                action({
-                                                    text: $clipboard.text
-                                                }),
-                                            500
-                                        )
+                                        $delay(0.5, () => action({ text: $clipboard.text }))
                                     }
                                 }
                             )
@@ -163,8 +157,12 @@ class Keyboard extends Clipboard {
                     pullDown: true,
                     items: [
                         {
-                            title: "Next Keyboard",
+                            title: $l10n("SWITCH_KEYBOARD"),
                             handler: this.keyboardTapped(() => $keyboard.next())
+                        },
+                        {
+                            title: $l10n("OPEN_IN_JSBOX"),
+                            handler: () => this.kernel.openInJsbox()
                         }
                     ]
                 }
