@@ -157,8 +157,12 @@ class Keyboard extends Clipboard {
                     pullDown: true,
                     items: [
                         {
-                            title: "Next Keyboard",
+                            title: $l10n("SWITCH_KEYBOARD"),
                             handler: this.keyboardTapped(() => $keyboard.next())
+                        },
+                        {
+                            title: $l10n("OPEN_IN_JSBOX"),
+                            handler: () => this.kernel.openInJsbox()
                         }
                     ]
                 }

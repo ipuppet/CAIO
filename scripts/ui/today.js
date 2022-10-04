@@ -1,4 +1,4 @@
-const { UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
+const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const TodayActions = require("./components/today-actions")
 
@@ -293,15 +293,17 @@ class Today extends Clipboard {
         }
     }
 
-    getMatrixView() {
+    getActionView() {
         let data = this.todayActions.getActions()
         if (data.length === 0) {
             data = this.todayActions.getAllActions()
         }
-        return {
+
+        const matrixView = {
             type: "matrix",
             props: {
                 id: this.matrixId,
+                bgcolor: $color("clear"),
                 columns: 2,
                 itemHeight: 50,
                 spacing: 8,
@@ -375,16 +377,14 @@ class Today extends Clipboard {
                 }
             }
         }
-    }
 
-    getActionView() {
         return {
             type: "view",
             props: {
                 id: this.actionsId,
                 hidden: this.tabIndex !== 2
             },
-            views: [this.getMatrixView()],
+            views: [matrixView],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.bottom.left.right.equalTo(view.super.safeArea)
@@ -393,11 +393,27 @@ class Today extends Clipboard {
     }
 
     getView() {
-        return {
-            type: "view",
-            views: [this.getNavBarView(), this.getListView(), this.getActionView()],
-            layout: $layout.fill
-        }
+        // 直接放最外层 ready 事件不生效
+        return View.createFromViews([
+            {
+                type: "view",
+                views: [this.getNavBarView(), this.getListView(), this.getActionView()],
+                layout: $layout.fill,
+                events: {
+                    ready: async () => {
+                        if ($app.env !== $env.today) return
+
+                        await $thread.main(0.5)
+                        $ui.animate({
+                            duration: 0.2,
+                            animation: () => {
+                                $ui.vc.runtimeValue().$view().$setBackgroundColor($color("clear"))
+                            }
+                        })
+                    }
+                }
+            }
+        ])
     }
 }
 

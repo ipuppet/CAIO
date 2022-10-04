@@ -73,6 +73,8 @@
 "JSBOX_TOOLBAR" = "JSBox Toolbar";
 "QUICK_START_SCRIPTS" = "Quick Start Scripts";
 "SEND" = "Send";
+"OPEN_IN_JSBOX" = "Open in JSBox";
+"SWITCH_KEYBOARD" = "Switch Keyboard";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

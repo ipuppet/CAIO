@@ -41,6 +41,16 @@ class AppKernel extends Kernel {
         settingMethods(this)
     }
 
+    addOpenInJsboxButton() {
+        this.useJsboxNav()
+        this.setNavButtons([
+            {
+                image: $image("assets/icon.png"),
+                handler: () => this.openInJsbox()
+            }
+        ])
+    }
+
     initComponents() {
         // Clipboard
         this.clipboard = new Clipboard(this)
@@ -71,18 +81,9 @@ class AppUI {
     static renderMainUI() {
         const kernel = new AppKernel()
         const buttons = {
-            clipboard: {
-                icon: "doc.on.clipboard",
-                title: $l10n("CLIPBOARD")
-            },
-            actions: {
-                icon: "command",
-                title: $l10n("ACTIONS")
-            },
-            setting: {
-                icon: "gear",
-                title: $l10n("SETTING")
-            }
+            clipboard: { icon: "doc.on.clipboard", title: $l10n("CLIPBOARD") },
+            actions: { icon: "command", title: $l10n("ACTIONS") },
+            setting: { icon: "gear", title: $l10n("SETTING") }
         }
         kernel.setting.setEvent("onSet", key => {
             if (key === "mainUIDisplayMode") {
@@ -123,8 +124,8 @@ class AppUI {
             kernel.tabBarController
                 .setPages({
                     clipboard: clipboardNavigationView.getPage(),
-                    actions: kernel.actionManager.getPageView(),
-                    setting: kernel.setting.getPageView()
+                    actions: kernel.actionManager.getPage(),
+                    setting: kernel.setting.getPage()
                 })
                 .setCells({
                     clipboard: buttons.clipboard,
@@ -138,16 +139,22 @@ class AppUI {
 
     static renderKeyboardUI() {
         const kernel = new AppKernel()
+        kernel.addOpenInJsboxButton()
+
         const Keyboard = require("./ui/keyboard")
         const keyboard = new Keyboard(kernel)
-        $ui.render({ views: [keyboard.getView()] })
+
+        kernel.UIRender(keyboard.getView())
     }
 
     static renderTodayUI() {
         const kernel = new AppKernel()
+        kernel.addOpenInJsboxButton()
+
         const Today = require("./ui/today")
         const today = new Today(kernel)
-        $ui.render({ views: [today.getView()] })
+
+        kernel.UIRender(today.getView())
     }
 
     static renderUnsupported() {
