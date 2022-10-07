@@ -394,26 +394,39 @@ class Today extends Clipboard {
 
     getView() {
         // 直接放最外层 ready 事件不生效
-        return View.createFromViews([
-            {
-                type: "view",
-                views: [this.getNavBarView(), this.getListView(), this.getActionView()],
-                layout: $layout.fill,
-                events: {
-                    ready: async () => {
-                        if ($app.env !== $env.today) return
+        return View.create({
+            props: {
+                titleColor: UIKit.textColor,
+                barColor: UIKit.primaryViewBackgroundColor
+            },
+            views: [
+                {
+                    type: "view",
+                    views: [this.getNavBarView(), this.getListView(), this.getActionView()],
+                    layout: $layout.fill,
+                    events: {
+                        ready: async () => {
+                            if ($app.env !== $env.today) return
 
-                        await $thread.main(0.5)
-                        $ui.animate({
-                            duration: 0.2,
-                            animation: () => {
-                                $ui.vc.runtimeValue().$view().$setBackgroundColor($color("clear"))
-                            }
-                        })
+                            const timer = $timer.schedule({
+                                interval: 0.2,
+                                handler: () => {
+                                    $ui.animate({
+                                        duration: 0.2,
+                                        animation: () => {
+                                            $ui.vc.runtimeValue().$view().$setBackgroundColor($color("clear"))
+                                        },
+                                        completion: () => {
+                                            timer.invalidate()
+                                        }
+                                    })
+                                }
+                            })
+                        }
                     }
                 }
-            }
-        ])
+            ]
+        })
     }
 }
 
