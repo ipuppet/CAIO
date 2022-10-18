@@ -965,7 +965,6 @@ class Clipboard {
             .setLeftButtons([
                 {
                     title: $l10n("EDIT"),
-                    //symbol: "arrow.up.arrow.down.circle",
                     tapped: () => this.getReorderView()
                 },
                 {
