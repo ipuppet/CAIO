@@ -409,12 +409,12 @@ class Today extends Clipboard {
                             if ($app.env !== $env.today) return
 
                             const timer = $timer.schedule({
-                                interval: 0.2,
+                                interval: 0.6,
                                 handler: () => {
                                     $ui.animate({
-                                        duration: 0.2,
+                                        duration: 0.3,
                                         animation: () => {
-                                            $ui.vc.runtimeValue().$view().$setBackgroundColor($color("clear"))
+                                            $ui.vc.ocValue().$view().$setBackgroundColor($color("clear"))
                                         },
                                         completion: () => {
                                             timer.invalidate()
