@@ -1,4 +1,13 @@
-const { Kernel, UIKit, Sheet, ViewController, NavigationView, SearchBar } = require("../libs/easy-jsbox")
+const {
+    View,
+    Kernel,
+    UIKit,
+    Sheet,
+    ViewController,
+    NavigationView,
+    NavigationBar,
+    SearchBar
+} = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 
 /**
@@ -887,7 +896,7 @@ class Clipboard {
 
     getListView() {
         this.loadSavedClipboard()
-        return {
+        const listView = {
             // 剪切板列表
             type: "list",
             props: {
@@ -944,6 +953,8 @@ class Clipboard {
                 }
             }
         }
+
+        return View.createFromViews([listView])
     }
 
     getNavigationView() {
@@ -978,6 +989,7 @@ class Clipboard {
             ])
 
         navigationView.navigationBar.setBackgroundColor(UIKit.primaryViewBackgroundColor)
+        navigationView.navigationBar.largeTitleDisplayMode = NavigationBar.largeTitleDisplayModeNever
 
         if (this.kernel.isUseJsboxNav) {
             navigationView.navigationBar.removeTopSafeArea()
