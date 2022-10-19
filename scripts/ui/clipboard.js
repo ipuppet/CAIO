@@ -883,8 +883,6 @@ class Clipboard {
     }
 
     getListView() {
-        this.loadSavedClipboard()
-
         const menuView = {
             type: "menu",
             props: {
