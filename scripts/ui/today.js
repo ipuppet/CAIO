@@ -7,6 +7,8 @@ const TodayActions = require("./components/today-actions")
  */
 
 class Today extends Clipboard {
+    tabItems = [$l10n("PIN"), $l10n("CLIPBOARD"), $l10n("ACTIONS")]
+
     /**
      * @param {AppKernel} kernel
      */
@@ -47,10 +49,6 @@ class Today extends Clipboard {
 
     get tabIndex() {
         return $cache.get("caio.today.tab.index") ?? 0
-    }
-
-    get tabItems() {
-        return [$l10n("PIN"), $l10n("CLIPBOARD"), $l10n("ACTIONS")]
     }
 
     listReady() {

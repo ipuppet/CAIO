@@ -53,7 +53,7 @@ class Storage {
         storage.localDb = db
         storage.init()
 
-        const action = (data, flag = true) => {
+        const action = (data, folder) => {
             const rebuildData = []
             data.forEach(item => {
                 const data = {
@@ -66,19 +66,11 @@ class Storage {
                 }
                 storage.beginTransaction()
                 try {
-                    if (flag) {
-                        storage.insert(data)
-                    } else {
-                        storage.insertPin(data)
-                    }
+                    storage.insert(folder, data)
                     if (data.next) {
                         // 更改指针
                         rebuildData[0].prev = data.uuid
-                        if (flag) {
-                            storage.update(rebuildData[0])
-                        } else {
-                            storage.updatePin(rebuildData[0])
-                        }
+                        storage.update(folder, rebuildData[0])
                     }
                     storage.commit()
                     rebuildData.unshift(data)
@@ -92,24 +84,24 @@ class Storage {
 
         let data
         try {
-            data = this.all()
+            data = this.all("clipboard")
             const sorted = this.sort(JSON.parse(JSON.stringify(data)))
             if (sorted.length > data.length) {
                 throw new Error()
             }
-            action(sorted.reverse())
+            action(sorted.reverse(), "clipboard")
         } catch {
-            action(this.all())
+            action(this.all("clipboard"), "clipboard")
         }
         try {
-            data = this.allPin()
+            data = this.all("pin")
             const sorted = this.sort(JSON.parse(JSON.stringify(data)))
             if (sorted.length > data.length) {
                 throw new Error()
             }
-            action(sorted.reverse(), false)
+            action(sorted.reverse(), "pin")
         } catch {
-            action(this.allPin(), false)
+            action(this.all("pin"), "pin")
         }
 
         $file.copy({
@@ -339,42 +331,23 @@ class Storage {
         }
     }
 
-    all() {
-        return this._all("clipboard")
+    all(folder) {
+        return this._all(folder)
     }
-    page(page, size) {
-        return this._page("clipboard", page, size)
+    page(folder, page, size) {
+        return this._page(folder, page, size)
     }
-    insert(clipboard) {
-        return this._insert("clipboard", clipboard)
+    insert(folder, clipboard) {
+        return this._insert(folder, clipboard)
     }
-    update(clipboard) {
-        return this._update("clipboard", clipboard)
+    update(folder, clipboard) {
+        return this._update(folder, clipboard)
     }
-    updateText(uuid, text) {
-        return this._updateText("clipboard", uuid, text)
+    updateText(folder, uuid, text) {
+        return this._updateText(folder, uuid, text)
     }
-    delete(uuid) {
-        return this._delete("clipboard", uuid)
-    }
-
-    allPin() {
-        return this._all("pin")
-    }
-    pagePin(page, size) {
-        return this._page("pin", page, size)
-    }
-    insertPin(clipboard) {
-        return this._insert("pin", clipboard)
-    }
-    updatePin(clipboard) {
-        return this._update("pin", clipboard)
-    }
-    updateTextPin(uuid, text) {
-        return this._updateText("pin", uuid, text)
-    }
-    deletePin(uuid) {
-        return this._delete("pin", uuid)
+    delete(folder, uuid) {
+        return this._delete(folder, uuid)
     }
 
     getPinByMD5(md5) {
