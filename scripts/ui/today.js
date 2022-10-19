@@ -67,11 +67,8 @@ class Today extends Clipboard {
 
     readClipboard(manual = false) {
         if (!this.isActionPage) {
-            if (super.readClipboard(manual)) {
-                this.listSection = 1
-                this.listPageNow[this.listSection] = 0
-                this.updateList()
-            }
+            super.readClipboard(manual)
+            this.updateList()
             return true
         }
         return false
@@ -219,7 +216,7 @@ class Today extends Clipboard {
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.savedClipboard[this.listSection].rows.slice(start, end)
+        $(this.listId).data = this.savedClipboard[this.listSection].slice(start, end)
         // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
@@ -232,7 +229,7 @@ class Today extends Clipboard {
     }
 
     clipboardNextPage() {
-        const maxPage = Math.ceil(this.savedClipboard[this.listSection].rows.length / this.listPageSize)
+        const maxPage = Math.ceil(this.savedClipboard[this.listSection].length / this.listPageSize)
         if (this.listPageNow[this.listSection] < maxPage - 1) {
             this.listPageNow[this.listSection]++
             this.updateList()

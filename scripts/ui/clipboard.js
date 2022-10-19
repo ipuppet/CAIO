@@ -155,14 +155,14 @@ class Clipboard {
         if (isUpdateIndicator) {
             if (this.copied.tabIndex !== undefined) {
                 try {
-                    this.savedClipboard[this.copied.tabIndex].rows[this.copied.row].copied.hidden = true
+                    this.savedClipboard[this.copied.tabIndex][this.copied.row].copied.hidden = true
                 } catch {
                     // 清空剪切板
                     uuid = undefined
                 }
             }
             if (uuid) {
-                this.savedClipboard[this.tabIndex].rows[row].copied.hidden = false
+                this.savedClipboard[this.tabIndex][row].copied.hidden = false
             }
             $delay(0.3, () => this.updateList())
         }
@@ -228,7 +228,7 @@ class Clipboard {
                 this.setCopied(res.uuid, this.getIndexPathRowByUUID(res.uuid))
             } else {
                 const data = this.add(text)
-                this.copy(text, data.uuid, data.indexPath.row)
+                this.copy(text, data.uuid, 0)
             }
         }
 
@@ -358,7 +358,7 @@ class Clipboard {
             }),
             info.uuid === this.copied.uuid
         )
-        this.savedClipboard[this.tabIndex].rows[row] = lineData
+        this.savedClipboard[this.tabIndex][row] = lineData
 
         // 更新列表
         this.updateList()
@@ -912,7 +912,7 @@ class Clipboard {
                 menu: {
                     items: this.menuItems(this.kernel)
                 },
-                bgcolor: UIKit.primaryViewBackgroundColor,
+                bgcolor: $color("clear"),
                 separatorInset: $insets(0, this.edges, 0, 0),
                 data: this.savedClipboard[this.tabIndex],
                 template: this.listTemplate(),

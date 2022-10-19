@@ -274,51 +274,14 @@ class Keyboard extends Clipboard {
     }
 
     getListView() {
-        return {
-            // 剪切板列表
-            type: "list",
-            props: {
-                id: this.listId,
-                bgcolor: $color("clear"),
-                menu: {
-                    items: this.menuItems()
-                },
-                separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                separatorColor: $color("lightGray"),
-                data: this.savedClipboard,
-                template: this.listTemplate(1)
-            },
-            events: {
-                ready: () => this.listReady(),
-                rowHeight: (sender, indexPath) => {
-                    const content = sender.object(indexPath).content
-                    return content.info.height + this.top_bottom * 2 + 1
-                },
-                didSelect: this.keyboardTapped((sender, indexPath, data) => {
-                    const content = data.content
-                    const text = content.info.text
-                    const path = this.kernel.storage.keyToPath(text)
-                    if (path && $file.exists(path.original)) {
-                        $clipboard.image = $file.read(path.original).image
-                        $ui.toast($l10n("COPIED"))
-                    } else {
-                        $keyboard.insert(data.content.info.text)
-                    }
-                }),
-                didScroll: sender => {
-                    if (sender.contentOffset.y > 0) {
-                        $(this.navBarSeparatorId).hidden = false
-                    } else {
-                        $(this.navBarSeparatorId).hidden = true
-                    }
-                }
-            },
-            layout: (make, view) => {
-                make.top.equalTo(this.navHeight)
-                make.width.equalTo(view.super)
-                make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
-            }
+        const superListView = super.getListView()
+        superListView.props.bgcolor = $color("clear")
+        superListView.layout = (make, view) => {
+            make.top.equalTo(this.navHeight)
+            make.width.equalTo(view.super)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
         }
+        return superListView
     }
 
     getView() {
