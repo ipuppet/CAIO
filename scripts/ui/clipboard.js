@@ -22,6 +22,7 @@ class Clipboard {
     // 键为 md5，值为 1 或 undefined 用来判断某个 md5 是否已经存在
     savedClipboardIndex = {}
 
+    tabHeight = 44
     tabItems = [$l10n("PIN"), $l10n("CLIPBOARD")]
     tabItemsIndex = ["pin", "clipboard"]
 
@@ -882,6 +883,7 @@ class Clipboard {
         const menuView = {
             type: "menu",
             props: {
+                id: this.listId + "-menu",
                 items: this.tabItems,
                 index: this.tabIndex,
                 dynamicWidth: true
@@ -894,7 +896,7 @@ class Clipboard {
             },
             layout: (make, view) => {
                 make.top.left.right.equalTo(view.super)
-                make.height.equalTo(44)
+                make.height.equalTo(this.tabHeight)
             }
         }
 
@@ -967,6 +969,26 @@ class Clipboard {
         const searchBar = new SearchBar()
         // 初始化搜索功能
         searchBar.controller.setEvent("onChange", text => this.searchAction(text))
+        searchBar.setEvent("didBeginEditing", () => {
+            $ui.animate({
+                duration: 0.4,
+                animation: () => {
+                    $(this.listId + "-menu").updateLayout(make => {
+                        make.height.equalTo(0)
+                    })
+                }
+            })
+        })
+        searchBar.setEvent("didEndEditing", () => {
+            $ui.animate({
+                duration: 0.4,
+                animation: () => {
+                    $(this.listId + "-menu").updateLayout(make => {
+                        make.height.equalTo(this.tabHeight)
+                    })
+                }
+            })
+        })
 
         const navigationView = new NavigationView()
         navigationView.navigationBarTitle($l10n("CLIPBOARD"))
