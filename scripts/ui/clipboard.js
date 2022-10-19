@@ -521,7 +521,7 @@ class Clipboard {
         }
     }
 
-    pin(item, indexPath) {
+    pin(item, row) {
         if (item?.section === "pin") return
         const res = this.kernel.storage.getPinByMD5(item.md5)
         if (res) {
@@ -543,7 +543,7 @@ class Clipboard {
             this.kernel.storage.commit()
 
             // 删除原表数据
-            this.delete(item.uuid, indexPath.row)
+            this.delete(item.uuid, row)
 
             const listUI = $(this.listId)
             const lineData = this.lineData(item)
@@ -551,12 +551,8 @@ class Clipboard {
             this.savedClipboard[0].unshift(lineData)
             this.savedClipboardIndex[item.md5] = 1
 
-            // UI insert
-            listUI.insert({
-                indexPath: $indexPath(0, 0),
-                value: lineData
-            })
-            listUI.delete(indexPath)
+            // UI 操作
+            listUI.delete($indexPath(0, row))
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()
@@ -931,7 +927,7 @@ class Clipboard {
                         handler: (sender, indexPath) => {
                             const content = sender.object(indexPath).content.info
                             delete content.height
-                            this.pin(content, indexPath)
+                            this.pin(content, indexPath.row)
                         }
                     }
                 ]
