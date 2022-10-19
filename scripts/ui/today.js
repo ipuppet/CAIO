@@ -8,6 +8,8 @@ const TodayActions = require("./components/today-actions")
 
 class Today extends Clipboard {
     tabItems = [$l10n("PIN"), $l10n("CLIPBOARD"), $l10n("ACTIONS")]
+    inLauncher = $app.env === $env.today && $app.widgetIndex === -1
+    launcherNavHeight = 44
 
     /**
      * @param {AppKernel} kernel
@@ -51,6 +53,13 @@ class Today extends Clipboard {
         return $cache.get("caio.today.tab.index") ?? 0
     }
 
+    loadData() {
+        this.setClipboarPageSize($widget.mode)
+        this.loadSavedClipboard()
+        this.updateList()
+        this.appListen()
+    }
+
     listReady() {
         // 监听展开状态
         $widget.modeChanged = mode => {
@@ -58,9 +67,7 @@ class Today extends Clipboard {
             this.updateList()
         }
 
-        this.loadSavedClipboard()
-        this.updateList()
-        this.appListen()
+        this.loadData()
 
         $delay(0.5, () => this.readClipboard())
     }
@@ -79,7 +86,7 @@ class Today extends Clipboard {
             this.listPageSize = 1
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
-            const height = viewHeight - this.navHeight * 2
+            const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
             const f_line = height / (this.getSingleLineHeight() + this.top_bottom * 2)
             const floor = Math.floor(f_line)
             this.listPageSize = floor
@@ -413,6 +420,7 @@ class Today extends Clipboard {
                                         },
                                         completion: () => {
                                             timer.invalidate()
+                                            this.loadData()
                                         }
                                     })
                                 }
