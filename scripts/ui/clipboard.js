@@ -61,7 +61,20 @@ class Clipboard {
     }
 
     set savedClipboard(savedClipboard) {
-        this.#savedClipboard = savedClipboard
+        this.#savedClipboard = savedClipboard.map(item => {
+            return new Proxy(item, {
+                set: (obj, prop, value) => {
+                    // 更新空列表背景
+                    this.updateListBackground()
+
+                    this.kernel.print(
+                        `data changed at index ${prop}\n${obj[prop]?.content?.text}\n↓\n${value?.content?.text}`
+                    )
+
+                    return Reflect.set(obj, prop, value)
+                }
+            })
+        })
     }
 
     getSingleLineHeight() {
@@ -75,10 +88,6 @@ class Clipboard {
     setSingleLine() {
         // 图片高度与文字一致
         this.imageContentHeight = this.getSingleLineHeight()
-    }
-
-    static updateMenu(kernel) {
-        // TODO 更新 menu 中的动作
     }
 
     setClipboardText(text) {
@@ -107,6 +116,8 @@ class Clipboard {
      * list view ready event
      */
     listReady() {
+        this.updateList()
+
         if (Kernel.isTaio) return
 
         // check url scheme
@@ -139,6 +150,11 @@ class Clipboard {
     updateList() {
         // 直接重置数据，解决小绿点滚动到屏幕外后消失问题
         $(this.listId).data = this.savedClipboard[this.tabIndex]
+        this.updateListBackground()
+    }
+
+    updateListBackground() {
+        $(this.listId + "-empty-list-background").hidden = this.savedClipboard[this.tabIndex].length > 0
     }
 
     /**
@@ -724,56 +740,44 @@ class Clipboard {
     }
 
     lineData(data, indicator = false) {
+        const image = {
+            hidden: true
+        }
+        const content = {
+            text: "",
+            info: {
+                text: data.text,
+                section: data.section,
+                uuid: data.uuid,
+                md5: data.md5,
+                prev: data.prev,
+                next: data.next
+            }
+        }
+
         const path = this.kernel.storage.keyToPath(data.text)
         if (path) {
-            return {
-                copied: { hidden: !indicator },
-                image: {
-                    src: path.preview,
-                    hidden: false
-                },
-                content: {
-                    info: {
-                        text: data.text,
-                        section: data.section,
-                        uuid: data.uuid,
-                        md5: data.md5,
-                        height: this.imageContentHeight,
-                        prev: data.prev,
-                        next: data.next
-                    }
-                }
-            }
+            image.src = path.preview
+            image.hidden = false
+            content.info.height = this.imageContentHeight
         } else {
             const sliceText = text => {
                 // 显示最大长度
                 const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
                 return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
             }
-            const text = sliceText(data.text)
-            const height = $text.sizeThatFits({
-                text: text,
+            content.text = sliceText(data.text)
+            content.info.height = $text.sizeThatFits({
+                text: content.text,
                 width: UIKit.windowSize.width - this.edges * 2,
                 font: $font(this.fontSize)
             }).height
-            return {
-                copied: { hidden: !indicator },
-                image: {
-                    hidden: true
-                },
-                content: {
-                    text: text,
-                    info: {
-                        text: data.text,
-                        section: data.section,
-                        uuid: data.uuid,
-                        md5: data.md5,
-                        height: height,
-                        prev: data.prev,
-                        next: data.next
-                    }
-                }
-            }
+        }
+
+        return {
+            copied: { hidden: !indicator },
+            image,
+            content
         }
     }
 
@@ -826,7 +830,7 @@ class Clipboard {
             props: {
                 bgcolor: UIKit.primaryViewBackgroundColor,
                 separatorInset: $insets(0, this.edges, 0, 0),
-                data: this.savedClipboard[this.tabIndex],
+                data: new Array(...this.savedClipboard[this.tabIndex]),
                 template: this.listTemplate(),
                 reorder: true,
                 crossSections: false,
@@ -905,12 +909,10 @@ class Clipboard {
             type: "list",
             props: {
                 id: this.listId,
-                menu: {
-                    items: this.menuItems(this.kernel)
-                },
                 bgcolor: $color("clear"),
                 separatorInset: $insets(0, this.edges, 0, 0),
-                data: this.savedClipboard[this.tabIndex],
+                menu: { items: this.menuItems(this.kernel) },
+                data: [],
                 template: this.listTemplate(),
                 actions: [
                     {
@@ -962,7 +964,18 @@ class Clipboard {
             }
         }
 
-        return View.createFromViews([menuView, listView])
+        const emptyListBackground = {
+            type: "label",
+            props: {
+                id: this.listId + "-empty-list-background",
+                hidden: this.savedClipboard[this.tabIndex].length > 0,
+                text: "Hello, World!",
+                align: $align.center
+            },
+            layout: $layout.center
+        }
+
+        return View.createFromViews([menuView, listView, emptyListBackground])
     }
 
     getNavigationView() {
