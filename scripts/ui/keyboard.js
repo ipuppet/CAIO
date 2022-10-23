@@ -21,7 +21,6 @@ class Keyboard extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
         this.navBarSeparatorId = "navBarSeparator"
-        this.taptic = 1
         this.deleteTimer = undefined
         this.continuousDeleteTimer = undefined
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
@@ -52,10 +51,10 @@ class Keyboard extends Clipboard {
         }
     }
 
-    keyboardTapped(tapped, tapticEngine = true) {
+    keyboardTapped(tapped, tapticEngine = true, level = 1) {
         return (...args) => {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
-                $device.taptic(this.taptic)
+                $device.taptic(level)
             }
             tapped(...args)
         }
@@ -200,7 +199,8 @@ class Keyboard extends Clipboard {
                                 interval: this.deleteDelay,
                                 handler: this.keyboardTapped(
                                     () => $keyboard.delete(),
-                                    this.kernel.setting.get("keyboard.tapticEngineForDelete")
+                                    this.kernel.setting.get("keyboard.tapticEngineForDelete"),
+                                    0
                                 )
                             })
                         })
