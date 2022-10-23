@@ -208,6 +208,8 @@ class Keyboard extends Clipboard {
                     touchesEnded: () => {
                         this.deleteTimer?.invalidate()
                         this.continuousDeleteTimer?.cancel()
+                        this.deleteTimer = undefined
+                        this.continuousDeleteTimer = undefined
                     }
                 }
             }
