@@ -77,8 +77,8 @@ class Clipboard {
         })
     }
 
-    get clipboard(){
-        return this.clipboard
+    get clipboard() {
+        return this.savedClipboard[this.tabIndex]
     }
 
     getSingleLineHeight() {
