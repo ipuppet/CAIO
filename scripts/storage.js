@@ -35,6 +35,7 @@ class Storage {
         this.sqlite.update(
             "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
+        this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
 
         // 初始化目录
         const pathList = [this.tempPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
@@ -60,6 +61,7 @@ class Storage {
                     uuid: item.uuid,
                     text: item.text,
                     md5: item.md5,
+                    tag: item.tag,
                     image: item.image,
                     prev: null,
                     next: rebuildData[0]?.uuid ?? null
@@ -195,6 +197,7 @@ class Storage {
                 section: result.result.get("section"),
                 text: result.result.get("text"),
                 md5: result.result.get("md5"),
+                tag: result.result.get("tag") ?? "",
                 prev: result.result.get("prev") ?? null,
                 next: result.result.get("next") ?? null
             })
@@ -206,21 +209,11 @@ class Storage {
     beginTransaction() {
         this.sqlite.beginTransaction()
     }
-
     commit() {
         this.sqlite.commit()
     }
-
     rollback() {
         this.sqlite.rollback()
-    }
-
-    getByText(text) {
-        const result = this.sqlite.query({
-            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text = ? UNION SELECT *, 'pin' AS section FROM pin WHERE text = ?",
-            args: [text, text]
-        })
-        return this.parse(result)[0]
     }
 
     getByUUID(uuid) {
@@ -230,7 +223,6 @@ class Storage {
         })
         return this.parse(result)[0]
     }
-
     getByMD5(md5) {
         const result = this.sqlite.query({
             sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE md5 = ? UNION SELECT *, 'pin' AS section FROM pin WHERE md5 = ?",
@@ -238,7 +230,6 @@ class Storage {
         })
         return this.parse(result)[0]
     }
-
     search(kw) {
         const result = this.sqlite.query({
             sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text like ? UNION SELECT *, 'pin' AS section FROM pin WHERE text like ?",
@@ -251,24 +242,20 @@ class Storage {
         path = JSON.stringify(path)
         return `@image=${path}`
     }
-
     keyToPath(key) {
-        if (key.startsWith("@image=")) {
+        if (key?.startsWith("@image=")) {
             return JSON.parse(key.slice(7))
         }
         return false
     }
 
-    _all(table) {
-        const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table}`)
+    all(table) {
+        const result = this.sqlite.query(
+            `SELECT ${table}.*, tag, '${table}' AS section FROM ${table} LEFT JOIN tag ON ${table}.uuid = tag.uuid`
+        )
         return this.parse(result)
     }
-    // 分页无法排序
-    _page(table, page, size) {
-        const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table} LIMIT ${page * size},${size}`)
-        return this.parse(result)
-    }
-    _insert(table, clipboard) {
+    insert(table, clipboard) {
         if (clipboard.image) {
             const image = clipboard.image
             const fileName = $text.uuid
@@ -294,7 +281,7 @@ class Storage {
             throw result.error
         }
     }
-    _update(table, clipboard) {
+    update(table, clipboard) {
         if (Object.keys(clipboard).length < 4 || typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
@@ -304,7 +291,7 @@ class Storage {
             throw result.error
         }
     }
-    _updateText(table, uuid, text) {
+    updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ? WHERE uuid = ?`,
@@ -314,48 +301,49 @@ class Storage {
             throw result.error
         }
     }
-    _delete(table, uuid) {
+    delete(table, uuid) {
         const clipboard = this.getByUUID(uuid)
-        const result = this.sqlite.update({
-            sql: `DELETE FROM ${table} WHERE uuid = ?`,
-            args: [uuid]
-        })
+        this.beginTransaction()
+        try {
+            const result = this.sqlite.update({
+                sql: `DELETE FROM ${table} WHERE uuid = ?`,
+                args: [uuid]
+            })
+            if (!result.result) {
+                throw result.error
+            }
+            this.deleteTag(uuid)
+            this.commit()
+        } catch (error) {
+            this.rollback()
+            throw error
+        }
+
         // delete image file
-        const path = this.keyToPath(clipboard.text)
+        const path = this.keyToPath(clipboard?.text)
         if (path) {
             $file.delete(path.original)
             $file.delete(path.preview)
         }
+    }
+
+    setTag(uuid, tag) {
+        const result = this.sqlite.update({
+            sql: `INSERT OR REPLACE INTO tag (uuid, tag) values (?, ?)`,
+            args: [uuid, tag]
+        })
         if (!result.result) {
             throw result.error
         }
     }
-
-    all(folder) {
-        return this._all(folder)
-    }
-    page(folder, page, size) {
-        return this._page(folder, page, size)
-    }
-    insert(folder, clipboard) {
-        return this._insert(folder, clipboard)
-    }
-    update(folder, clipboard) {
-        return this._update(folder, clipboard)
-    }
-    updateText(folder, uuid, text) {
-        return this._updateText(folder, uuid, text)
-    }
-    delete(folder, uuid) {
-        return this._delete(folder, uuid)
-    }
-
-    getPinByMD5(md5) {
-        const result = this.sqlite.query({
-            sql: "SELECT * FROM pin WHERE md5 = ?",
-            args: [md5]
+    deleteTag(uuid) {
+        const tagResult = this.sqlite.update({
+            sql: `DELETE FROM tag WHERE uuid = ?`,
+            args: [uuid]
         })
-        return this.parse(result)[0]
+        if (!tagResult.result) {
+            throw tagResult.error
+        }
     }
 }
 

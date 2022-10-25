@@ -22,6 +22,13 @@ class Clipboard {
     // 键为 md5，值为 1 或 undefined 用来判断某个 md5 是否已经存在
     savedClipboardIndex = {}
 
+    // 剪贴板列个性化设置
+    edges = 20 // 列表边距
+    fontSize = 16 // 字体大小
+    copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
+    imageContentHeight = 50
+    tagContainerHeight = 25
+
     tabHeight = 44
     tabItems = [$l10n("PIN"), $l10n("CLIPBOARD")]
     tabItemsIndex = ["pin", "clipboard"]
@@ -32,11 +39,6 @@ class Clipboard {
     constructor(kernel) {
         this.kernel = kernel
         this.listId = "clipboard-list"
-        // 剪贴板列个性化设置
-        this.edges = 20 // 列表边距
-        this.fontSize = 16 // 字体大小
-        this.copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
-        this.imageContentHeight = 50
 
         this.viewController = new ViewController()
     }
@@ -68,7 +70,7 @@ class Clipboard {
                     this.updateListBackground()
 
                     this.kernel.print(
-                        `data changed at index ${prop}\n${obj[prop]?.content?.text}\n↓\n${value?.content?.text}`
+                        `data changed at index [${prop}]\n${obj[prop]?.content?.text}\n↓\n${value?.content?.text}`
                     )
 
                     return Reflect.set(obj, prop, value)
@@ -263,6 +265,7 @@ class Clipboard {
             text: item,
             md5: null,
             image: null,
+            tag: "",
             prev: null,
             next: this.clipboard[0] ? this.clipboard[0].content.info.uuid : null
         }
@@ -699,6 +702,32 @@ class Clipboard {
                 inline: true,
                 items: [
                     {
+                        title: $l10n("TAG"),
+                        symbol: "tag",
+                        handler: (sender, indexPath) => {
+                            const uuid = sender.object(indexPath).content.info.uuid
+                            $input.text({
+                                placeholder: $l10n("ADD_TAG"),
+                                text: sender.text,
+                                handler: text => {
+                                    text = text.trim()
+                                    if (text.length > 0) {
+                                        this.kernel.storage.setTag(uuid, text)
+                                    } else {
+                                        this.kernel.storage.deleteTag(uuid)
+                                    }
+                                    this.loadSavedClipboard()
+                                    this.updateList()
+                                }
+                            })
+                        }
+                    }
+                ]
+            },
+            {
+                inline: true,
+                items: [
+                    {
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
                         handler: (sender, indexPath) => {
@@ -745,16 +774,17 @@ class Clipboard {
         const image = {
             hidden: true
         }
+        const info = {
+            text: data.text,
+            section: data.section,
+            uuid: data.uuid,
+            md5: data.md5,
+            prev: data.prev,
+            next: data.next
+        }
         const content = {
             text: "",
-            info: {
-                text: data.text,
-                section: data.section,
-                uuid: data.uuid,
-                md5: data.md5,
-                prev: data.prev,
-                next: data.next
-            }
+            info
         }
 
         const path = this.kernel.storage.keyToPath(data.text)
@@ -779,6 +809,7 @@ class Clipboard {
         return {
             copied: { hidden: !indicator },
             image,
+            tag: { text: data.tag, info },
             content
         }
     }
@@ -789,38 +820,59 @@ class Clipboard {
             views: [
                 {
                     type: "view",
-                    props: {
-                        id: "copied",
-                        circular: this.copiedIndicatorSize,
-                        hidden: true,
-                        bgcolor: $color("green")
-                    },
+                    views: [
+                        {
+                            type: "view",
+                            props: {
+                                id: "copied",
+                                circular: this.copiedIndicatorSize,
+                                hidden: true,
+                                bgcolor: $color("green")
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.size.equalTo(this.copiedIndicatorSize)
+                                // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                                make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2)
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "content",
+                                lines: lines,
+                                font: $font(this.fontSize)
+                            },
+                            layout: (make, view) => {
+                                make.top.left.right.inset(this.edges)
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: "image",
+                                hidden: true
+                            },
+                            layout: $layout.fill
+                        }
+                    ],
                     layout: (make, view) => {
-                        make.centerY.equalTo(view.super)
-                        make.size.equalTo(this.copiedIndicatorSize)
-                        // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                        make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2)
+                        make.width.top.equalTo(view.super)
+                        make.height.equalTo(view.super)
                     }
                 },
                 {
                     type: "label",
                     props: {
-                        id: "content",
-                        lines: lines,
-                        font: $font(this.fontSize)
+                        id: "tag",
+                        color: $color("systemGray2"),
+                        font: $font(14)
                     },
                     layout: (make, view) => {
-                        make.centerY.equalTo(view.super)
-                        make.left.right.inset(this.edges)
+                        make.bottom.width.equalTo(view.super)
+                        make.left.inset(this.edges)
+                        make.height.equalTo(this.tagContainerHeight)
                     }
-                },
-                {
-                    type: "image",
-                    props: {
-                        id: "image",
-                        hidden: true
-                    },
-                    layout: $layout.fill
                 }
             ]
         }
@@ -946,7 +998,9 @@ class Clipboard {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const content = sender.object(indexPath).content
-                    return content.info.height + this.edges * 2
+                    const tag = sender.object(indexPath).tag
+                    const tagHeight = tag.text.length > 0 ? this.tagContainerHeight : this.edges
+                    return content.info.height + this.edges + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
                     const content = data.content
