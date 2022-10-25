@@ -283,6 +283,18 @@ class Keyboard extends Clipboard {
             make.width.equalTo(view.super)
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
         }
+        superListView.views[1].events.didSelect = (sender, indexPath, data) => {
+            const content = data.content
+            const text = content.info.text
+            const path = this.kernel.storage.keyToPath(text)
+            if (path && $file.exists(path.original)) {
+                $quicklook.open({
+                    image: $file.read(path.original)?.image
+                })
+            } else {
+                $keyboard.insert(content.info.text)
+            }
+        }
         return superListView
     }
 

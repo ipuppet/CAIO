@@ -366,7 +366,7 @@ class Clipboard {
     }
 
     update(uuid, text, row) {
-        const info = $(this.listId).cell($indexPath(this.tabIndex, row)).get("content").info
+        const info = $(this.listId).object($indexPath(this.tabIndex, row)).content.info
         const newMD5 = $text.MD5(text)
 
         // 更新索引
@@ -791,7 +791,7 @@ class Clipboard {
         if (path) {
             image.src = path.preview
             image.hidden = false
-            content.info.height = this.imageContentHeight
+            connt.info.height = this.imageContentHeight
         } else {
             const sliceText = text => {
                 // 显示最大长度
@@ -799,7 +799,7 @@ class Clipboard {
                 return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
             }
             content.text = sliceText(data.text)
-            content.info.height = $text.sizeThatFits({
+            info.height = $text.sizeThatFits({
                 text: content.text,
                 width: UIKit.windowSize.width - this.edges * 2,
                 font: $font(this.fontSize)
@@ -999,7 +999,7 @@ class Clipboard {
                 rowHeight: (sender, indexPath) => {
                     const content = sender.object(indexPath).content
                     const tag = sender.object(indexPath).tag
-                    const tagHeight = tag.text.length > 0 ? this.tagContainerHeight : this.edges
+                    const tagHeight = tag.text ? this.tagContainerHeight : this.edges
                     return content.info.height + this.edges + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
