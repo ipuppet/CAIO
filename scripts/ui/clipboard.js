@@ -211,7 +211,7 @@ class Clipboard {
      * @param {string} uuid
      */
     getIndexPathRowByUUID(uuid) {
-        const data = $(this.listId).data
+        const data = this.savedClipboard
         for (let i = 0; i < data.length; i++) {
             let length = data[i].length
             for (let index = 0; index < length; index++) {
