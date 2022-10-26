@@ -23,10 +23,13 @@ class Clipboard {
     savedClipboardIndex = {}
 
     // 剪贴板列个性化设置
-    edges = 20 // 列表边距
+    #singleLine = false
+    left_right = 20 // 列表边距
+    top_bottom = 20 // 列表边距
     fontSize = 16 // 字体大小
     copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
     imageContentHeight = 50
+    tagFontSize = 14
     tagContainerHeight = 25
 
     tabHeight = 44
@@ -92,6 +95,7 @@ class Clipboard {
     }
 
     setSingleLine() {
+        this.#singleLine = true
         // 图片高度与文字一致
         this.imageContentHeight = this.getSingleLineHeight()
     }
@@ -679,24 +683,7 @@ class Clipboard {
         }
     }
 
-    menuItems(withDefaultButtons = true) {
-        const handlerRewrite = handler => {
-            return (sender, indexPath) => {
-                const item = sender.object(indexPath)
-                const data = {
-                    text: item.content.info.text,
-                    uuid: item.content.info.uuid
-                }
-                handler(data)
-            }
-        }
-        const actions = this.kernel.actionManager.getActions("clipboard").map(action => {
-            const actionHandler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
-            action.handler = handlerRewrite(actionHandler)
-            action.title = action.name
-            action.symbol = action.icon
-            return action
-        })
+    menuItems(defaultOnly = false) {
         const defaultButtons = [
             {
                 inline: true,
@@ -767,7 +754,30 @@ class Clipboard {
                 ]
             }
         ]
-        return actions.concat(withDefaultButtons ? defaultButtons : [])
+
+        if (defaultOnly) {
+            return defaultButtons
+        }
+
+        const handlerRewrite = handler => {
+            return (sender, indexPath) => {
+                const item = sender.object(indexPath)
+                const data = {
+                    text: item.content.info.text,
+                    uuid: item.content.info.uuid
+                }
+                handler(data)
+            }
+        }
+        const actions = this.kernel.actionManager.getActions("clipboard").map(action => {
+            const actionHandler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
+            action.handler = handlerRewrite(actionHandler)
+            action.title = action.name
+            action.symbol = action.icon
+            return action
+        })
+
+        return actions.concat(defaultButtons)
     }
 
     lineData(data, indicator = false) {
@@ -801,7 +811,7 @@ class Clipboard {
             content.text = sliceText(data.text)
             info.height = $text.sizeThatFits({
                 text: content.text,
-                width: UIKit.windowSize.width - this.edges * 2,
+                width: UIKit.windowSize.width - this.left_right * 2,
                 font: $font(this.fontSize)
             }).height
         }
@@ -833,7 +843,7 @@ class Clipboard {
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo(this.copiedIndicatorSize)
                                 // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                make.left.inset(this.edges / 2 - this.copiedIndicatorSize / 2)
+                                make.left.inset(this.left_right / 2 - this.copiedIndicatorSize / 2)
                             }
                         },
                         {
@@ -844,7 +854,12 @@ class Clipboard {
                                 font: $font(this.fontSize)
                             },
                             layout: (make, view) => {
-                                make.top.left.right.inset(this.edges)
+                                make.left.right.inset(this.left_right)
+                                if (this.#singleLine) {
+                                    make.top.inset(this.imageContentHeight / 2)
+                                } else {
+                                    make.top.inset(this.top_bottom)
+                                }
                             }
                         },
                         {
@@ -866,11 +881,11 @@ class Clipboard {
                     props: {
                         id: "tag",
                         color: $color("systemGray2"),
-                        font: $font(14)
+                        font: $font(this.tagFontSize)
                     },
                     layout: (make, view) => {
                         make.bottom.width.equalTo(view.super)
-                        make.left.inset(this.edges)
+                        make.left.inset(this.left_right)
                         make.height.equalTo(this.tagContainerHeight)
                     }
                 }
@@ -883,7 +898,7 @@ class Clipboard {
             type: "list",
             props: {
                 bgcolor: UIKit.primaryViewBackgroundColor,
-                separatorInset: $insets(0, this.edges, 0, 0),
+                separatorInset: $insets(0, this.left_right, 0, 0),
                 data: new Array(...this.clipboard),
                 template: this.listTemplate(),
                 reorder: true,
@@ -905,7 +920,7 @@ class Clipboard {
                 rowHeight: (sender, indexPath) => {
                     // sender 取不到值时代表此项为占位符，从原列表取值
                     const content = sender.object(indexPath).content ?? $(this.listId).object(indexPath).content
-                    return content.info.height + this.edges * 2
+                    return content.info.height + this.top_bottom * 2
                 },
                 reorderBegan: indexPath => {
                     // 用于纠正 rowHeight 高度计算
@@ -964,8 +979,8 @@ class Clipboard {
             props: {
                 id: this.listId,
                 bgcolor: $color("clear"),
-                separatorInset: $insets(0, this.edges, 0, 0),
-                menu: { items: this.menuItems(this.kernel) },
+                separatorInset: $insets(0, this.left_right, 0, 0),
+                menu: { items: this.menuItems() },
                 data: [],
                 template: this.listTemplate(),
                 actions: [
@@ -999,8 +1014,8 @@ class Clipboard {
                 rowHeight: (sender, indexPath) => {
                     const content = sender.object(indexPath).content
                     const tag = sender.object(indexPath).tag
-                    const tagHeight = tag.text ? this.tagContainerHeight : this.edges
-                    return content.info.height + this.edges + tagHeight
+                    const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
+                    return content.info.height + this.top_bottom + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
                     const content = data.content

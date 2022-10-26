@@ -32,6 +32,8 @@ class Today extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 38
         this.taptic = 1
+        this.tagFontSize = 10
+        this.tagContainerHeight = 12
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
@@ -243,6 +245,12 @@ class Today extends Clipboard {
         }
     }
 
+    menuItems() {
+        const items = super.menuItems(true).reverse()
+        items[0].items = items[0].items.reverse()
+        return items
+    }
+
     getListView() {
         return {
             type: "view",
@@ -259,15 +267,19 @@ class Today extends Clipboard {
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
                         menu: {
-                            items: this.menuItems(false)
+                            items: this.menuItems()
                         },
                         separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                        rowHeight: this.getSingleLineHeight() + this.top_bottom * 2,
                         data: [],
                         template: this.listTemplate(1)
                     },
                     events: {
                         ready: () => this.listReady(),
+                        rowHeight: (sender, indexPath) => {
+                            const tag = sender.object(indexPath).tag
+                            const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
+                            return this.getSingleLineHeight() + this.top_bottom + tagHeight
+                        },
                         didSelect: this.buttonTapped((sender, indexPath, data) => {
                             const content = data.content
                             const text = content.info.text
@@ -275,7 +287,7 @@ class Today extends Clipboard {
                             if (path && $file.exists(path.original)) {
                                 $clipboard.image = $file.read(path.original).image
                             } else {
-                                this.setCopied(data.content.info.uuid, $indexPath(this.listSection, indexPath.row))
+                                this.setCopied(data.content.info.uuid, indexPath.row)
                                 this.setClipboardText(data.content.info.text)
                             }
                             $ui.toast($l10n("COPIED"))
