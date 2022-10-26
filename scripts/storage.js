@@ -84,27 +84,31 @@ class Storage {
             })
         }
 
-        let data
-        try {
-            data = this.all("clipboard")
-            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
-            if (sorted.length > data.length) {
-                throw new Error()
+        ;["clipboard", "pin"].map(folder => {
+            let data = this.all(folder)
+            try {
+                const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+                if (sorted.length > data.length) {
+                    throw new Error()
+                }
+                data = sorted.reverse()
+            } catch {}
+            action(data, folder)
+        })
+
+        // tag
+        const tagQuery = this.sqlite.query(`SELECT * FROM tag`)
+        this.parseTag(tagQuery).forEach(item => {
+            storage.beginTransaction()
+            try {
+                storage.setTag(item.uuid, item.tag)
+                storage.commit()
+            } catch (error) {
+                storage.rollback()
+                this.kernel.error(error)
+                throw error
             }
-            action(sorted.reverse(), "clipboard")
-        } catch {
-            action(this.all("clipboard"), "clipboard")
-        }
-        try {
-            data = this.all("pin")
-            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
-            if (sorted.length > data.length) {
-                throw new Error()
-            }
-            action(sorted.reverse(), "pin")
-        } catch {
-            action(this.all("pin"), "pin")
-        }
+        })
 
         $file.copy({
             src: db,
@@ -200,6 +204,21 @@ class Storage {
                 tag: result.result.get("tag") ?? "",
                 prev: result.result.get("prev") ?? null,
                 next: result.result.get("next") ?? null
+            })
+        }
+        result.result.close()
+        return data
+    }
+
+    parseTag(result) {
+        if (result.error !== null) {
+            throw result.error
+        }
+        const data = []
+        while (result.result.next()) {
+            data.push({
+                uuid: result.result.get("uuid"),
+                tag: result.result.get("tag")
             })
         }
         result.result.close()
