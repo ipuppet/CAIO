@@ -164,7 +164,9 @@ class Clipboard {
     }
 
     updateListBackground() {
-        $(this.listId + "-empty-list-background").hidden = this.clipboard.length > 0
+        try {
+            $(this.listId + "-empty-list-background").hidden = this.clipboard.length > 0
+        } catch {}
     }
 
     /**
