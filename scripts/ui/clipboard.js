@@ -172,7 +172,7 @@ class Clipboard {
     /**
      * 将元素标记为 copied
      * @param {string|undefined} uuid 若为 undefined 则清空剪切板
-     * @param {$indexPath} row
+     * @param {number} row
      * @param {boolean} isUpdateIndicator
      * @returns
      */
@@ -213,12 +213,9 @@ class Clipboard {
      * @param {string} uuid
      */
     getIndexPathRowByUUID(uuid) {
-        const data = this.savedClipboard
-        for (let i = 0; i < data.length; i++) {
-            let length = data[i].length
-            for (let index = 0; index < length; index++) {
-                if (data[i][index].content.info.uuid === uuid) return index
-            }
+        let length = this.clipboard.length
+        for (let i = 0; i < length; ++i) {
+            if (this.clipboard[i].content.info.uuid === uuid) return i
         }
 
         return false
