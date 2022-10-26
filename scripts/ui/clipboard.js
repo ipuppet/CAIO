@@ -67,7 +67,7 @@ class Clipboard {
 
     set savedClipboard(savedClipboard) {
         this.#savedClipboard = savedClipboard.map(item => {
-            return new Proxy(item, {
+            return new Proxy(item ?? [], {
                 set: (obj, prop, value) => {
                     // 更新空列表背景
                     this.updateListBackground()
