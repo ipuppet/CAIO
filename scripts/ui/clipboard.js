@@ -166,7 +166,7 @@ class Clipboard {
     updateListBackground() {
         try {
             $(this.listId + "-empty-list-background").hidden = this.clipboard.length > 0
-        } catch {}
+        } catch { }
     }
 
     /**
@@ -226,15 +226,20 @@ class Clipboard {
             this.kernel.print("read clipboard")
 
             // 仅手动模式下保存图片
-            if (manual && $clipboard.images?.length > 0) {
-                $clipboard.images.forEach(image => {
-                    this.add(image)
-                })
+            if ($clipboard.images?.length > 0) {
+                if (manual) {
+                    $clipboard.images.forEach(image => {
+                        this.add(image)
+                    })
 
-                return true
+                    return true
+                }
+
+                return false
             }
 
             const text = $clipboard.text
+
             if (!text || text === "") {
                 // 删除剪切板信息
                 this.setCopied()
