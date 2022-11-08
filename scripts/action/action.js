@@ -66,7 +66,10 @@ class Action {
      * @returns Array
      */
     getAllClipboard() {
-        return this.kernel.storage.all().map(item => item.text)
+        return {
+            clipboard: this.kernel.storage.all("clipboard").map(item => item.text),
+            pin: this.kernel.storage.all("pin").map(item => item.text)
+        }
     }
 
     getAllContent() {

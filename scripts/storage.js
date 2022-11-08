@@ -35,6 +35,7 @@ class Storage {
         this.sqlite.update(
             "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
+        this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
 
         // 初始化目录
         const pathList = [this.tempPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
@@ -53,32 +54,25 @@ class Storage {
         storage.localDb = db
         storage.init()
 
-        const action = (data, flag = true) => {
+        const action = (data, folder) => {
             const rebuildData = []
             data.forEach(item => {
                 const data = {
                     uuid: item.uuid,
                     text: item.text,
                     md5: item.md5,
+                    tag: item.tag,
                     image: item.image,
                     prev: null,
                     next: rebuildData[0]?.uuid ?? null
                 }
                 storage.beginTransaction()
                 try {
-                    if (flag) {
-                        storage.insert(data)
-                    } else {
-                        storage.insertPin(data)
-                    }
+                    storage.insert(folder, data)
                     if (data.next) {
                         // 更改指针
                         rebuildData[0].prev = data.uuid
-                        if (flag) {
-                            storage.update(rebuildData[0])
-                        } else {
-                            storage.updatePin(rebuildData[0])
-                        }
+                        storage.update(folder, rebuildData[0])
                     }
                     storage.commit()
                     rebuildData.unshift(data)
@@ -90,27 +84,31 @@ class Storage {
             })
         }
 
-        let data
-        try {
-            data = this.all()
-            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
-            if (sorted.length > data.length) {
-                throw new Error()
+        ;["clipboard", "pin"].map(folder => {
+            let data = this.all(folder)
+            try {
+                const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+                if (sorted.length > data.length) {
+                    throw new Error()
+                }
+                data = sorted.reverse()
+            } catch {}
+            action(data, folder)
+        })
+
+        // tag
+        const tagQuery = this.sqlite.query(`SELECT * FROM tag`)
+        this.parseTag(tagQuery).forEach(item => {
+            storage.beginTransaction()
+            try {
+                storage.setTag(item.uuid, item.tag)
+                storage.commit()
+            } catch (error) {
+                storage.rollback()
+                this.kernel.error(error)
+                throw error
             }
-            action(sorted.reverse())
-        } catch {
-            action(this.all())
-        }
-        try {
-            data = this.allPin()
-            const sorted = this.sort(JSON.parse(JSON.stringify(data)))
-            if (sorted.length > data.length) {
-                throw new Error()
-            }
-            action(sorted.reverse(), false)
-        } catch {
-            action(this.allPin(), false)
-        }
+        })
 
         $file.copy({
             src: db,
@@ -203,8 +201,24 @@ class Storage {
                 section: result.result.get("section"),
                 text: result.result.get("text"),
                 md5: result.result.get("md5"),
+                tag: result.result.get("tag") ?? "",
                 prev: result.result.get("prev") ?? null,
                 next: result.result.get("next") ?? null
+            })
+        }
+        result.result.close()
+        return data
+    }
+
+    parseTag(result) {
+        if (result.error !== null) {
+            throw result.error
+        }
+        const data = []
+        while (result.result.next()) {
+            data.push({
+                uuid: result.result.get("uuid"),
+                tag: result.result.get("tag")
             })
         }
         result.result.close()
@@ -214,21 +228,11 @@ class Storage {
     beginTransaction() {
         this.sqlite.beginTransaction()
     }
-
     commit() {
         this.sqlite.commit()
     }
-
     rollback() {
         this.sqlite.rollback()
-    }
-
-    getByText(text) {
-        const result = this.sqlite.query({
-            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text = ? UNION SELECT *, 'pin' AS section FROM pin WHERE text = ?",
-            args: [text, text]
-        })
-        return this.parse(result)[0]
     }
 
     getByUUID(uuid) {
@@ -238,7 +242,6 @@ class Storage {
         })
         return this.parse(result)[0]
     }
-
     getByMD5(md5) {
         const result = this.sqlite.query({
             sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE md5 = ? UNION SELECT *, 'pin' AS section FROM pin WHERE md5 = ?",
@@ -246,7 +249,6 @@ class Storage {
         })
         return this.parse(result)[0]
     }
-
     search(kw) {
         const result = this.sqlite.query({
             sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text like ? UNION SELECT *, 'pin' AS section FROM pin WHERE text like ?",
@@ -259,24 +261,20 @@ class Storage {
         path = JSON.stringify(path)
         return `@image=${path}`
     }
-
     keyToPath(key) {
-        if (key.startsWith("@image=")) {
+        if (key?.startsWith("@image=")) {
             return JSON.parse(key.slice(7))
         }
         return false
     }
 
-    _all(table) {
-        const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table}`)
+    all(table) {
+        const result = this.sqlite.query(
+            `SELECT ${table}.*, tag, '${table}' AS section FROM ${table} LEFT JOIN tag ON ${table}.uuid = tag.uuid`
+        )
         return this.parse(result)
     }
-    // 分页无法排序
-    _page(table, page, size) {
-        const result = this.sqlite.query(`SELECT *, '${table}' AS section FROM ${table} LIMIT ${page * size},${size}`)
-        return this.parse(result)
-    }
-    _insert(table, clipboard) {
+    insert(table, clipboard) {
         if (clipboard.image) {
             const image = clipboard.image
             const fileName = $text.uuid
@@ -302,7 +300,7 @@ class Storage {
             throw result.error
         }
     }
-    _update(table, clipboard) {
+    update(table, clipboard) {
         if (Object.keys(clipboard).length < 4 || typeof clipboard.uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
@@ -312,7 +310,7 @@ class Storage {
             throw result.error
         }
     }
-    _updateText(table, uuid, text) {
+    updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ? WHERE uuid = ?`,
@@ -322,67 +320,49 @@ class Storage {
             throw result.error
         }
     }
-    _delete(table, uuid) {
+    delete(table, uuid) {
         const clipboard = this.getByUUID(uuid)
-        const result = this.sqlite.update({
-            sql: `DELETE FROM ${table} WHERE uuid = ?`,
-            args: [uuid]
-        })
+        this.beginTransaction()
+        try {
+            const result = this.sqlite.update({
+                sql: `DELETE FROM ${table} WHERE uuid = ?`,
+                args: [uuid]
+            })
+            if (!result.result) {
+                throw result.error
+            }
+            this.deleteTag(uuid)
+            this.commit()
+        } catch (error) {
+            this.rollback()
+            throw error
+        }
+
         // delete image file
-        const path = this.keyToPath(clipboard.text)
+        const path = this.keyToPath(clipboard?.text)
         if (path) {
             $file.delete(path.original)
             $file.delete(path.preview)
         }
+    }
+
+    setTag(uuid, tag) {
+        const result = this.sqlite.update({
+            sql: `INSERT OR REPLACE INTO tag (uuid, tag) values (?, ?)`,
+            args: [uuid, tag]
+        })
         if (!result.result) {
             throw result.error
         }
     }
-
-    all() {
-        return this._all("clipboard")
-    }
-    page(page, size) {
-        return this._page("clipboard", page, size)
-    }
-    insert(clipboard) {
-        return this._insert("clipboard", clipboard)
-    }
-    update(clipboard) {
-        return this._update("clipboard", clipboard)
-    }
-    updateText(uuid, text) {
-        return this._updateText("clipboard", uuid, text)
-    }
-    delete(uuid) {
-        return this._delete("clipboard", uuid)
-    }
-
-    allPin() {
-        return this._all("pin")
-    }
-    pagePin(page, size) {
-        return this._page("pin", page, size)
-    }
-    insertPin(clipboard) {
-        return this._insert("pin", clipboard)
-    }
-    updatePin(clipboard) {
-        return this._update("pin", clipboard)
-    }
-    updateTextPin(uuid, text) {
-        return this._updateText("pin", uuid, text)
-    }
-    deletePin(uuid) {
-        return this._delete("pin", uuid)
-    }
-
-    getPinByMD5(md5) {
-        const result = this.sqlite.query({
-            sql: "SELECT * FROM pin WHERE md5 = ?",
-            args: [md5]
+    deleteTag(uuid) {
+        const tagResult = this.sqlite.update({
+            sql: `DELETE FROM tag WHERE uuid = ?`,
+            args: [uuid]
         })
-        return this.parse(result)[0]
+        if (!tagResult.result) {
+            throw tagResult.error
+        }
     }
 }
 

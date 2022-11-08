@@ -11,6 +11,8 @@
 "UNIVERSAL_CLIPBOARD_TIPS" = "Universal Clipboard allows you to copy something on your iPhone, and paste it on your Mac–or vice-versa–using iCloud.";
 "CLIPBOARD_STRUCTURE_ERROR" = "Clipboard data structure is abnormal";
 "ADD" = "Add";
+"TAG" = "Tag";
+"ADD_TAG" = "Add Tag";
 "EDIT" = "Edit";
 "SEARCH" = "Search";
 "PIN" = "Pin";

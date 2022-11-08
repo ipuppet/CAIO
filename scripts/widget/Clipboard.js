@@ -9,12 +9,14 @@ class ClipboardWidget {
             actions: `${this.baseUrlScheme}&actions=1`,
             copy: uuid => `${this.baseUrlScheme}&copy=${uuid}`
         }
-        this.length = 0 // 统计剪切板总数
+
         this.viewStyle = {
             topItemSize: 32, // 2x2加号和计数大小
             tipTextColor: "orange" // 2x2加号和计数大小
         }
         this.padding = 15
+
+        this.savedClipboard = this.storage.sort(this.storage.all("clipboard"))
     }
 
     getListMaxLength() {
@@ -26,44 +28,6 @@ class ClipboardWidget {
             case 2:
                 return 10
         }
-    }
-
-    getSavedClipboard() {
-        const dataObj = {}
-        let length = 0
-        let header = null
-        this.storage.all().forEach(item => {
-            // 构建结构
-            dataObj[item.uuid] = item
-            // 寻找头节点
-            if (item.prev === null) {
-                header = item.uuid
-            }
-            // 统计长度
-            length++
-        })
-        this.length = length
-        // 排序
-        const sorted = []
-        if (length > 0) {
-            let p = dataObj[header]
-            let maxLoop = this.getListMaxLength() // 控制显示行数
-            while (p.next !== null && maxLoop > 1) {
-                maxLoop--
-                sorted.push(p)
-                p = dataObj[p.next]
-                if (p === undefined) {
-                    throw $l10n("CLIPBOARD_STRUCTURE_ERROR")
-                }
-            }
-            sorted.push(p) // 将最后一个元素推入
-        }
-        return sorted.map((data, index) => {
-            return {
-                text: data.text,
-                uuid: data.uuid
-            }
-        })
     }
 
     view2x2(clipboardList) {
@@ -122,7 +86,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 font: $font("bold", this.viewStyle.topItemSize),
-                                text: String(this.length)
+                                text: String(this.savedClipboard.length)
                             }
                         }
                     ]
@@ -147,7 +111,7 @@ class ClipboardWidget {
                         {
                             type: "text",
                             props: {
-                                text: clipboardList[0] ? clipboardList[0].text : "",
+                                text: this.savedClipboard[0] ? this.savedClipboard[0].text : "",
                                 font: $font(12)
                             }
                         }
@@ -157,7 +121,7 @@ class ClipboardWidget {
         }
     }
 
-    view2x4(clipboardList) {
+    view2x4() {
         return {
             type: "hstack",
             props: {
@@ -190,7 +154,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 font: $font("bold", this.viewStyle.topItemSize),
-                                text: String(this.length)
+                                text: String(this.savedClipboard.length)
                             }
                         },
                         {
@@ -206,7 +170,7 @@ class ClipboardWidget {
                 },
                 {
                     type: "spacer",
-                    props: { frame: { maxWidth: clipboardList.length > 0 ? 25 : Infinity } }
+                    props: { frame: { maxWidth: this.savedClipboard.length > 0 ? 25 : Infinity } }
                 },
                 {
                     // 右侧
@@ -222,7 +186,7 @@ class ClipboardWidget {
                     views: (() => {
                         const result = []
                         const height = (this.ctx.displaySize.height - this.padding) / this.getListMaxLength()
-                        clipboardList.map((item, i) => {
+                        this.savedClipboard.map((item, i) => {
                             if (i !== 0 && i !== 5) {
                                 result.push({ type: "divider" })
                             }
@@ -248,8 +212,8 @@ class ClipboardWidget {
         }
     }
 
-    view4x4(clipboardList) {
-        return this.view2x2(clipboardList)
+    view4x4() {
+        return this.view2x2()
     }
 
     render() {
@@ -267,17 +231,16 @@ class ClipboardWidget {
             },
             render: ctx => {
                 this.ctx = ctx
-                const clipboardList = this.getSavedClipboard()
                 let view
                 switch (this.ctx.family) {
                     case 0:
-                        view = this.view2x2(clipboardList)
+                        view = this.view2x2()
                         break
                     case 1:
-                        view = this.view2x4(clipboardList)
+                        view = this.view2x4()
                         break
                     case 2:
-                        view = this.view4x4(clipboardList)
+                        view = this.view4x4()
                         break
                     default:
                         view = this.view2x2()

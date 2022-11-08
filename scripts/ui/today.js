@@ -7,6 +7,10 @@ const TodayActions = require("./components/today-actions")
  */
 
 class Today extends Clipboard {
+    tabItems = [$l10n("PIN"), $l10n("CLIPBOARD"), $l10n("ACTIONS")]
+    inLauncher = $app.env === $env.today && $app.widgetIndex === -1
+    launcherNavHeight = 44
+
     /**
      * @param {AppKernel} kernel
      */
@@ -28,6 +32,8 @@ class Today extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 38
         this.taptic = 1
+        this.tagFontSize = 10
+        this.tagContainerHeight = 12
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
@@ -49,8 +55,11 @@ class Today extends Clipboard {
         return $cache.get("caio.today.tab.index") ?? 0
     }
 
-    get tabItems() {
-        return [$l10n("PIN"), $l10n("CLIPBOARD"), $l10n("ACTIONS")]
+    loadData() {
+        this.setClipboarPageSize($widget.mode)
+        this.loadSavedClipboard()
+        this.updateList()
+        this.appListen()
     }
 
     listReady() {
@@ -60,20 +69,15 @@ class Today extends Clipboard {
             this.updateList()
         }
 
-        this.loadSavedClipboard()
-        this.updateList()
-        this.appListen()
+        this.loadData()
 
         $delay(0.5, () => this.readClipboard())
     }
 
     readClipboard(manual = false) {
         if (!this.isActionPage) {
-            if (super.readClipboard(manual)) {
-                this.listSection = 1
-                this.listPageNow[this.listSection] = 0
-                this.updateList()
-            }
+            super.readClipboard(manual)
+            this.updateList()
             return true
         }
         return false
@@ -84,7 +88,7 @@ class Today extends Clipboard {
             this.listPageSize = 1
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
-            const height = viewHeight - this.navHeight * 2
+            const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
             const f_line = height / (this.getSingleLineHeight() + this.top_bottom * 2)
             const floor = Math.floor(f_line)
             this.listPageSize = floor
@@ -221,7 +225,7 @@ class Today extends Clipboard {
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.savedClipboard[this.listSection].rows.slice(start, end)
+        $(this.listId).data = this.savedClipboard[this.listSection].slice(start, end)
         // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
@@ -234,11 +238,17 @@ class Today extends Clipboard {
     }
 
     clipboardNextPage() {
-        const maxPage = Math.ceil(this.savedClipboard[this.listSection].rows.length / this.listPageSize)
+        const maxPage = Math.ceil(this.savedClipboard[this.listSection].length / this.listPageSize)
         if (this.listPageNow[this.listSection] < maxPage - 1) {
             this.listPageNow[this.listSection]++
             this.updateList()
         }
+    }
+
+    menuItems() {
+        const items = super.menuItems(true).reverse()
+        items[0].items = items[0].items.reverse()
+        return items
     }
 
     getListView() {
@@ -257,15 +267,19 @@ class Today extends Clipboard {
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
                         menu: {
-                            items: this.menuItems(false)
+                            items: this.menuItems()
                         },
                         separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                        rowHeight: this.getSingleLineHeight() + this.top_bottom * 2,
                         data: [],
                         template: this.listTemplate(1)
                     },
                     events: {
                         ready: () => this.listReady(),
+                        rowHeight: (sender, indexPath) => {
+                            const tag = sender.object(indexPath).tag
+                            const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
+                            return this.getSingleLineHeight() + this.top_bottom + tagHeight
+                        },
                         didSelect: this.buttonTapped((sender, indexPath, data) => {
                             const content = data.content
                             const text = content.info.text
@@ -273,7 +287,7 @@ class Today extends Clipboard {
                             if (path && $file.exists(path.original)) {
                                 $clipboard.image = $file.read(path.original).image
                             } else {
-                                this.setCopied(data.content.info.uuid, $indexPath(this.listSection, indexPath.row))
+                                this.setCopied(data.content.info.uuid, indexPath.row)
                                 this.setClipboardText(data.content.info.text)
                             }
                             $ui.toast($l10n("COPIED"))
@@ -418,6 +432,7 @@ class Today extends Clipboard {
                                         },
                                         completion: () => {
                                             timer.invalidate()
+                                            this.loadData()
                                         }
                                     })
                                 }

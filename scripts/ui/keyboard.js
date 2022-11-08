@@ -21,7 +21,6 @@ class Keyboard extends Clipboard {
         this.fontSize = 14 // 字体大小
         this.navHeight = 50
         this.navBarSeparatorId = "navBarSeparator"
-        this.taptic = 1
         this.deleteTimer = undefined
         this.continuousDeleteTimer = undefined
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
@@ -52,10 +51,10 @@ class Keyboard extends Clipboard {
         }
     }
 
-    keyboardTapped(tapped, tapticEngine = true) {
+    keyboardTapped(tapped, tapticEngine = true, level = 1) {
         return (...args) => {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
-                $device.taptic(this.taptic)
+                $device.taptic(level)
             }
             tapped(...args)
         }
@@ -200,7 +199,8 @@ class Keyboard extends Clipboard {
                                 interval: this.deleteDelay,
                                 handler: this.keyboardTapped(
                                     () => $keyboard.delete(),
-                                    this.kernel.setting.get("keyboard.tapticEngineForDelete")
+                                    this.kernel.setting.get("keyboard.tapticEngineForDelete"),
+                                    0
                                 )
                             })
                         })
@@ -208,6 +208,8 @@ class Keyboard extends Clipboard {
                     touchesEnded: () => {
                         this.deleteTimer?.invalidate()
                         this.continuousDeleteTimer?.cancel()
+                        this.deleteTimer = undefined
+                        this.continuousDeleteTimer = undefined
                     }
                 }
             }
@@ -274,51 +276,26 @@ class Keyboard extends Clipboard {
     }
 
     getListView() {
-        return {
-            // 剪切板列表
-            type: "list",
-            props: {
-                id: this.listId,
-                bgcolor: $color("clear"),
-                menu: {
-                    items: this.menuItems()
-                },
-                separatorInset: $insets(0, this.left_right, 0, this.left_right),
-                separatorColor: $color("lightGray"),
-                data: this.savedClipboard,
-                template: this.listTemplate(1)
-            },
-            events: {
-                ready: () => this.listReady(),
-                rowHeight: (sender, indexPath) => {
-                    const content = sender.object(indexPath).content
-                    return content.info.height + this.top_bottom * 2 + 1
-                },
-                didSelect: this.keyboardTapped((sender, indexPath, data) => {
-                    const content = data.content
-                    const text = content.info.text
-                    const path = this.kernel.storage.keyToPath(text)
-                    if (path && $file.exists(path.original)) {
-                        $clipboard.image = $file.read(path.original).image
-                        $ui.toast($l10n("COPIED"))
-                    } else {
-                        $keyboard.insert(data.content.info.text)
-                    }
-                }),
-                didScroll: sender => {
-                    if (sender.contentOffset.y > 0) {
-                        $(this.navBarSeparatorId).hidden = false
-                    } else {
-                        $(this.navBarSeparatorId).hidden = true
-                    }
-                }
-            },
-            layout: (make, view) => {
-                make.top.equalTo(this.navHeight)
-                make.width.equalTo(view.super)
-                make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        const superListView = super.getListView()
+        superListView.props.bgcolor = $color("clear")
+        superListView.layout = (make, view) => {
+            make.top.equalTo(this.navHeight)
+            make.width.equalTo(view.super)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        }
+        superListView.views[1].events.didSelect = (sender, indexPath, data) => {
+            const content = data.content
+            const text = content.info.text
+            const path = this.kernel.storage.keyToPath(text)
+            if (path && $file.exists(path.original)) {
+                $quicklook.open({
+                    image: $file.read(path.original)?.image
+                })
+            } else {
+                $keyboard.insert(content.info.text)
             }
         }
+        return superListView
     }
 
     getView() {
