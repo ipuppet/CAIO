@@ -800,7 +800,7 @@ class Clipboard {
         if (path) {
             image.src = path.preview
             image.hidden = false
-            connt.info.height = this.imageContentHeight
+            content.info.height = this.imageContentHeight
         } else {
             const sliceText = text => {
                 // 显示最大长度
