@@ -113,15 +113,18 @@ function buildTextActions() {
     templates.forEach(fileName => {
         const filePath = path.join(folder, fileName)
         const fileContent = fs.readFileSync(filePath, "utf-8")
-        const textActions = JSON.parse(fileContent)
-        for (let i = 0; i < textActions.actions.length; i++) {
-            if (textActions.actions[i].type === "@flow.javascript") {
-                textActions.actions[i].parameters.script.value = script
+        const textAction = JSON.parse(fileContent)
+
+        textAction.name = outputName
+
+        for (let i = 0; i < textAction.actions.length; i++) {
+            if (textAction.actions[i].type === "@flow.javascript") {
+                textAction.actions[i].parameters.script.value = script
                 break
             }
         }
         const outputPath = path.join(__dirname, `dist/${outputName}-${fileName}`)
-        fs.writeFileSync(outputPath, JSON.stringify(textActions, null, 4))
+        fs.writeFileSync(outputPath, JSON.stringify(textAction, null, 4))
     })
 }
 

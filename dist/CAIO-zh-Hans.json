@@ -18,12 +18,12 @@
         }
     ],
     "buildVersion": 1,
-    "name": "CAIO",
     "clientMinVersion": 1,
     "summary": "",
     "icon": {
         "glyph": "heart.text.square",
         "color": "#FF6633"
     },
-    "clientVersion": 592
+    "clientVersion": 592,
+    "name": "CAIO"
 }
