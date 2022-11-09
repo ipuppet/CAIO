@@ -26,31 +26,34 @@ class MyAction extends Action {
         const b23url = this.getUrls()[0]
         if (!b23url) {
             $ui.warning($l10n("b23clear.noUrl"))
-        } else if (b23url.indexOf("bilibili.com") !== -1 && b23url.indexOf("b23.tv") !== -1) {
-            $ui.warning($l10n("b23clear.noBiliUrl"))
-        } else {
-            $ui.toast($l10n("b23clear.converting"))
-            let url
-            if (b23url.indexOf("b23.tv")) {
-                const resp = await $http.get(b23url)
-                url = resp.response.url
-            }
-
-            const bvUrl = url.substring(0, url.indexOf("?") - 1)
-            $ui.alert({
-                title: $l10n("b23clear.success"),
-                message: bvUrl,
-                actions: [
-                    { title: $l10n("OK") },
-                    {
-                        title: $l10n("COPY"),
-                        handler: () => {
-                            $clipboard.text = bvUrl
-                            $ui.success($l10n("COPIED"))
-                        }
-                    }
-                ]
-            })
+            return
         }
+        if (b23url.indexOf("bilibili.com") === -1 && b23url.indexOf("b23.tv") === -1) {
+            $ui.warning($l10n("b23clear.noBiliUrl"))
+            return
+        }
+
+        $ui.toast($l10n("b23clear.converting"))
+        let url
+        if (b23url.indexOf("b23.tv") >= 0) {
+            const resp = await $http.get(b23url)
+            url = resp.response.url
+        }
+
+        const bvUrl = url.substring(0, url.indexOf("?") - 1)
+        $ui.alert({
+            title: $l10n("b23clear.success"),
+            message: bvUrl,
+            actions: [
+                { title: $l10n("OK") },
+                {
+                    title: $l10n("COPY"),
+                    handler: () => {
+                        $clipboard.text = bvUrl
+                        $ui.success($l10n("COPIED"))
+                    }
+                }
+            ]
+        })
     }
 }

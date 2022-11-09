@@ -100,7 +100,7 @@ class Action {
     getUrls() {
         const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/gi
         const text = this.text ?? ""
-        return text.match(regex, text) ?? []
+        return text.match(regex) ?? []
     }
 }
 
