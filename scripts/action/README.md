@@ -90,4 +90,9 @@ setContent(text): void
  * 运行指定的 Action 并返回该 Action do() 方法的返回值
  */
 runAction(type, name): any
+
+/**
+ * 从 `this.text` 中匹配所有 url
+ */
+getUrls(): []
 ```

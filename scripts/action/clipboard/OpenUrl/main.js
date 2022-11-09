@@ -1,12 +1,21 @@
 class MyAction extends Action {
+    l10n() {
+        return {
+            "zh-Hans": {
+                "openLink.nourl": "未检测到链接"
+            },
+            en: {
+                "openLink.nourl": "No link detected"
+            }
+        }
+    }
+
     openUrl(url) {
         $app.openURL(url.trim())
     }
 
     do() {
-        const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/ig
-        const text = this.text ?? ""
-        const url = text.match(regex, text) ?? []
+        const url = this.getUrls()
         if (url.length > 1) {
             $ui.menu({
                 items: url,
@@ -17,7 +26,7 @@ class MyAction extends Action {
         } else if (url.length === 1) {
             this.openUrl(url[0])
         } else {
-            $ui.warning("未检测到链接")
+            $ui.warning($l10n("openLink.nourl"))
         }
     }
 }
