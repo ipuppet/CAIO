@@ -2,9 +2,12 @@ const fs = require("fs")
 const path = require("path")
 const process = require("child_process")
 
-const outputName = "CAIO"
-const distEntry = `dist/${outputName}.js`
-const entryFilePath = path.join(__dirname, "main.js")
+const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"))
+
+const outputName = config.info.name
+const distEntryPath = path.join(__dirname, `dist/${outputName}.js`)
+const entryFile = "main.js"
+const entryFilePath = path.join(__dirname, entryFile)
 const entryFileContent = fs.readFileSync(entryFilePath, "utf-8")
 
 function injectContent() {
@@ -33,7 +36,6 @@ function injectContent() {
 
     const stringsText = `$app.strings = ${JSON.stringify(localizedText)};`
 
-    const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"))
     const configSettings = Object.keys(config.settings)
         .map(key => {
             const value = (() => {
@@ -51,9 +53,8 @@ function injectContent() {
 
     const readmeText = (() => {
         const files = {}
-        const addFile = name => (files[name] = fs.readFileSync(path.join(__dirname, name), "utf-8"))
-        addFile("README.md")
-        addFile("README_CN.md")
+        const fileList = ["README.md", "README_CN.md"]
+        fileList.map(name => (files[name] = fs.readFileSync(path.join(__dirname, name), "utf-8")))
         return `__README__ = ${JSON.stringify(files)}`
     })()
 
@@ -107,37 +108,64 @@ function injectContent() {
 }
 
 function buildTextActions() {
-    const script = fs.readFileSync(path.join(__dirname, distEntry), "utf-8")
+    const script = fs.readFileSync(distEntryPath, "utf-8")
     const folder = path.join(__dirname, "templates")
     const templates = fs.readdirSync(folder)
     templates.forEach(fileName => {
         const filePath = path.join(folder, fileName)
         const fileContent = fs.readFileSync(filePath, "utf-8")
-        const textActions = JSON.parse(fileContent)
-        for (let i = 0; i < textActions.actions.length; i++) {
-            if (textActions.actions[i].type === "@flow.javascript") {
-                textActions.actions[i].parameters.script.value = script
+        const textAction = JSON.parse(fileContent)
+
+        textAction.name = config.info.name
+
+        for (let i = 0; i < textAction.actions.length; i++) {
+            if (textAction.actions[i].type === "@flow.javascript") {
+                textAction.actions[i].parameters.script.value = script
                 break
             }
         }
         const outputPath = path.join(__dirname, `dist/${outputName}-${fileName}`)
-        fs.writeFileSync(outputPath, JSON.stringify(textActions, null, 4))
+        fs.writeFileSync(outputPath, JSON.stringify(textAction, null, 4))
     })
 }
 
+function injectPackageJson(packageJson) {
+    packageJson.jsbox = distEntryPath
+    packageJson.targets = {
+        jsbox: {
+            source: entryFile,
+            includeNodeModules: false,
+            sourceMap: false,
+            outputFormat: "global"
+        }
+    }
+
+    return packageJson
+}
+
 async function build() {
+    const packageJsonPath = path.join(__dirname, "package.json")
+    const packageJsonContent = fs.readFileSync(packageJsonPath, "utf-8")
+
+    const packageJson = injectPackageJson(JSON.parse(packageJsonContent))
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson))
+
     try {
         injectContent()
         const stdout = process.execSync(`parcel build`)
         console.log(stdout.toString())
+        buildTextActions()
     } catch (error) {
-        console.log(error.stdout.toString())
+        if (error.stdout) {
+            console.log(error.stdout.toString())
+        } else {
+            console.log(error)
+        }
     } finally {
         // 恢复文件内容
         fs.writeFileSync(entryFilePath, entryFileContent)
+        fs.writeFileSync(packageJsonPath, packageJsonContent)
     }
-
-    buildTextActions()
 }
 
 build()

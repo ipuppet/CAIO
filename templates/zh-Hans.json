@@ -18,12 +18,11 @@
         }
     ],
     "buildVersion": 1,
-    "name": "CAIO",
     "clientMinVersion": 1,
-    "summary": "",
+    "clientVersion": 592,
     "icon": {
         "glyph": "heart.text.square",
         "color": "#FF6633"
     },
-    "clientVersion": 592
+    "summary": "A Clipboard tool based on JSBox."
 }
