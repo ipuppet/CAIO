@@ -2,7 +2,9 @@ const fs = require("fs")
 const path = require("path")
 const process = require("child_process")
 
-const outputName = "CAIO"
+const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"))
+
+const outputName = config.info.name
 const distEntry = `dist/${outputName}.js`
 const entryFilePath = path.join(__dirname, "main.js")
 const entryFileContent = fs.readFileSync(entryFilePath, "utf-8")
@@ -33,7 +35,6 @@ function injectContent() {
 
     const stringsText = `$app.strings = ${JSON.stringify(localizedText)};`
 
-    const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"))
     const configSettings = Object.keys(config.settings)
         .map(key => {
             const value = (() => {
@@ -51,9 +52,8 @@ function injectContent() {
 
     const readmeText = (() => {
         const files = {}
-        const addFile = name => (files[name] = fs.readFileSync(path.join(__dirname, name), "utf-8"))
-        addFile("README.md")
-        addFile("README_CN.md")
+        const fileList = ["README.md", "README_CN.md"]
+        fileList.map(name => (files[name] = fs.readFileSync(path.join(__dirname, name), "utf-8")))
         return `__README__ = ${JSON.stringify(files)}`
     })()
 
@@ -115,7 +115,7 @@ function buildTextActions() {
         const fileContent = fs.readFileSync(filePath, "utf-8")
         const textAction = JSON.parse(fileContent)
 
-        textAction.name = outputName
+        textAction.name = config.info.name
 
         for (let i = 0; i < textAction.actions.length; i++) {
             if (textAction.actions[i].type === "@flow.javascript") {
@@ -134,7 +134,11 @@ async function build() {
         const stdout = process.execSync(`parcel build`)
         console.log(stdout.toString())
     } catch (error) {
-        console.log(error.stdout.toString())
+        if (error.stdout) {
+            console.log(error.stdout.toString())
+        } else {
+            console.log(error)
+        }
     } finally {
         // 恢复文件内容
         fs.writeFileSync(entryFilePath, entryFileContent)
