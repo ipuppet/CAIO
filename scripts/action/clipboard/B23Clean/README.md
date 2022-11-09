@@ -1,1 +1,3 @@
-## ClearClipboard
+## B23Clean
+
+清除 b23.tv 分享链接中的追踪参数，转换为 BV 视频链接。
