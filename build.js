@@ -5,8 +5,9 @@ const process = require("child_process")
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf-8"))
 
 const outputName = config.info.name
-const distEntry = `dist/${outputName}.js`
-const entryFilePath = path.join(__dirname, "main.js")
+const distEntryPath = path.join(__dirname, `dist/${outputName}.js`)
+const entryFile = "main.js"
+const entryFilePath = path.join(__dirname, entryFile)
 const entryFileContent = fs.readFileSync(entryFilePath, "utf-8")
 
 function injectContent() {
@@ -107,7 +108,7 @@ function injectContent() {
 }
 
 function buildTextActions() {
-    const script = fs.readFileSync(path.join(__dirname, distEntry), "utf-8")
+    const script = fs.readFileSync(distEntryPath, "utf-8")
     const folder = path.join(__dirname, "templates")
     const templates = fs.readdirSync(folder)
     templates.forEach(fileName => {
@@ -128,11 +129,32 @@ function buildTextActions() {
     })
 }
 
+function injectPackageJson(packageJson) {
+    packageJson.jsbox = distEntryPath
+    packageJson.targets = {
+        jsbox: {
+            source: entryFile,
+            includeNodeModules: false,
+            sourceMap: false,
+            outputFormat: "global"
+        }
+    }
+
+    return packageJson
+}
+
 async function build() {
+    const packageJsonPath = path.join(__dirname, "package.json")
+    const packageJsonContent = fs.readFileSync(packageJsonPath, "utf-8")
+
+    const packageJson = injectPackageJson(JSON.parse(packageJsonContent))
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson))
+
     try {
         injectContent()
         const stdout = process.execSync(`parcel build`)
         console.log(stdout.toString())
+        buildTextActions()
     } catch (error) {
         if (error.stdout) {
             console.log(error.stdout.toString())
@@ -142,9 +164,8 @@ async function build() {
     } finally {
         // 恢复文件内容
         fs.writeFileSync(entryFilePath, entryFileContent)
+        fs.writeFileSync(packageJsonPath, packageJsonContent)
     }
-
-    buildTextActions()
 }
 
 build()
