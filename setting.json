@@ -102,6 +102,16 @@
                                 "type": "script",
                                 "key": "clipboard.rebuildDatabase",
                                 "value": "this.method.rebuildDatabase"
+                            },
+                            {
+                                "icon": [
+                                    "trash",
+                                    "red"
+                                ],
+                                "title": "DELETE_ALL_DATA",
+                                "type": "script",
+                                "key": "clipboard.deleteAllData",
+                                "value": "this.method.deleteAllData"
                             }
                         ]
                     }

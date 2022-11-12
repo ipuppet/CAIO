@@ -16,6 +16,7 @@ const Editor = require("./components/editor")
 
 class Clipboard {
     copied = $cache.get("clipboard.copied") ?? {}
+    pasteboard = $objc("UIPasteboard").$generalPasteboard()
 
     reorder = {}
     #savedClipboard = []
@@ -84,6 +85,19 @@ class Clipboard {
 
     get clipboard() {
         return this.savedClipboard[this.tabIndex]
+    }
+
+    get isChanged() {
+        const changeCount = this.pasteboard.$changeCount()
+
+        const cache = $cache.get("clipboard.changeCount")
+        $cache.set("clipboard.changeCount", changeCount)
+
+        if (cache === changeCount) {
+            return false
+        }
+
+        return true
     }
 
     getSingleLineHeight() {
@@ -166,7 +180,7 @@ class Clipboard {
     updateListBackground() {
         try {
             $(this.listId + "-empty-list-background").hidden = this.clipboard.length > 0
-        } catch { }
+        } catch {}
     }
 
     /**
@@ -225,6 +239,11 @@ class Clipboard {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
             this.kernel.print("read clipboard")
 
+            // 剪切板没有变化则直接退出
+            if (!this.isChanged) {
+                return
+            }
+
             // 仅手动模式下保存图片
             if ($clipboard.images?.length > 0) {
                 if (manual) {
@@ -245,8 +264,6 @@ class Clipboard {
                 this.setCopied()
                 return false
             }
-
-            $clipboard.text = text // 防止重复弹窗提示从其他 App 读取剪切板
 
             // 判断 copied 是否和剪切板一致
             if (this.copied.text === text) {

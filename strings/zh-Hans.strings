@@ -32,6 +32,8 @@
 "REBUILD" = "重建";
 "REBUILD_DATABASE" = "重建数据库";
 "REBUILD_DATABASE_ALERT" = "重建数据库将会丢失顺序信息，是否确认重建？";
+"DELETE_ALL_DATA" = "删除所有数据";
+"DELETE_ALL_DATA_ALERT" = "确定要删除所有数据吗？";
 
 "EDITOR" = "编辑器";
 "CREATE_NEW" = "新建";
