@@ -116,6 +116,11 @@ class Storage {
         })
     }
 
+    deleteAllData() {
+        $file.delete(this.imagePath)
+        $file.delete(this.localDb)
+    }
+
     clearTemp() {
         $file.delete(this.tempPath)
         $file.mkdir(this.tempPath)

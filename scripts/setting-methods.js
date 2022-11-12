@@ -91,7 +91,36 @@ function clipboard() {
                         rebuildDatabase()
                     }
                 },
-                { title: $l10n("CANCEL") }
+                {
+                    title: $l10n("CANCEL"),
+                    handler: () => {
+                        animate.actionCancel()
+                    }
+                }
+            ]
+        })
+    }
+
+    kernel.setting.method.deleteAllData = animate => {
+        animate.actionStart()
+        $ui.alert({
+            title: $l10n("DELETE_ALL_DATA_ALERT"),
+            actions: [
+                {
+                    title: $l10n("DELETE"),
+                    style: $alertActionType.destructive,
+                    handler: () => {
+                        kernel.storage.deleteAllData()
+                        animate.actionDone()
+                        $delay(0.5, () => $addin.restart())
+                    }
+                },
+                {
+                    title: $l10n("CANCEL"),
+                    handler: () => {
+                        animate.actionCancel()
+                    }
+                }
             ]
         })
     }
