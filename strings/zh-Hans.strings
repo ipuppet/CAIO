@@ -6,7 +6,10 @@
 "UNCATEGORIZED" = "未分类";
 "SHARE" = "分享";
 
-"CLIPBOARD" = "剪切板";
+"CLICK_TO_OPEN_JSBOX" = "点击标题打开主应用。";
+
+"CLIPS" = "剪切板";
+"CLIPBOARD" = "Clipboard";
 "UNIVERSAL_CLIPBOARD" = "通用剪贴板";
 "UNIVERSAL_CLIPBOARD_TIPS" = "用剪贴板允许您在iPhone上复制某些内容，然后使用iCloud将其粘贴到Mac上(反之亦然)。";
 "CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";

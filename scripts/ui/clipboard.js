@@ -34,7 +34,7 @@ class Clipboard {
     tagContainerHeight = 25
 
     tabHeight = 44
-    tabItems = [$l10n("PIN"), $l10n("CLIPBOARD")]
+    tabItems = [$l10n("PIN"), $l10n("CLIPS")]
     tabItemsIndex = ["pin", "clipboard"]
 
     /**
@@ -974,26 +974,6 @@ class Clipboard {
     }
 
     getListView() {
-        const menuView = {
-            type: "menu",
-            props: {
-                id: this.listId + "-menu",
-                items: this.tabItems,
-                index: this.tabIndex,
-                dynamicWidth: true
-            },
-            events: {
-                changed: sender => {
-                    this.tabIndex = sender.index
-                    this.updateList()
-                }
-            },
-            layout: (make, view) => {
-                make.top.left.right.equalTo(view.super)
-                make.height.equalTo(this.tabHeight)
-            }
-        }
-
         const listView = {
             // 剪切板列表
             type: "list",
@@ -1026,10 +1006,7 @@ class Clipboard {
                     }
                 ]
             },
-            layout: (make, view) => {
-                make.bottom.left.right.equalTo(view.super)
-                make.top.equalTo(view.prev.bottom)
-            },
+            layout: $layout.fill,
             events: {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
@@ -1067,7 +1044,38 @@ class Clipboard {
             layout: $layout.center
         }
 
-        return View.createFromViews([menuView, listView, emptyListBackground])
+        return View.createFromViews([listView, emptyListBackground])
+    }
+
+    mixinMenuView() {
+        const menuView = {
+            type: "menu",
+            props: {
+                id: this.listId + "-menu",
+                items: this.tabItems,
+                index: this.tabIndex,
+                dynamicWidth: true
+            },
+            events: {
+                changed: sender => {
+                    this.tabIndex = sender.index
+                    this.updateList()
+                }
+            },
+            layout: (make, view) => {
+                make.top.left.right.equalTo(view.super)
+                make.height.equalTo(this.tabHeight)
+            }
+        }
+
+        const view = this.getListView()
+        view.views.unshift(menuView)
+        view.views[1].layout = (make, view) => {
+            make.bottom.left.right.equalTo(view.super)
+            make.top.equalTo(view.prev.bottom)
+        }
+
+        return view
     }
 
     getNavigationView() {
@@ -1096,7 +1104,7 @@ class Clipboard {
         })
 
         const navigationView = new NavigationView()
-        navigationView.navigationBarTitle($l10n("CLIPBOARD"))
+        navigationView.navigationBarTitle($l10n("CLIPS"))
         navigationView.navigationBarItems
             .setTitleView(searchBar)
             .pinTitleView()
@@ -1127,7 +1135,7 @@ class Clipboard {
         if (this.kernel.isUseJsboxNav) {
             navigationView.navigationBar.removeTopSafeArea()
         }
-        navigationView.setView(this.getListView())
+        navigationView.setView(this.mixinMenuView())
 
         return navigationView
     }

@@ -1,4 +1,13 @@
+/**
+ * @typedef {import("../storage")} Storage
+ * @typedef {import("../libs/easy-jsbox").Setting} Setting
+ */
 class ClipboardWidget {
+    /**
+     * 
+     * @param {Setting} setting 
+     * @param {Storage} storage 
+     */
     constructor(setting, storage) {
         this.setting = setting
         this.storage = storage
@@ -19,7 +28,7 @@ class ClipboardWidget {
         this.savedClipboard = this.storage.sort(this.storage.all("clipboard"))
     }
 
-    getListMaxLength() {
+    get maxLength() {
         switch (this.ctx.family) {
             case 0:
                 return 1
@@ -30,7 +39,7 @@ class ClipboardWidget {
         }
     }
 
-    view2x2(clipboardList) {
+    view2x2() {
         return {
             type: "vstack",
             props: {
@@ -162,7 +171,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 color: $color(this.viewStyle.tipTextColor),
-                                text: $l10n("CLIPBOARD"),
+                                text: $l10n("CLIPS"),
                                 font: $font("bold", 16)
                             }
                         }
@@ -185,7 +194,7 @@ class ClipboardWidget {
                     },
                     views: (() => {
                         const result = []
-                        const height = (this.ctx.displaySize.height - this.padding) / this.getListMaxLength()
+                        const height = (this.ctx.displaySize.height - this.padding) / this.maxLength
                         this.savedClipboard.map((item, i) => {
                             if (i !== 0 && i !== 5) {
                                 result.push({ type: "divider" })

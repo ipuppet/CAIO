@@ -7,7 +7,7 @@ const TodayActions = require("./components/today-actions")
  */
 
 class Today extends Clipboard {
-    tabItems = [$l10n("PIN"), $l10n("CLIPBOARD"), $l10n("ACTIONS")]
+    tabItems = [$l10n("PIN"), $l10n("CLIPS"), $l10n("ACTIONS")]
     inLauncher = $app.env === $env.today && $app.widgetIndex === -1
     launcherNavHeight = 44
 
