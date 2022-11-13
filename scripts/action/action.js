@@ -111,8 +111,6 @@ class Action {
 
         const regex = new RegExp(strRegex, "gi")
         const text = this.text ?? ""
-        console.log(text.match(regex))
-        return []
         return text.match(regex) ?? []
     }
 }
