@@ -387,7 +387,6 @@ class Today extends Clipboard {
     }
 
     getView() {
-        // 直接放最外层 ready 事件不生效
         return View.create({
             props: {
                 titleColor: UIKit.textColor,
@@ -397,30 +396,30 @@ class Today extends Clipboard {
                 {
                     type: "view",
                     views: [this.getNavBarView(), this.getListView(), this.getActionView()],
-                    layout: $layout.fill,
-                    events: {
-                        ready: async () => {
-                            if ($app.env !== $env.today) return
+                    layout: $layout.fill
+                }
+            ],
+            events: {
+                appeared: async () => {
+                    if ($app.env !== $env.today) return
 
-                            const timer = $timer.schedule({
-                                interval: 0.6,
-                                handler: () => {
-                                    $ui.animate({
-                                        duration: 0.3,
-                                        animation: () => {
-                                            $ui.vc.ocValue().$view().$setBackgroundColor($color("clear"))
-                                        },
-                                        completion: () => {
-                                            timer.invalidate()
-                                            this.loadData()
-                                        }
-                                    })
+                    const timer = $timer.schedule({
+                        interval: 0,
+                        handler: () => {
+                            $ui.animate({
+                                duration: 0.3,
+                                animation: () => {
+                                    $ui.vc.ocValue().$view().$setBackgroundColor($color("clear"))
+                                },
+                                completion: () => {
+                                    timer.invalidate()
+                                    this.loadData()
                                 }
                             })
                         }
-                    }
+                    })
                 }
-            ]
+            }
         })
     }
 }
