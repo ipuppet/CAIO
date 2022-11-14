@@ -137,38 +137,18 @@ class Today extends Clipboard {
         })
     }
 
-    tabView() {
-        const switchTab = index => {
-            this.tabIndex = index
-            if (index === 2) {
-                $(this.listContainerId).hidden = true
-                $(this.actionsId).hidden = false
-                $(this.readClipboardButtonId).hidden = true
-            } else {
-                this.listSection = index
-                $(this.actionsId).hidden = true
-                $(this.listContainerId).hidden = false
-                $(this.readClipboardButtonId).hidden = false
-                this.updateList()
-            }
-        }
-
-        return {
-            type: "tab",
-            props: {
-                items: this.tabItems,
-                index: this.tabIndex,
-                dynamicWidth: true
-            },
-            events: {
-                changed: sender => {
-                    switchTab(sender.index)
-                }
-            },
-            layout: (make, view) => {
-                make.centerY.equalTo(view.super)
-                make.left.equalTo(view.super.saveArea).offset(10)
-            }
+    switchTab(index) {
+        this.tabIndex = index
+        if (index === 2) {
+            $(this.listContainerId).hidden = true
+            $(this.actionsId).hidden = false
+            $(this.readClipboardButtonId).hidden = true
+        } else {
+            this.listSection = index
+            $(this.actionsId).hidden = true
+            $(this.listContainerId).hidden = false
+            $(this.readClipboardButtonId).hidden = false
+            this.updateList()
         }
     }
 
@@ -225,7 +205,7 @@ class Today extends Clipboard {
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.savedClipboard[this.listSection].slice(start, end)
+        $(this.listId).data = this.savedClipboard[this.listSection].slice(start, end).map(data => this.lineData(data))
         // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
