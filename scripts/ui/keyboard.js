@@ -1,4 +1,5 @@
-const { UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
+const { ActionData, ActionEnv } = require("../action/action")
+const { UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -89,19 +90,19 @@ class Keyboard extends Clipboard {
                         directions: $popoverDirection.up,
                         size: $size(200, 300),
                         views: [
-                            this.kernel.actionManager.getActionListView(
-                                {},
-                                {
-                                    didSelect: (sender, indexPath, data) => {
-                                        popover.dismiss()
-                                        const action = this.kernel.actionManager.getActionHandler(
-                                            data.info.info.type,
-                                            data.info.info.dir
-                                        )
-                                        $delay(0.5, () => action({ text: $clipboard.text }))
-                                    }
-                                }
-                            )
+                            this.kernel.actionManager.getActionListView(action => {
+                                popover.dismiss()
+                                $delay(0.5, async () => {
+                                    const actionData = new ActionData({
+                                        env: ActionEnv.keyboard,
+                                        textBeforeInput: $keyboard.textBeforeInput,
+                                        textAfterInput: $keyboard.textAfterInput,
+                                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
+                                    })
+
+                                    action(actionData)
+                                })
+                            })
                         ]
                     })
                 })
@@ -327,7 +328,7 @@ class Keyboard extends Clipboard {
     }
 
     getView() {
-        let backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
+        const backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
         const backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
         const backgroundColorDark = this.kernel.setting.getColor(
             this.kernel.setting.get("keyboard.background.color.dark")
@@ -339,15 +340,14 @@ class Keyboard extends Clipboard {
                 bgcolor: $color(backgroundColor, backgroundColorDark)
             },
             views: [
-                backgroundImage !== null
-                    ? {
-                          type: "image",
-                          props: {
-                              image: backgroundImage
-                          },
-                          layout: $layout.fill
-                      }
-                    : {},
+                {
+                    type: "image",
+                    props: {
+                        image: backgroundImage,
+                        hidden: backgroundImage !== null
+                    },
+                    layout: $layout.fill
+                },
                 this.getNavBarView(),
                 UIKit.separatorLine({
                     id: this.navBarSeparatorId,

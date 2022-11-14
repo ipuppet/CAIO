@@ -1,3 +1,4 @@
+const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const TodayActions = require("./components/today-actions")
@@ -361,13 +362,11 @@ class Today extends Clipboard {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    this.kernel.actionManager.getActionHandler(
-                        info.type,
-                        info.dir
-                    )({
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null,
-                        uuid: null
+                    const actionData = new ActionData({
+                        env: ActionEnv.today,
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
                     })
+                    this.kernel.actionManager.getActionHandler(info.type, info.dir)(actionData)
                 }
             }
         }

@@ -1,4 +1,5 @@
 const { UIKit, NavigationBar, NavigationView, Sheet } = require("../../libs/easy-jsbox")
+const { ActionEnv, ActionData } = require("../../action/action")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -38,29 +39,20 @@ class Editor {
                 // senderMaybe 处理 Sheet addNavBar 中的按钮
                 if (senderMaybe) sender = senderMaybe
                 const range = $(this.id).selectedRange
-                const content = {
-                    text: this.text,
-                    selectedRange: range,
-                    selectedText: this.text.slice(range.location, range.location + range.length)
-                }
+                const actionData = new ActionData({
+                    env: ActionEnv.editor,
+                    text: range.length > 0 ? this.text.slice(range.location, range.location + range.length) : this.text,
+                    selectedRange: range
+                })
                 const popover = $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
                     views: [
-                        this.kernel.actionManager.getActionListView(
-                            {},
-                            {
-                                didSelect: (sender, indexPath, data) => {
-                                    popover.dismiss()
-                                    const action = this.kernel.actionManager.getActionHandler(
-                                        data.info.info.type,
-                                        data.info.info.dir
-                                    )
-                                    setTimeout(() => action(content), 500)
-                                }
-                            }
-                        )
+                        this.kernel.actionManager.getActionListView(action => {
+                            popover.dismiss()
+                            $delay(0.5, () => action(actionData))
+                        })
                     ]
                 })
             }

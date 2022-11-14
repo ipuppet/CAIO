@@ -1,6 +1,8 @@
 class MyAction extends Action {
     do() {
-        const selectedText = this.selectedText
-        $ui.alert(selectedText)
+        if (this.selectedRange.length > 0) {
+            const selectedText = this.text
+            $ui.alert(selectedText)
+        }
     }
 }

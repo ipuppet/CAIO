@@ -2,23 +2,50 @@ const { Kernel, Sheet } = require("../libs/easy-jsbox")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
- */
-
-/**
  * @typedef {Action} Action
  */
+
+class ActionEnv {
+    static keyboard = 0
+    static today = 0
+    static editor = 1
+    static clipboard = 2
+    static action = 3
+}
+class ActionData {
+    env
+    text
+    originalContent
+    uuid // 首页剪切板项目 uuid
+    selectedRange
+    textBeforeInput
+    textAfterInput
+
+    constructor({ env, text, uuid = null, selectedRange = null, textBeforeInput = null, textAfterInput = null } = {}) {
+        this.env = env
+        this.text = text
+        this.originalContent = text
+        this.uuid = uuid
+        this.selectedRange = selectedRange
+        this.textBeforeInput = textBeforeInput
+        this.textAfterInput = textAfterInput
+    }
+}
+
 class Action {
     /**
      *
      * @param {AppKernel} kernel
      * @param {*} config
-     * @param {*} data
+     * @param {ActionData} data
      */
     constructor(kernel, config, data) {
         this.kernel = kernel
         this.config = config
 
         Object.assign(this, data)
+
+        this.originalContent = this.text
 
         const l10n = this.l10n()
         Object.keys(l10n).forEach(language => {
@@ -81,10 +108,6 @@ class Action {
         this.kernel.editor.setContent(text)
     }
 
-    get originalContent() {
-        return this.kernel.editor.originalContent
-    }
-
     async runAction(type, name) {
         const handler = this.kernel.actionManager.getActionHandler(type, name)
         return new Promise(async (resolve, reject) => {
@@ -115,4 +138,8 @@ class Action {
     }
 }
 
-module.exports = Action
+module.exports = {
+    ActionEnv,
+    ActionData,
+    Action
+}
