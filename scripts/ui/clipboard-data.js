@@ -1,3 +1,5 @@
+const { UIKit, Toast } = require("../libs/easy-jsbox")
+
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
@@ -15,9 +17,6 @@ class ClipboardData {
     #savedClipboard = []
     // 键为 md5，值为 1 或 undefined 用来去重
     savedClipboardIndex = {}
-
-    // 为 true 时不会打印日志
-    dataChangeLogLock = false
 
     /**
      * @param {AppKernel} kernel
@@ -51,10 +50,6 @@ class ClipboardData {
                 set: (obj, prop, value) => {
                     // 更新空列表背景
                     this.updateListBackground()
-
-                    if (!this.dataChangeLogLock) {
-                        this.kernel.print(`data changed at index [${prop}]\n${obj[prop]?.text}\n↓\n${value?.text}`)
-                    }
 
                     return Reflect.set(obj, prop, value)
                 }
@@ -140,6 +135,7 @@ class ClipboardData {
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()
+            throw error
         }
     }
 
@@ -180,6 +176,7 @@ class ClipboardData {
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()
+            throw error
         }
     }
 
@@ -192,6 +189,7 @@ class ClipboardData {
         this.savedClipboardIndex[newMD5] = 1
 
         // 更新内存数据
+        const oldData = info.text
         this.clipboard[row] = Object.assign(info, {
             text,
             md5: newMD5
@@ -199,6 +197,9 @@ class ClipboardData {
 
         try {
             this.kernel.storage.updateText(this.folder, uuid, text)
+
+            this.kernel.print(`data changed at index [${row}]\n${oldData}\n↓\n${text}`)
+
             return true
         } catch (error) {
             this.kernel.error(error)
@@ -217,7 +218,6 @@ class ClipboardData {
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
 
         try {
-            this.dataChangeLogLock = true // 上锁，防止打印移动时产生的数据日志
             const folder = this.folder
             if (!this.clipboard[to]) {
                 this.clipboard[to] = {
@@ -308,8 +308,35 @@ class ClipboardData {
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()
-        } finally {
-            this.dataChangeLogLock = false
+            throw error
+        }
+    }
+
+    pin(item, row) {
+        item.next = this.savedClipboard[0][0]?.uuid ?? null
+        item.prev = null
+
+        try {
+            // 写入数据库
+            this.kernel.storage.beginTransaction()
+            this.kernel.storage.insert("pin", item)
+            if (item.next) {
+                // 更改指针
+                this.savedClipboard[0][0].prev = item.uuid
+                this.kernel.storage.update("pin", this.savedClipboard[0][0])
+            }
+            this.kernel.storage.commit()
+
+            // 删除原表数据
+            this.delete(item.uuid, row)
+
+            // 保存到内存中
+            this.savedClipboard[0].unshift(item)
+            this.savedClipboardIndex[item.md5] = 1
+        } catch (error) {
+            this.kernel.error(error)
+            this.kernel.storage.rollback()
+            throw error
         }
     }
 

@@ -6,7 +6,8 @@ const {
     ViewController,
     NavigationView,
     NavigationBar,
-    SearchBar
+    SearchBar,
+    Toast
 } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 const ClipboardData = require("./clipboard-data")
@@ -296,37 +297,15 @@ class Clipboard extends ClipboardData {
         if (item?.section === "pin") return
         const res = this.kernel.storage.getByMD5(item.md5)
         if (res.section === "pin") {
-            $ui.warning("Already exists")
+            Toast.warning("Already exists")
             return
         }
-        item.next = this.savedClipboard[0][0]?.content?.info?.uuid ?? null
-        item.prev = null
 
         try {
-            // 写入数据库
-            this.kernel.storage.beginTransaction()
-            this.kernel.storage.insert("pin", item)
-            if (item.next) {
-                // 更改指针
-                this.savedClipboard[0][0].content.info.prev = item.uuid
-                this.kernel.storage.update("pin", this.savedClipboard[0][0].content.info)
-            }
-            this.kernel.storage.commit()
-
-            // 删除原表数据
-            this.delete(item.uuid, row)
-
-            const listUI = $(this.listId)
-            const lineData = this.lineData(item)
-            // 保存到内存中
-            this.savedClipboard[0].unshift(lineData)
-            this.savedClipboardIndex[item.md5] = 1
-
+            super.pin(item, row)
             // UI 操作
-            listUI.delete($indexPath(0, row))
+            $(this.listId).delete($indexPath(0, row))
         } catch (error) {
-            this.kernel.error(error)
-            this.kernel.storage.rollback()
             $ui.alert(error)
         }
     }
@@ -631,8 +610,6 @@ class Clipboard extends ClipboardData {
                 },
                 reorderBegan: indexPath => {
                     // 用于纠正 rowHeight 高度计算
-                    this.reorder.content = this.clipboard[indexPath.row].content
-                    this.reorder.image = this.clipboard[indexPath.row].image
                     this.reorder.from = indexPath.row
                     this.reorder.to = undefined
                 },
