@@ -360,20 +360,6 @@ class Clipboard extends ClipboardData {
         })
     }
 
-    searchAction(text) {
-        try {
-            if (text === "") {
-                this.updateList()
-            } else {
-                const res = this.kernel.storage.search(text)
-                if (res && res.length > 0) $(this.listId).data = res.map(data => this.lineData(data))
-            }
-        } catch (error) {
-            this.updateList()
-            throw error
-        }
-    }
-
     menuItems(defaultOnly = false) {
         const defaultButtons = [
             {
@@ -756,7 +742,21 @@ class Clipboard extends ClipboardData {
         return view
     }
 
-    getNavigationView() {
+    searchAction(text) {
+        try {
+            if (text === "") {
+                this.updateList()
+            } else {
+                const res = this.kernel.storage.search(text)
+                if (res && res.length > 0) $(this.listId).data = res.map(data => this.lineData(data))
+            }
+        } catch (error) {
+            this.updateList()
+            throw error
+        }
+    }
+
+    searchBar() {
         const searchBar = new SearchBar()
         // 初始化搜索功能
         searchBar.controller.setEvent("onChange", text => this.searchAction(text))
@@ -781,10 +781,30 @@ class Clipboard extends ClipboardData {
             })
         })
 
+        // TODO: 搜索历史
+        // searchBar.setAccessoryView(
+        //     UIKit.blurBox({ height: 50 }, [
+        //         {
+        //             type: "label",
+        //             props: {
+        //                 text: "Hello, World!",
+        //                 align: $align.center
+        //             },
+        //             layout: (make, view) => {
+        //                 make.center.equalTo(view.super)
+        //             }
+        //         }
+        //     ])
+        // )
+
+        return searchBar
+    }
+
+    getNavigationView() {
         const navigationView = new NavigationView()
         navigationView.navigationBarTitle($l10n("CLIPS"))
         navigationView.navigationBarItems
-            .setTitleView(searchBar)
+            .setTitleView(this.searchBar())
             .pinTitleView()
             .setRightButtons([
                 {
