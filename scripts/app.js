@@ -81,7 +81,7 @@ class AppUI {
     static renderMainUI() {
         const kernel = new AppKernel()
         const buttons = {
-            clipboard: { icon: "doc.on.clipboard", title: $l10n("CLIPBOARD") },
+            clipboard: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
             actions: { icon: "command", title: $l10n("ACTIONS") },
             setting: { icon: "gear", title: $l10n("SETTING") }
         }

@@ -39,6 +39,10 @@ class Keyboard extends Clipboard {
             this.#readClipboardTimer = $timer.schedule({
                 interval: 1,
                 handler: () => {
+                    if (!this.kernel.setting.get("clipboard.autoSave")) {
+                        this.#readClipboardTimer.invalidate()
+                        return
+                    }
                     this.readClipboard()
                 }
             })
@@ -110,6 +114,27 @@ class Keyboard extends Clipboard {
         })
     }
 
+    tabView() {
+        return {
+            type: "tab",
+            props: {
+                items: this.tabItems,
+                index: this.tabIndex,
+                dynamicWidth: true
+            },
+            events: {
+                changed: sender => {
+                    this.tabIndex = sender.index
+                    this.updateList()
+                }
+            },
+            layout: (make, view) => {
+                make.centerY.equalTo(view.super)
+                make.left.equalTo(view.prev.right).offset(this.left_right)
+            }
+        }
+    }
+
     getNavBarView() {
         return {
             // 顶部按钮栏
@@ -125,15 +150,39 @@ class Keyboard extends Clipboard {
                         {
                             type: "label",
                             props: {
-                                text: $l10n("CLIPBOARD"),
+                                text: $l10n("CAIO"),
                                 font: $font("bold", 20)
+                            },
+                            events: {
+                                tapped: () => this.kernel.openInJsbox(),
+                                ready: sender => {
+                                    const cache = $cache.get("tips.keyboard.title")
+                                    if (cache) return
+                                    $cache.set("tips.keyboard.title", true)
+                                    $ui.popover({
+                                        sourceView: sender,
+                                        size: $size(200, 60),
+                                        directions: $popoverDirection.up,
+                                        views: [
+                                            {
+                                                type: "label",
+                                                props: {
+                                                    lines: 0,
+                                                    text: $l10n("CLICK_TO_OPEN_JSBOX"),
+                                                    align: $align.center
+                                                },
+                                                layout: $layout.fillSafeArea
+                                            }
+                                        ]
+                                    })
+                                }
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.left.equalTo(view.super).offset(this.left_right)
                             }
                         }
-                    ].concat(this.navButtons())
+                    ].concat(this.tabView(), this.navButtons())
                 }
             ],
             layout: (make, view) => {
@@ -283,7 +332,7 @@ class Keyboard extends Clipboard {
             make.width.equalTo(view.super)
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
         }
-        superListView.views[1].events.didSelect = (sender, indexPath, data) => {
+        superListView.views[0].events.didSelect = (sender, indexPath, data) => {
             const content = data.content
             const text = content.info.text
             const path = this.kernel.storage.keyToPath(text)

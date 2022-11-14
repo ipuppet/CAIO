@@ -6,6 +6,9 @@
 "UNCATEGORIZED" = "Uncategorized";
 "SHARE" = "Share";
 
+"CLICK_TO_OPEN_JSBOX" = "Click the title to open the main app.";
+
+"CLIPS" = "Clips";
 "CLIPBOARD" = "Clipboard";
 "UNIVERSAL_CLIPBOARD" = "Universal Clipboard";
 "UNIVERSAL_CLIPBOARD_TIPS" = "Universal Clipboard allows you to copy something on your iPhone, and paste it on your Mac–or vice-versa–using iCloud.";

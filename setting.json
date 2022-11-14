@@ -7,7 +7,7 @@
                     "#FFCC66"
                 ],
                 "type": "child",
-                "title": "CLIPBOARD",
+                "title": "CLIPS",
                 "key": "clipboard",
                 "children": [
                     {
@@ -189,7 +189,7 @@
                 "key": "editor",
                 "children": [
                     {
-                        "title": "CLIPBOARD",
+                        "title": "CLIPS",
                         "items": [
                             {
                                 "icon": [
@@ -389,7 +389,7 @@
                                 "items": [
                                     "ADD",
                                     "ACTIONS",
-                                    "CLIPBOARD"
+                                    "CLIPS"
                                 ],
                                 "value": 2
                             }
