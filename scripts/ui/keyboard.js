@@ -114,27 +114,6 @@ class Keyboard extends Clipboard {
         })
     }
 
-    tabView() {
-        return {
-            type: "tab",
-            props: {
-                items: this.tabItems,
-                index: this.tabIndex,
-                dynamicWidth: true
-            },
-            events: {
-                changed: sender => {
-                    this.tabIndex = sender.index
-                    this.updateList()
-                }
-            },
-            layout: (make, view) => {
-                make.centerY.equalTo(view.super)
-                make.left.equalTo(view.prev.right).offset(this.left_right)
-            }
-        }
-    }
-
     getNavBarView() {
         return {
             // 顶部按钮栏
