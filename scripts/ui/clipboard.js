@@ -764,7 +764,7 @@ class Clipboard extends ClipboardData {
             $ui.animate({
                 duration: 0.4,
                 animation: () => {
-                    $(this.listId + "-menu").updateLayout(make => {
+                    $(this.listId + "-tab").updateLayout(make => {
                         make.height.equalTo(0)
                     })
                 }
@@ -774,7 +774,7 @@ class Clipboard extends ClipboardData {
             $ui.animate({
                 duration: 0.4,
                 animation: () => {
-                    $(this.listId + "-menu").updateLayout(make => {
+                    $(this.listId + "-tab").updateLayout(make => {
                         make.height.equalTo(this.tabHeight)
                     })
                 }
