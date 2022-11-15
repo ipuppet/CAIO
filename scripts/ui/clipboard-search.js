@@ -15,7 +15,7 @@ class ClipboardSearch {
     /**
      * @param {AppKernel} kernel
      */
-    constructor(kernel, searchAction) {
+    constructor(kernel) {
         this.kernel = kernel
         this.listId = "clipboard-list-search"
 
