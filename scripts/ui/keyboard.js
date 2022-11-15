@@ -119,9 +119,7 @@ class Keyboard extends Clipboard {
         return {
             // 顶部按钮栏
             type: "view",
-            props: {
-                bgcolor: $color("backgroundColor")
-            },
+            props: { bgcolor: $color("clear") },
             views: [
                 {
                     type: "view",
@@ -246,7 +244,7 @@ class Keyboard extends Clipboard {
 
         const getButtonView = (button, align) => {
             const size = $size(38, 38)
-            const edges = 15
+            const edges = 10
             return {
                 type: "button",
                 props: Object.assign(
@@ -254,7 +252,7 @@ class Keyboard extends Clipboard {
                         symbol: button.symbol,
                         title: button.title,
                         font: $font(16),
-                        bgcolor: $color("clear"),
+                        bgcolor: $color("#ACB0B8", "#474749"),
                         tintColor: UIKit.textColor,
                         titleColor: UIKit.textColor,
                         info: { align }
@@ -276,8 +274,8 @@ class Keyboard extends Clipboard {
                     }
                     make.centerY.equalTo(view.super)
                     if (view.prev && view.prev.info.align === align) {
-                        if (align === UIKit.align.right) make.right.equalTo(view.prev.left)
-                        else make.left.equalTo(view.prev.right)
+                        if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges / 2)
+                        else make.left.equalTo(view.prev.right).offset(edges / 2)
                     } else {
                         // 留一半边距，按钮内边距是另一半
                         const thisEdges = edges / 2
@@ -290,9 +288,7 @@ class Keyboard extends Clipboard {
 
         return {
             type: "view",
-            props: {
-                bgcolor: $color("clear")
-            },
+            props: { bgcolor: $color("clear") },
             views: [
                 ...leftButtons.map(btn => getButtonView(btn, UIKit.align.left)),
                 ...rightButtons.map(btn => getButtonView(btn, UIKit.align.right))
@@ -313,8 +309,10 @@ class Keyboard extends Clipboard {
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
         }
 
-        superListView.views[0].props.separatorColor = $color("lightGray")
-        superListView.views[0].events.didSelect = (sender, indexPath, data) => {
+        const listView = superListView.views[0]
+        listView.props.separatorColor = $color("lightGray")
+        listView.props.bgcolor = $color("clear")
+        listView.events.didSelect = (sender, indexPath, data) => {
             const content = data.content
             const text = content.info.text
             const path = this.kernel.storage.keyToPath(text)
@@ -326,6 +324,9 @@ class Keyboard extends Clipboard {
                 $keyboard.insert(content.info.text)
             }
         }
+
+        const blurBox = UIKit.blurBox({}, [listView])
+        superListView.views[0] = blurBox
         return superListView
     }
 
