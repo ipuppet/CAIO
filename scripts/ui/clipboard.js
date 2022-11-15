@@ -688,6 +688,7 @@ class Clipboard extends ClipboardData {
             type: "label",
             props: {
                 id: this.listId + "-empty-list-background",
+                color: $color("secondaryText"),
                 hidden: this.clipboard.length > 0,
                 text: "Hello, World!",
                 align: $align.center
