@@ -1,4 +1,4 @@
-const { UIKit, Toast } = require("../libs/easy-jsbox")
+const { UIKit } = require("../libs/easy-jsbox")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel

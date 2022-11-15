@@ -18,6 +18,8 @@
 "ADD_TAG" = "添加标签";
 "EDIT" = "编辑";
 "SEARCH" = "搜索";
+"SEARCH_HISTORY" = "搜索历史";
+"NO_SEARCH_RESULT" = "搜索无结果";
 "PIN" = "置顶";
 "COPY" = "复制";
 "COPIED" = "已复制";
