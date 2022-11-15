@@ -221,8 +221,46 @@ function keyboard() {
         animate.touchHighlightStart()
         const Keyboard = require("./ui/keyboard")
         const keyboard = new Keyboard(kernel).getView()
+
+        const keyboardId = $text.uuit
+        const windowHeight = UIKit.windowSize.height
+
         UIKit.push({
-            views: [keyboard],
+            props: { clipsToSafeArea: true },
+            views: [
+                {
+                    type: "stepper",
+                    props: {
+                        max: windowHeight,
+                        min: 267,
+                        step: 10,
+                        value: 267
+                    },
+                    layout: (make, view) => {
+                        make.top.inset(24)
+                        make.centerX.equalTo(view.super)
+                    },
+                    events: {
+                        changed: sender => {
+                            const frame = sender.frame
+                            sender.max = windowHeight - frame.x - frame.height - 24
+                            sender.next.updateLayout((make, view) => {
+                                make.height.equalTo(sender.value)
+                            })
+                        }
+                    }
+                },
+                {
+                    type: "view",
+                    props: { id: keyboardId },
+                    views: [keyboard],
+                    layout: (make, view) => {
+                        make.width.equalTo(view.super)
+                        make.height.equalTo(267)
+                        make.bottom.inset(0)
+                    }
+                }
+            ],
             disappeared: () => animate.touchHighlightEnd()
         })
     }

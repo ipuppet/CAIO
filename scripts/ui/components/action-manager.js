@@ -1,6 +1,6 @@
 const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
-const Action = require("../../action/action")
+const { ActionEnv, ActionData, Action } = require("../../action/action")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -92,14 +92,28 @@ class ActionManager {
         else return []
     }
 
-    getActionHandler(type, name, basePath) {
-        if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
+    getActionPath(type, dir) {
+        return `${this.userActionPath}/${type}/${dir}`
+    }
+
+    getAction(type, dir, data) {
+        const basePath = this.getActionPath(type, dir)
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
+        try {
+            const script = $file.read(`${basePath}/main.js`).string
+            const MyAction = new Function("Action", `${script}\n return MyAction`)(Action)
+            const action = new MyAction(this.kernel, config, data)
+            return action
+        } catch (error) {
+            $ui.error(error)
+            this.kernel.error(error)
+        }
+    }
+
+    getActionHandler(type, dir) {
         return async data => {
             try {
-                const script = $file.read(`${basePath}/main.js`).string
-                const MyAction = new Function("Action", `${script}\n return MyAction`)(Action)
-                const action = new MyAction(this.kernel, config, data)
+                const action = this.getAction(type, dir, data)
                 return await action.do()
             } catch (error) {
                 $ui.error(error)
@@ -146,111 +160,6 @@ class ActionManager {
 
     getTypeDir(name) {
         return this.typeNameMap[name] ?? name
-    }
-
-    actionToData(action) {
-        return {
-            name: { text: action.name },
-            icon:
-                action.icon.slice(0, 5) === "icon_"
-                    ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                    : { image: $image(action.icon) },
-            color: { bgcolor: this.kernel.setting.getColor(action.color) },
-            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
-        }
-    }
-
-    titleView(title) {
-        return {
-            name: { hidden: true },
-            icon: { hidden: true },
-            color: { hidden: true },
-            button: { hidden: true },
-            bgcolor: { hidden: true },
-            info: {
-                hidden: false,
-                info: {
-                    title: title
-                }
-            }
-        }
-    }
-
-    getActionListView(props = {}, events = {}) {
-        const data = []
-        this.getActionTypes().forEach(type => {
-            const section = {
-                title: this.getTypeName(type),
-                rows: []
-            }
-            this.getActions(type).forEach(action => {
-                section.rows.push(this.actionToData(action))
-            })
-            data.push(section)
-        })
-        return {
-            type: "list",
-            layout: (make, view) => {
-                make.top.width.equalTo(view.super.safeArea)
-                make.bottom.inset(0)
-            },
-            events: events,
-            props: Object.assign(
-                {
-                    reorder: false,
-                    bgcolor: $color("clear"),
-                    rowHeight: 60,
-                    sectionTitleHeight: 30,
-                    stickyHeader: true,
-                    data: data,
-                    template: {
-                        props: { bgcolor: $color("clear") },
-                        views: [
-                            {
-                                type: "image",
-                                props: {
-                                    id: "color",
-                                    cornerRadius: 8,
-                                    smoothCorners: true
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.left.inset(15)
-                                    make.size.equalTo($size(30, 30))
-                                }
-                            },
-                            {
-                                type: "image",
-                                props: {
-                                    id: "icon",
-                                    tintColor: $color("#ffffff")
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.left.inset(20)
-                                    make.size.equalTo($size(20, 20))
-                                }
-                            },
-                            {
-                                type: "label",
-                                props: {
-                                    id: "name",
-                                    lines: 1,
-                                    font: $font(16)
-                                },
-                                layout: (make, view) => {
-                                    make.height.equalTo(30)
-                                    make.centerY.equalTo(view.super)
-                                    make.left.equalTo(view.prev.right).offset(15)
-                                }
-                            },
-                            { type: "label", props: { id: "info" } }
-                        ]
-                    }
-                },
-                props
-            )
-        }
     }
 
     editActionInfoPageSheet(info, done) {
@@ -517,16 +426,55 @@ class ActionManager {
                 }
             },
             {
-                // 删除
-                title: $l10n("DELETE"),
-                symbol: "trash",
-                destructive: true,
-                handler: (sender, indexPath, data) => {
-                    this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                        this.delete(data.info.info)
-                        sender.delete(indexPath)
-                    })
-                }
+                inline: true,
+                items: [
+                    {
+                        // README
+                        title: "README",
+                        symbol: "book",
+                        handler: (sender, indexPath) => {
+                            const view = sender.cell(indexPath)
+                            const info = view.get("info").info
+
+                            let content
+
+                            try {
+                                content = __ACTIONS__[info.type][info.dir]["README.md"]
+                            } catch {
+                                const basePath = this.getActionPath(info.type, info.dir)
+                                content = $file.read(basePath + "/README.md").string
+                            }
+                            const sheet = new Sheet()
+                            sheet
+                                .setView({
+                                    type: "markdown",
+                                    props: { content: content },
+                                    layout: (make, view) => {
+                                        make.size.equalTo(view.super)
+                                    }
+                                })
+                                .init()
+                                .present()
+                        }
+                    }
+                ]
+            },
+            {
+                inline: true,
+                items: [
+                    {
+                        // 删除
+                        title: $l10n("DELETE"),
+                        symbol: "trash",
+                        destructive: true,
+                        handler: (sender, indexPath, data) => {
+                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+                                this.delete(data.info.info)
+                                sender.delete(indexPath)
+                            })
+                        }
+                    }
+                ]
             }
         ]
     }
@@ -590,6 +538,7 @@ class ActionManager {
                         size: $size(200, 300),
                         views: [
                             this.getActionListView(
+                                undefined,
                                 {
                                     reorder: true,
                                     actions: [
@@ -626,20 +575,104 @@ class ActionManager {
         ]
     }
 
+    actionToData(action) {
+        return {
+            name: { text: action.name },
+            icon:
+                action.icon.slice(0, 5) === "icon_"
+                    ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                    : { image: $image(action.icon) },
+            color: { bgcolor: this.kernel.setting.getColor(action.color) },
+            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
+        }
+    }
+
     actionsToData() {
-        // 格式化数据供 matrix 使用
-        const data = []
-        this.getActionTypes().forEach(type => {
-            const section = {
-                title: this.getTypeName(type),
-                items: []
-            }
+        return this.getActionTypes().map(type => {
+            const rows = []
             this.getActions(type).forEach(action => {
-                section.items.push(this.actionToData(action))
+                rows.push(this.actionToData(action))
             })
-            data.push(section)
+            return {
+                title: this.getTypeName(type),
+                items: rows,
+                rows: rows
+            }
         })
-        return data
+    }
+
+    getActionListView(didSelect, props = {}, events = {}) {
+        if (didSelect) {
+            events.didSelect = (sender, indexPath, data) => {
+                const info = data.info.info
+                const action = this.kernel.actionManager.getActionHandler(info.type, info.dir)
+                didSelect(action)
+            }
+        }
+
+        return {
+            type: "list",
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super.safeArea)
+                make.bottom.inset(0)
+            },
+            events: events,
+            props: Object.assign(
+                {
+                    reorder: false,
+                    bgcolor: $color("clear"),
+                    rowHeight: 60,
+                    sectionTitleHeight: 30,
+                    stickyHeader: true,
+                    data: this.actionsToData(),
+                    template: {
+                        props: { bgcolor: $color("clear") },
+                        views: [
+                            {
+                                type: "image",
+                                props: {
+                                    id: "color",
+                                    cornerRadius: 8,
+                                    smoothCorners: true
+                                },
+                                layout: (make, view) => {
+                                    make.centerY.equalTo(view.super)
+                                    make.left.inset(15)
+                                    make.size.equalTo($size(30, 30))
+                                }
+                            },
+                            {
+                                type: "image",
+                                props: {
+                                    id: "icon",
+                                    tintColor: $color("#ffffff")
+                                },
+                                layout: (make, view) => {
+                                    make.centerY.equalTo(view.super)
+                                    make.left.inset(20)
+                                    make.size.equalTo($size(20, 20))
+                                }
+                            },
+                            {
+                                type: "label",
+                                props: {
+                                    id: "name",
+                                    lines: 1,
+                                    font: $font(16)
+                                },
+                                layout: (make, view) => {
+                                    make.height.equalTo(30)
+                                    make.centerY.equalTo(view.super)
+                                    make.left.equalTo(view.prev.right).offset(15)
+                                }
+                            },
+                            { type: "label", props: { id: "info" } }
+                        ]
+                    }
+                },
+                props
+            )
+        }
     }
 
     getMatrixView({ columns = 2, spacing = 15, itemHeight = 100 } = {}) {
@@ -746,13 +779,11 @@ class ActionManager {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    this.getActionHandler(
-                        info.type,
-                        info.dir
-                    )({
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null,
-                        uuid: null
+                    const actionData = new ActionData({
+                        env: ActionEnv.action,
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
                     })
+                    this.getActionHandler(info.type, info.dir)(actionData)
                 },
                 pulled: sender => {
                     $delay(0.5, () => {

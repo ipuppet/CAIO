@@ -1,0 +1,6 @@
+{
+    "icon": "square.and.arrow.down",
+    "color": "#33CC33",
+    "name": "读取 clipsync",
+    "description": "通 clipsync 读取 PC 剪切板。"
+}

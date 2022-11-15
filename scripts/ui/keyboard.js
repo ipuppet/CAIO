@@ -1,4 +1,5 @@
-const { UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
+const { ActionData, ActionEnv } = require("../action/action")
+const { UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -89,19 +90,19 @@ class Keyboard extends Clipboard {
                         directions: $popoverDirection.up,
                         size: $size(200, 300),
                         views: [
-                            this.kernel.actionManager.getActionListView(
-                                {},
-                                {
-                                    didSelect: (sender, indexPath, data) => {
-                                        popover.dismiss()
-                                        const action = this.kernel.actionManager.getActionHandler(
-                                            data.info.info.type,
-                                            data.info.info.dir
-                                        )
-                                        $delay(0.5, () => action({ text: $clipboard.text }))
-                                    }
-                                }
-                            )
+                            this.kernel.actionManager.getActionListView(action => {
+                                popover.dismiss()
+                                $delay(0.5, async () => {
+                                    const actionData = new ActionData({
+                                        env: ActionEnv.keyboard,
+                                        textBeforeInput: $keyboard.textBeforeInput,
+                                        textAfterInput: $keyboard.textAfterInput,
+                                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
+                                    })
+
+                                    action(actionData)
+                                })
+                            })
                         ]
                     })
                 })
@@ -118,9 +119,7 @@ class Keyboard extends Clipboard {
         return {
             // 顶部按钮栏
             type: "view",
-            props: {
-                bgcolor: $color("backgroundColor")
-            },
+            props: { bgcolor: $color("clear") },
             views: [
                 {
                     type: "view",
@@ -245,7 +244,7 @@ class Keyboard extends Clipboard {
 
         const getButtonView = (button, align) => {
             const size = $size(38, 38)
-            const edges = 15
+            const edges = 10
             return {
                 type: "button",
                 props: Object.assign(
@@ -253,7 +252,7 @@ class Keyboard extends Clipboard {
                         symbol: button.symbol,
                         title: button.title,
                         font: $font(16),
-                        bgcolor: $color("clear"),
+                        bgcolor: $color("#ACB0B8", "#474749"),
                         tintColor: UIKit.textColor,
                         titleColor: UIKit.textColor,
                         info: { align }
@@ -275,8 +274,8 @@ class Keyboard extends Clipboard {
                     }
                     make.centerY.equalTo(view.super)
                     if (view.prev && view.prev.info.align === align) {
-                        if (align === UIKit.align.right) make.right.equalTo(view.prev.left)
-                        else make.left.equalTo(view.prev.right)
+                        if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges / 2)
+                        else make.left.equalTo(view.prev.right).offset(edges / 2)
                     } else {
                         // 留一半边距，按钮内边距是另一半
                         const thisEdges = edges / 2
@@ -289,9 +288,7 @@ class Keyboard extends Clipboard {
 
         return {
             type: "view",
-            props: {
-                bgcolor: $color("clear")
-            },
+            props: { bgcolor: $color("clear") },
             views: [
                 ...leftButtons.map(btn => getButtonView(btn, UIKit.align.left)),
                 ...rightButtons.map(btn => getButtonView(btn, UIKit.align.right))
@@ -311,7 +308,11 @@ class Keyboard extends Clipboard {
             make.width.equalTo(view.super)
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
         }
-        superListView.views[0].events.didSelect = (sender, indexPath, data) => {
+
+        const listView = superListView.views[0]
+        listView.props.separatorColor = $color("lightGray")
+        listView.props.bgcolor = $color("clear")
+        listView.events.didSelect = (sender, indexPath, data) => {
             const content = data.content
             const text = content.info.text
             const path = this.kernel.storage.keyToPath(text)
@@ -323,11 +324,14 @@ class Keyboard extends Clipboard {
                 $keyboard.insert(content.info.text)
             }
         }
+
+        const blurBox = UIKit.blurBox({}, [listView])
+        superListView.views[0] = blurBox
         return superListView
     }
 
     getView() {
-        let backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
+        const backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
         const backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
         const backgroundColorDark = this.kernel.setting.getColor(
             this.kernel.setting.get("keyboard.background.color.dark")
@@ -339,15 +343,14 @@ class Keyboard extends Clipboard {
                 bgcolor: $color(backgroundColor, backgroundColorDark)
             },
             views: [
-                backgroundImage !== null
-                    ? {
-                          type: "image",
-                          props: {
-                              image: backgroundImage
-                          },
-                          layout: $layout.fill
-                      }
-                    : {},
+                {
+                    type: "image",
+                    props: {
+                        image: backgroundImage,
+                        hidden: backgroundImage !== null
+                    },
+                    layout: $layout.fill
+                },
                 this.getNavBarView(),
                 UIKit.separatorLine({
                     id: this.navBarSeparatorId,

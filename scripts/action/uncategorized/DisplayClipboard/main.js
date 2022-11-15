@@ -7,7 +7,7 @@ class MyAction extends Action {
             view: {
                 type: "label",
                 props: {
-                    text: this.text,
+                    text: $clipboard.text,
                     align: $align.center
                 },
                 layout: $layout.fill

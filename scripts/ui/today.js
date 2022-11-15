@@ -1,3 +1,4 @@
+const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
 const Clipboard = require("./clipboard")
 const TodayActions = require("./components/today-actions")
@@ -361,13 +362,11 @@ class Today extends Clipboard {
             events: {
                 didSelect: (sender, indexPath, data) => {
                     const info = data.info.info
-                    this.kernel.actionManager.getActionHandler(
-                        info.type,
-                        info.dir
-                    )({
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null,
-                        uuid: null
+                    const actionData = new ActionData({
+                        env: ActionEnv.today,
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
                     })
+                    this.kernel.actionManager.getActionHandler(info.type, info.dir)(actionData)
                 }
             }
         }
@@ -387,7 +386,6 @@ class Today extends Clipboard {
     }
 
     getView() {
-        // 直接放最外层 ready 事件不生效
         return View.create({
             props: {
                 titleColor: UIKit.textColor,
@@ -397,30 +395,30 @@ class Today extends Clipboard {
                 {
                     type: "view",
                     views: [this.getNavBarView(), this.getListView(), this.getActionView()],
-                    layout: $layout.fill,
-                    events: {
-                        ready: async () => {
-                            if ($app.env !== $env.today) return
+                    layout: $layout.fill
+                }
+            ],
+            events: {
+                appeared: async () => {
+                    if ($app.env !== $env.today) return
 
-                            const timer = $timer.schedule({
-                                interval: 0.6,
-                                handler: () => {
-                                    $ui.animate({
-                                        duration: 0.3,
-                                        animation: () => {
-                                            $ui.vc.ocValue().$view().$setBackgroundColor($color("clear"))
-                                        },
-                                        completion: () => {
-                                            timer.invalidate()
-                                            this.loadData()
-                                        }
-                                    })
+                    const timer = $timer.schedule({
+                        interval: 0,
+                        handler: () => {
+                            $ui.animate({
+                                duration: 0.3,
+                                animation: () => {
+                                    $ui.vc.ocValue().$view().$setBackgroundColor($color("clear"))
+                                },
+                                completion: () => {
+                                    timer.invalidate()
+                                    this.loadData()
                                 }
                             })
                         }
-                    }
+                    })
                 }
-            ]
+            }
         })
     }
 }

@@ -11,6 +11,8 @@ const {
 } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 const ClipboardData = require("./clipboard-data")
+const ClipboardSearch = require("./clipboard-search")
+const { ActionData, ActionEnv } = require("../action/action")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -39,6 +41,21 @@ class Clipboard extends ClipboardData {
         this.listId = "clipboard-list"
 
         this.viewController = new ViewController()
+        this.search = new ClipboardSearch(this.kernel)
+        this.search.setCallback(res => {
+            $(this.listId).data = res.map(data => this.lineData(data))
+        })
+        this.search.setDismiss(() => {
+            this.updateList()
+            $(this.listId + "-tab").updateLayout(make => {
+                make.height.equalTo(this.tabHeight)
+            })
+        })
+        this.search.setBegin(() => {
+            $(this.listId + "-tab").updateLayout(make => {
+                make.height.equalTo(0)
+            })
+        })
     }
 
     getSingleLineHeight() {
@@ -360,20 +377,6 @@ class Clipboard extends ClipboardData {
         })
     }
 
-    searchAction(text) {
-        try {
-            if (text === "") {
-                this.updateList()
-            } else {
-                const res = this.kernel.storage.search(text)
-                if (res && res.length > 0) $(this.listId).data = res.map(data => this.lineData(data))
-            }
-        } catch (error) {
-            this.updateList()
-            throw error
-        }
-    }
-
     menuItems(defaultOnly = false) {
         const defaultButtons = [
             {
@@ -453,11 +456,12 @@ class Clipboard extends ClipboardData {
         const handlerRewrite = handler => {
             return (sender, indexPath) => {
                 const item = sender.object(indexPath)
-                const data = {
+                const actionData = new ActionData({
+                    env: ActionEnv.clipboard,
                     text: item.content.info.text,
                     uuid: item.content.info.uuid
-                }
-                handler(data)
+                })
+                handler(actionData)
             }
         }
         const actions = this.kernel.actionManager.getActions("clipboard").map(action => {
@@ -700,6 +704,7 @@ class Clipboard extends ClipboardData {
             type: "label",
             props: {
                 id: this.listId + "-empty-list-background",
+                color: $color("secondaryText"),
                 hidden: this.clipboard.length > 0,
                 text: "Hello, World!",
                 align: $align.center
@@ -707,7 +712,7 @@ class Clipboard extends ClipboardData {
             layout: $layout.center
         }
 
-        return View.createFromViews([listView, emptyListBackground])
+        return View.createFromViews([listView, emptyListBackground, this.search.historyView])
     }
 
     switchTab(index, manual = false) {
@@ -757,34 +762,10 @@ class Clipboard extends ClipboardData {
     }
 
     getNavigationView() {
-        const searchBar = new SearchBar()
-        // 初始化搜索功能
-        searchBar.controller.setEvent("onChange", text => this.searchAction(text))
-        searchBar.setEvent("didBeginEditing", () => {
-            $ui.animate({
-                duration: 0.4,
-                animation: () => {
-                    $(this.listId + "-menu").updateLayout(make => {
-                        make.height.equalTo(0)
-                    })
-                }
-            })
-        })
-        searchBar.setEvent("didEndEditing", () => {
-            $ui.animate({
-                duration: 0.4,
-                animation: () => {
-                    $(this.listId + "-menu").updateLayout(make => {
-                        make.height.equalTo(this.tabHeight)
-                    })
-                }
-            })
-        })
-
         const navigationView = new NavigationView()
         navigationView.navigationBarTitle($l10n("CLIPS"))
         navigationView.navigationBarItems
-            .setTitleView(searchBar)
+            .setTitleView(this.search.getSearchBarView())
             .pinTitleView()
             .setRightButtons([
                 {
