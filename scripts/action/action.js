@@ -117,6 +117,36 @@ class Action {
         return await action.do()
     }
 
+    async request(url, method, body = {}, header = {}) {
+        try {
+            this.kernel.print(`sending request [${method}]: ${url}`)
+            const resp = await $http.request({
+                header,
+                url,
+                method,
+                body,
+                timeout: 5
+            })
+
+            if (resp.error) {
+                throw resp.error
+            } else if (resp?.response?.statusCode >= 400) {
+                let errMsg = resp.data
+                if (typeof errMsg === "object") {
+                    errMsg = JSON.stringify(errMsg)
+                }
+                throw new Error("http error: [" + resp.response.statusCode + "] " + errMsg)
+            }
+
+            return resp
+        } catch (error) {
+            if (error.code) {
+                error = new Error("network error: [" + error.code + "] " + error.localizedDescription)
+            }
+            throw error
+        }
+    }
+
     getUrls() {
         const strRegex =
             "((https|http|ftp|rtsp|mms)?://)" +
