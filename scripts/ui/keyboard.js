@@ -312,6 +312,8 @@ class Keyboard extends Clipboard {
             make.width.equalTo(view.super)
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
         }
+
+        superListView.views[0].props.separatorColor = $color("lightGray")
         superListView.views[0].events.didSelect = (sender, indexPath, data) => {
             const content = data.content
             const text = content.info.text
