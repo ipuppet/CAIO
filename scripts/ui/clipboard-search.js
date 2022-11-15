@@ -105,6 +105,10 @@ class ClipboardSearch {
         ])
     }
 
+    setBegin(callback) {
+        this.begin = callback
+    }
+
     setCallback(callback) {
         this.callback = callback
     }
@@ -119,6 +123,7 @@ class ClipboardSearch {
                 const res = this.kernel.storage.search(text)
                 if (res && res.length > 0) {
                     this.searchHistoryView.hide()
+                    $(this.searchBarId).blur()
                     this.callback(res)
                 } else {
                     $ui.toast($l10n("NO_SEARCH_RESULT"))
@@ -135,7 +140,7 @@ class ClipboardSearch {
         let history = $cache.get("caio.search.history") ?? []
         if (history.indexOf(text) === -1) {
             history.push(text)
-            if (history > 20) {
+            if (history.length > 20) {
                 history = history.slice(-20)
             }
             $(this.listId + "-history").data = this.searchHistory
@@ -157,6 +162,7 @@ class ClipboardSearch {
         })
 
         this.searchBar.setEvent("didBeginEditing", () => {
+            this.begin()
             if ($(this.searchBarId).text === "") {
                 this.searchHistoryView.show()
             }

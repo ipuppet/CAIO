@@ -47,6 +47,14 @@ class Clipboard extends ClipboardData {
         })
         this.search.setDismiss(() => {
             this.updateList()
+            $(this.listId + "-tab").updateLayout(make => {
+                make.height.equalTo(this.tabHeight)
+            })
+        })
+        this.search.setBegin(() => {
+            $(this.listId + "-tab").updateLayout(make => {
+                make.height.equalTo(0)
+            })
         })
     }
 
