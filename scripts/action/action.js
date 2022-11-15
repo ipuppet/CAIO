@@ -108,16 +108,13 @@ class Action {
         this.kernel.editor.setContent(text)
     }
 
+    getAction(type, name, data) {
+        return this.kernel.actionManager.getAction(type, name, data)
+    }
+
     async runAction(type, name) {
-        const handler = this.kernel.actionManager.getActionHandler(type, name)
-        return new Promise(async (resolve, reject) => {
-            if (typeof handler === "function") {
-                const result = await handler()
-                resolve(result)
-            } else {
-                reject(`No such Action: ${type}/${name}`)
-            }
-        })
+        const action = this.getAction(type, name)
+        return await action.do()
     }
 
     getUrls() {

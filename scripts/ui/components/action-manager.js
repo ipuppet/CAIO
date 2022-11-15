@@ -92,14 +92,24 @@ class ActionManager {
         else return []
     }
 
-    getActionHandler(type, name, basePath) {
-        if (!basePath) basePath = `${this.userActionPath}/${type}/${name}`
+    getAction(type, name, data) {
+        const basePath = `${this.userActionPath}/${type}/${name}`
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
+        try {
+            const script = $file.read(`${basePath}/main.js`).string
+            const MyAction = new Function("Action", `${script}\n return MyAction`)(Action)
+            const action = new MyAction(this.kernel, config, data)
+            return action
+        } catch (error) {
+            $ui.error(error)
+            this.kernel.error(error)
+        }
+    }
+
+    getActionHandler(type, name) {
         return async data => {
             try {
-                const script = $file.read(`${basePath}/main.js`).string
-                const MyAction = new Function("Action", `${script}\n return MyAction`)(Action)
-                const action = new MyAction(this.kernel, config, data)
+                const action = this.getAction(type, name, data)
                 return await action.do()
             } catch (error) {
                 $ui.error(error)
