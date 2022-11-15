@@ -92,8 +92,12 @@ class ActionManager {
         else return []
     }
 
-    getAction(type, name, data) {
-        const basePath = `${this.userActionPath}/${type}/${name}`
+    getActionPath(type, dir) {
+        return `${this.userActionPath}/${type}/${dir}`
+    }
+
+    getAction(type, dir, data) {
+        const basePath = this.getActionPath(type, dir)
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         try {
             const script = $file.read(`${basePath}/main.js`).string
@@ -106,10 +110,10 @@ class ActionManager {
         }
     }
 
-    getActionHandler(type, name) {
+    getActionHandler(type, dir) {
         return async data => {
             try {
-                const action = this.getAction(type, name, data)
+                const action = this.getAction(type, dir, data)
                 return await action.do()
             } catch (error) {
                 $ui.error(error)
@@ -422,16 +426,55 @@ class ActionManager {
                 }
             },
             {
-                // 删除
-                title: $l10n("DELETE"),
-                symbol: "trash",
-                destructive: true,
-                handler: (sender, indexPath, data) => {
-                    this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                        this.delete(data.info.info)
-                        sender.delete(indexPath)
-                    })
-                }
+                inline: true,
+                items: [
+                    {
+                        // README
+                        title: "README",
+                        symbol: "book",
+                        handler: (sender, indexPath) => {
+                            const view = sender.cell(indexPath)
+                            const info = view.get("info").info
+
+                            let content
+
+                            try {
+                                content = __ACTIONS__[info.type][info.dir]["README.md"]
+                            } catch {
+                                const basePath = this.getActionPath(info.type, info.dir)
+                                content = $file.read(basePath + "/README.md").string
+                            }
+                            const sheet = new Sheet()
+                            sheet
+                                .setView({
+                                    type: "markdown",
+                                    props: { content: content },
+                                    layout: (make, view) => {
+                                        make.size.equalTo(view.super)
+                                    }
+                                })
+                                .init()
+                                .present()
+                        }
+                    }
+                ]
+            },
+            {
+                inline: true,
+                items: [
+                    {
+                        // 删除
+                        title: $l10n("DELETE"),
+                        symbol: "trash",
+                        destructive: true,
+                        handler: (sender, indexPath, data) => {
+                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+                                this.delete(data.info.info)
+                                sender.delete(indexPath)
+                            })
+                        }
+                    }
+                ]
             }
         ]
     }

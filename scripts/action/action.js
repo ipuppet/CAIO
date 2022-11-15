@@ -108,8 +108,8 @@ class Action {
         this.kernel.editor.setContent(text)
     }
 
-    getAction(type, name, data) {
-        return this.kernel.actionManager.getAction(type, name, data)
+    getAction(type, dir, data) {
+        return this.kernel.actionManager.getAction(type, dir, data)
     }
 
     async runAction(type, name) {
