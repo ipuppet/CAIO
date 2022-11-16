@@ -10,7 +10,8 @@ class ClipboardSearch {
      */
     kernel
     callback = () => {}
-    dismiss = () => {}
+    onBegin = () => {}
+    onDismiss = () => {}
 
     /**
      * @param {AppKernel} kernel
@@ -39,27 +40,7 @@ class ClipboardSearch {
         ]
     }
 
-    get historyView() {
-        return {
-            type: "list",
-            props: {
-                id: this.listId + "-history",
-                hidden: true,
-                stickyHeader: true,
-                data: this.searchHistory,
-                separatorInset: $insets(0, 13, 0, 0)
-            },
-            events: {
-                didSelect: (sender, indexPath, data) => {
-                    this.searchAction(data)
-                    $(this.searchBarId).text = data
-                }
-            },
-            layout: $layout.fill
-        }
-    }
-
-    get accessoryView() {
+    getAccessoryView() {
         return UIKit.blurBox({ height: 50 }, [
             {
                 type: "button",
@@ -74,14 +55,7 @@ class ClipboardSearch {
                     make.width.equalTo(view.super.height)
                 },
                 events: {
-                    tapped: sender => {
-                        $(this.searchBarId).blur()
-                        $(this.searchBarId).text = ""
-
-                        this.searchHistoryView.hide()
-
-                        this.dismiss()
-                    }
+                    tapped: () => this.dismiss()
                 }
             },
             {
@@ -97,24 +71,64 @@ class ClipboardSearch {
                     make.width.equalTo(view.super.height)
                 },
                 events: {
-                    tapped: sender => {
-                        $(this.searchBarId).blur()
-                    }
+                    tapped: () => $(this.searchBarId).blur()
                 }
             }
         ])
     }
 
-    setBegin(callback) {
-        this.begin = callback
+    getSearchHistoryView() {
+        return {
+            type: "list",
+            props: {
+                id: this.listId + "-history",
+                hidden: true,
+                stickyHeader: true,
+                data: this.searchHistory,
+                separatorInset: $insets(0, 13, 0, 0),
+                actions: [
+                    {
+                        title: $l10n("DELETE"),
+                        handler: (sender, indexPath) => {
+                            const data = sender.data
+                            this.updateSearchHistory(data[0].rows.reverse())
+                        }
+                    }
+                ]
+            },
+            events: {
+                didSelect: (sender, indexPath, data) => {
+                    this.searchAction(data)
+                    $(this.searchBarId).text = data
+                }
+            },
+            layout: $layout.fill
+        }
     }
 
     setCallback(callback) {
         this.callback = callback
     }
 
-    setDismiss(callback) {
-        this.dismiss = callback
+    setOnBegin(callback) {
+        this.onBegin = callback
+    }
+
+    setOnDismiss(callback) {
+        this.onDismiss = callback
+    }
+
+    begin() {
+        this.searchHistoryView.show()
+        this.onBegin()
+    }
+
+    dismiss() {
+        $(this.searchBarId).blur()
+        $(this.searchBarId).text = ""
+
+        this.searchHistoryView.hide()
+        this.onDismiss()
     }
 
     searchAction(text) {
@@ -122,7 +136,6 @@ class ClipboardSearch {
             if (text !== "") {
                 const res = this.kernel.storage.search(text)
                 if (res && res.length > 0) {
-                    this.searchHistoryView.hide()
                     $(this.searchBarId).blur()
                     this.callback(res)
                 } else {
@@ -148,6 +161,10 @@ class ClipboardSearch {
         }
     }
 
+    updateSearchHistory(data = []) {
+        $cache.set("caio.search.history", data)
+    }
+
     getSearchBarView() {
         // 初始化搜索功能
         this.searchBar.controller.setEvent("onReturn", text => {
@@ -160,15 +177,11 @@ class ClipboardSearch {
         this.searchBar.controller.setEvent("onChange", text => {
             if (text === "") this.searchHistoryView.show()
         })
-
-        this.searchBar.setEvent("didBeginEditing", () => {
-            this.begin()
-            if ($(this.searchBarId).text === "") {
-                this.searchHistoryView.show()
-            }
+        this.searchBar.setEvent("didBeginEditing", sender => {
+            if (sender.text === "") this.begin()
         })
 
-        this.searchBar.setAccessoryView(this.accessoryView)
+        this.searchBar.setAccessoryView(this.getAccessoryView())
 
         return this.searchBar
     }
