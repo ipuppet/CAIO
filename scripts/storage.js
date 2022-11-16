@@ -197,7 +197,7 @@ class Storage {
 
     parse(result) {
         if (result.error !== null) {
-            throw result.error
+            throw new Error(`Code [${result.error.code}] ${result.error.domain} ${result.error.localizedDescription}`)
         }
         const data = []
         while (result.result.next()) {
@@ -256,7 +256,12 @@ class Storage {
     }
     search(kw) {
         const result = this.sqlite.query({
-            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE text like ? UNION SELECT *, 'pin' AS section FROM pin WHERE text like ?",
+            sql: `SELECT * from
+                (SELECT clipboard.*, 'clipboard' AS section FROM clipboard WHERE text like ?
+                UNION
+                SELECT pin.*, 'pin' AS section FROM pin WHERE text like ?) a
+                LEFT JOIN tag ON a.uuid = tag.uuid
+            `,
             args: [`%${kw}%`, `%${kw}%`]
         })
         return this.parse(result)
