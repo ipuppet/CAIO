@@ -10,6 +10,8 @@ class ClipboardSearch {
      */
     kernel
     callback = () => {}
+    onBegin = () => {}
+    onDismiss = () => {}
 
     /**
      * @param {AppKernel} kernel
@@ -53,12 +55,7 @@ class ClipboardSearch {
                     make.width.equalTo(view.super.height)
                 },
                 events: {
-                    tapped: sender => {
-                        $(this.searchBarId).blur()
-                        $(this.searchBarId).text = ""
-
-                        this.searchHistoryView.hide()
-                    }
+                    tapped: () => this.dismiss()
                 }
             },
             {
@@ -74,9 +71,7 @@ class ClipboardSearch {
                     make.width.equalTo(view.super.height)
                 },
                 events: {
-                    tapped: sender => {
-                        $(this.searchBarId).blur()
-                    }
+                    tapped: () => $(this.searchBarId).blur()
                 }
             }
         ])
@@ -90,7 +85,16 @@ class ClipboardSearch {
                 hidden: true,
                 stickyHeader: true,
                 data: this.searchHistory,
-                separatorInset: $insets(0, 13, 0, 0)
+                separatorInset: $insets(0, 13, 0, 0),
+                actions: [
+                    {
+                        title: $l10n("DELETE"),
+                        handler: (sender, indexPath) => {
+                            const data = sender.data
+                            this.updateSearchHistory(data[0].rows.reverse())
+                        }
+                    }
+                ]
             },
             events: {
                 didSelect: (sender, indexPath, data) => {
@@ -104,6 +108,27 @@ class ClipboardSearch {
 
     setCallback(callback) {
         this.callback = callback
+    }
+
+    setOnBegin(callback) {
+        this.onBegin = callback
+    }
+
+    setOnDismiss(callback) {
+        this.onDismiss = callback
+    }
+
+    begin() {
+        this.searchHistoryView.show()
+        this.onBegin()
+    }
+
+    dismiss() {
+        $(this.searchBarId).blur()
+        $(this.searchBarId).text = ""
+
+        this.searchHistoryView.hide()
+        this.onDismiss()
     }
 
     searchAction(text) {
@@ -136,6 +161,10 @@ class ClipboardSearch {
         }
     }
 
+    updateSearchHistory(data = []) {
+        $cache.set("caio.search.history", data)
+    }
+
     getSearchBarView() {
         // 初始化搜索功能
         this.searchBar.controller.setEvent("onReturn", text => {
@@ -148,11 +177,8 @@ class ClipboardSearch {
         this.searchBar.controller.setEvent("onChange", text => {
             if (text === "") this.searchHistoryView.show()
         })
-
-        this.searchBar.setEvent("didBeginEditing", () => {
-            if ($(this.searchBarId).text === "") {
-                this.searchHistoryView.show()
-            }
+        this.searchBar.setEvent("didBeginEditing", sender => {
+            if (sender.text === "") this.begin()
         })
 
         this.searchBar.setAccessoryView(this.getAccessoryView())
