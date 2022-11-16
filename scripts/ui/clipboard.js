@@ -41,21 +41,6 @@ class Clipboard extends ClipboardData {
         this.listId = "clipboard-list"
 
         this.viewController = new ViewController()
-        this.search = new ClipboardSearch(this.kernel)
-        this.search.setCallback(res => {
-            $(this.listId).data = res.map(data => this.lineData(data))
-        })
-        this.search.setDismiss(() => {
-            this.updateList()
-            $(this.listId + "-tab").updateLayout(make => {
-                make.height.equalTo(this.tabHeight)
-            })
-        })
-        this.search.setBegin(() => {
-            $(this.listId + "-tab").updateLayout(make => {
-                make.height.equalTo(0)
-            })
-        })
     }
 
     getSingleLineHeight() {
@@ -640,16 +625,16 @@ class Clipboard extends ClipboardData {
             .present()
     }
 
-    getListView() {
+    getListView(id = this.listId, data = []) {
         const listView = {
             // 剪切板列表
             type: "list",
             props: {
-                id: this.listId,
+                id,
                 bgcolor: $color("clear"),
                 separatorInset: $insets(0, this.left_right, 0, 0),
                 menu: { items: this.menuItems() },
-                data: [],
+                data,
                 template: this.listTemplate(),
                 actions: [
                     {
@@ -703,7 +688,7 @@ class Clipboard extends ClipboardData {
         const emptyListBackground = {
             type: "label",
             props: {
-                id: this.listId + "-empty-list-background",
+                id: id + "-empty-list-background",
                 color: $color("secondaryText"),
                 hidden: this.clipboard.length > 0,
                 text: "Hello, World!",
@@ -712,7 +697,7 @@ class Clipboard extends ClipboardData {
             layout: $layout.center
         }
 
-        return View.createFromViews([listView, emptyListBackground, this.search.historyView])
+        return View.createFromViews([listView, emptyListBackground])
     }
 
     switchTab(index, manual = false) {
@@ -762,6 +747,27 @@ class Clipboard extends ClipboardData {
     }
 
     getNavigationView() {
+        this.search = new ClipboardSearch(this.kernel)
+        this.search.setCallback(res => {
+            const sheet = new Sheet()
+            sheet
+                .setView(
+                    this.getListView(
+                        this.listId + "-search-result",
+                        res.map(data => this.lineData(data))
+                    )
+                )
+                .addNavBar({
+                    title: $l10n("SEARCH_RESULT"),
+                    popButton: { title: $l10n("DONE") }
+                })
+                .init()
+                .present()
+        })
+
+        const view = this.mixinMenuView()
+        view.views.push(this.search.getSearchHistoryView())
+
         const navigationView = new NavigationView()
         navigationView.navigationBarTitle($l10n("CLIPS"))
         navigationView.navigationBarItems
@@ -794,7 +800,8 @@ class Clipboard extends ClipboardData {
         if (this.kernel.isUseJsboxNav) {
             navigationView.navigationBar.removeTopSafeArea()
         }
-        navigationView.setView(this.mixinMenuView())
+
+        navigationView.setView(view)
 
         return navigationView
     }

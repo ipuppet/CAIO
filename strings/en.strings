@@ -19,6 +19,7 @@
 "EDIT" = "Edit";
 "SEARCH" = "Search";
 "SEARCH_HISTORY" = "Search History";
+"SEARCH_RESULT" = "Search Result";
 "NO_SEARCH_RESULT" = "No item found.";
 "PIN" = "Pin";
 "COPY" = "Copy";
