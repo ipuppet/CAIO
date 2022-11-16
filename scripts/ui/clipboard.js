@@ -313,7 +313,7 @@ class Clipboard extends ClipboardData {
     pin(item, row) {
         if (item?.section === "pin") return
         const res = this.kernel.storage.getByMD5(item.md5)
-        if (res.section === "pin") {
+        if (res?.section === "pin") {
             Toast.warning("Already exists")
             return
         }
