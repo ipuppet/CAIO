@@ -759,7 +759,7 @@ class Clipboard extends ClipboardData {
                 )
                 .addNavBar({
                     title: $l10n("SEARCH_RESULT"),
-                    popButton: { title: $l10n("DONE") }
+                    popButton: { title: $l10n("DONE"), tapped: () => this.search.dismiss() }
                 })
                 .init()
                 .present()
