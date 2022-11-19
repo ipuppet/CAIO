@@ -23,6 +23,7 @@ class Clipboard extends ClipboardData {
     #singleLine = false
     left_right = 20 // 列表边距
     top_bottom = 20 // 列表边距
+    containerMargin = 0 // list 单边边距。如果 list 未贴合屏幕左右边缘，则需要此值辅助计算文字高度
     fontSize = 16 // 字体大小
     copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
     imageContentHeight = 50
@@ -542,7 +543,7 @@ class Clipboard extends ClipboardData {
             content.text = sliceText(data.text)
             info.height = $text.sizeThatFits({
                 text: content.text,
-                width: UIKit.windowSize.width - this.left_right * 2,
+                width: UIKit.windowSize.width - (this.left_right + this.containerMargin) * 2,
                 font: $font(this.fontSize)
             }).height
         }
