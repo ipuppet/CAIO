@@ -242,7 +242,7 @@ class Keyboard extends Clipboard {
         const rightButtons = []
 
         // 切换键盘
-        if (!$device.isIphoneX) {
+        if (!$device.hasFaceID || $device.isIpadPro) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
