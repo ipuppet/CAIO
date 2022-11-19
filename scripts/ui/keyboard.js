@@ -10,22 +10,26 @@ const KeyboardScripts = require("./components/keyboard-scripts")
 class Keyboard extends Clipboard {
     #readClipboardTimer
 
+    deleteTimer = undefined
+    continuousDeleteTimer = undefined
+    deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
+    continuousDeleteDelay = 0.5
+
+    // 剪贴板列个性化设置
+    left_right = 10 // 列表边距
+    top_bottom = 10 // 列表边距
+    containerEdge = 5 // 容器边距
+    fontSize = 14 // 字体大小
+    navHeight = 50
+
+    menuItemActionMaxCount = 3
+
     /**
      * @param {AppKernel} kernel
      */
     constructor(kernel) {
         super(kernel)
         this.listId = "keyboard-clipboard-list"
-        // 剪贴板列个性化设置
-        this.left_right = 20 // 列表边距
-        this.top_bottom = 10 // 列表边距
-        this.fontSize = 14 // 字体大小
-        this.navHeight = 50
-        this.navBarSeparatorId = "navBarSeparator"
-        this.deleteTimer = undefined
-        this.continuousDeleteTimer = undefined
-        this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
-        this.continuousDeleteDelay = 0.5
 
         this.keyboardSetting()
         this.setSingleLine()
@@ -65,7 +69,49 @@ class Keyboard extends Clipboard {
         }
     }
 
-    navButtons() {
+    getButtonView(button, align) {
+        const size = $size(38, 38)
+        const edges = this.containerEdge
+        return {
+            type: "button",
+            props: Object.assign(
+                {
+                    symbol: button.symbol,
+                    title: button.title,
+                    font: $font(16),
+                    bgcolor: $color("#ACB0B8", "#474749"),
+                    tintColor: UIKit.textColor,
+                    titleColor: UIKit.textColor,
+                    info: { align }
+                },
+                button.menu ? { menu: button.menu } : {}
+            ),
+            events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
+            layout: (make, view) => {
+                if (button.title) {
+                    const fontSize = $text.sizeThatFits({
+                        text: button.title,
+                        width: UIKit.windowSize.width,
+                        font: $font(16)
+                    })
+                    const width = Math.ceil(fontSize.width) + edges // 文本按钮增加内边距
+                    make.size.equalTo($size(width, size.height))
+                } else {
+                    make.size.equalTo(size)
+                }
+                make.centerY.equalTo(view.super)
+                if (view.prev && view.prev.info.align === align) {
+                    if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
+                    else make.left.equalTo(view.prev.right).offset(edges)
+                } else {
+                    if (align === UIKit.align.right) make.right.inset(edges)
+                    else make.left.inset(edges)
+                }
+            }
+        }
+    }
+
+    getTopButtons() {
         const buttons = [
             {
                 // 关闭键盘
@@ -108,6 +154,8 @@ class Keyboard extends Clipboard {
                 })
             }
         ]
+
+        BarButtonItem.edges = this.containerEdge // 设置按钮边距
         return buttons.map(button => {
             const barButtonItem = new BarButtonItem()
             return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped)
@@ -115,11 +163,10 @@ class Keyboard extends Clipboard {
         })
     }
 
-    getNavBarView() {
+    getTopBarView() {
         return {
             // 顶部按钮栏
             type: "view",
-            props: { bgcolor: $color("clear") },
             views: [
                 {
                     type: "view",
@@ -157,10 +204,10 @@ class Keyboard extends Clipboard {
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.super).offset(this.left_right)
+                                make.left.equalTo(view.super).offset(this.containerEdge)
                             }
                         }
-                    ].concat(this.tabView(), this.navButtons())
+                    ].concat(this.tabView(), this.getTopButtons())
                 }
             ],
             layout: (make, view) => {
@@ -242,56 +289,11 @@ class Keyboard extends Clipboard {
             }
         )
 
-        const getButtonView = (button, align) => {
-            const size = $size(38, 38)
-            const edges = 10
-            return {
-                type: "button",
-                props: Object.assign(
-                    {
-                        symbol: button.symbol,
-                        title: button.title,
-                        font: $font(16),
-                        bgcolor: $color("#ACB0B8", "#474749"),
-                        tintColor: UIKit.textColor,
-                        titleColor: UIKit.textColor,
-                        info: { align }
-                    },
-                    button.menu ? { menu: button.menu } : {}
-                ),
-                events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
-                layout: (make, view) => {
-                    if (button.title) {
-                        const fontSize = $text.sizeThatFits({
-                            text: button.title,
-                            width: UIKit.windowSize.width,
-                            font: $font(16)
-                        })
-                        const width = Math.ceil(fontSize.width) + edges // 文本按钮增加内边距
-                        make.size.equalTo($size(width, size.height))
-                    } else {
-                        make.size.equalTo(size)
-                    }
-                    make.centerY.equalTo(view.super)
-                    if (view.prev && view.prev.info.align === align) {
-                        if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges / 2)
-                        else make.left.equalTo(view.prev.right).offset(edges / 2)
-                    } else {
-                        // 留一半边距，按钮内边距是另一半
-                        const thisEdges = edges / 2
-                        if (align === UIKit.align.right) make.right.inset(thisEdges)
-                        else make.left.inset(thisEdges)
-                    }
-                }
-            }
-        }
-
         return {
             type: "view",
-            props: { bgcolor: $color("clear") },
             views: [
-                ...leftButtons.map(btn => getButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => getButtonView(btn, UIKit.align.right))
+                ...leftButtons.map(btn => this.getButtonView(btn, UIKit.align.left)),
+                ...rightButtons.map(btn => this.getButtonView(btn, UIKit.align.right))
             ],
             layout: (make, view) => {
                 make.bottom.left.right.equalTo(view.super.safeArea)
@@ -300,9 +302,13 @@ class Keyboard extends Clipboard {
         }
     }
 
+    menuItems() {
+        const items = super.menuItems()
+        return [items[0], items[2]]
+    }
+
     getListView() {
         const superListView = super.getListView()
-        superListView.props.bgcolor = $color("clear")
         superListView.layout = (make, view) => {
             make.top.equalTo(this.navHeight)
             make.width.equalTo(view.super)
@@ -310,8 +316,6 @@ class Keyboard extends Clipboard {
         }
 
         const listView = superListView.views[0]
-        listView.props.separatorColor = $color("lightGray")
-        listView.props.bgcolor = $color("clear")
         listView.events.didSelect = (sender, indexPath, data) => {
             const content = data.content
             const text = content.info.text
@@ -324,8 +328,19 @@ class Keyboard extends Clipboard {
                 $keyboard.insert(content.info.text)
             }
         }
+        listView.props.separatorInset = $insets(0, this.left_right, 0, this.left_right)
 
-        const blurBox = UIKit.blurBox({}, [listView])
+        const blurBox = UIKit.blurBox(
+            {
+                smoothCorners: true,
+                cornerRadius: this.containerEdge * 2
+            },
+            [listView],
+            (make, view) => {
+                make.bottom.top.equalTo(view.super)
+                make.left.right.inset(this.containerEdge)
+            }
+        )
         superListView.views[0] = blurBox
         return superListView
     }
@@ -351,14 +366,8 @@ class Keyboard extends Clipboard {
                     },
                     layout: $layout.fill
                 },
-                this.getNavBarView(),
-                UIKit.separatorLine({
-                    id: this.navBarSeparatorId,
-                    hidden: true,
-                    bgcolor: $color("lightGray")
-                }),
+                this.getTopBarView(),
                 this.getListView(),
-                UIKit.separatorLine({ bgcolor: $color("lightGray") }),
                 this.getBottomBarView()
             ],
             layout: $layout.fill

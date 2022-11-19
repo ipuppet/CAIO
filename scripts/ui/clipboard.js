@@ -28,6 +28,7 @@ class Clipboard extends ClipboardData {
     imageContentHeight = 50
     tagFontSize = 14
     tagContainerHeight = 25
+    menuItemActionMaxCount = 5
 
     tabHeight = 44
     tabItems = [$l10n("PIN"), $l10n("CLIPS")]
@@ -41,6 +42,24 @@ class Clipboard extends ClipboardData {
         this.listId = "clipboard-list"
 
         this.viewController = new ViewController()
+
+        this.search = new ClipboardSearch(this.kernel)
+        this.search.setCallback(res => {
+            const sheet = new Sheet()
+            sheet
+                .setView(
+                    this.getListView(
+                        this.listId + "-search-result",
+                        res.map(data => this.lineData(data))
+                    )
+                )
+                .addNavBar({
+                    title: $l10n("SEARCH_RESULT"),
+                    popButton: { title: $l10n("DONE"), tapped: () => this.search.dismiss() }
+                })
+                .init()
+                .present()
+        })
     }
 
     getSingleLineHeight() {
@@ -438,8 +457,9 @@ class Clipboard extends ClipboardData {
             return defaultButtons
         }
 
-        const handlerRewrite = handler => {
-            return (sender, indexPath) => {
+        const action = action => {
+            const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
+            action.handler = (sender, indexPath) => {
                 const item = sender.object(indexPath)
                 const actionData = new ActionData({
                     env: ActionEnv.clipboard,
@@ -448,16 +468,52 @@ class Clipboard extends ClipboardData {
                 })
                 handler(actionData)
             }
-        }
-        const actions = this.kernel.actionManager.getActions("clipboard").map(action => {
-            const actionHandler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
-            action.handler = handlerRewrite(actionHandler)
             action.title = action.name
             action.symbol = action.icon
             return action
-        })
+        }
+        const actions = this.kernel.actionManager.getActions("clipboard")
+        const actionButtons = {
+            inline: true,
+            items: actions.slice(0, this.menuItemActionMaxCount).map(action)
+        }
+        if (actions.length > this.menuItemActionMaxCount) {
+            actionButtons.items.push({
+                title: $l10n("MORE_ACTIONS"),
+                symbol: "square.grid.2x2",
+                items: actions.slice(this.menuItemActionMaxCount).map(action)
+            })
+        }
 
-        return actions.concat(defaultButtons)
+        return [actionButtons, ...defaultButtons]
+    }
+
+    switchTab(index, manual = false) {
+        this.tabIndex = index
+        this.updateList()
+
+        if (manual) {
+            $(this.listId + "-tab").index = this.tabIndex
+        }
+    }
+
+    tabView() {
+        return {
+            type: "tab",
+            props: {
+                id: this.listId + "-tab",
+                items: this.tabItems,
+                index: this.tabIndex,
+                dynamicWidth: true
+            },
+            events: {
+                changed: sender => this.switchTab(sender.index)
+            },
+            layout: (make, view) => {
+                make.centerY.equalTo(view.super)
+                make.left.equalTo(view.prev.right).offset(this.left_right)
+            }
+        }
     }
 
     lineData(data, indicator = false) {
@@ -700,35 +756,7 @@ class Clipboard extends ClipboardData {
         return View.createFromViews([listView, emptyListBackground])
     }
 
-    switchTab(index, manual = false) {
-        this.tabIndex = index
-        this.updateList()
-
-        if (manual) {
-            $(this.listId + "-tab").index = this.tabIndex
-        }
-    }
-
-    tabView() {
-        return {
-            type: "tab",
-            props: {
-                id: this.listId + "-tab",
-                items: this.tabItems,
-                index: this.tabIndex,
-                dynamicWidth: true
-            },
-            events: {
-                changed: sender => this.switchTab(sender.index)
-            },
-            layout: (make, view) => {
-                make.centerY.equalTo(view.super)
-                make.left.equalTo(view.prev.right).offset(this.left_right)
-            }
-        }
-    }
-
-    mixinMenuView() {
+    getNavigationView() {
         const menuView = this.tabView()
         menuView.type = "menu"
         menuView.layout = (make, view) => {
@@ -742,34 +770,9 @@ class Clipboard extends ClipboardData {
             make.bottom.left.right.equalTo(view.super)
             make.top.equalTo(view.prev.bottom)
         }
-
-        return view
-    }
-
-    getNavigationView() {
-        this.search = new ClipboardSearch(this.kernel)
-        this.search.setCallback(res => {
-            const sheet = new Sheet()
-            sheet
-                .setView(
-                    this.getListView(
-                        this.listId + "-search-result",
-                        res.map(data => this.lineData(data))
-                    )
-                )
-                .addNavBar({
-                    title: $l10n("SEARCH_RESULT"),
-                    popButton: { title: $l10n("DONE"), tapped: () => this.search.dismiss() }
-                })
-                .init()
-                .present()
-        })
-
-        const view = this.mixinMenuView()
         view.views.push(this.search.getSearchHistoryView())
 
-        const navigationView = new NavigationView()
-        navigationView.navigationBarTitle($l10n("CLIPS"))
+        const navigationView = new NavigationView().navigationBarTitle($l10n("CLIPS")).setView(view)
         navigationView.navigationBarItems
             .setTitleView(this.search.getSearchBarView())
             .pinTitleView()
@@ -794,14 +797,12 @@ class Clipboard extends ClipboardData {
                 }
             ])
 
-        navigationView.navigationBar.setBackgroundColor(UIKit.primaryViewBackgroundColor)
-        navigationView.navigationBar.largeTitleDisplayMode = NavigationBar.largeTitleDisplayModeNever
-
+        navigationView.navigationBar
+            .setBackgroundColor(UIKit.primaryViewBackgroundColor)
+            .setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
         if (this.kernel.isUseJsboxNav) {
             navigationView.navigationBar.removeTopSafeArea()
         }
-
-        navigationView.setView(view)
 
         return navigationView
     }
