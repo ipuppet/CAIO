@@ -77,6 +77,7 @@
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
 
 "KEYBOARD" = "键盘";
+"KEYBOARD_HEIGHT" = "键盘高度";
 "BACKGROUND_COLOR" = "背景色";
 "BACKGROUND_COLOR_DARK" = "深色模式背景色";
 "BACKGROUND_IMAGE" = "背景图片";
