@@ -377,7 +377,7 @@ class Keyboard extends Clipboard {
                 {
                     type: "image",
                     props: {
-                        image: $imagekit.blur(this.backgroundImage, 10),
+                        image: this.backgroundImage,
                         hidden: this.backgroundImage === null
                     },
                     layout: $layout.fill
