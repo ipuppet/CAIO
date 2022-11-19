@@ -46,7 +46,10 @@ class Keyboard extends Clipboard {
     }
 
     static set keyboardHeight(height) {
-        $cache.set("caio.keyboard.height", height)
+        $cache.setAsync({
+            key: "caio.keyboard.height",
+            value: height
+        })
     }
 
     listReady() {
@@ -71,7 +74,16 @@ class Keyboard extends Clipboard {
     keyboardSetting() {
         if ($app.env !== $env.keyboard) return
 
-        $keyboard.height = Keyboard.keyboardHeight
+        const timer = $timer.schedule({
+            interval: 0,
+            handler: () => {
+                if ($keyboard.height !== Keyboard.keyboardHeight) {
+                    $keyboard.height = Keyboard.keyboardHeight
+                } else {
+                    timer.invalidate()
+                }
+            }
+        })
         if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
             $keyboard.barHidden = true
         }
