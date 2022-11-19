@@ -1,4 +1,4 @@
-const { Kernel, UIKit, Sheet } = require("./libs/easy-jsbox")
+const { Kernel, UIKit } = require("./libs/easy-jsbox")
 
 const KeyboardScripts = require("./ui/components/keyboard-scripts")
 const TodayActions = require("./ui/components/today-actions")
@@ -217,36 +217,67 @@ function action() {
 }
 
 function keyboard() {
-    kernel.setting.method.previewKeyboard = animate => {
-        animate.touchHighlightStart()
-        const Keyboard = require("./ui/keyboard")
-        const keyboard = new Keyboard(kernel).getView()
+    const Keyboard = require("./ui/keyboard")
+    const keyboard = new Keyboard(kernel).getView()
+    const keyboardMaxHeight = 400
+    const keyboardMinHeight = 200
 
-        const keyboardId = $text.uuit
-        const windowHeight = UIKit.windowSize.height
-
-        UIKit.push({
-            props: { clipsToSafeArea: true },
+    kernel.setting.method.previewKeyboard = () => {
+        const keyboardId = $text.uuid
+        const updateHeight = height => {
+            $(keyboardId).updateLayout(make => {
+                make.height.equalTo(height)
+            })
+            Keyboard.keyboardHeight = height
+        }
+        const getPercentage = v => (v - keyboardMinHeight) / (keyboardMaxHeight - keyboardMinHeight)
+        return {
             views: [
                 {
-                    type: "stepper",
-                    props: {
-                        max: windowHeight,
-                        min: 267,
-                        step: 10,
-                        value: 267
-                    },
+                    type: "label",
                     layout: (make, view) => {
-                        make.top.inset(24)
+                        make.top.inset(20)
                         make.centerX.equalTo(view.super)
                     },
                     events: {
-                        changed: sender => {
-                            const frame = sender.frame
-                            sender.max = windowHeight - frame.x - frame.height - 24
-                            sender.next.updateLayout((make, view) => {
-                                make.height.equalTo(sender.value)
+                        ready: sender => (sender.text = Keyboard.keyboardHeight),
+                        tapped: sender => {
+                            $input.text({
+                                type: $kbType.number,
+                                text: Keyboard.keyboardHeight,
+                                handler: text => {
+                                    const reg = /^[0-9]+.?[0-9]*$/
+                                    if (reg.test(text)) {
+                                        let value = Number(text)
+                                        value = Math.min(value, keyboardMaxHeight)
+                                        value = Math.max(value, keyboardMinHeight)
+
+                                        sender.text = value
+                                        sender.next.value = getPercentage(value)
+
+                                        updateHeight(value)
+                                    } else {
+                                        $ui.toast("Not a Number")
+                                    }
+                                }
                             })
+                        }
+                    }
+                },
+                {
+                    type: "slider",
+                    props: { max: 1, min: 0 },
+                    layout: (make, view) => {
+                        make.top.equalTo(view.prev.bottom)
+                        make.right.inset(20)
+                        make.width.equalTo(view.super).offset(-40)
+                    },
+                    events: {
+                        ready: sender => (sender.value = getPercentage(Keyboard.keyboardHeight)),
+                        changed: sender => {
+                            const value = sender.value * (keyboardMaxHeight - keyboardMinHeight) + keyboardMinHeight
+                            sender.prev.text = value
+                            updateHeight(value)
                         }
                     }
                 },
@@ -256,18 +287,16 @@ function keyboard() {
                     views: [keyboard],
                     layout: (make, view) => {
                         make.width.equalTo(view.super)
-                        make.height.equalTo(267)
+                        make.height.equalTo(Keyboard.keyboardHeight)
                         make.bottom.inset(0)
                     }
                 }
             ],
-            disappeared: () => animate.touchHighlightEnd()
-        })
+            layout: $layout.fill
+        }
     }
 
-    kernel.setting.method.setKeyboardQuickStart = animate => {
-        KeyboardScripts.sheet()
-    }
+    kernel.setting.method.setKeyboardQuickStart = () => KeyboardScripts.sheet()
 }
 
 function todayWidget() {

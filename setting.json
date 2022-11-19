@@ -256,9 +256,9 @@
                                     "rectangle.3.offgrid.fill"
                                 ],
                                 "title": "PREVIEW",
-                                "type": "script",
-                                "key": "keyboard.preview",
-                                "value": "this.method.previewKeyboard"
+                                "type": "push",
+                                "key": "keyboard.previewAndHeight",
+                                "view": "this.method.previewKeyboard"
                             }
                         ]
                     },

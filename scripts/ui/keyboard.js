@@ -41,6 +41,14 @@ class Keyboard extends Clipboard {
         this.setSingleLine()
     }
 
+    static get keyboardHeight() {
+        return $cache.get("caio.keyboard.height") ?? 267
+    }
+
+    static set keyboardHeight(height) {
+        $cache.set("caio.keyboard.height", height)
+    }
+
     listReady() {
         this.loadSavedClipboard()
         this.updateList()
@@ -61,6 +69,9 @@ class Keyboard extends Clipboard {
     }
 
     keyboardSetting() {
+        if ($app.env !== $env.keyboard) return
+
+        $keyboard.height = Keyboard.keyboardHeight
         if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
             $keyboard.barHidden = true
         }
@@ -242,7 +253,7 @@ class Keyboard extends Clipboard {
         const rightButtons = []
 
         // 切换键盘
-        if (!$device.isIphoneX) {
+        if (!$device.hasFaceID || $device.isIpadPro) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
