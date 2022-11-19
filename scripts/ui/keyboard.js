@@ -16,7 +16,7 @@ class Keyboard extends Clipboard {
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
-    left_right = 10 // 列表边距
+    left_right = 15 // 列表边距
     top_bottom = 10 // 列表边距
     containerEdge = 5 // 容器边距
     fontSize = 14 // 字体大小
