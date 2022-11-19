@@ -18,7 +18,7 @@ class Keyboard extends Clipboard {
     // 剪贴板列个性化设置
     left_right = 15 // 列表边距
     top_bottom = 10 // 列表边距
-    containerEdge = 5 // 容器边距
+    containerMargin = 5 // 容器边距
     fontSize = 14 // 字体大小
     navHeight = 50
 
@@ -71,7 +71,7 @@ class Keyboard extends Clipboard {
 
     getButtonView(button, align) {
         const size = $size(38, 38)
-        const edges = this.containerEdge
+        const edges = this.containerMargin
         return {
             type: "button",
             props: Object.assign(
@@ -155,7 +155,7 @@ class Keyboard extends Clipboard {
             }
         ]
 
-        BarButtonItem.edges = this.containerEdge // 设置按钮边距
+        BarButtonItem.edges = this.containerMargin // 设置按钮边距
         return buttons.map(button => {
             const barButtonItem = new BarButtonItem()
             return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped)
@@ -204,7 +204,7 @@ class Keyboard extends Clipboard {
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.super).offset(this.containerEdge)
+                                make.left.equalTo(view.super).offset(this.containerMargin)
                             }
                         }
                     ].concat(this.tabView(), this.getTopButtons())
@@ -333,12 +333,12 @@ class Keyboard extends Clipboard {
         const blurBox = UIKit.blurBox(
             {
                 smoothCorners: true,
-                cornerRadius: this.containerEdge * 2
+                cornerRadius: this.containerMargin * 2
             },
             [listView],
             (make, view) => {
                 make.bottom.top.equalTo(view.super)
-                make.left.right.inset(this.containerEdge)
+                make.left.right.inset(this.containerMargin)
             }
         )
         superListView.views[0] = blurBox
