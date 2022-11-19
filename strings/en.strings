@@ -26,6 +26,7 @@
 "COPIED" = "Copied";
 "SORT" = "Sort";
 "ACTIONS" = "Actions";
+"MORE_ACTIONS" = "More Actions";
 "PREVIEW" = "Preview";
 "MAX_ITEM_LENGTH" = "Line Limit";
 "TEXT_MAX_LENGTH" = "Display Character Length";
