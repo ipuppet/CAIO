@@ -31,6 +31,12 @@ class Keyboard extends Clipboard {
         super(kernel)
         this.listId = "keyboard-clipboard-list"
 
+        this.backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
+        this.backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
+        this.backgroundColorDark = this.kernel.setting.getColor(
+            this.kernel.setting.get("keyboard.background.color.dark")
+        )
+
         this.keyboardSetting()
         this.setSingleLine()
     }
@@ -72,29 +78,42 @@ class Keyboard extends Clipboard {
     getButtonView(button, align) {
         const size = $size(38, 38)
         const edges = this.containerMargin
-        return {
-            type: "button",
-            props: Object.assign(
+
+        const blurBox = UIKit.blurBox(
+            {
+                info: { align },
+                smoothCorners: true,
+                cornerRadius: 5
+            },
+            [
                 {
-                    symbol: button.symbol,
-                    title: button.title,
-                    font: $font(16),
-                    bgcolor: $color("#ACB0B8", "#474749"),
-                    tintColor: UIKit.textColor,
-                    titleColor: UIKit.textColor,
-                    info: { align }
-                },
-                button.menu ? { menu: button.menu } : {}
-            ),
-            events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
-            layout: (make, view) => {
+                    type: "button",
+                    props: Object.assign(
+                        {
+                            symbol: button.symbol,
+                            title: button.title,
+                            font: $font(16),
+                            bgcolor: this.backgroundImage
+                                ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
+                                : $color("#ACB0B8", "#474749"),
+                            tintColor: UIKit.textColor,
+                            titleColor: UIKit.textColor,
+                            info: { align }
+                        },
+                        button.menu ? { menu: button.menu } : {}
+                    ),
+                    events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
+                    layout: $layout.fill
+                }
+            ],
+            (make, view) => {
                 if (button.title) {
                     const fontSize = $text.sizeThatFits({
                         text: button.title,
                         width: UIKit.windowSize.width,
                         font: $font(16)
                     })
-                    const width = Math.ceil(fontSize.width) + edges // 文本按钮增加内边距
+                    const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
                     make.size.equalTo($size(width, size.height))
                 } else {
                     make.size.equalTo(size)
@@ -108,7 +127,8 @@ class Keyboard extends Clipboard {
                     else make.left.inset(edges)
                 }
             }
-        }
+        )
+        return blurBox
     }
 
     getTopButtons() {
@@ -332,6 +352,7 @@ class Keyboard extends Clipboard {
 
         const blurBox = UIKit.blurBox(
             {
+                style: $blurStyle.ultraThinMaterial,
                 smoothCorners: true,
                 cornerRadius: this.containerMargin * 2
             },
@@ -346,23 +367,18 @@ class Keyboard extends Clipboard {
     }
 
     getView() {
-        const backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
-        const backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
-        const backgroundColorDark = this.kernel.setting.getColor(
-            this.kernel.setting.get("keyboard.background.color.dark")
-        )
         return {
             type: "view",
             props: {
                 id: "keyboard.main",
-                bgcolor: $color(backgroundColor, backgroundColorDark)
+                bgcolor: $color(this.backgroundColor, this.backgroundColorDark)
             },
             views: [
                 {
                     type: "image",
                     props: {
-                        image: backgroundImage,
-                        hidden: backgroundImage !== null
+                        image: $imagekit.blur(this.backgroundImage, 10),
+                        hidden: this.backgroundImage === null
                     },
                     layout: $layout.fill
                 },
