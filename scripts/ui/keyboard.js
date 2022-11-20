@@ -98,62 +98,6 @@ class Keyboard extends Clipboard {
         }
     }
 
-    getButtonView(button, align) {
-        const size = $size(38, 38)
-        const edges = this.containerMargin
-
-        const blurBox = UIKit.blurBox(
-            {
-                info: { align },
-                smoothCorners: true,
-                cornerRadius: 5
-            },
-            [
-                {
-                    type: "button",
-                    props: Object.assign(
-                        {
-                            symbol: button.symbol,
-                            title: button.title,
-                            font: $font(16),
-                            bgcolor: this.backgroundImage
-                                ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
-                                : $color("#ACB0B8", "#474749"),
-                            tintColor: UIKit.textColor,
-                            titleColor: UIKit.textColor,
-                            info: { align }
-                        },
-                        button.menu ? { menu: button.menu } : {}
-                    ),
-                    events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
-                    layout: $layout.fill
-                }
-            ],
-            (make, view) => {
-                if (button.title) {
-                    const fontSize = $text.sizeThatFits({
-                        text: button.title,
-                        width: UIKit.windowSize.width,
-                        font: $font(16)
-                    })
-                    const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
-                    make.size.equalTo($size(width, size.height))
-                } else {
-                    make.size.equalTo(size)
-                }
-                make.centerY.equalTo(view.super)
-                if (view.prev && view.prev.info.align === align) {
-                    if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
-                    else make.left.equalTo(view.prev.right).offset(edges)
-                } else {
-                    if (align === UIKit.align.right) make.right.inset(edges)
-                    else make.left.inset(edges)
-                }
-            }
-        )
-        return blurBox
-    }
-
     getTopButtons() {
         const buttons = [
             {
@@ -198,12 +142,22 @@ class Keyboard extends Clipboard {
             }
         ]
 
-        BarButtonItem.edges = this.containerMargin // 设置按钮边距
-        return buttons.map(button => {
-            const barButtonItem = new BarButtonItem()
-            return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped)
-                .definition
-        })
+        return {
+            type: "view",
+            views: buttons.map((button, i) => {
+                const barButtonItem = new BarButtonItem()
+                return barButtonItem
+                    .setAlign(UIKit.align.right)
+                    .setSymbol(button.symbol)
+                    .setEvent("tapped", button.tapped).definition
+            }),
+            layout: (make, view) => {
+                const barButtonItem = new BarButtonItem()
+                make.height.equalTo(view.super)
+                make.right.inset(this.containerMargin - barButtonItem.edges)
+                make.width.equalTo(barButtonItem.width * buttons.length + barButtonItem.edges)
+            }
+        }
     }
 
     getTopBarView() {
@@ -258,6 +212,62 @@ class Keyboard extends Clipboard {
                 make.height.equalTo(this.navHeight)
             }
         }
+    }
+
+    getButtonView(button, align) {
+        const size = $size(38, 38)
+        const edges = this.containerMargin
+
+        const blurBox = UIKit.blurBox(
+            {
+                info: { align },
+                smoothCorners: true,
+                cornerRadius: 5
+            },
+            [
+                {
+                    type: "button",
+                    props: Object.assign(
+                        {
+                            symbol: button.symbol,
+                            title: button.title,
+                            font: $font(16),
+                            bgcolor: this.backgroundImage
+                                ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
+                                : $color("#ACB0B8", "#474749"),
+                            tintColor: UIKit.textColor,
+                            titleColor: UIKit.textColor,
+                            info: { align }
+                        },
+                        button.menu ? { menu: button.menu } : {}
+                    ),
+                    events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
+                    layout: $layout.fill
+                }
+            ],
+            (make, view) => {
+                if (button.title) {
+                    const fontSize = $text.sizeThatFits({
+                        text: button.title,
+                        width: UIKit.windowSize.width,
+                        font: $font(16)
+                    })
+                    const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
+                    make.size.equalTo($size(width, size.height))
+                } else {
+                    make.size.equalTo(size)
+                }
+                make.centerY.equalTo(view.super)
+                if (view.prev && view.prev.info.align === align) {
+                    if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
+                    else make.left.equalTo(view.prev.right).offset(edges)
+                } else {
+                    if (align === UIKit.align.right) make.right.inset(edges)
+                    else make.left.inset(edges)
+                }
+            }
+        )
+        return blurBox
     }
 
     getBottomBarView() {
