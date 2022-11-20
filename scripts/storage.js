@@ -278,6 +278,13 @@ class Storage {
         return false
     }
 
+    deleteTable(table) {
+        const result = this.sqlite.update(`DELETE FROM ${table}`)
+        if (!result.result) {
+            throw result.error
+        }
+    }
+
     all(table) {
         const result = this.sqlite.query(
             `SELECT ${table}.*, tag, '${table}' AS section FROM ${table} LEFT JOIN tag ON ${table}.uuid = tag.uuid`

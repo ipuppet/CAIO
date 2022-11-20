@@ -218,11 +218,12 @@ function action() {
 
 function keyboard() {
     const Keyboard = require("./ui/keyboard")
-    const keyboard = new Keyboard(kernel).getView()
     const keyboardMaxHeight = 400
     const keyboardMinHeight = 200
 
     kernel.setting.method.previewKeyboard = () => {
+        const keyboard = new Keyboard(kernel).getView()
+
         const keyboardId = $text.uuid
         const updateHeight = height => {
             $(keyboardId).updateLayout(make => {

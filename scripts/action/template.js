@@ -1,3 +1,7 @@
+/**
+ * @typedef {import("../../action").Action} Action
+ */
+
 class MyAction extends Action {
     /**
      * 系统会调用 do() 方法

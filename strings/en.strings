@@ -41,6 +41,8 @@
 "REBUILD_DATABASE_ALERT" = "Rebuilding the database will lose the order information, do you want to confirm the rebuild?";
 "DELETE_ALL_DATA" = "Delete All Data";
 "DELETE_ALL_DATA_ALERT" = "Are you sure you want to delete all your data?";
+"DELETE_DATA" = "Delete Data";
+"DELETE_TABLE" = "Delete all data from ${table}?";
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";

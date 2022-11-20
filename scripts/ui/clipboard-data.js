@@ -18,6 +18,9 @@ class ClipboardData {
     // 键为 md5，值为 1 或 undefined 用来去重
     savedClipboardIndex = {}
 
+    tabItems = [$l10n("PIN"), $l10n("CLIPS")]
+    tabItemsIndex = ["pin", "clipboard"]
+
     /**
      * @param {AppKernel} kernel
      */
@@ -33,8 +36,12 @@ class ClipboardData {
         return $cache.get("caio.main.tab.index") ?? 0
     }
 
-    get folder() {
+    get table() {
         return this.tabItemsIndex[this.tabIndex]
+    }
+
+    get tableL10n() {
+        return this.tabItems[this.tabIndex]
     }
 
     get savedClipboard() {
@@ -119,11 +126,11 @@ class ClipboardData {
         try {
             // 写入数据库
             this.kernel.storage.beginTransaction()
-            this.kernel.storage.insert(this.folder, data)
+            this.kernel.storage.insert(this.table, data)
             if (data.next) {
                 // 更改指针
                 this.clipboard[0].prev = data.uuid
-                this.kernel.storage.update(this.folder, this.clipboard[0])
+                this.kernel.storage.update(this.table, this.clipboard[0])
             }
             this.kernel.storage.commit()
 
@@ -140,7 +147,7 @@ class ClipboardData {
     }
 
     delete(uuid, row) {
-        const folder = this.folder
+        const folder = this.table
 
         try {
             // 删除数据库中的值
@@ -196,7 +203,7 @@ class ClipboardData {
         })
 
         try {
-            this.kernel.storage.updateText(this.folder, uuid, text)
+            this.kernel.storage.updateText(this.table, uuid, text)
 
             this.kernel.print(`data changed at index [${row}]\n${oldData}\n↓\n${text}`)
 
@@ -218,7 +225,7 @@ class ClipboardData {
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
 
         try {
-            const folder = this.folder
+            const folder = this.table
             if (!this.clipboard[to]) {
                 this.clipboard[to] = {
                     uuid: null,
