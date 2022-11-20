@@ -87,6 +87,8 @@
 "SEND" = "Send";
 "OPEN_IN_JSBOX" = "Open in JSBox";
 "SWITCH_KEYBOARD" = "Switch Keyboard";
+"TAPTIC_ENGINE" = "Taptic Engine";
+"TAPTIC_ENGINE_FOR_DELETE" = "Taptic Engine For Delete";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
