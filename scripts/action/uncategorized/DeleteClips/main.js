@@ -11,7 +11,12 @@ class MyAction extends Action {
         })
         if (res.index === 0) {
             // 确认删除
-            this.cleanAllClips()
+            try {
+                this.cleanAllClips()
+                $ui.success($l10n("DONE"))
+            } catch (error) {
+                $ui.error(error)
+            }
         }
     }
 }

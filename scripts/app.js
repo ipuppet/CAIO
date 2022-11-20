@@ -11,6 +11,7 @@ const Storage = require("./storage")
 const Clipboard = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
 
+const compatibility = require("./compatibility")
 const settingMethods = require("./setting-methods")
 
 const fileStorage = new FileStorage()
@@ -80,6 +81,9 @@ class AppKernel extends Kernel {
 class AppUI {
     static renderMainUI() {
         const kernel = new AppKernel()
+        // 兼容性操作
+        compatibility(kernel)
+
         const buttons = {
             clipboard: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
             actions: { icon: "command", title: $l10n("ACTIONS") },

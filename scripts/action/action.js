@@ -106,7 +106,7 @@ class Action {
 
     /**
      * TODO 废弃
-     * @returns 
+     * @returns
      */
     getAllContent() {
         return this.getAllClipboard()
@@ -178,7 +178,7 @@ class Action {
             this.#kernel.storage.deleteTable("clipboard")
         } catch (error) {
             this.#kernel.error(error)
-            $ui.error(error)
+            throw error
         }
     }
 }
