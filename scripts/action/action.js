@@ -162,7 +162,7 @@ class Action {
         return text.match(regex) ?? []
     }
 
-    cleanAllClips() {
+    clearAllClips() {
         try {
             this.#kernel.storage.deleteTable("clipboard")
         } catch (error) {
