@@ -58,10 +58,10 @@ class MyAction extends Action {
  * l10n() {
         return {
             "zh-Hans": {
-                "clipboard.clear.success": "剪切板已清空"
+                "clipboard.clean.success": "剪切板已清空"
             },
             en: {
-                "clipboard.clear.success": "Clipboard is cleared"
+                "clipboard.clean.success": "Clipboard is cleaned"
             }
         }
     }

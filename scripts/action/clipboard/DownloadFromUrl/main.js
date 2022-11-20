@@ -12,9 +12,7 @@ class MyAction extends Action {
     }
 
     async do() {
-        const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/ig
-        const text = this.text ?? ""
-        const url = text.match(regex, text) ?? []
+        const url = this.getUrls()
         let response = undefined
         if (url.length > 1) {
             $ui.menu({
@@ -29,10 +27,12 @@ class MyAction extends Action {
             $ui.warning("未检测到链接")
             return
         }
-        $share.sheet([{
-            name: response.response.suggestedFilename,
-            data: response.data
-        }])
+        $share.sheet([
+            {
+                name: response.response.suggestedFilename,
+                data: response.data
+            }
+        ])
         return response
     }
 }

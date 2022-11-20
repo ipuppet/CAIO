@@ -17,7 +17,7 @@ class MyAction extends Action {
      * 系统会调用 do() 方法
      */
     do() {
-        $clipboard.clean()
+        $clipboard.clear()
         $ui.success($l10n("clipboard.clean.success"))
     }
 }
