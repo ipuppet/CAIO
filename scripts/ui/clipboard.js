@@ -32,8 +32,6 @@ class Clipboard extends ClipboardData {
     menuItemActionMaxCount = 5
 
     tabHeight = 44
-    tabItems = [$l10n("PIN"), $l10n("CLIPS")]
-    tabItemsIndex = ["pin", "clipboard"]
 
     /**
      * @param {AppKernel} kernel
@@ -146,23 +144,21 @@ class Clipboard extends ClipboardData {
      * @returns
      */
     setCopied(uuid, row, isUpdateIndicator = true) {
-        if (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex && row === this.copied?.row) {
+        if (
+            !uuid ||
+            (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex && row === this.copied?.row)
+        ) {
             return
         }
 
         if (isUpdateIndicator) {
             $delay(0.3, () => this.updateList())
         }
-        if (uuid) {
-            if (this.copied.uuid !== uuid) {
-                this.copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
-            }
-            this.copied.tabIndex = this.tabIndex
-            this.copied.row = row
-        } else {
-            this.copied = {}
-            $clipboard.clear()
+        if (this.copied.uuid !== uuid) {
+            this.copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
         }
+        this.copied.tabIndex = this.tabIndex
+        this.copied.row = row
         $cache.set("clipboard.copied", this.copied)
     }
 
@@ -191,8 +187,6 @@ class Clipboard extends ClipboardData {
             const text = $clipboard.text
 
             if (!text || text === "") {
-                // 删除剪切板信息
-                this.setCopied()
                 return false
             }
 
@@ -242,7 +236,8 @@ class Clipboard extends ClipboardData {
             super.delete(uuid, row)
             // 删除剪切板信息
             if (this.copied.uuid === uuid) {
-                this.setCopied()
+                this.copied = {}
+                $clipboard.clear()
             }
         } catch (error) {
             $ui.alert(error)
@@ -625,7 +620,7 @@ class Clipboard extends ClipboardData {
         }
     }
 
-    getReorderView() {
+    getListEditerView() {
         const reorderView = {
             type: "list",
             props: {
@@ -675,7 +670,35 @@ class Clipboard extends ClipboardData {
             .setView(reorderView)
             .addNavBar({
                 title: "",
-                popButton: { title: $l10n("DONE") }
+                popButton: { title: $l10n("DONE") },
+                rightButtons: [
+                    {
+                        title: $l10n("DELETE"),
+                        color: $color("red"),
+                        tapped: async () => {
+                            const res = await $ui.alert({
+                                title: $l10n("DELETE_DATA"),
+                                message: $l10n("DELETE_TABLE").replace("${table}", this.tableL10n),
+                                actions: [
+                                    { title: $l10n("DELETE"), style: $alertActionType.destructive },
+                                    { title: $l10n("CANCEL") }
+                                ]
+                            })
+                            if (res.index === 0) {
+                                // 确认删除
+                                try {
+                                    this.kernel.storage.deleteTable(this.table)
+                                    sheet.dismiss()
+                                    this.loadSavedClipboard()
+                                    this.updateList()
+                                } catch (error) {
+                                    this.kernel.error(error)
+                                    $ui.error(error)
+                                }
+                            }
+                        }
+                    }
+                ]
             })
             .preventDismiss()
             .init()
@@ -738,6 +761,11 @@ class Clipboard extends ClipboardData {
                                 this.update(content.info.uuid, text, indexPath.row)
                         })
                     }
+                },
+                pulled: sender => {
+                    this.loadSavedClipboard()
+                    this.updateList()
+                    $delay(0.5, () => sender.endRefreshing())
                 }
             }
         }
@@ -786,7 +814,7 @@ class Clipboard extends ClipboardData {
             .setLeftButtons([
                 {
                     title: $l10n("EDIT"),
-                    tapped: () => this.getReorderView()
+                    tapped: () => this.getListEditerView()
                 },
                 {
                     symbol: "square.and.arrow.down.on.square",

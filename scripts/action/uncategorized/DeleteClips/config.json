@@ -1,0 +1,6 @@
+{
+    "icon": "trash",
+    "color": "#FF0000",
+    "name": "删除保存的剪切板",
+    "description": "删除保存的剪切板（不包括置顶）"
+}

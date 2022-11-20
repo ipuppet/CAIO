@@ -34,13 +34,18 @@ class ActionData {
 
 class Action {
     /**
+     * @type {AppKernel}
+     */
+    #kernel
+
+    /**
      *
      * @param {AppKernel} kernel
-     * @param {*} config
+     * @param {object} config
      * @param {ActionData} data
      */
     constructor(kernel, config, data) {
-        this.kernel = kernel
+        this.#kernel = kernel
         this.config = config
 
         Object.assign(this, data)
@@ -94,22 +99,26 @@ class Action {
      */
     getAllClipboard() {
         return {
-            clipboard: this.kernel.storage.all("clipboard").map(item => item.text),
-            pin: this.kernel.storage.all("pin").map(item => item.text)
+            clipboard: this.#kernel.storage.all("clipboard").map(item => item.text),
+            pin: this.#kernel.storage.all("pin").map(item => item.text)
         }
     }
 
+    /**
+     * TODO 废弃
+     * @returns 
+     */
     getAllContent() {
         return this.getAllClipboard()
     }
 
     setContent(text) {
         this.text = text
-        this.kernel.editor.setContent(text)
+        this.#kernel.editor.setContent(text)
     }
 
     getAction(type, dir, data) {
-        return this.kernel.actionManager.getAction(type, dir, data)
+        return this.#kernel.actionManager.getAction(type, dir, data)
     }
 
     async runAction(type, name) {
@@ -119,7 +128,7 @@ class Action {
 
     async request(url, method, body = {}, header = {}) {
         try {
-            this.kernel.print(`sending request [${method}]: ${url}`)
+            this.#kernel.print(`sending request [${method}]: ${url}`)
             const resp = await $http.request({
                 header,
                 url,
@@ -162,6 +171,15 @@ class Action {
         const regex = new RegExp(strRegex, "gi")
         const text = this.text ?? ""
         return text.match(regex) ?? []
+    }
+
+    cleanAllClips() {
+        try {
+            this.#kernel.storage.deleteTable("clipboard")
+        } catch (error) {
+            this.#kernel.error(error)
+            $ui.error(error)
+        }
     }
 }
 
