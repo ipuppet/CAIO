@@ -302,7 +302,7 @@
                                     "cursor.rays",
                                     "#FF8C00"
                                 ],
-                                "title": "Taptic Engine",
+                                "title": "TAPTIC_ENGINE",
                                 "type": "switch",
                                 "key": "keyboard.tapticEngine",
                                 "value": true
@@ -335,7 +335,7 @@
                                     "cursor.rays",
                                     "#FF8C00"
                                 ],
-                                "title": "Taptic Engine For Delete",
+                                "title": "TAPTIC_ENGINE_FOR_DELETE",
                                 "type": "switch",
                                 "key": "keyboard.tapticEngineForDelete",
                                 "value": true

@@ -9,7 +9,7 @@
 "CLICK_TO_OPEN_JSBOX" = "点击标题打开主应用。";
 
 "CLIPS" = "剪切板";
-"CLIPBOARD" = "Clipboard";
+"CLIPBOARD" = "剪切板";
 "UNIVERSAL_CLIPBOARD" = "通用剪贴板";
 "UNIVERSAL_CLIPBOARD_TIPS" = "用剪贴板允许您在iPhone上复制某些内容，然后使用iCloud将其粘贴到Mac上(反之亦然)。";
 "CLIPBOARD_STRUCTURE_ERROR" = "剪切板数据结构异常";
@@ -87,6 +87,8 @@
 "SEND" = "发送";
 "OPEN_IN_JSBOX" = "在 JSBox 中打开";
 "SWITCH_KEYBOARD" = "切换键盘";
+"TAPTIC_ENGINE" = "触感反馈";
+"TAPTIC_ENGINE_FOR_DELETE" = "删除按钮触感反馈";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";
