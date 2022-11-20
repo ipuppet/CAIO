@@ -46,7 +46,10 @@ class Keyboard extends Clipboard {
     }
 
     static set keyboardHeight(height) {
-        $cache.set("caio.keyboard.height", height)
+        $cache.setAsync({
+            key: "caio.keyboard.height",
+            value: height
+        })
     }
 
     listReady() {
@@ -71,7 +74,16 @@ class Keyboard extends Clipboard {
     keyboardSetting() {
         if ($app.env !== $env.keyboard) return
 
-        $keyboard.height = Keyboard.keyboardHeight
+        const timer = $timer.schedule({
+            interval: 0,
+            handler: () => {
+                if ($keyboard.height !== Keyboard.keyboardHeight) {
+                    $keyboard.height = Keyboard.keyboardHeight
+                } else {
+                    timer.invalidate()
+                }
+            }
+        })
         if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
             $keyboard.barHidden = true
         }
@@ -83,6 +95,122 @@ class Keyboard extends Clipboard {
                 $device.taptic(level)
             }
             tapped(...args)
+        }
+    }
+
+    getTopButtons() {
+        const buttons = [
+            {
+                // 关闭键盘
+                symbol: "keyboard.chevron.compact.down",
+                tapped: this.keyboardTapped(() => $keyboard.dismiss())
+            },
+            {
+                // 手动读取剪切板
+                symbol: "square.and.arrow.down.on.square",
+                tapped: this.keyboardTapped(animate => {
+                    animate.start()
+                    this.readClipboard(true)
+                    animate.done()
+                })
+            },
+            {
+                // Action
+                symbol: "bolt.circle",
+                tapped: this.keyboardTapped((animate, sender) => {
+                    const popover = $ui.popover({
+                        sourceView: sender,
+                        directions: $popoverDirection.up,
+                        size: $size(200, 300),
+                        views: [
+                            this.kernel.actionManager.getActionListView(action => {
+                                popover.dismiss()
+                                $delay(0.5, async () => {
+                                    const actionData = new ActionData({
+                                        env: ActionEnv.keyboard,
+                                        textBeforeInput: $keyboard.textBeforeInput,
+                                        textAfterInput: $keyboard.textAfterInput,
+                                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
+                                    })
+
+                                    action(actionData)
+                                })
+                            })
+                        ]
+                    })
+                })
+            }
+        ]
+
+        return {
+            type: "view",
+            views: buttons.map((button, i) => {
+                const barButtonItem = new BarButtonItem()
+                return barButtonItem
+                    .setAlign(UIKit.align.right)
+                    .setSymbol(button.symbol)
+                    .setEvent("tapped", button.tapped).definition
+            }),
+            layout: (make, view) => {
+                const barButtonItem = new BarButtonItem()
+                make.height.equalTo(view.super)
+                make.right.inset(this.containerMargin - barButtonItem.edges)
+                make.width.equalTo(barButtonItem.width * buttons.length + barButtonItem.edges)
+            }
+        }
+    }
+
+    getTopBarView() {
+        return {
+            // 顶部按钮栏
+            type: "view",
+            views: [
+                {
+                    type: "view",
+                    layout: $layout.fill,
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                text: $l10n("CAIO"),
+                                font: $font("bold", 20)
+                            },
+                            events: {
+                                tapped: () => this.kernel.openInJsbox(),
+                                ready: sender => {
+                                    const cache = $cache.get("tips.keyboard.title")
+                                    if (cache) return
+                                    $cache.set("tips.keyboard.title", true)
+                                    $ui.popover({
+                                        sourceView: sender,
+                                        size: $size(200, 60),
+                                        directions: $popoverDirection.up,
+                                        views: [
+                                            {
+                                                type: "label",
+                                                props: {
+                                                    lines: 0,
+                                                    text: $l10n("CLICK_TO_OPEN_JSBOX"),
+                                                    align: $align.center
+                                                },
+                                                layout: $layout.fillSafeArea
+                                            }
+                                        ]
+                                    })
+                                }
+                            },
+                            layout: (make, view) => {
+                                make.centerY.equalTo(view.super)
+                                make.left.equalTo(view.super).offset(this.containerMargin)
+                            }
+                        }
+                    ].concat(this.tabView(), this.getTopButtons())
+                }
+            ],
+            layout: (make, view) => {
+                make.top.width.equalTo(view.super)
+                make.height.equalTo(this.navHeight)
+            }
         }
     }
 
@@ -140,112 +268,6 @@ class Keyboard extends Clipboard {
             }
         )
         return blurBox
-    }
-
-    getTopButtons() {
-        const buttons = [
-            {
-                // 关闭键盘
-                symbol: "keyboard.chevron.compact.down",
-                tapped: this.keyboardTapped(() => $keyboard.dismiss())
-            },
-            {
-                // 手动读取剪切板
-                symbol: "square.and.arrow.down.on.square",
-                tapped: this.keyboardTapped(animate => {
-                    animate.start()
-                    this.readClipboard(true)
-                    animate.done()
-                })
-            },
-            {
-                // Action
-                symbol: "bolt.circle",
-                tapped: this.keyboardTapped((animate, sender) => {
-                    const popover = $ui.popover({
-                        sourceView: sender,
-                        directions: $popoverDirection.up,
-                        size: $size(200, 300),
-                        views: [
-                            this.kernel.actionManager.getActionListView(action => {
-                                popover.dismiss()
-                                $delay(0.5, async () => {
-                                    const actionData = new ActionData({
-                                        env: ActionEnv.keyboard,
-                                        textBeforeInput: $keyboard.textBeforeInput,
-                                        textAfterInput: $keyboard.textAfterInput,
-                                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
-                                    })
-
-                                    action(actionData)
-                                })
-                            })
-                        ]
-                    })
-                })
-            }
-        ]
-
-        BarButtonItem.edges = this.containerMargin // 设置按钮边距
-        return buttons.map(button => {
-            const barButtonItem = new BarButtonItem()
-            return barButtonItem.setAlign(UIKit.align.right).setSymbol(button.symbol).setEvent("tapped", button.tapped)
-                .definition
-        })
-    }
-
-    getTopBarView() {
-        return {
-            // 顶部按钮栏
-            type: "view",
-            views: [
-                {
-                    type: "view",
-                    layout: $layout.fill,
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                text: $l10n("CAIO"),
-                                font: $font("bold", 20)
-                            },
-                            events: {
-                                tapped: () => this.kernel.openInJsbox(),
-                                ready: sender => {
-                                    const cache = $cache.get("tips.keyboard.title")
-                                    if (cache) return
-                                    $cache.set("tips.keyboard.title", true)
-                                    $ui.popover({
-                                        sourceView: sender,
-                                        size: $size(200, 60),
-                                        directions: $popoverDirection.up,
-                                        views: [
-                                            {
-                                                type: "label",
-                                                props: {
-                                                    lines: 0,
-                                                    text: $l10n("CLICK_TO_OPEN_JSBOX"),
-                                                    align: $align.center
-                                                },
-                                                layout: $layout.fillSafeArea
-                                            }
-                                        ]
-                                    })
-                                }
-                            },
-                            layout: (make, view) => {
-                                make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.super).offset(this.containerMargin)
-                            }
-                        }
-                    ].concat(this.tabView(), this.getTopButtons())
-                }
-            ],
-            layout: (make, view) => {
-                make.top.width.equalTo(view.super)
-                make.height.equalTo(this.navHeight)
-            }
-        }
     }
 
     getBottomBarView() {

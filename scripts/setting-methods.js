@@ -246,7 +246,7 @@ function keyboard() {
                                 type: $kbType.number,
                                 text: Keyboard.keyboardHeight,
                                 handler: text => {
-                                    const reg = /^[0-9]+.?[0-9]*$/
+                                    const reg = /^[0-9]+$/
                                     if (reg.test(text)) {
                                         let value = Number(text)
                                         value = Math.min(value, keyboardMaxHeight)
@@ -257,7 +257,7 @@ function keyboard() {
 
                                         updateHeight(value)
                                     } else {
-                                        $ui.toast("Not a Number")
+                                        $ui.toast("Only integers can be entered.")
                                     }
                                 }
                             })
@@ -275,7 +275,10 @@ function keyboard() {
                     events: {
                         ready: sender => (sender.value = getPercentage(Keyboard.keyboardHeight)),
                         changed: sender => {
-                            const value = sender.value * (keyboardMaxHeight - keyboardMinHeight) + keyboardMinHeight
+                            const value = Math.floor(
+                                sender.value * (keyboardMaxHeight - keyboardMinHeight) + keyboardMinHeight
+                            )
+
                             sender.prev.text = value
                             updateHeight(value)
                         }
