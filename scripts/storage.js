@@ -12,12 +12,12 @@ class Storage {
     constructor(kernel) {
         this.kernel = kernel
         this.dbName = "CAIO.db"
-        this.localDb = `${this.kernel.fileStorage.basePath}/${this.dbName}`
-        this.imagePath = `${this.kernel.fileStorage.basePath}/image`
+        this.localDb = `/${this.dbName}`
+        this.imagePath = `/image`
         this.imageOriginalPath = `${this.imagePath}/original`
         this.imagePreviewPath = `${this.imagePath}/preview`
 
-        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
+        this.tempPath = `/temp`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
         this.tempImagePath = `${this.tempPath}/image`
 
@@ -28,7 +28,7 @@ class Storage {
 
     init() {
         // 初始化表
-        this.sqlite = $sqlite.open(this.localDb)
+        this.sqlite = $sqlite.open(this.kernel.fileStorage.filePath(this.localDb))
         this.sqlite.update(
             "CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
@@ -36,20 +36,11 @@ class Storage {
             "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
         this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
-
-        // 初始化目录
-        const pathList = [this.tempPath, this.imagePath, this.imagePreviewPath, this.imageOriginalPath]
-
-        pathList.forEach(path => {
-            if (!$file.exists(path)) {
-                $file.mkdir(path)
-            }
-        })
     }
 
     rebuild() {
         const db = this.tempPath + "/rebuild.db"
-        $file.delete(db)
+        this.kernel.fileStorage.delete(db)
         const storage = new Storage(this.kernel)
         storage.localDb = db
         storage.init()
@@ -110,36 +101,36 @@ class Storage {
             }
         })
 
-        $file.copy({
-            src: db,
-            dst: this.localDb
-        })
+        this.kernel.fileStorage.copy(db, this.localDb)
     }
 
     deleteAllData() {
-        $file.delete(this.imagePath)
-        $file.delete(this.localDb)
+        this.kernel.fileStorage.delete(this.imagePath)
+        this.kernel.fileStorage.delete(this.localDb)
     }
 
     clearTemp() {
-        $file.delete(this.tempPath)
-        $file.mkdir(this.tempPath)
+        this.kernel.fileStorage.delete(this.tempPath)
     }
 
     async export(callback) {
-        $file.copy({ src: this.localDb, dst: this.tempDbFile })
-        $file.copy({ src: this.imagePath, dst: this.tempImagePath })
+        this.clearTemp()
+        this.kernel.fileStorage.copy(this.localDb, this.tempDbFile)
+        this.kernel.fileStorage.copy(this.imagePath, this.tempImagePath)
         const exportFile = this.tempPath + "/" + this.exportFileName
-        await $archiver.zip({ directory: this.tempPath, dest: exportFile })
+        await $archiver.zip({
+            directory: this.kernel.fileStorage.filePath(this.tempPath),
+            dest: this.kernel.fileStorage.filePath(exportFile)
+        })
         $share.sheet({
             items: [
                 {
                     name: this.exportFileName,
-                    data: $data({ path: exportFile })
+                    data: $data({ path: this.kernel.fileStorage.filePath(exportFile) })
                 }
             ],
             handler: success => {
-                $file.delete(exportFile)
+                this.kernel.fileStorage.delete(exportFile)
                 callback(success)
             }
         })
@@ -147,19 +138,17 @@ class Storage {
 
     async import(data) {
         if (data.fileName.slice(-2) === "db") {
-            if (!$file.write({ data: data, path: this.localDb })) {
+            if (!this.kernel.fileStorage.writeSync(this.localDb, data)) {
                 throw new Error("WRITE_DB_FILE_FAILED")
             }
         } else if (data.fileName.slice(-3) === "zip") {
-            if (!(await $archiver.unzip({ file: data, dest: this.tempPath }))) {
+            if (!(await $archiver.unzip({ file: data, dest: this.kernel.fileStorage.filePath(this.tempPath) }))) {
                 throw new Error("UNZIP_FAILED")
             }
-            $file.write({ data: $data({ path: this.tempDbFile }), path: this.localDb })
+            this.kernel.fileStorage.move(this.tempDbFile, this.localDb)
             // image
-            $file.move({ src: this.tempImagePath, dst: this.imagePath })
+            this.kernel.fileStorage.move(this.tempImagePath, this.imagePath)
         }
-        $sqlite.close(this.sqlite)
-        this.sqlite = $sqlite.open(this.localDb)
     }
 
     sort(data, maxLoop = 9000) {
@@ -299,14 +288,8 @@ class Storage {
                 original: `${this.imageOriginalPath}/${fileName}.png`,
                 preview: `${this.imagePreviewPath}/${fileName}.jpg`
             }
-            $file.write({
-                data: image.png,
-                path: path.original
-            })
-            $file.write({
-                data: Kernel.compressImage(image).jpg(0.8),
-                path: path.preview
-            })
+            this.kernel.fileStorage.write(path.original, image.png)
+            this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
             clipboard.text = this.pathToKey(path)
         }
         const result = this.sqlite.update({
@@ -358,8 +341,8 @@ class Storage {
         // delete image file
         const path = this.keyToPath(clipboard?.text)
         if (path) {
-            $file.delete(path.original)
-            $file.delete(path.preview)
+            this.kernel.fileStorage.delete(path.original)
+            this.kernel.fileStorage.delete(path.preview)
         }
     }
 

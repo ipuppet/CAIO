@@ -131,16 +131,17 @@ function action() {
         animate.actionStart()
         // 备份动作
         const fileName = "actions.zip"
-        const tempPath = `${kernel.fileStorage.basePath}/${fileName}`
+        const tempPath = `/${fileName}`
+        const jsboxPath = kernel.fileStorage.filePath(tempPath)
         $archiver.zip({
             directory: kernel.actionManager.userActionPath,
-            dest: tempPath,
+            dest: jsboxPath,
             handler: () => {
                 $share.sheet({
                     items: [
                         {
                             name: fileName,
-                            data: $data({ path: tempPath })
+                            data: $data({ path: jsboxPath })
                         }
                     ],
                     handler: success => {
@@ -149,7 +150,7 @@ function action() {
                         } else {
                             animate.actionCancel()
                         }
-                        $file.delete(tempPath)
+                        kernel.fileStorage.delete(tempPath)
                     }
                 })
             }
@@ -174,7 +175,7 @@ function action() {
                                 if ($file.isDirectory(`${path}/${item}`)) {
                                     $file.copy({
                                         src: `${path}/${item}`,
-                                        dst: `${kernel.actionManager.userActionPath}${item}`
+                                        dst: `${kernel.actionManager.userActionPath}/${item}`
                                     })
                                 }
                             })
