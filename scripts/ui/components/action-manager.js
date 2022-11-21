@@ -735,7 +735,7 @@ class ActionManager {
                                     },
                                     layout: (make, view) => {
                                         make.center.equalTo(view.super)
-                                        make.size.equalTo(BarButtonItem.iconSize)
+                                        make.size.equalTo(BarButtonItem.style.iconSize)
                                     }
                                 }
                             ],
@@ -750,7 +750,7 @@ class ActionManager {
                             },
                             layout: make => {
                                 make.top.right.inset(0)
-                                make.size.equalTo(BarButtonItem.size)
+                                make.size.equalTo(BarButtonItem.style.width)
                             }
                         },
                         {
