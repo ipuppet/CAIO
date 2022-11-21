@@ -162,12 +162,23 @@ class Action {
         return text.match(regex) ?? []
     }
 
-    clearAllClips() {
-        try {
-            this.#kernel.storage.deleteTable("clipboard")
-        } catch (error) {
-            this.#kernel.error(error)
-            throw error
+    async clearAllClips() {
+        const res = await $ui.alert({
+            title: $l10n("DELETE_DATA"),
+            message: $l10n("DELETE_TABLE").replace("${table}", $l10n("CLIPS")),
+            actions: [{ title: $l10n("DELETE"), style: $alertActionType.destructive }, { title: $l10n("CANCEL") }]
+        })
+        if (res.index === 0) {
+            // 确认删除
+            try {
+                this.#kernel.storage.deleteTable("clipboard")
+                return true
+            } catch (error) {
+                this.#kernel.error(error)
+                throw error
+            }
+        } else {
+            return false
         }
     }
 }
