@@ -373,9 +373,9 @@ class Keyboard extends Clipboard {
             const content = data.content
             const text = content.info.text
             const path = this.kernel.storage.keyToPath(text)
-            if (path && $file.exists(path.original)) {
+            if (path && this.kernel.fileStorage.exists(path.original)) {
                 $quicklook.open({
-                    image: $file.read(path.original)?.image
+                    image: this.kernel.fileStorage.readSync(path.original)?.image
                 })
             } else {
                 $keyboard.insert(content.info.text)

@@ -335,8 +335,8 @@ class Clipboard extends ClipboardData {
      */
     copy(text, uuid, row) {
         const path = this.kernel.storage.keyToPath(text)
-        if (path && $file.exists(path.original)) {
-            $clipboard.image = $file.read(path.original).image
+        if (path && this.kernel.fileStorage.exists(path.original)) {
+            $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
         } else {
             this.setClipboardText(text)
         }
@@ -415,8 +415,8 @@ class Clipboard extends ClipboardData {
                             const text = sender.object(indexPath).content.info.text
                             let shareContent = text
                             const path = this.kernel.storage.keyToPath(text)
-                            if (path && $file.exists(path.original)) {
-                                const image = $file.read(path.original)?.image?.png
+                            if (path && this.kernel.fileStorage.exists(path.original)) {
+                                const image = this.kernel.fileStorage.readSync(path.original)?.image?.png
                                 shareContent = {
                                     name: image.fileName,
                                     data: image
@@ -751,9 +751,9 @@ class Clipboard extends ClipboardData {
                     const content = data.content
                     const text = content.info.text
                     const path = this.kernel.storage.keyToPath(text)
-                    if (path && $file.exists(path.original)) {
+                    if (path && this.kernel.fileStorage.exists(path.original)) {
                         $quicklook.open({
-                            image: $file.read(path.original)?.image
+                            image: this.kernel.fileStorage.readSync(path.original)?.image
                         })
                     } else {
                         this.edit(content.info.text, text => {
