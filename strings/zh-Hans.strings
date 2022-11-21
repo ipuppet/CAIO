@@ -84,6 +84,7 @@
 "BACKGROUND_COLOR_DARK" = "深色模式背景色";
 "BACKGROUND_IMAGE" = "背景图片";
 "DELETE_DELAY" = "删除延时";
+"SWITCH_AFTER_INSERT" = "输入后切换";
 "JSBOX_TOOLBAR" = "JSBox 工具栏";
 "QUICK_START_SCRIPTS" = "快速启动脚本";
 "SEND" = "发送";

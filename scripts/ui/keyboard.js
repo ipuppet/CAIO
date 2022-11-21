@@ -30,6 +30,8 @@ class Keyboard extends Clipboard {
     constructor(kernel) {
         super(kernel)
         this.listId = "keyboard-clipboard-list"
+        this.keyboardSwitchLockId = "keyboard-switch-lock"
+        this.keyboardSwitchLockKey = "caio.keyboard.switch.lock"
 
         this.backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
         this.backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
@@ -39,17 +41,36 @@ class Keyboard extends Clipboard {
 
         this.keyboardSetting()
         this.setSingleLine()
+
+        if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
+            $cache.set(this.keyboardSwitchLockKey, false)
+        }
     }
 
-    static get keyboardHeight() {
-        return $cache.get("caio.keyboard.height") ?? 267
+    get keyboardHeight() {
+        return this.kernel.setting.get("keyboard.previewAndHeight")
     }
 
-    static set keyboardHeight(height) {
-        $cache.setAsync({
-            key: "caio.keyboard.height",
-            value: height
-        })
+    set keyboardHeight(height) {
+        this.kernel.setting.set("keyboard.previewAndHeight", height)
+    }
+
+    /**
+     *
+     * @returns {boolean} true: lock, false: unlock
+     */
+    getKeyboardSwitchLock() {
+        const lock = $cache.get(this.keyboardSwitchLockKey)
+        if (typeof lock !== "boolean") {
+            $cache.set(this.keyboardSwitchLockKey, true)
+        }
+        return lock
+    }
+
+    switchKeyboardSwitchLock() {
+        const lock = $cache.get(this.keyboardSwitchLockKey)
+        $cache.set(this.keyboardSwitchLockKey, !lock)
+        $(this.keyboardSwitchLockId).symbol = !lock ? "lock" : "lock.open"
     }
 
     listReady() {
@@ -77,8 +98,8 @@ class Keyboard extends Clipboard {
         const timer = $timer.schedule({
             interval: 0,
             handler: () => {
-                if ($keyboard.height !== Keyboard.keyboardHeight) {
-                    $keyboard.height = Keyboard.keyboardHeight
+                if ($keyboard.height !== this.keyboardHeight) {
+                    $keyboard.height = this.keyboardHeight
                 } else {
                     timer.invalidate()
                 }
@@ -231,6 +252,7 @@ class Keyboard extends Clipboard {
                         {
                             symbol: button.symbol,
                             title: button.title,
+                            id: button.id ?? $text.uuid,
                             font: $font(16),
                             bgcolor: this.backgroundImage
                                 ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
@@ -294,6 +316,15 @@ class Keyboard extends Clipboard {
                 }
             })
         }
+
+        if (this.kernel.setting.get("keyboard.switchAfterInsert")) {
+            leftButtons.push({
+                symbol: this.getKeyboardSwitchLock() ? "lock" : "lock.open",
+                id: this.keyboardSwitchLockId,
+                tapped: this.keyboardTapped(() => this.switchKeyboardSwitchLock())
+            })
+        }
+
         leftButtons.push({
             symbol: "paperplane",
             menu: {
@@ -379,6 +410,9 @@ class Keyboard extends Clipboard {
                 })
             } else {
                 $keyboard.insert(content.info.text)
+                if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {
+                    $keyboard.next()
+                }
             }
         }
         listView.props.separatorInset = $insets(0, this.left_right, 0, this.left_right)

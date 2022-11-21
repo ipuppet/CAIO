@@ -84,6 +84,7 @@
 "BACKGROUND_COLOR_DARK" = "Dark Background Color";
 "BACKGROUND_IMAGE" = "Background Image";
 "DELETE_DELAY" = "Delete Delay";
+"SWITCH_AFTER_INSERT" = "Switch After Insert";
 "JSBOX_TOOLBAR" = "JSBox Toolbar";
 "QUICK_START_SCRIPTS" = "Quick Start Scripts";
 "SEND" = "Send";

@@ -258,7 +258,8 @@
                                 "title": "PREVIEW",
                                 "type": "push",
                                 "key": "keyboard.previewAndHeight",
-                                "view": "this.method.previewKeyboard"
+                                "view": "this.method.previewKeyboard",
+                                "value": 267
                             }
                         ]
                     },
@@ -297,6 +298,16 @@
                     },
                     {
                         "items": [
+                            {
+                                "icon": [
+                                    "globe",
+                                    "#1899c4"
+                                ],
+                                "title": "SWITCH_AFTER_INSERT",
+                                "type": "switch",
+                                "key": "keyboard.switchAfterInsert",
+                                "value": false
+                            },
                             {
                                 "icon": [
                                     "cursor.rays",
