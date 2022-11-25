@@ -79,32 +79,31 @@ class AppKernel extends Kernel {
 }
 
 class AppUI {
-    static renderMainUI() {
-        const kernel = new AppKernel()
-        // 兼容性操作
-        compatibility(kernel)
+    // 小组件模式下不初始化 AppKernel
+    static kernel = $app.env !== $env.widget ? new AppKernel() : undefined
 
+    static renderMainUI() {
         const buttons = {
             clipboard: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
             actions: { icon: "command", title: $l10n("ACTIONS") },
             setting: { icon: "gear", title: $l10n("SETTING") }
         }
-        kernel.setting.setEvent("onSet", key => {
+        this.kernel.setting.setEvent("onSet", key => {
             if (key === "mainUIDisplayMode") {
                 $delay(0.3, () => $addin.restart())
             }
         })
-        if (kernel.setting.get("mainUIDisplayMode") === 0) {
-            kernel.useJsboxNav()
-            kernel.setting.useJsboxNav()
-            kernel.setNavButtons([
+        if (this.kernel.setting.get("mainUIDisplayMode") === 0) {
+            this.kernel.useJsboxNav()
+            this.kernel.setting.useJsboxNav()
+            this.kernel.setNavButtons([
                 {
                     symbol: buttons.setting.icon,
                     title: buttons.setting.title,
                     handler: () => {
                         UIKit.push({
                             title: buttons.setting.title,
-                            views: [kernel.setting.getListView()]
+                            views: [this.kernel.setting.getListView()]
                         })
                     }
                 },
@@ -112,24 +111,24 @@ class AppUI {
                     symbol: buttons.actions.icon,
                     title: buttons.actions.title,
                     handler: () => {
-                        kernel.actionManager.present()
+                        this.kernel.actionManager.present()
                     }
                 }
             ])
 
-            kernel.UIRender(kernel.clipboard.getNavigationView().getPage())
+            this.kernel.UIRender(this.kernel.clipboard.getNavigationView().getPage())
         } else {
-            kernel.fileManager.setViewController(new ViewController())
+            this.kernel.fileManager.setViewController(new ViewController())
 
-            kernel.tabBarController = new TabBarController()
+            this.kernel.tabBarController = new TabBarController()
 
-            const clipboardNavigationView = kernel.clipboard.getNavigationView()
+            const clipboardNavigationView = this.kernel.clipboard.getNavigationView()
 
-            kernel.tabBarController
+            this.kernel.tabBarController
                 .setPages({
                     clipboard: clipboardNavigationView.getPage(),
-                    actions: kernel.actionManager.getPage(),
-                    setting: kernel.setting.getPage()
+                    actions: this.kernel.actionManager.getPage(),
+                    setting: this.kernel.setting.getPage()
                 })
                 .setCells({
                     clipboard: buttons.clipboard,
@@ -137,28 +136,26 @@ class AppUI {
                     setting: buttons.setting
                 })
 
-            kernel.UIRender(kernel.tabBarController.generateView().definition)
+            this.kernel.UIRender(this.kernel.tabBarController.generateView().definition)
         }
     }
 
     static renderKeyboardUI() {
-        const kernel = new AppKernel()
-        kernel.addOpenInJsboxButton()
+        this.kernel.addOpenInJsboxButton()
 
         const Keyboard = require("./ui/keyboard")
-        const keyboard = new Keyboard(kernel)
+        const keyboard = new Keyboard(this.kernel)
 
-        kernel.UIRender(keyboard.getView())
+        this.kernel.UIRender(keyboard.getView())
     }
 
     static renderTodayUI() {
-        const kernel = new AppKernel()
-        kernel.addOpenInJsboxButton()
+        this.kernel.addOpenInJsboxButton()
 
         const Today = require("./ui/today")
-        const today = new Today(kernel)
+        const today = new Today(this.kernel)
 
-        kernel.UIRender(today.getView())
+        this.kernel.UIRender(today.getView())
     }
 
     static renderUnsupported() {
@@ -224,6 +221,10 @@ module.exports = {
         //AppUI.renderTodayUI(); return
         //AppUI.renderKeyboardUI(); return
         //Widget.render(); return
+
+        // 兼容性操作
+        compatibility(AppUI.kernel)
+
         if ($app.env === $env.app || $app.env === $env.action) {
             AppUI.renderMainUI()
         } else if ($app.env === $env.keyboard) {
