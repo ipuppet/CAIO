@@ -154,7 +154,7 @@ class TodayActions {
         const sheet = new Sheet()
         sheet
             .setView(view)
-            .addNavBar({ title: $l10n("ADD") })
+            .addNavBar({ title: $l10n("ADD"), popButton: { title: $l10n("CLOSE") } })
             .init()
             .present()
     }
@@ -204,7 +204,7 @@ class TodayActions {
         const todayActions = new TodayActions(kernel)
         sheet.setView(todayActions.getListView()).addNavBar({
             title: $l10n("ACTIONS"),
-            popButton: { title: $l10n("DONE") },
+            popButton: { title: $l10n("CLOSE") },
             rightButtons: todayActions.getNavButtons()
         })
 
