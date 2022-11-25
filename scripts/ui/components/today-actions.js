@@ -27,16 +27,26 @@ class TodayActions {
         })
 
         const savedActions = []
+        let needUpdate = false
         cache.forEach(action => {
-            savedActions.push(actions[action.type + action.dir])
+            const t = actions[action.type + action.dir]
+            if (t) {
+                savedActions.push(t)
+            } else {
+                needUpdate = true
+            }
         })
+
+        if (needUpdate) {
+            this.setActions(savedActions)
+        }
 
         return savedActions
     }
 
     setActions(list = []) {
         list.map((item, i) => {
-            if (item === null) {
+            if (!item) {
                 list.splice(i, 1)
             }
         })
