@@ -8,6 +8,16 @@ const TodayActions = require("./components/today-actions")
  */
 
 class Today extends Clipboard {
+    // 剪贴板列个性化设置
+    left_right = 8 // 列表边距
+    top_bottom = 10 // 列表边距
+    fontSize = 14 // 字体大小
+    navHeight = 38
+    taptic = 1
+    tagFontSize = 10
+    tagContainerHeight = 12
+    matrixItemHeight = 50
+
     tabItems = [$l10n("PIN"), $l10n("CLIPS"), $l10n("ACTIONS")]
     inLauncher = $app.env === $env.today && $app.widgetIndex === -1
     launcherNavHeight = 44
@@ -26,15 +36,6 @@ class Today extends Clipboard {
         this.bottomBar = new NavigationBar()
         this.bottomBar.navigationBarItems = this.navigationBarItems
         this.todayActions = new TodayActions(this.kernel)
-
-        // 剪贴板列个性化设置
-        this.left_right = 20 // 列表边距
-        this.top_bottom = 10 // 列表边距
-        this.fontSize = 14 // 字体大小
-        this.navHeight = 38
-        this.taptic = 1
-        this.tagFontSize = 10
-        this.tagContainerHeight = 12
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
@@ -300,8 +301,8 @@ class Today extends Clipboard {
                 id: this.matrixId,
                 bgcolor: $color("clear"),
                 columns: 2,
-                itemHeight: 50,
-                spacing: 8,
+                itemHeight: this.matrixItemHeight,
+                spacing: this.left_right,
                 data: data.map(action => {
                     return this.kernel.actionManager.actionToData(action)
                 }),
@@ -316,12 +317,13 @@ class Today extends Clipboard {
                             type: "image",
                             props: {
                                 id: "color",
-                                cornerRadius: 8,
+                                cornerRadius: this.left_right,
                                 smoothCorners: true
                             },
                             layout: make => {
-                                make.top.left.inset(10)
-                                make.size.equalTo($size(30, 30))
+                                const size = this.matrixItemHeight - 20
+                                make.top.left.inset((this.matrixItemHeight - size) / 2)
+                                make.size.equalTo($size(size, size))
                             }
                         },
                         {
@@ -330,9 +332,8 @@ class Today extends Clipboard {
                                 id: "icon",
                                 tintColor: $color("#ffffff")
                             },
-                            layout: make => {
-                                make.top.left.inset(15)
-                                make.size.equalTo($size(20, 20))
+                            layout: (make, view) => {
+                                make.edges.equalTo(view.prev).insets(5)
                             }
                         },
                         {

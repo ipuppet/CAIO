@@ -1,6 +1,7 @@
 "ALERT_INFO" = "提示";
 "NONE" = "什么都没有";
 "DONE" = "完成";
+"CLOSE" = "关闭";
 "FAILED_TO_LOAD_VIEW" = "加载视图失败";
 "VIEW_NOT_PROVIDED" = "未提供该视图";
 "UNCATEGORIZED" = "未分类";
@@ -84,6 +85,7 @@
 "BACKGROUND_COLOR_DARK" = "深色模式背景色";
 "BACKGROUND_IMAGE" = "背景图片";
 "DELETE_DELAY" = "删除延时";
+"SWITCH_AFTER_INSERT" = "输入后切换";
 "JSBOX_TOOLBAR" = "JSBox 工具栏";
 "QUICK_START_SCRIPTS" = "快速启动脚本";
 "SEND" = "发送";

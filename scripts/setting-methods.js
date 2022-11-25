@@ -223,14 +223,14 @@ function keyboard() {
     const keyboardMinHeight = 200
 
     kernel.setting.method.previewKeyboard = () => {
-        const keyboard = new Keyboard(kernel).getView()
+        const keyboard = new Keyboard(kernel)
 
         const keyboardId = $text.uuid
         const updateHeight = height => {
             $(keyboardId).updateLayout(make => {
                 make.height.equalTo(height)
             })
-            Keyboard.keyboardHeight = height
+            keyboard.keyboardHeight = height
         }
         const getPercentage = v => (v - keyboardMinHeight) / (keyboardMaxHeight - keyboardMinHeight)
         return {
@@ -242,11 +242,11 @@ function keyboard() {
                         make.centerX.equalTo(view.super)
                     },
                     events: {
-                        ready: sender => (sender.text = Keyboard.keyboardHeight),
+                        ready: sender => (sender.text = keyboard.keyboardHeight),
                         tapped: sender => {
                             $input.text({
                                 type: $kbType.number,
-                                text: Keyboard.keyboardHeight,
+                                text: keyboard.keyboardHeight,
                                 handler: text => {
                                     const reg = /^[0-9]+$/
                                     if (reg.test(text)) {
@@ -275,7 +275,7 @@ function keyboard() {
                         make.width.equalTo(view.super).offset(-40)
                     },
                     events: {
-                        ready: sender => (sender.value = getPercentage(Keyboard.keyboardHeight)),
+                        ready: sender => (sender.value = getPercentage(keyboard.keyboardHeight)),
                         changed: sender => {
                             const value = Math.floor(
                                 sender.value * (keyboardMaxHeight - keyboardMinHeight) + keyboardMinHeight
@@ -289,10 +289,10 @@ function keyboard() {
                 {
                     type: "view",
                     props: { id: keyboardId },
-                    views: [keyboard],
+                    views: [keyboard.getView()],
                     layout: (make, view) => {
                         make.width.equalTo(view.super)
-                        make.height.equalTo(Keyboard.keyboardHeight)
+                        make.height.equalTo(keyboard.keyboardHeight)
                         make.bottom.inset(0)
                     }
                 }
