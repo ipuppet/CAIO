@@ -507,7 +507,11 @@ class Clipboard extends ClipboardData {
             },
             layout: (make, view) => {
                 make.centerY.equalTo(view.super)
-                make.left.equalTo(view.prev.right).offset(this.left_right)
+                if (view.prev) {
+                    make.left.equalTo(view.prev.right).offset(this.left_right)
+                } else {
+                    make.left.inset(this.left_right)
+                }
             }
         }
     }
