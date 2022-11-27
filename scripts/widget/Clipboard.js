@@ -25,7 +25,7 @@ class ClipboardWidget {
         }
         this.padding = 15
 
-        this.savedClipboard = this.storage.sort(this.storage.all("clipboard"))
+        this.savedClipboard = this.storage.sort(this.storage.all("clips"))
     }
 
     get maxLength() {

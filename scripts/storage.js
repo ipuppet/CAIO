@@ -5,6 +5,8 @@ const { Kernel } = require("./libs/easy-jsbox")
  */
 
 class Storage {
+    sqlite
+
     /**
      *
      * @param {AppKernel} kernel
@@ -30,7 +32,7 @@ class Storage {
         // 初始化表
         this.sqlite = $sqlite.open(this.kernel.fileStorage.filePath(this.localDb))
         this.sqlite.update(
-            "CREATE TABLE IF NOT EXISTS clipboard(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
+            "CREATE TABLE IF NOT EXISTS clips(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
         this.sqlite.update(
             "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
@@ -75,7 +77,7 @@ class Storage {
             })
         }
 
-        ;["clipboard", "pin"].map(folder => {
+        ;["clips", "pin"].map(folder => {
             let data = this.all(folder)
             try {
                 const sorted = this.sort(JSON.parse(JSON.stringify(data)))
@@ -184,23 +186,25 @@ class Storage {
         return sorted
     }
 
-    parse(result) {
-        if (result.error !== null) {
-            throw new Error(`Code [${result.error.code}] ${result.error.domain} ${result.error.localizedDescription}`)
+    parse(execRes) {
+        const result = execRes.result
+        const error = execRes.error
+        if (error !== null) {
+            throw new Error(`Code [${error.code}] ${error.domain} ${error.localizedDescription}`)
         }
         const data = []
-        while (result.result.next()) {
+        while (result.next()) {
             data.push({
-                uuid: result.result.get("uuid"),
-                section: result.result.get("section"),
-                text: result.result.get("text"),
-                md5: result.result.get("md5"),
-                tag: result.result.get("tag") ?? "",
-                prev: result.result.get("prev") ?? null,
-                next: result.result.get("next") ?? null
+                uuid: result.get("uuid"),
+                section: result.get("section"),
+                text: result.get("text"),
+                md5: result.get("md5"),
+                tag: result.get("tag") ?? "",
+                prev: result.get("prev") ?? null,
+                next: result.get("next") ?? null
             })
         }
-        result.result.close()
+        result.close()
         return data
     }
 
@@ -231,14 +235,14 @@ class Storage {
 
     getByUUID(uuid) {
         const result = this.sqlite.query({
-            sql: "SELECT *, 'clipboard' AS section FROM clipboard a WHERE uuid = ? UNION SELECT *, 'pin' AS section FROM pin a WHERE uuid = ?",
+            sql: "SELECT *, 'clips' AS section FROM clips a WHERE uuid = ? UNION SELECT *, 'pin' AS section FROM pin a WHERE uuid = ?",
             args: [uuid, uuid]
         })
         return this.parse(result)[0]
     }
     getByMD5(md5) {
         const result = this.sqlite.query({
-            sql: "SELECT *, 'clipboard' AS section FROM clipboard WHERE md5 = ? UNION SELECT *, 'pin' AS section FROM pin WHERE md5 = ?",
+            sql: "SELECT *, 'clips' AS section FROM clips WHERE md5 = ? UNION SELECT *, 'pin' AS section FROM pin WHERE md5 = ?",
             args: [md5, md5]
         })
         return this.parse(result)[0]
@@ -246,7 +250,7 @@ class Storage {
     search(kw) {
         const result = this.sqlite.query({
             sql: `SELECT * from
-                (SELECT clipboard.*, 'clipboard' AS section FROM clipboard WHERE text like ?
+                (SELECT clips.*, 'clips' AS section FROM clips WHERE text like ?
                 UNION
                 SELECT pin.*, 'pin' AS section FROM pin WHERE text like ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid

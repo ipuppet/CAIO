@@ -99,8 +99,8 @@ class Action {
      */
     getAllClips() {
         return {
-            clips: this.#kernel.storage.all("clipboard").map(item => item.text),
-            pin: this.#kernel.storage.all("pin").map(item => item.text)
+            pin: this.#kernel.storage.all("pin").map(item => item.text),
+            clips: this.#kernel.storage.all("clips").map(item => item.text)
         }
     }
 
@@ -113,7 +113,7 @@ class Action {
         if (res.index === 0) {
             // 确认删除
             try {
-                this.#kernel.storage.deleteTable("clipboard")
+                this.#kernel.storage.deleteTable("clips")
                 return true
             } catch (error) {
                 this.#kernel.error(error)

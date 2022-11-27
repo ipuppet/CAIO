@@ -18,7 +18,7 @@ class ClipsData {
     savedClipboardIndex = {}
 
     tabItems = [$l10n("PIN"), $l10n("CLIPS")]
-    tabItemsIndex = ["pin", "clipboard"]
+    tabItemsIndex = ["pin", "clips"]
 
     /**
      * @param {AppKernel} kernel
@@ -376,7 +376,10 @@ class ClipsData {
                 this.kernel.error(error)
             }
         }
-        this.allClips = [initData(this.kernel.storage.all("pin")), initData(this.kernel.storage.all("clipboard"))]
+        this.allClips = [
+            initData(this.kernel.storage.all(this.tabItemsIndex[0])),
+            initData(this.kernel.storage.all(this.tabItemsIndex[1]))
+        ]
     }
 }
 
