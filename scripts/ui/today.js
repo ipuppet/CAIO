@@ -1,13 +1,13 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
-const Clipboard = require("./clipboard")
+const Clips = require("./clipboard")
 const TodayActions = require("./components/today-actions")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
-class Today extends Clipboard {
+class Today extends Clips {
     // 剪贴板列个性化设置
     left_right = 8 // 列表边距
     top_bottom = 10 // 列表边距
@@ -59,7 +59,7 @@ class Today extends Clipboard {
 
     loadData() {
         this.setClipboarPageSize($widget.mode)
-        this.loadSavedClipboard()
+        this.loadAllClips()
         this.updateList()
         this.appListen()
     }
@@ -207,7 +207,7 @@ class Today extends Clipboard {
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.savedClipboard[this.listSection].slice(start, end).map(data => this.lineData(data))
+        $(this.listId).data = this.allClips[this.listSection].slice(start, end).map(data => this.lineData(data))
         // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
@@ -220,7 +220,7 @@ class Today extends Clipboard {
     }
 
     clipboardNextPage() {
-        const maxPage = Math.ceil(this.savedClipboard[this.listSection].length / this.listPageSize)
+        const maxPage = Math.ceil(this.allClips[this.listSection].length / this.listPageSize)
         if (this.listPageNow[this.listSection] < maxPage - 1) {
             this.listPageNow[this.listSection]++
             this.updateList()

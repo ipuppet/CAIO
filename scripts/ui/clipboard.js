@@ -10,15 +10,15 @@ const {
     Toast
 } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
-const ClipboardData = require("./clipboard-data")
-const ClipboardSearch = require("./clipboard-search")
+const ClipsData = require("./clipboard-data")
+const ClipsSearch = require("./clipboard-search")
 const { ActionData, ActionEnv } = require("../action/action")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
-class Clipboard extends ClipboardData {
+class Clips extends ClipsData {
     // 剪贴板列个性化设置
     #singleLine = false
     left_right = 20 // 列表边距
@@ -33,6 +33,8 @@ class Clipboard extends ClipboardData {
 
     tabHeight = 44
 
+    copied = $cache.get("clips.copied") ?? {}
+
     /**
      * @param {AppKernel} kernel
      */
@@ -42,7 +44,7 @@ class Clipboard extends ClipboardData {
 
         this.viewController = new ViewController()
 
-        this.search = new ClipboardSearch(this.kernel)
+        this.search = new ClipsSearch(this.kernel)
         this.search.setCallback(res => {
             const sheet = new Sheet()
             sheet
@@ -80,7 +82,7 @@ class Clipboard extends ClipboardData {
         $app.listen({
             resume: () => {
                 // 在应用恢复响应后调用
-                this.loadSavedClipboard()
+                this.loadAllClips()
                 this.updateList()
                 $delay(0.5, () => {
                     this.readClipboard()
@@ -126,13 +128,13 @@ class Clipboard extends ClipboardData {
 
     updateList() {
         // 直接重置数据，解决小绿点滚动到屏幕外后消失问题
-        $(this.listId).data = this.clipboard.map(data => this.lineData(data, this.copied.uuid === data.uuid))
+        $(this.listId).data = this.clips.map(data => this.lineData(data, this.copied.uuid === data.uuid))
         this.updateListBackground()
     }
 
     updateListBackground() {
         try {
-            $(this.listId + "-empty-list-background").hidden = this.clipboard.length > 0
+            $(this.listId + "-empty-list-background").hidden = this.clips.length > 0
         } catch {}
     }
 
@@ -159,7 +161,7 @@ class Clipboard extends ClipboardData {
         }
         this.copied.tabIndex = this.tabIndex
         this.copied.row = row
-        $cache.set("clipboard.copied", this.copied)
+        $cache.set("clips.copied", this.copied)
     }
 
     readClipboard(manual = false) {
@@ -281,7 +283,7 @@ class Clipboard extends ClipboardData {
                 // 从上往下移动
                 listView.insert({
                     indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
-                    value: this.lineData(this.clipboard[to])
+                    value: this.lineData(this.clips[to])
                 })
                 listView.delete($indexPath(0, from))
             } else {
@@ -289,7 +291,7 @@ class Clipboard extends ClipboardData {
                 listView.delete($indexPath(0, from))
                 listView.insert({
                     indexPath: $indexPath(0, to),
-                    value: this.lineData(this.clipboard[to])
+                    value: this.lineData(this.clips[to])
                 })
             }
             // 修正指示器
@@ -401,7 +403,7 @@ class Clipboard extends ClipboardData {
                                     } else {
                                         this.kernel.storage.deleteTag(uuid)
                                     }
-                                    this.loadSavedClipboard()
+                                    this.loadAllClips()
                                     this.updateList()
                                 }
                             })
@@ -634,7 +636,7 @@ class Clipboard extends ClipboardData {
             props: {
                 bgcolor: UIKit.primaryViewBackgroundColor,
                 separatorInset: $insets(0, this.left_right, 0, 0),
-                data: this.clipboard.map(data => this.lineData(data)),
+                data: this.clips.map(data => this.lineData(data)),
                 template: this.listTemplate(),
                 reorder: true,
                 crossSections: false,
@@ -697,7 +699,7 @@ class Clipboard extends ClipboardData {
                                 try {
                                     this.kernel.storage.deleteTable(this.table)
                                     sheet.dismiss()
-                                    this.loadSavedClipboard()
+                                    this.loadAllClips()
                                     this.updateList()
                                 } catch (error) {
                                     this.kernel.error(error)
@@ -771,7 +773,7 @@ class Clipboard extends ClipboardData {
                     }
                 },
                 pulled: sender => {
-                    this.loadSavedClipboard()
+                    this.loadAllClips()
                     this.updateList()
                     $delay(0.5, () => sender.endRefreshing())
                 }
@@ -783,7 +785,7 @@ class Clipboard extends ClipboardData {
             props: {
                 id: id + "-empty-list-background",
                 color: $color("secondaryText"),
-                hidden: this.clipboard.length > 0,
+                hidden: this.clips.length > 0,
                 text: $l10n("NONE"),
                 align: $align.center
             },
@@ -845,4 +847,4 @@ class Clipboard extends ClipboardData {
     }
 }
 
-module.exports = Clipboard
+module.exports = Clips

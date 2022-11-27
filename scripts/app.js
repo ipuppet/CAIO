@@ -8,7 +8,7 @@ const {
     FileManager
 } = require("./libs/easy-jsbox")
 const Storage = require("./storage")
-const Clipboard = require("./ui/clipboard")
+const Clips = require("./ui/clipboard")
 const ActionManager = require("./ui/components/action-manager")
 
 const compatibility = require("./compatibility")
@@ -53,8 +53,8 @@ class AppKernel extends Kernel {
     }
 
     initComponents() {
-        // Clipboard
-        this.clipboard = new Clipboard(this)
+        // Clips
+        this.clips = new Clips(this)
         // ActionManager
         this.actionManager = new ActionManager(this)
         // FileManager
@@ -84,7 +84,7 @@ class AppUI {
 
     static renderMainUI() {
         const buttons = {
-            clipboard: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
+            clips: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
             actions: { icon: "command", title: $l10n("ACTIONS") },
             setting: { icon: "gear", title: $l10n("SETTING") }
         }
@@ -116,22 +116,22 @@ class AppUI {
                 }
             ])
 
-            this.kernel.UIRender(this.kernel.clipboard.getNavigationView().getPage())
+            this.kernel.UIRender(this.kernel.clips.getNavigationView().getPage())
         } else {
             this.kernel.fileManager.setViewController(new ViewController())
 
             this.kernel.tabBarController = new TabBarController()
 
-            const clipboardNavigationView = this.kernel.clipboard.getNavigationView()
+            const clipsdNavigationView = this.kernel.clips.getNavigationView()
 
             this.kernel.tabBarController
                 .setPages({
-                    clipboard: clipboardNavigationView.getPage(),
+                    clips: clipsdNavigationView.getPage(),
                     actions: this.kernel.actionManager.getPage(),
                     setting: this.kernel.setting.getPage()
                 })
                 .setCells({
-                    clipboard: buttons.clipboard,
+                    clips: buttons.clips,
                     actions: buttons.actions,
                     setting: buttons.setting
                 })

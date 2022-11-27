@@ -280,9 +280,9 @@ class Storage {
         )
         return this.parse(result)
     }
-    insert(table, clipboard) {
-        if (clipboard.image) {
-            const image = clipboard.image
+    insert(table, clip) {
+        if (clip.image) {
+            const image = clip.image
             const fileName = $text.uuid
             const path = {
                 original: `${this.imageOriginalPath}/${fileName}.png`,
@@ -290,21 +290,21 @@ class Storage {
             }
             this.kernel.fileStorage.write(path.original, image.png)
             this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
-            clipboard.text = this.pathToKey(path)
+            clip.text = this.pathToKey(path)
         }
         const result = this.sqlite.update({
             sql: `INSERT INTO ${table} (uuid, text, md5, prev, next) values (?, ?, ?, ?, ?)`,
-            args: [clipboard.uuid, clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next]
+            args: [clip.uuid, clip.text, $text.MD5(clip.text), clip.prev, clip.next]
         })
         if (!result.result) {
             throw result.error
         }
     }
-    update(table, clipboard) {
-        if (Object.keys(clipboard).length < 4 || typeof clipboard.uuid !== "string") return
+    update(table, clip) {
+        if (Object.keys(clip).length < 4 || typeof clip.uuid !== "string") return
         const result = this.sqlite.update({
             sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
-            args: [clipboard.text, $text.MD5(clipboard.text), clipboard.prev, clipboard.next, clipboard.uuid]
+            args: [clip.text, $text.MD5(clip.text), clip.prev, clip.next, clip.uuid]
         })
         if (!result.result) {
             throw result.error
@@ -321,7 +321,7 @@ class Storage {
         }
     }
     delete(table, uuid) {
-        const clipboard = this.getByUUID(uuid)
+        const clip = this.getByUUID(uuid)
         this.beginTransaction()
         try {
             const result = this.sqlite.update({
@@ -339,7 +339,7 @@ class Storage {
         }
 
         // delete image file
-        const path = this.keyToPath(clipboard?.text)
+        const path = this.keyToPath(clip?.text)
         if (path) {
             this.kernel.fileStorage.delete(path.original)
             this.kernel.fileStorage.delete(path.preview)

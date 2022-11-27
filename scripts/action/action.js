@@ -97,19 +97,31 @@ class Action {
      * 获取所有剪切板数据
      * @returns Array
      */
-    getAllClipboard() {
+    getAllClips() {
         return {
-            clipboard: this.#kernel.storage.all("clipboard").map(item => item.text),
+            clips: this.#kernel.storage.all("clipboard").map(item => item.text),
             pin: this.#kernel.storage.all("pin").map(item => item.text)
         }
     }
 
-    /**
-     * TODO 废弃
-     * @returns
-     */
-    getAllContent() {
-        return this.getAllClipboard()
+    async clearAllClips() {
+        const res = await $ui.alert({
+            title: $l10n("DELETE_DATA"),
+            message: $l10n("DELETE_TABLE").replace("${table}", $l10n("CLIPS")),
+            actions: [{ title: $l10n("DELETE"), style: $alertActionType.destructive }, { title: $l10n("CANCEL") }]
+        })
+        if (res.index === 0) {
+            // 确认删除
+            try {
+                this.#kernel.storage.deleteTable("clipboard")
+                return true
+            } catch (error) {
+                this.#kernel.error(error)
+                throw error
+            }
+        } else {
+            return false
+        }
     }
 
     setContent(text) {
@@ -160,26 +172,6 @@ class Action {
         const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/gi
         const text = this.text ?? ""
         return text.match(regex) ?? []
-    }
-
-    async clearAllClips() {
-        const res = await $ui.alert({
-            title: $l10n("DELETE_DATA"),
-            message: $l10n("DELETE_TABLE").replace("${table}", $l10n("CLIPS")),
-            actions: [{ title: $l10n("DELETE"), style: $alertActionType.destructive }, { title: $l10n("CANCEL") }]
-        })
-        if (res.index === 0) {
-            // 确认删除
-            try {
-                this.#kernel.storage.deleteTable("clipboard")
-                return true
-            } catch (error) {
-                this.#kernel.error(error)
-                throw error
-            }
-        } else {
-            return false
-        }
     }
 }
 
