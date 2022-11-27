@@ -170,7 +170,9 @@ class Clips extends ClipsData {
 
             // 剪切板没有变化则直接退出
             if (!this.isChanged) {
-                $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
+                if (manual) {
+                    $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
+                }
                 return
             }
 
