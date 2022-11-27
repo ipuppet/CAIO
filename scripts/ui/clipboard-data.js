@@ -359,7 +359,7 @@ class ClipboardData {
             } catch (error) {
                 $ui.alert({
                     title: $l10n("REBUILD_DATABASE"),
-                    message: $l10n("CLIPBOARD_STRUCTURE_ERROR"),
+                    message: $l10n("CLIPS_STRUCTURE_ERROR"),
                     actions: [
                         {
                             title: $l10n("OK"),

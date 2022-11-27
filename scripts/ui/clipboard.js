@@ -38,7 +38,7 @@ class Clipboard extends ClipboardData {
      */
     constructor(kernel) {
         super(kernel)
-        this.listId = "clipboard-list"
+        this.listId = "clips-list"
 
         this.viewController = new ViewController()
 
@@ -168,8 +168,12 @@ class Clipboard extends ClipboardData {
 
             // 剪切板没有变化则直接退出
             if (!this.isChanged) {
+                $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
                 return
             }
+
+            // 切换标签页
+            this.switchTab(1, true) // clips
 
             // 仅手动模式下保存图片
             if ($clipboard.images?.length > 0) {
@@ -780,7 +784,7 @@ class Clipboard extends ClipboardData {
                 id: id + "-empty-list-background",
                 color: $color("secondaryText"),
                 hidden: this.clipboard.length > 0,
-                text: "Hello, World!",
+                text: $l10n("NONE"),
                 align: $align.center
             },
             layout: $layout.center

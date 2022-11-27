@@ -1,5 +1,5 @@
 "ALERT_INFO" = "Alert";
-"NONE" = "None";
+"NONE" = "Nothing";
 "DONE" = "Done";
 "CLOSE" = "Close";
 "FAILED_TO_LOAD_VIEW" = "Faild to load view";
@@ -13,7 +13,8 @@
 "CLIPBOARD" = "Clipboard";
 "UNIVERSAL_CLIPBOARD" = "Universal Clipboard";
 "UNIVERSAL_CLIPBOARD_TIPS" = "Universal Clipboard allows you to copy something on your iPhone, and paste it on your Mac–or vice-versa–using iCloud.";
-"CLIPBOARD_STRUCTURE_ERROR" = "Clipboard data structure is abnormal";
+"CLIPS_STRUCTURE_ERROR" = "Clips data structure is abnormal";
+"CLIPBOARD_NO_CHANGE" = "Clipboard no change";
 "ADD" = "Add";
 "TAG" = "Tag";
 "ADD_TAG" = "Add Tag";
