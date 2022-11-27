@@ -1,6 +1,6 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { UIKit, BarButtonItem } = require("../libs/easy-jsbox")
-const Clips = require("./clipboard")
+const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
 /**

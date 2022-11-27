@@ -4,7 +4,7 @@
 
 /**
  *
- * @param {AppKernel} kernel
+ * @param {AppKernel} appKernel
  */
 function compatibility(kernel) {
     if (!kernel) return
@@ -16,16 +16,28 @@ function compatibility(kernel) {
     try {
         // 删除弃用文件
         if ($file.exists("scripts/action/clipboard/ClearClipboard")) {
-            kernel.print(`delete files: scripts/action/clipboard/ClearClipboard`)
+            kernel.print(`delete folder: scripts/action/clipboard/ClearClipboard`)
             $file.delete("scripts/action/clipboard/ClearClipboard")
             showMessage = true
         }
+        if ($file.exists("scripts/ui/clipboard.js")) {
+            kernel.print(`delete file: scripts/ui/clipboard.js`)
+            $file.delete("scripts/ui/clipboard.js")
+            kernel.print(`delete file: scripts/ui/clipboard-data.js`)
+            $file.delete("scripts/ui/clipboard-data.js")
+            kernel.print(`delete file: scripts/ui/clipboard-search.js`)
+            $file.delete("scripts/ui/clipboard-search.js")
+            showMessage = true
+        }
+
         // 键盘高度保存到 setting
         if ($cache.get("caio.keyboard.height")) {
             kernel.setting.set("keyboard.previewAndHeight", $cache.get("caio.keyboard.height"))
             $cache.remove("caio.keyboard.height")
+
             showMessage = true
         }
+
         // 用户动作
         if (needChange) {
             kernel.print(`rebuild user action: ExportAllContent`)

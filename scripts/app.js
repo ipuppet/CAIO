@@ -8,7 +8,7 @@ const {
     FileManager
 } = require("./libs/easy-jsbox")
 const Storage = require("./storage")
-const Clips = require("./ui/clipboard")
+const Clips = require("./ui/clips")
 const ActionManager = require("./ui/components/action-manager")
 
 const compatibility = require("./compatibility")

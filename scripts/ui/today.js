@@ -1,6 +1,6 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
-const Clips = require("./clipboard")
+const Clips = require("./clips")
 const TodayActions = require("./components/today-actions")
 
 /**
