@@ -111,3 +111,7 @@
 "MODERN" = "Modern";
 
 "FILE_MANAGEMENT" = "File Management";
+
+"compatibility.rebuildUserAction.alert.title" = "We need to rebuild some of the action!";
+"compatibility.rebuildUserAction.alert.message" = "If you tap the OK button, the following actions will be rebuilt:";
+"compatibility.rebuildUserAction.alert.message2" = "Only the action logic will be changed, and the name and icon will remain as it is.";

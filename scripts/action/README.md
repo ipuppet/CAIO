@@ -76,6 +76,7 @@ l10n()
         title: args.title ?? "", // 中间标题
         done: args.done, // 点击左上角按钮后的回调函数
         doneText: args.doneText ?? $l10n("DONE") // 左上角文本
+        rightButtons: [{ title:string, symbol:string, tapped:function }] // 右上角按钮
     }
   */
 pageSheet(args): void

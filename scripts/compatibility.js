@@ -42,24 +42,65 @@ function rebuildDatabase(kernel) {
  * 用户动作
  * @param {AppKernel} kernel
  */
-function rebuildUserAction(kernel) {
-    // 用户动作
+async function rebuildUserActions(kernel, actions = {}) {
+    const actionPath = `scripts/action`
     const userActionPath = `${kernel.fileStorage.basePath}/user_action`
 
-    if ($file.exists(userActionPath + "/uncategorized/ExportAllContent")) {
-        kernel.print(`rebuild user action: ExportAllContent`)
-        $file.copy({
-            src: "scripts/action/uncategorized/ExportAllContent/main.js",
-            dst: userActionPath + "/uncategorized/ExportAllContent/main.js"
+    const changeList = []
+    for (let type of Object.keys(actions)) {
+        actions[type].forEach(action => {
+            const config = JSON.parse($file.read(`${actionPath}/${type}/${action}/config.json`).string)
+            changeList.push(config.name)
         })
     }
 
-    if ($file.exists(userActionPath + "/clipboard/B23Clean")) {
-        kernel.print(`rebuild user action: B23Clean`)
-        $file.copy({
-            src: "scripts/action/clipboard/B23Clean/main.js",
-            dst: userActionPath + "/clipboard/B23Clean/main.js"
+    const alertResult = await $ui.alert({
+        title: $l10n("compatibility.rebuildUserAction.alert.title"),
+        message:
+            $l10n("compatibility.rebuildUserAction.alert.message") +
+            "\n" +
+            JSON.stringify(changeList, null, 2) +
+            "\n" +
+            $l10n("compatibility.rebuildUserAction.alert.message2"),
+        actions: [{ title: $l10n("OK") }, { title: $l10n("CANCEL") }]
+    })
+    if (alertResult.index === 1) {
+        return
+    }
+
+    // 重建用户动作
+    for (let type of Object.keys(actions)) {
+        actions[type].forEach(action => {
+            if ($file.exists(`${userActionPath}/${type}/${action}`)) {
+                kernel.print(`rebuild user action: ${type}/${action}`)
+                $file.copy({
+                    src: `${actionPath}/${type}/${action}/main.js`,
+                    dst: `${userActionPath}/${type}/${action}/main.js`
+                })
+            }
         })
+    }
+}
+
+async function ver1(kernel) {
+    deleteFiles(kernel, [
+        "scripts/action/clipboard/ClearClipboard",
+        "scripts/ui/clipboard.js",
+        "scripts/ui/clipboard-data.js",
+        "scripts/ui/clipboard-search.js"
+    ])
+
+    rebuildDatabase(kernel)
+
+    await rebuildUserActions(kernel, {
+        uncategorized: ["ExportAllContent", "DisplayClipboard"],
+        clipboard: ["B23Clean"]
+    })
+
+    // 键盘高度保存到 setting
+    if ($cache.get("caio.keyboard.height")) {
+        kernel.setting.set("keyboard.previewAndHeight", $cache.get("caio.keyboard.height"))
+        $cache.remove("caio.keyboard.height")
     }
 }
 
@@ -67,35 +108,16 @@ function rebuildUserAction(kernel) {
  *
  * @param {AppKernel} kernel
  */
-function compatibility(kernel) {
+async function compatibility(kernel) {
     if (!kernel) return
 
     const version = 1
-    const userVersion = $cache.get("compatibility.version")
-    const needChange = version !== userVersion
+    const userVersion = $cache.get("compatibility.version") ?? 0
 
-    let showMessage = false
     try {
-        // 删除弃用文件
-        deleteFiles(kernel, [
-            "scripts/action/clipboard/ClearClipboard",
-            "scripts/ui/clipboard.js",
-            "scripts/ui/clipboard-data.js",
-            "scripts/ui/clipboard-search.js"
-        ])
-
-        // 键盘高度保存到 setting
-        if ($cache.get("caio.keyboard.height")) {
-            kernel.setting.set("keyboard.previewAndHeight", $cache.get("caio.keyboard.height"))
-            $cache.remove("caio.keyboard.height")
-
-            showMessage = true
-        }
-
-        if (needChange) {
-            kernel.print(`compatibility: userVersion [${userVersion}] lower than [${version}], start action`)
-            rebuildDatabase(kernel)
-            rebuildUserAction(kernel)
+        if (userVersion < 1) {
+            kernel.print(`compatibility: userVersion [${userVersion}] lower than [1], start action`)
+            await ver1(kernel)
         }
     } catch (error) {
         kernel.error(error)
@@ -103,9 +125,6 @@ function compatibility(kernel) {
     }
 
     $cache.set("compatibility.version", version) // 修改版本
-    if (showMessage) {
-        $delay(1, () => $ui.toast("Update success!"))
-    }
 }
 
 module.exports = compatibility

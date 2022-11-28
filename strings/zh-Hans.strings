@@ -111,3 +111,7 @@
 "MODERN" = "现代";
 
 "FILE_MANAGEMENT" = "文件管理";
+
+"compatibility.rebuildUserAction.alert.title" = "我们需要重建部分动作！";
+"compatibility.rebuildUserAction.alert.message" = "如果您点击 好，以下动作将会被重建：";
+"compatibility.rebuildUserAction.alert.message2" = "只有动作逻辑会被更改，名称和图标将维持现状。";

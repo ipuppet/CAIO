@@ -72,10 +72,6 @@ class Action {
         return {}
     }
 
-    push(args) {
-        this.pageSheet(args)
-    }
-
     /**
      * page sheet
      * @param {*} args 
@@ -84,9 +80,10 @@ class Action {
             title: 中间标题
             done: 点击左上角按钮后的回调函数
             doneText: 左上角文本
+            rightButtons: 右上角按钮
         }
      */
-    pageSheet({ view, title = "", done, doneText = $l10n("DONE") }) {
+    pageSheet({ view, title = "", done, doneText = $l10n("DONE"), rightButtons = [] }) {
         const sheet = new Sheet()
         sheet
             .setView(view)
@@ -97,7 +94,8 @@ class Action {
                     tapped: () => {
                         if (done) done()
                     }
-                }
+                },
+                rightButtons
             })
             .init()
             .present()
