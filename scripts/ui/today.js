@@ -1,13 +1,13 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
-const Clipboard = require("./clipboard")
+const Clips = require("./clips")
 const TodayActions = require("./components/today-actions")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
-class Today extends Clipboard {
+class Today extends Clips {
     // 剪贴板列个性化设置
     left_right = 8 // 列表边距
     top_bottom = 10 // 列表边距
@@ -59,7 +59,7 @@ class Today extends Clipboard {
 
     loadData() {
         this.setClipboarPageSize($widget.mode)
-        this.loadSavedClipboard()
+        this.loadAllClips()
         this.updateList()
         this.appListen()
     }
@@ -91,7 +91,7 @@ class Today extends Clipboard {
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
             const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
-            const f_line = height / (this.getSingleLineHeight() + this.top_bottom * 2)
+            const f_line = height / (this.singleLineHeight + this.top_bottom * 2)
             const floor = Math.floor(f_line)
             this.listPageSize = floor
             if (f_line - floor >= 0.6) {
@@ -207,7 +207,7 @@ class Today extends Clipboard {
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.savedClipboard[this.listSection].slice(start, end).map(data => this.lineData(data))
+        $(this.listId).data = this.allClips[this.listSection].slice(start, end).map(data => this.lineData(data))
         // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
@@ -220,7 +220,7 @@ class Today extends Clipboard {
     }
 
     clipboardNextPage() {
-        const maxPage = Math.ceil(this.savedClipboard[this.listSection].length / this.listPageSize)
+        const maxPage = Math.ceil(this.allClips[this.listSection].length / this.listPageSize)
         if (this.listPageNow[this.listSection] < maxPage - 1) {
             this.listPageNow[this.listSection]++
             this.updateList()
@@ -248,19 +248,17 @@ class Today extends Clipboard {
                         id: this.listId,
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
-                        menu: {
-                            items: this.menuItems()
-                        },
+                        menu: { items: this.menuItems() },
                         separatorInset: $insets(0, this.left_right, 0, this.left_right),
                         data: [],
-                        template: this.listTemplate(1)
+                        template: this.listTemplate()
                     },
                     events: {
                         ready: () => this.listReady(),
                         rowHeight: (sender, indexPath) => {
                             const tag = sender.object(indexPath).tag
                             const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
-                            return this.getSingleLineHeight() + this.top_bottom + tagHeight
+                            return this.singleLineHeight + this.top_bottom + tagHeight
                         },
                         didSelect: this.buttonTapped((sender, indexPath, data) => {
                             const content = data.content
@@ -269,8 +267,8 @@ class Today extends Clipboard {
                             if (path && this.kernel.fileStorage.exists(path.original)) {
                                 $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
                             } else {
-                                this.setCopied(data.content.info.uuid, indexPath.row)
                                 this.setClipboardText(data.content.info.text)
+                                this.setCopied(data.content.info.uuid, indexPath.row)
                             }
                             $ui.toast($l10n("COPIED"))
                         })

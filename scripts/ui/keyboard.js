@@ -1,13 +1,13 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { UIKit, BarButtonItem } = require("../libs/easy-jsbox")
-const Clipboard = require("./clipboard")
+const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
-class Keyboard extends Clipboard {
+class Keyboard extends Clips {
     #readClipboardTimer
 
     deleteTimer = undefined
@@ -29,7 +29,7 @@ class Keyboard extends Clipboard {
      */
     constructor(kernel) {
         super(kernel)
-        this.listId = "keyboard-clipboard-list"
+        this.listId = "keyboard-clips-list"
         this.keyboardSwitchLockId = "keyboard-switch-lock"
         this.keyboardSwitchLockKey = "caio.keyboard.switch.lock"
 
@@ -40,7 +40,6 @@ class Keyboard extends Clipboard {
         )
 
         this.keyboardSetting()
-        this.setSingleLine()
 
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
@@ -74,7 +73,7 @@ class Keyboard extends Clipboard {
     }
 
     listReady() {
-        this.loadSavedClipboard()
+        this.loadAllClips()
         this.updateList()
         this.appListen()
         // readClipboard

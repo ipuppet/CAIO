@@ -13,7 +13,7 @@ class ClipboardWidget {
         this.storage = storage
         this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}&widget=${this.widget}`
         this.urlScheme = {
-            clipboard: this.baseUrlScheme,
+            clips: this.baseUrlScheme,
             add: `${this.baseUrlScheme}&add=1`,
             actions: `${this.baseUrlScheme}&actions=1`,
             copy: uuid => `${this.baseUrlScheme}&copy=${uuid}`
@@ -25,7 +25,7 @@ class ClipboardWidget {
         }
         this.padding = 15
 
-        this.savedClipboard = this.storage.sort(this.storage.all("clipboard"))
+        this.savedClipboard = this.storage.sort(this.storage.all("clips"))
     }
 
     get maxLength() {
@@ -53,7 +53,7 @@ class ClipboardWidget {
                         case 1:
                             return this.urlScheme.actions
                         case 2:
-                            return this.urlScheme.clipboard
+                            return this.urlScheme.clips
                     }
                 })()
             },
@@ -136,7 +136,7 @@ class ClipboardWidget {
             props: {
                 spacing: 0,
                 padding: this.padding,
-                widgetURL: this.urlScheme.clipboard
+                widgetURL: this.urlScheme.clips
             },
             views: [
                 {

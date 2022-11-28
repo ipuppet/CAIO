@@ -4,7 +4,7 @@ const { UIKit, SearchBar } = require("../libs/easy-jsbox")
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
-class ClipboardSearch {
+class ClipsSearch {
     /**
      * @type {AppKernel}
      */
@@ -18,7 +18,7 @@ class ClipboardSearch {
      */
     constructor(kernel) {
         this.kernel = kernel
-        this.listId = "clipboard-list-search"
+        this.listId = "clips-list-search"
 
         this.searchBar = new SearchBar()
         this.searchBarId = this.searchBar.id + "-input"
@@ -187,4 +187,4 @@ class ClipboardSearch {
     }
 }
 
-module.exports = ClipboardSearch
+module.exports = ClipsSearch

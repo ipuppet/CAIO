@@ -12,7 +12,7 @@ const TodayActions = require("./ui/components/today-actions")
  */
 let kernel
 
-function clipboard() {
+function clips() {
     kernel.setting.method.exportClipboard = animate => {
         animate.actionStart()
         kernel.storage.export(success => {
@@ -405,7 +405,7 @@ function settingMethods(appKernel) {
         kernel.fileManager.push("storage")
     }
 
-    clipboard()
+    clips()
 
     action()
 

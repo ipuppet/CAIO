@@ -20,8 +20,17 @@ class ActionData {
     selectedRange
     textBeforeInput
     textAfterInput
+    editor
 
-    constructor({ env, text, uuid = null, selectedRange = null, textBeforeInput = null, textAfterInput = null } = {}) {
+    constructor({
+        env,
+        text,
+        uuid = null,
+        selectedRange = null,
+        textBeforeInput = null,
+        textAfterInput = null,
+        editor = null
+    } = {}) {
         this.env = env
         this.text = text
         this.originalContent = text
@@ -29,6 +38,7 @@ class ActionData {
         this.selectedRange = selectedRange
         this.textBeforeInput = textBeforeInput
         this.textAfterInput = textAfterInput
+        this.editor = editor
     }
 }
 
@@ -62,10 +72,6 @@ class Action {
         return {}
     }
 
-    push(args) {
-        this.pageSheet(args)
-    }
-
     /**
      * page sheet
      * @param {*} args 
@@ -74,9 +80,10 @@ class Action {
             title: 中间标题
             done: 点击左上角按钮后的回调函数
             doneText: 左上角文本
+            rightButtons: 右上角按钮
         }
      */
-    pageSheet({ view, title = "", done, doneText = $l10n("DONE") }) {
+    pageSheet({ view, title = "", done, doneText = $l10n("DONE"), rightButtons = [] }) {
         const sheet = new Sheet()
         sheet
             .setView(view)
@@ -87,7 +94,8 @@ class Action {
                     tapped: () => {
                         if (done) done()
                     }
-                }
+                },
+                rightButtons
             })
             .init()
             .present()
@@ -97,24 +105,38 @@ class Action {
      * 获取所有剪切板数据
      * @returns Array
      */
-    getAllClipboard() {
+    getAllClips() {
         return {
-            clipboard: this.#kernel.storage.all("clipboard").map(item => item.text),
-            pin: this.#kernel.storage.all("pin").map(item => item.text)
+            pin: this.#kernel.storage.all("pin").map(item => item.text),
+            clips: this.#kernel.storage.all("clips").map(item => item.text)
         }
     }
 
-    /**
-     * TODO 废弃
-     * @returns
-     */
-    getAllContent() {
-        return this.getAllClipboard()
+    async clearAllClips() {
+        const res = await $ui.alert({
+            title: $l10n("DELETE_DATA"),
+            message: $l10n("DELETE_TABLE").replace("${table}", $l10n("CLIPS")),
+            actions: [{ title: $l10n("DELETE"), style: $alertActionType.destructive }, { title: $l10n("CANCEL") }]
+        })
+        if (res.index === 0) {
+            // 确认删除
+            try {
+                this.#kernel.storage.deleteTable("clips")
+                return true
+            } catch (error) {
+                this.#kernel.error(error)
+                throw error
+            }
+        } else {
+            return false
+        }
     }
 
     setContent(text) {
         this.text = text
-        this.#kernel.editor.setContent(text)
+        if (this.env === ActionEnv.editor) {
+            this.editor.setContent(text)
+        }
     }
 
     getAction(type, dir, data) {
@@ -160,26 +182,6 @@ class Action {
         const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/gi
         const text = this.text ?? ""
         return text.match(regex) ?? []
-    }
-
-    async clearAllClips() {
-        const res = await $ui.alert({
-            title: $l10n("DELETE_DATA"),
-            message: $l10n("DELETE_TABLE").replace("${table}", $l10n("CLIPS")),
-            actions: [{ title: $l10n("DELETE"), style: $alertActionType.destructive }, { title: $l10n("CANCEL") }]
-        })
-        if (res.index === 0) {
-            // 确认删除
-            try {
-                this.#kernel.storage.deleteTable("clipboard")
-                return true
-            } catch (error) {
-                this.#kernel.error(error)
-                throw error
-            }
-        } else {
-            return false
-        }
     }
 }
 

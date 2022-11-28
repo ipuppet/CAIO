@@ -6,6 +6,8 @@ const { ActionEnv, ActionData } = require("../../action/action")
  */
 
 class Editor {
+    #text = ""
+
     /**
      * @param {AppKernel} kernel
      */
@@ -25,11 +27,11 @@ class Editor {
             // 原始内容
             this.originalContent = text
         }
-        this._text = text
+        this.#text = text
     }
 
     get text() {
-        return this._text
+        return this.#text
     }
 
     getActionButton() {
@@ -41,6 +43,9 @@ class Editor {
                 const range = $(this.id).selectedRange
                 const actionData = new ActionData({
                     env: ActionEnv.editor,
+                    editor: {
+                        setContent: text => this.setContent(text)
+                    },
                     text: range.length > 0 ? this.text.slice(range.location, range.location + range.length) : this.text,
                     selectedRange: range
                 })
@@ -135,7 +140,7 @@ class Editor {
      * @param {Array} navButtons 可通过 Editor.text 属性访问内容，如 editor.text
      * @param {*} type
      */
-    getNavigationView(text = "", navButtons = [], type = "text") {
+    getNavigationView(text = "", callback, navButtons = [], type = "text") {
         this.text = text
         navButtons.unshift(this.getActionButton())
 
@@ -144,6 +149,7 @@ class Editor {
         navigationView.navigationBar.setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
         navigationView.navigationBarItems.setRightButtons(navButtons)
         navigationView.setView(this.getView(type)).navigationBarTitle("")
+        navigationView.setEvent("onPop", () => callback(this.text))
 
         return navigationView
     }
