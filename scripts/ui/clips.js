@@ -142,6 +142,11 @@ class Clips extends ClipsData {
         } catch {}
     }
 
+    updateCopied(copied = {}) {
+        this.copied = Object.assign(this.copied, copied)
+        this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
+        $cache.set("clips.copied", this.copied)
+    }
     /**
      * 将元素标记为 copied
      * @param {string|undefined} uuid 若为 undefined 则清空剪切板
@@ -160,12 +165,13 @@ class Clips extends ClipsData {
         if (isUpdateIndicator) {
             $delay(0.3, () => this.updateList())
         }
+        let copied = {}
         if (this.copied.uuid !== uuid) {
-            this.copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
+            copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
         }
-        this.copied.tabIndex = this.tabIndex
-        this.copied.row = row
-        $cache.set("clips.copied", this.copied)
+        copied.tabIndex = this.tabIndex
+        copied.row = row
+        this.updateCopied(copied)
     }
 
     readClipboard(manual = false) {
@@ -177,7 +183,7 @@ class Clips extends ClipsData {
                 if (manual) {
                     $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
                 }
-                return
+                //return
             }
 
             // 切换标签页
@@ -262,6 +268,7 @@ class Clips extends ClipsData {
             this.updateList()
             if (uuid === this.copied.uuid) {
                 this.setClipboardText(text)
+                this.updateCopied({ text })
             }
 
             return true

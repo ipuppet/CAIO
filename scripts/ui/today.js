@@ -267,8 +267,8 @@ class Today extends Clips {
                             if (path && this.kernel.fileStorage.exists(path.original)) {
                                 $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
                             } else {
-                                this.setCopied(data.content.info.uuid, indexPath.row)
                                 this.setClipboardText(data.content.info.text)
+                                this.setCopied(data.content.info.uuid, indexPath.row)
                             }
                             $ui.toast($l10n("COPIED"))
                         })
