@@ -209,6 +209,7 @@ class Clips extends ClipsData {
             }
 
             // 判断 copied 是否和剪切板一致
+            // 开发模式下，清空数据后该值仍然存在，可能造成：无法保存相同的数据
             if (this.copied.text === text) {
                 return false
             }

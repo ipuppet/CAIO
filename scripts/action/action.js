@@ -14,6 +14,7 @@ class ActionEnv {
 }
 class ActionData {
     env
+    args // 其他动作传递的参数
     text
     originalContent
     uuid // 首页剪切板项目 uuid
@@ -24,6 +25,7 @@ class ActionData {
 
     constructor({
         env,
+        args,
         text,
         uuid = null,
         selectedRange = null,
@@ -32,6 +34,7 @@ class ActionData {
         editor = null
     } = {}) {
         this.env = env
+        this.args = args
         this.text = text
         this.originalContent = text
         this.uuid = uuid
@@ -139,12 +142,19 @@ class Action {
         }
     }
 
+    /**
+     *
+     * @param {string} type
+     * @param {string} dir
+     * @param {ActionData} data
+     * @returns
+     */
     getAction(type, dir, data) {
         return this.#kernel.actionManager.getAction(type, dir, data)
     }
 
-    async runAction(type, name) {
-        const action = this.getAction(type, name)
+    async runAction(type, dir) {
+        const action = this.getAction(type, dir)
         return await action.do()
     }
 

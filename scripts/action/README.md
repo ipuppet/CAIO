@@ -95,9 +95,18 @@ getAllClipboard() {
 setContent(text): void
 
 /**
+ * 获取指定的 Action 类，若为自定义动作，dir 为 $text.MD5(name)
+ * @param {string} type
+ * @param {string} dir
+ * @param {ActionData} data new ActionData({ args: any })
+ * @returns
+ */
+getAction(type, dir, data): any
+
+/**
  * 运行指定的 Action 并返回该 Action do() 方法的返回值
  */
-runAction(type, name): any
+async runAction(type, dir): any
 
 /**
  * 从 `this.text` 中匹配所有 url
