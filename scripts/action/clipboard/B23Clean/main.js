@@ -9,22 +9,21 @@ class MyAction extends Action {
                 "b23clean.noUrl": "未检测到链接",
                 "b23clean.noBiliUrl": "未检测到 bilibili 链接",
                 "b23clean.success": "已转换为 BV 视频链接",
-                "b23clean.noChange": "无变化"
+                "b23clean.noChange": "无变化",
+                "b23clean.multipleLinks": "多条链接仅在编辑模式下可用。"
             },
             en: {
                 "b23clean.converting": "Converting...",
                 "b23clean.noUrl": "No link detected",
                 "b23clean.noBiliUrl": "bilibili link not detected",
                 "b23clean.success": "Converted to BV video link",
-                "b23clean.noChange": "No change"
+                "b23clean.noChange": "No change",
+                "b23clean.multipleLinks": "Multiple links are only available in edit mode."
             }
         }
     }
 
     async cleanUrl(b23url) {
-        if (!b23url) {
-            throw new Error($l10n("b23clean.noUrl"))
-        }
         if (b23url.indexOf("bilibili.com") === -1 && b23url.indexOf("b23.tv") === -1) {
             throw new Error($l10n("b23clean.noBiliUrl"))
         }
@@ -51,8 +50,12 @@ class MyAction extends Action {
 
         try {
             const b23url = this.getUrls()
+            if (b23url.length === 0) {
+                throw new Error($l10n("b23clean.noUrl"))
+            }
+
             if (b23url.length === 1) {
-                let url = await this.cleanUrl(b23url)
+                let url = await this.cleanUrl(b23url[0])
                 $ui.clearToast()
                 $ui.alert({
                     title: $l10n("b23clean.success"),
@@ -69,6 +72,10 @@ class MyAction extends Action {
                     ]
                 })
             } else {
+                if (this.env !== ActionEnv.editor) {
+                    $ui.toast($l10n("b23clean.multipleLinks"))
+                    return
+                }
                 let flag = false
                 for (let i = 0; i < b23url.length; i++) {
                     try {
@@ -90,7 +97,7 @@ class MyAction extends Action {
             }
         } catch (error) {
             $ui.clearToast()
-            $ui.error(error)
+            $delay(0.5, () => $ui.error(error))
         }
     }
 }
