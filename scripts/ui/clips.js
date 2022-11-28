@@ -371,10 +371,9 @@ class Clips extends ClipsData {
         ]
 
         if (this.kernel.isUseJsboxNav) {
-            editor.uikitPush(text, () => callback(editor.text), navButtons)
+            editor.uikitPush(text, text => callback(text), navButtons)
         } else {
-            const navigationView = editor.getNavigationView(text, navButtons)
-            this.viewController.setEvent("onPop", () => callback(editor.text))
+            const navigationView = editor.getNavigationView(text, text => callback(text), navButtons)
             this.viewController.push(navigationView)
         }
     }
