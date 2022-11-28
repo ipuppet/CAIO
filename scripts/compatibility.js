@@ -3,6 +3,19 @@
  */
 
 /**
+ * 删除文件
+ * @param {AppKernel} kernel
+ */
+function deleteFiles(kernel, files = []) {
+    files.forEach(file => {
+        if ($file.exists(file)) {
+            kernel.print(`delete file: ${file}`)
+            $file.delete(file)
+        }
+    })
+}
+
+/**
  * 重建表
  * @param {AppKernel} kernel
  */
@@ -31,12 +44,21 @@ function rebuildDatabase(kernel) {
  */
 function rebuildUserAction(kernel) {
     // 用户动作
-    kernel.print(`rebuild user action: ExportAllContent`)
     const userActionPath = `${kernel.fileStorage.basePath}/user_action`
+
     if ($file.exists(userActionPath + "/uncategorized/ExportAllContent")) {
+        kernel.print(`rebuild user action: ExportAllContent`)
         $file.copy({
             src: "scripts/action/uncategorized/ExportAllContent/main.js",
             dst: userActionPath + "/uncategorized/ExportAllContent/main.js"
+        })
+    }
+
+    if ($file.exists(userActionPath + "/clipboard/B23Clean")) {
+        kernel.print(`rebuild user action: B23Clean`)
+        $file.copy({
+            src: "scripts/action/clipboard/B23Clean/main.js",
+            dst: userActionPath + "/clipboard/B23Clean/main.js"
         })
     }
 }
@@ -55,20 +77,12 @@ function compatibility(kernel) {
     let showMessage = false
     try {
         // 删除弃用文件
-        if ($file.exists("scripts/action/clipboard/ClearClipboard")) {
-            kernel.print(`delete folder: scripts/action/clipboard/ClearClipboard`)
-            $file.delete("scripts/action/clipboard/ClearClipboard")
-            showMessage = true
-        }
-        if ($file.exists("scripts/ui/clipboard.js")) {
-            kernel.print(`delete file: scripts/ui/clipboard.js`)
-            $file.delete("scripts/ui/clipboard.js")
-            kernel.print(`delete file: scripts/ui/clipboard-data.js`)
-            $file.delete("scripts/ui/clipboard-data.js")
-            kernel.print(`delete file: scripts/ui/clipboard-search.js`)
-            $file.delete("scripts/ui/clipboard-search.js")
-            showMessage = true
-        }
+        deleteFiles(kernel, [
+            "scripts/action/clipboard/ClearClipboard",
+            "scripts/ui/clipboard.js",
+            "scripts/ui/clipboard-data.js",
+            "scripts/ui/clipboard-search.js"
+        ])
 
         // 键盘高度保存到 setting
         if ($cache.get("caio.keyboard.height")) {

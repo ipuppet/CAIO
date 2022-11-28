@@ -20,8 +20,17 @@ class ActionData {
     selectedRange
     textBeforeInput
     textAfterInput
+    editor
 
-    constructor({ env, text, uuid = null, selectedRange = null, textBeforeInput = null, textAfterInput = null } = {}) {
+    constructor({
+        env,
+        text,
+        uuid = null,
+        selectedRange = null,
+        textBeforeInput = null,
+        textAfterInput = null,
+        editor = null
+    } = {}) {
         this.env = env
         this.text = text
         this.originalContent = text
@@ -29,6 +38,7 @@ class ActionData {
         this.selectedRange = selectedRange
         this.textBeforeInput = textBeforeInput
         this.textAfterInput = textAfterInput
+        this.editor = editor
     }
 }
 
@@ -126,7 +136,9 @@ class Action {
 
     setContent(text) {
         this.text = text
-        this.#kernel.editor.setContent(text)
+        if (this.env === ActionEnv.editor) {
+            this.editor.setContent(text)
+        }
     }
 
     getAction(type, dir, data) {
