@@ -101,7 +101,11 @@ class ActionManager {
         const config = JSON.parse($file.read(`${basePath}/config.json`).string)
         try {
             const script = $file.read(`${basePath}/main.js`).string
-            const MyAction = new Function("Action", `${script}\n return MyAction`)(Action)
+            const MyAction = new Function("Action", "ActionEnv", "ActionData", `${script}\n return MyAction`)(
+                Action,
+                ActionEnv,
+                ActionData
+            )
             const action = new MyAction(this.kernel, config, data)
             return action
         } catch (error) {
@@ -169,13 +173,13 @@ class ActionManager {
             actionTypesIndex[key] = index
         })
         this.editingActionInfo = info ?? {
-            dir: $text.uuid, // 随机生成文件夹名
             type: "clipboard",
             name: "MyAction",
             color: "#CC00CC",
             icon: "icon_062.png", // 默认星星图标
             description: ""
         }
+
         const SettingUI = new Setting({
             structure: {},
             set: (key, value) => {
@@ -257,6 +261,9 @@ class ActionManager {
                 popButton: {
                     title: $l10n("DONE"),
                     tapped: () => {
+                        if (!this.editingActionInfo.dir) {
+                            this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
+                        }
                         this.saveActionInfo(this.editingActionInfo)
                         if (done) done(this.editingActionInfo)
                     }
