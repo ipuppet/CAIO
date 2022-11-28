@@ -21,6 +21,7 @@ const { ActionData, ActionEnv } = require("../action/action")
 class Clips extends ClipsData {
     // 剪贴板列个性化设置
     #singleLine = false
+    #singleLineHeight = -1
     left_right = 20 // 列表边距
     top_bottom = 20 // 列表边距
     containerMargin = 0 // list 单边边距。如果 list 未贴合屏幕左右边缘，则需要此值辅助计算文字高度
@@ -63,18 +64,21 @@ class Clips extends ClipsData {
         })
     }
 
-    getSingleLineHeight() {
-        return $text.sizeThatFits({
-            text: "A",
-            width: this.fontSize,
-            font: $font(this.fontSize)
-        }).height
+    get singleLineHeight() {
+        if (this.#singleLineHeight < 0) {
+            this.#singleLineHeight = $text.sizeThatFits({
+                text: "A",
+                width: this.fontSize,
+                font: $font(this.fontSize)
+            }).height
+        }
+        return this.#singleLineHeight
     }
 
     setSingleLine() {
         this.#singleLine = true
         // 图片高度与文字一致
-        this.imageContentHeight = this.getSingleLineHeight()
+        this.imageContentHeight = this.singleLineHeight
     }
 
     appListen() {
@@ -541,17 +545,17 @@ class Clips extends ClipsData {
             image.hidden = false
             content.info.height = this.imageContentHeight
         } else {
-            const sliceText = text => {
-                // 显示最大长度
-                const textMaxLength = this.kernel.setting.get("clipboard.textMaxLength")
-                return text.length > textMaxLength ? text.slice(0, textMaxLength) + "..." : text
-            }
-            content.text = sliceText(data.text)
-            info.height = $text.sizeThatFits({
-                text: content.text,
-                width: UIKit.windowSize.width - (this.left_right + this.containerMargin) * 2,
-                font: $font(this.fontSize)
-            }).height
+            content.text = data.text
+            info.height = this.#singleLine
+                ? this.singleLineHeight
+                : Math.min(
+                      $text.sizeThatFits({
+                          text: content.text,
+                          width: UIKit.windowSize.width - (this.left_right + this.containerMargin) * 2,
+                          font: $font(this.fontSize)
+                      }).height,
+                      this.singleLineHeight * 2
+                  )
         }
 
         return {
@@ -562,7 +566,7 @@ class Clips extends ClipsData {
         }
     }
 
-    listTemplate(lines = 0) {
+    listTemplate() {
         return {
             props: { bgcolor: $color("clear") },
             views: [
@@ -588,7 +592,7 @@ class Clips extends ClipsData {
                             type: "label",
                             props: {
                                 id: "content",
-                                lines: lines,
+                                lines: this.#singleLine ? 1 : 2,
                                 font: $font(this.fontSize)
                             },
                             layout: (make, view) => {

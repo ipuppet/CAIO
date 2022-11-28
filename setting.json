@@ -48,16 +48,6 @@
                             },
                             {
                                 "icon": [
-                                    "pencil.and.ellipsis.rectangle",
-                                    "#CC0099"
-                                ],
-                                "title": "TEXT_MAX_LENGTH",
-                                "type": "number",
-                                "key": "clipboard.textMaxLength",
-                                "value": 35
-                            },
-                            {
-                                "icon": [
                                     "square.and.arrow.down.on.square",
                                     "#FF6633"
                                 ],

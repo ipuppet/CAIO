@@ -40,7 +40,6 @@ class Keyboard extends Clips {
         )
 
         this.keyboardSetting()
-        this.setSingleLine()
 
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)

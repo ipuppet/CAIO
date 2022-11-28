@@ -91,7 +91,7 @@ class Today extends Clips {
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
             const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
-            const f_line = height / (this.getSingleLineHeight() + this.top_bottom * 2)
+            const f_line = height / (this.singleLineHeight + this.top_bottom * 2)
             const floor = Math.floor(f_line)
             this.listPageSize = floor
             if (f_line - floor >= 0.6) {
@@ -248,19 +248,17 @@ class Today extends Clips {
                         id: this.listId,
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
-                        menu: {
-                            items: this.menuItems()
-                        },
+                        menu: { items: this.menuItems() },
                         separatorInset: $insets(0, this.left_right, 0, this.left_right),
                         data: [],
-                        template: this.listTemplate(1)
+                        template: this.listTemplate()
                     },
                     events: {
                         ready: () => this.listReady(),
                         rowHeight: (sender, indexPath) => {
                             const tag = sender.object(indexPath).tag
                             const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
-                            return this.getSingleLineHeight() + this.top_bottom + tagHeight
+                            return this.singleLineHeight + this.top_bottom + tagHeight
                         },
                         didSelect: this.buttonTapped((sender, indexPath, data) => {
                             const content = data.content
