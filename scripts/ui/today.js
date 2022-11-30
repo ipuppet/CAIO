@@ -57,13 +57,6 @@ class Today extends Clips {
         return $cache.get("caio.today.tab.index") ?? 0
     }
 
-    loadData() {
-        this.setClipboarPageSize($widget.mode)
-        this.loadAllClips()
-        this.updateList()
-        this.appListen()
-    }
-
     listReady() {
         // 监听展开状态
         $widget.modeChanged = mode => {
@@ -71,15 +64,18 @@ class Today extends Clips {
             this.updateList()
         }
 
-        this.loadData()
+        this.setClipboarPageSize($widget.mode)
+
+        this.loadAllClips()
+        this.updateList()
+        this.appListen()
 
         $delay(0.5, () => this.readClipboard())
     }
 
     readClipboard(manual = false) {
-        if (!this.isActionPage) {
+        if (!this.isActionPage && $app.env === $env.today) {
             super.readClipboard(manual)
-            this.updateList()
             return true
         }
         return false
@@ -411,7 +407,6 @@ class Today extends Clips {
                                 },
                                 completion: () => {
                                     timer.invalidate()
-                                    this.loadData()
                                 }
                             })
                         }

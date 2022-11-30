@@ -183,7 +183,7 @@ class Clips extends ClipsData {
                 if (manual) {
                     $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
                 }
-                //return
+                return
             }
 
             // 切换标签页
