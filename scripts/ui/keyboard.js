@@ -73,7 +73,6 @@ class Keyboard extends Clips {
     }
 
     listReady() {
-        this.loadAllClips()
         this.updateList()
         this.appListen()
         // readClipboard
