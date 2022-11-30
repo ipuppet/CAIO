@@ -74,9 +74,8 @@ class Today extends Clips {
     }
 
     readClipboard(manual = false) {
-        if (!this.isActionPage) {
+        if (!this.isActionPage && $app.env === $env.today) {
             super.readClipboard(manual)
-            this.updateList()
             return true
         }
         return false
