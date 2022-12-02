@@ -331,7 +331,10 @@ class Clips extends ClipsData {
     }
 
     pin(item, row) {
-        if (item?.section === "pin") return
+        if (item?.section === "pin") {
+            this.move(row, 0)
+            return
+        }
         const res = this.kernel.storage.getByMD5(item.md5)
         if (res?.section === "pin") {
             Toast.warning("Already exists")
@@ -754,8 +757,7 @@ class Clips extends ClipsData {
                         title: $l10n("PIN"),
                         color: $color("orange"),
                         handler: (sender, indexPath) => {
-                            const content = sender.object(indexPath).content.info
-                            delete content.height
+                            const content = this.clips[indexPath.row]
                             this.pin(content, indexPath.row)
                         }
                     }
