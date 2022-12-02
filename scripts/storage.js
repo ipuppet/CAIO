@@ -235,7 +235,7 @@ class Storage {
 
     getByUUID(uuid) {
         const result = this.sqlite.query({
-            sql: "SELECT *, 'clips' AS section FROM clips a WHERE uuid = ? UNION SELECT *, 'pin' AS section FROM pin a WHERE uuid = ?",
+            sql: "SELECT *, 'clips' AS section FROM clips WHERE uuid = ? UNION SELECT *, 'pin' AS section FROM pin WHERE uuid = ?",
             args: [uuid, uuid]
         })
         return this.parse(result)[0]
