@@ -143,7 +143,7 @@ class Clips extends ClipsData {
     }
 
     updateCopied(copied = {}) {
-        this.copied = Object.assign(this.copied, copied)
+        Object.assign(this.copied, copied)
         this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
@@ -162,16 +162,17 @@ class Clips extends ClipsData {
             return
         }
 
-        if (isUpdateIndicator) {
-            $delay(0.3, () => this.updateList())
-        }
         let copied = {}
         if (this.copied.uuid !== uuid) {
-            copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
+            copied = this.kernel.storage.getByUUID(uuid) ?? {}
         }
         copied.tabIndex = this.tabIndex
         copied.row = row
         this.updateCopied(copied)
+
+        if (isUpdateIndicator) {
+            $delay(0.3, () => this.updateList())
+        }
     }
 
     readClipboard(manual = false) {
@@ -365,7 +366,7 @@ class Clips extends ClipsData {
         }
         const isMoveToTop = this.tabIndex !== 0
         // 将被复制的行移动到最前端
-        if (isMoveToTop) this.move(row, 0)
+        if (isMoveToTop) this.move(row, 0, false)
         // 写入缓存并更新数据
         this.setCopied(uuid, isMoveToTop ? 0 : row)
     }
@@ -748,8 +749,8 @@ class Clips extends ClipsData {
                         title: $l10n("COPY"),
                         color: $color("systemLink"),
                         handler: (sender, indexPath) => {
-                            const data = sender.object(indexPath)
-                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
+                            const info = this.clips[indexPath.row]
+                            this.copy(info.text, info.uuid, indexPath.row)
                         }
                     },
                     {
