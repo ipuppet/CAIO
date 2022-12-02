@@ -693,7 +693,7 @@ class Clips extends ClipsData {
             .setView(reorderView)
             .addNavBar({
                 title: "",
-                popButton: { title: $l10n("DONE") },
+                popButton: { title: $l10n("CLOSE") },
                 rightButtons: [
                     {
                         title: $l10n("DELETE"),
