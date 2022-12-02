@@ -234,16 +234,26 @@ class Storage {
     }
 
     getByUUID(uuid) {
+        uuid = uuid.replace("'", "")
         const result = this.sqlite.query({
-            sql: "SELECT *, 'clips' AS section FROM clips WHERE uuid = ? UNION SELECT *, 'pin' AS section FROM pin WHERE uuid = ?",
-            args: [uuid, uuid]
+            sql: `
+                SELECT *, 'clips' AS section FROM clips WHERE uuid = '${uuid}'
+                UNION
+                SELECT *, 'pin' AS section FROM pin WHERE uuid = '${uuid}'
+            `
+            // args: [uuid, uuid]
         })
         return this.parse(result)[0]
     }
     getByMD5(md5) {
+        md5 = md5.replace("'", "")
         const result = this.sqlite.query({
-            sql: "SELECT *, 'clips' AS section FROM clips WHERE md5 = ? UNION SELECT *, 'pin' AS section FROM pin WHERE md5 = ?",
-            args: [md5, md5]
+            sql: `
+                SELECT *, 'clips' AS section FROM clips WHERE md5 = '${md5}'
+                UNION
+                SELECT *, 'pin' AS section FROM pin WHERE md5 = '${md5}'
+            `
+            // args: [md5, md5]
         })
         return this.parse(result)[0]
     }
