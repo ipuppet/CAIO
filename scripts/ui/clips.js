@@ -143,7 +143,7 @@ class Clips extends ClipsData {
     }
 
     updateCopied(copied = {}) {
-        this.copied = Object.assign(this.copied, copied)
+        Object.assign(this.copied, copied)
         this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
@@ -162,16 +162,17 @@ class Clips extends ClipsData {
             return
         }
 
-        if (isUpdateIndicator) {
-            $delay(0.3, () => this.updateList())
-        }
         let copied = {}
         if (this.copied.uuid !== uuid) {
-            copied = Object.assign(this.copied, this.kernel.storage.getByUUID(uuid) ?? {})
+            copied = this.kernel.storage.getByUUID(uuid) ?? {}
         }
         copied.tabIndex = this.tabIndex
         copied.row = row
         this.updateCopied(copied)
+
+        if (isUpdateIndicator) {
+            $delay(0.3, () => this.updateList())
+        }
     }
 
     readClipboard(manual = false) {
@@ -331,7 +332,10 @@ class Clips extends ClipsData {
     }
 
     pin(item, row) {
-        if (item?.section === "pin") return
+        if (item?.section === "pin") {
+            this.move(row, 0)
+            return
+        }
         const res = this.kernel.storage.getByMD5(item.md5)
         if (res?.section === "pin") {
             Toast.warning("Already exists")
@@ -362,7 +366,7 @@ class Clips extends ClipsData {
         }
         const isMoveToTop = this.tabIndex !== 0
         // 将被复制的行移动到最前端
-        if (isMoveToTop) this.move(row, 0)
+        if (isMoveToTop) this.move(row, 0, false)
         // 写入缓存并更新数据
         this.setCopied(uuid, isMoveToTop ? 0 : row)
     }
@@ -693,7 +697,7 @@ class Clips extends ClipsData {
             .setView(reorderView)
             .addNavBar({
                 title: "",
-                popButton: { title: $l10n("DONE") },
+                popButton: { title: $l10n("CLOSE") },
                 rightButtons: [
                     {
                         title: $l10n("DELETE"),
@@ -745,8 +749,8 @@ class Clips extends ClipsData {
                         title: $l10n("COPY"),
                         color: $color("systemLink"),
                         handler: (sender, indexPath) => {
-                            const data = sender.object(indexPath)
-                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
+                            const info = this.clips[indexPath.row]
+                            this.copy(info.text, info.uuid, indexPath.row)
                         }
                     },
                     {
@@ -754,8 +758,7 @@ class Clips extends ClipsData {
                         title: $l10n("PIN"),
                         color: $color("orange"),
                         handler: (sender, indexPath) => {
-                            const content = sender.object(indexPath).content.info
-                            delete content.height
+                            const content = this.clips[indexPath.row]
                             this.pin(content, indexPath.row)
                         }
                     }
