@@ -45,6 +45,8 @@
 "DELETE_ALL_DATA_ALERT" = "Are you sure you want to delete all your data?";
 "DELETE_DATA" = "Delete Data";
 "DELETE_TABLE" = "Delete all data from ${table}?";
+"SELECT_ALL" = "Select All";
+"DESELECT_ALL" = "Deselect All";
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";
@@ -68,6 +70,7 @@
 "SAVE_SUCCESS" = "Save success";
 "SAVE_ERROR" = "Save failed";
 "DELETE" = "Delete";
+"CONFIRM_DELETE_TITLE" = "Delete Confirmation";
 "CONFIRM_DELETE_MSG" = "Are you sure you want to delete?";
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";

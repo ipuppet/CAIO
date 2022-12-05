@@ -6,12 +6,12 @@ const {
     ViewController,
     NavigationView,
     NavigationBar,
-    SearchBar,
     Toast
 } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 const ClipsData = require("./clips-data")
 const ClipsSearch = require("./clips-search")
+const ClipsEditor = require("./clips-editor")
 const { ActionData, ActionEnv } = require("../action/action")
 
 /**
@@ -19,6 +19,8 @@ const { ActionData, ActionEnv } = require("../action/action")
  */
 
 class Clips extends ClipsData {
+    listId = "clips-list"
+
     // 剪贴板列个性化设置
     #singleLine = false
     #singleLineHeight = -1
@@ -35,13 +37,13 @@ class Clips extends ClipsData {
     tabHeight = 44
 
     copied = $cache.get("clips.copied") ?? {}
+    #textHeightCache = {}
 
     /**
      * @param {AppKernel} kernel
      */
     constructor(kernel) {
         super(kernel)
-        this.listId = "clips-list"
 
         this.viewController = new ViewController()
 
@@ -79,6 +81,22 @@ class Clips extends ClipsData {
         this.#singleLine = true
         // 图片高度与文字一致
         this.imageContentHeight = this.singleLineHeight
+    }
+
+    getTextHeight(text) {
+        if (!this.#textHeightCache[text]) {
+            this.#textHeightCache[text] = this.#singleLine
+                ? this.singleLineHeight
+                : Math.min(
+                      $text.sizeThatFits({
+                          text: text,
+                          width: UIKit.windowSize.width - (this.left_right + this.containerMargin) * 2,
+                          font: $font(this.fontSize)
+                      }).height,
+                      this.singleLineHeight * 2
+                  )
+        }
+        return this.#textHeightCache[text]
     }
 
     appListen() {
@@ -131,15 +149,12 @@ class Clips extends ClipsData {
     }
 
     updateList() {
-        // 直接重置数据，解决小绿点滚动到屏幕外后消失问题
         $(this.listId).data = this.clips.map(data => this.lineData(data, this.copied.uuid === data.uuid))
         this.updateListBackground()
     }
 
     updateListBackground() {
-        try {
-            $(this.listId + "-empty-list-background").hidden = this.clips.length > 0
-        } catch {}
+        $(this.listId + "-empty-list-background").hidden = this.clips.length > 0
     }
 
     updateCopied(copied = {}) {
@@ -147,6 +162,7 @@ class Clips extends ClipsData {
         this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
+
     /**
      * 将元素标记为 copied
      * @param {string|undefined} uuid 若为 undefined 则清空剪切板
@@ -168,10 +184,17 @@ class Clips extends ClipsData {
         }
         copied.tabIndex = this.tabIndex
         copied.row = row
+
+        const oldRow = this.copied.row
+
         this.updateCopied(copied)
 
         if (isUpdateIndicator) {
-            $delay(0.3, () => this.updateList())
+            const listView = $(this.listId)
+            $delay(0.3, () => {
+                listView.cell($indexPath(0, oldRow)).get("copied").hidden = true
+                listView.cell($indexPath(0, row)).get("copied").hidden = false
+            })
         }
     }
 
@@ -283,14 +306,15 @@ class Clips extends ClipsData {
      * 将from位置的元素移动到to位置
      * @param {number} from
      * @param {number} to
-     * @param {number} section
-     * @param {boolean} copiedIndex
+     * @param {boolean} updateUI
      */
-    move(from, to, copiedIndex = true) {
+    move(from, to, updateUI = true) {
         if (from === to) return
 
         try {
             super.move(from, to)
+
+            if (!updateUI) return
             // 操作 UI
             const listView = $(this.listId)
             // 移动列表
@@ -310,7 +334,7 @@ class Clips extends ClipsData {
                 })
             }
             // 修正指示器
-            if (copiedIndex && this.copied.tabIndex !== undefined) {
+            if (this.copied.tabIndex !== undefined) {
                 if (this.copied.tabIndex === this.tabIndex) {
                     if (this.copied.row === from) {
                         // 被移动的行是被复制的行
@@ -366,7 +390,7 @@ class Clips extends ClipsData {
         }
         const isMoveToTop = this.tabIndex !== 0
         // 将被复制的行移动到最前端
-        if (isMoveToTop) this.move(row, 0, false)
+        if (isMoveToTop) this.move(row, 0)
         // 写入缓存并更新数据
         this.setCopied(uuid, isMoveToTop ? 0 : row)
     }
@@ -409,7 +433,7 @@ class Clips extends ClipsData {
                         title: $l10n("TAG"),
                         symbol: "tag",
                         handler: (sender, indexPath) => {
-                            const uuid = sender.object(indexPath).content.info.uuid
+                            const uuid = this.clips[indexPath.row].uuid
                             $input.text({
                                 placeholder: $l10n("ADD_TAG"),
                                 text: sender.text,
@@ -435,7 +459,7 @@ class Clips extends ClipsData {
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
                         handler: (sender, indexPath) => {
-                            const text = sender.object(indexPath).content.info.text
+                            const text = this.clips[indexPath.row].text
                             let shareContent = text
                             const path = this.kernel.storage.keyToPath(text)
                             if (path && this.kernel.fileStorage.exists(path.original)) {
@@ -452,8 +476,8 @@ class Clips extends ClipsData {
                         title: $l10n("COPY"),
                         symbol: "square.on.square",
                         handler: (sender, indexPath) => {
-                            const data = sender.object(indexPath)
-                            this.copy(data.content.info.text, data.content.info.uuid, indexPath.row)
+                            const item = this.clips[indexPath.row]
+                            this.copy(item.text, item.uuid, indexPath.row)
                         }
                     },
                     {
@@ -462,8 +486,8 @@ class Clips extends ClipsData {
                         destructive: true,
                         handler: (sender, indexPath) => {
                             this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                const data = sender.object(indexPath)
-                                this.delete(data.content.info.uuid, indexPath.row)
+                                const item = this.clips[indexPath.row]
+                                this.delete(item.uuid, indexPath.row)
                                 sender.delete(indexPath)
                             })
                         }
@@ -479,11 +503,11 @@ class Clips extends ClipsData {
         const action = action => {
             const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
             action.handler = (sender, indexPath) => {
-                const item = sender.object(indexPath)
+                const item = this.clips[indexPath.row]
                 const actionData = new ActionData({
                     env: ActionEnv.clipboard,
-                    text: item.content.info.text,
-                    uuid: item.content.info.uuid
+                    text: item.text,
+                    uuid: item.uuid
                 })
                 handler(actionData)
             }
@@ -541,39 +565,20 @@ class Clips extends ClipsData {
 
     lineData(data, indicator = false) {
         const image = { hidden: true }
-        const info = {
-            text: data.text,
-            section: data.section,
-            uuid: data.uuid,
-            md5: data.md5,
-            prev: data.prev,
-            next: data.next
-        }
-        const content = { text: "", info }
+        const content = { text: "" }
 
         const path = this.kernel.storage.keyToPath(data.text)
         if (path) {
             image.src = path.preview
             image.hidden = false
-            content.info.height = this.imageContentHeight
         } else {
             content.text = data.text
-            info.height = this.#singleLine
-                ? this.singleLineHeight
-                : Math.min(
-                      $text.sizeThatFits({
-                          text: content.text,
-                          width: UIKit.windowSize.width - (this.left_right + this.containerMargin) * 2,
-                          font: $font(this.fontSize)
-                      }).height,
-                      this.singleLineHeight * 2
-                  )
         }
 
         return {
             copied: { hidden: !indicator },
             image,
-            tag: { text: data.tag, info },
+            tag: { text: data.tag },
             content
         }
     }
@@ -597,7 +602,7 @@ class Clips extends ClipsData {
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo(this.copiedIndicatorSize)
                                 // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                make.left.inset(this.left_right / 2 - this.copiedIndicatorSize / 2)
+                                make.left.equalTo(view.super).inset(this.left_right / 2 - this.copiedIndicatorSize / 2)
                             }
                         },
                         {
@@ -608,7 +613,7 @@ class Clips extends ClipsData {
                                 font: $font(this.fontSize)
                             },
                             layout: (make, view) => {
-                                make.left.right.inset(this.left_right)
+                                make.left.right.equalTo(view.super).inset(this.left_right)
                                 if (this.#singleLine) {
                                     make.top.inset(this.imageContentHeight / 2)
                                 } else {
@@ -625,10 +630,7 @@ class Clips extends ClipsData {
                             layout: $layout.fill
                         }
                     ],
-                    layout: (make, view) => {
-                        make.width.top.equalTo(view.super)
-                        make.height.equalTo(view.super)
-                    }
+                    layout: $layout.fill
                 },
                 {
                     type: "label",
@@ -647,97 +649,13 @@ class Clips extends ClipsData {
         }
     }
 
-    getListEditerView() {
-        const reorderView = {
-            type: "list",
-            props: {
-                bgcolor: UIKit.primaryViewBackgroundColor,
-                separatorInset: $insets(0, this.left_right, 0, 0),
-                data: this.clips.map(data => this.lineData(data)),
-                template: this.listTemplate(),
-                reorder: true,
-                crossSections: false,
-                actions: [
-                    {
-                        // 删除
-                        title: "delete",
-                        handler: (sender, indexPath) => {
-                            const listView = $(this.listId)
-                            const data = listView.object(indexPath)
-                            this.delete(data.content.info.uuid, indexPath.row)
-                            listView.delete(indexPath)
-                        }
-                    }
-                ]
-            },
-            events: {
-                rowHeight: (sender, indexPath) => {
-                    // sender 取不到值时代表此项为占位符，从原列表取值
-                    const content = sender.object(indexPath).content ?? $(this.listId).object(indexPath).content
-                    return content.info.height + this.top_bottom * 2
-                },
-                reorderBegan: indexPath => {
-                    // 用于纠正 rowHeight 高度计算
-                    this.reorder.from = indexPath.row
-                    this.reorder.to = undefined
-                },
-                reorderMoved: (fromIndexPath, toIndexPath) => {
-                    this.reorder.to = toIndexPath.row
-                },
-                reorderFinished: () => {
-                    if (this.reorder.to === undefined) return
-                    this.move(this.reorder.from, this.reorder.to)
-                }
-            },
-            layout: $layout.fill
-        }
-
-        const sheet = new Sheet()
-        sheet
-            .setView(reorderView)
-            .addNavBar({
-                title: "",
-                popButton: { title: $l10n("CLOSE") },
-                rightButtons: [
-                    {
-                        title: $l10n("DELETE"),
-                        color: $color("red"),
-                        tapped: async () => {
-                            const res = await $ui.alert({
-                                title: $l10n("DELETE_DATA"),
-                                message: $l10n("DELETE_TABLE").replace("${table}", this.tableL10n),
-                                actions: [
-                                    { title: $l10n("DELETE"), style: $alertActionType.destructive },
-                                    { title: $l10n("CANCEL") }
-                                ]
-                            })
-                            if (res.index === 0) {
-                                // 确认删除
-                                try {
-                                    this.kernel.storage.deleteTable(this.table)
-                                    sheet.dismiss()
-                                    this.loadAllClips()
-                                    this.updateList()
-                                } catch (error) {
-                                    this.kernel.error(error)
-                                    $ui.error(error)
-                                }
-                            }
-                        }
-                    }
-                ]
-            })
-            .preventDismiss()
-            .init()
-            .present()
-    }
-
     getListView(id = this.listId, data = []) {
         const listView = {
             // 剪切板列表
             type: "list",
             props: {
                 id,
+                associateWithNavigationBar: false,
                 bgcolor: $color("clear"),
                 separatorInset: $insets(0, this.left_right, 0, 0),
                 menu: { items: this.menuItems() },
@@ -749,8 +667,8 @@ class Clips extends ClipsData {
                         title: $l10n("COPY"),
                         color: $color("systemLink"),
                         handler: (sender, indexPath) => {
-                            const info = this.clips[indexPath.row]
-                            this.copy(info.text, info.uuid, indexPath.row)
+                            const item = this.clips[indexPath.row]
+                            this.copy(item.text, item.uuid, indexPath.row)
                         }
                     },
                     {
@@ -768,23 +686,25 @@ class Clips extends ClipsData {
             events: {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
-                    const content = sender.object(indexPath).content
-                    const tag = sender.object(indexPath).tag
-                    const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
-                    return content.info.height + this.top_bottom + tagHeight
+                    const object = sender.object(indexPath)
+                    const tagHeight = object.tag.text ? this.tagContainerHeight : this.top_bottom
+                    const itemHeight = this.kernel.storage.isImage(object.content.text)
+                        ? this.imageContentHeight
+                        : this.getTextHeight(object.content.text)
+                    return itemHeight + this.top_bottom + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
-                    const content = data.content
-                    const text = content.info.text
+                    const item = this.clips[indexPath.row]
+                    const text = item.text
                     const path = this.kernel.storage.keyToPath(text)
                     if (path && this.kernel.fileStorage.exists(path.original)) {
+                        // TODO: preview image
                         $quicklook.open({
                             image: this.kernel.fileStorage.readSync(path.original)?.image
                         })
                     } else {
-                        this.edit(content.info.text, text => {
-                            if (content.info.md5 !== $text.MD5(text))
-                                this.update(content.info.uuid, text, indexPath.row)
+                        this.edit(item.text, text => {
+                            if (item.md5 !== $text.MD5(text)) this.update(item.uuid, text, indexPath.row)
                         })
                     }
                 },
@@ -840,7 +760,9 @@ class Clips extends ClipsData {
             .setLeftButtons([
                 {
                     title: $l10n("EDIT"),
-                    tapped: () => this.getListEditerView()
+                    tapped: () => {
+                        new ClipsEditor(this).presentSheet()
+                    }
                 },
                 {
                     symbol: "square.and.arrow.down.on.square",

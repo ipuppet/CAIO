@@ -63,7 +63,8 @@ class AppKernel extends Kernel {
 
     deleteConfirm(message, conformAction) {
         $ui.alert({
-            title: message,
+            title: $l10n("CONFIRM_DELETE_TITLE"),
+            message,
             actions: [
                 {
                     title: $l10n("DELETE"),

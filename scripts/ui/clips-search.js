@@ -5,6 +5,8 @@ const { UIKit, SearchBar } = require("../libs/easy-jsbox")
  */
 
 class ClipsSearch {
+    listId = "clips-list-search"
+
     /**
      * @type {AppKernel}
      */
@@ -18,7 +20,6 @@ class ClipsSearch {
      */
     constructor(kernel) {
         this.kernel = kernel
-        this.listId = "clips-list-search"
 
         this.searchBar = new SearchBar()
         this.searchBarId = this.searchBar.id + "-input"
