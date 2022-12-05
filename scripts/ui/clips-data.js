@@ -12,7 +12,6 @@ class ClipsData {
 
     pasteboard = $objc("UIPasteboard").$generalPasteboard()
 
-    reorder = {}
     #allClips = []
     // 键为 md5，值为 1 或 undefined 用来去重
     savedClipboardIndex = {}
@@ -54,9 +53,6 @@ class ClipsData {
         this.#allClips = allClips.map(item => {
             return new Proxy(item ?? [], {
                 set: (obj, prop, value) => {
-                    // 更新空列表背景
-                    this.updateListBackground()
-
                     return Reflect.set(obj, prop, value)
                 }
             })
@@ -187,19 +183,15 @@ class ClipsData {
     }
 
     update(uuid, text, row) {
-        const info = this.clips[row]
-        const newMD5 = $text.MD5(text)
+        const md5 = $text.MD5(text)
 
         // 更新索引
-        delete this.savedClipboardIndex[info.md5]
-        this.savedClipboardIndex[newMD5] = 1
+        delete this.savedClipboardIndex[this.clips[row].md5]
+        this.savedClipboardIndex[md5] = 1
 
         // 更新内存数据
-        const oldData = info.text
-        this.clips[row] = Object.assign(info, {
-            text,
-            md5: newMD5
-        })
+        const oldData = this.clips[row].text
+        Object.assign(this.clips[row], { text, md5 })
 
         try {
             this.kernel.storage.updateText(this.table, uuid, text)

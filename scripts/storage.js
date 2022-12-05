@@ -270,12 +270,15 @@ class Storage {
         return this.parse(result)
     }
 
+    isImage(text) {
+        return text?.startsWith("@image=")
+    }
     pathToKey(path) {
         path = JSON.stringify(path)
         return `@image=${path}`
     }
     keyToPath(key) {
-        if (key?.startsWith("@image=")) {
+        if (this.isImage(key)) {
             return JSON.parse(key.slice(7))
         }
         return false
