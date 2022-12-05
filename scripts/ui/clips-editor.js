@@ -163,14 +163,14 @@ class ClipsEditor {
                         }
                     ],
                     layout: (make, view) => {
-                        make.left.right.height.equalTo(view.super)
+                        make.left.right.top.equalTo(view.super)
                         make.bottom.equalTo(view.super.safeAreaBottom)
                     }
                 }
             ],
             (make, view) => {
                 make.left.right.bottom.equalTo(view.super)
-                make.top.equalTo(view.super.bottom).offset(-this.toolBarHeight)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-this.toolBarHeight)
             }
         )
     }
