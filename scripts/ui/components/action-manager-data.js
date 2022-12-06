@@ -84,11 +84,8 @@ class ActionManagerData {
         }
     }
 
-    /**
-     * TODO: Actions iCloud sync
-     * @returns 
-     */
     async sync() {
+        // TODO: Actions iCloud sync
         return
         $thread.background({
             delay: 0,
