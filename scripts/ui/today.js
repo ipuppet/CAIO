@@ -291,7 +291,6 @@ class Today extends Clips {
         const matrixView = {
             type: "matrix",
             props: {
-                id: this.matrixId,
                 bgcolor: $color("clear"),
                 columns: 2,
                 itemHeight: this.matrixItemHeight,

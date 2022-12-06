@@ -1,169 +1,30 @@
 const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
+const ActionManagerData = require("./action-manager-data")
 const { ActionEnv, ActionData, Action } = require("../../action/action")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
  */
 
-class ActionManager {
-    matrixId = "actions"
+class ActionManager extends ActionManagerData {
     matrix
     reorder = {}
 
-    /**
-     * @param {AppKernel} kernel
-     */
-    constructor(kernel) {
-        this.kernel = kernel
-        // path
-        this.actionPath = "scripts/action"
-        this.actionOrderFile = "order.json"
-        this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
-        // 用来存储被美化的 Action 分类名称
-        this.typeNameMap = {}
-        // checkUserAction
-        this.checkUserAction()
-    }
-
-    importExampleAction() {
-        try {
-            Object.keys(__ACTIONS__).forEach(type => {
-                const userActionTypePath = `${this.userActionPath}/${type}`
-                Object.keys(__ACTIONS__[type]).forEach(name => {
-                    if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
-                        $file.mkdir(userActionTypePath)
-                        $file.mkdir(`${userActionTypePath}/${name}`)
-
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["main.js"] }),
-                            path: `${userActionTypePath}/${name}/main.js`
-                        })
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["config.json"] }),
-                            path: `${userActionTypePath}/${name}/config.json`
-                        })
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["README.md"] }),
-                            path: `${userActionTypePath}/${name}/README.md`
-                        })
-                    }
-                })
+    get actions() {
+        return super.actions.map(type => {
+            const rows = []
+            type.items.forEach(action => {
+                rows.push(this.actionToData(action))
             })
-        } catch {
-            $file.list(this.actionPath).forEach(type => {
-                const actionTypePath = `${this.actionPath}/${type}`
-                if ($file.isDirectory(actionTypePath)) {
-                    const userActionTypePath = `${this.userActionPath}/${type}`
-                    $file.list(actionTypePath).forEach(name => {
-                        if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
-                            $file.mkdir(userActionTypePath)
-                            $file.copy({
-                                src: `${actionTypePath}/${name}`,
-                                dst: `${userActionTypePath}/${name}`
-                            })
-                        }
-                    })
-                }
-            })
-        }
-    }
 
-    checkUserAction() {
-        if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
-            $file.mkdir(this.userActionPath)
-            this.importExampleAction()
-        }
-    }
-
-    getActionTypes() {
-        const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        return type.concat(
-            $file.list(this.userActionPath).filter(dir => {
-                // 获取 type.indexOf(dir) < 0 的文件夹名
-                if ($file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0) return dir
-            })
-        )
-    }
-
-    getActionOrder(type) {
-        const path = `${this.userActionPath}/${type}/${this.actionOrderFile}`
-        if ($file.exists(path)) return JSON.parse($file.read(path).string)
-        else return []
-    }
-
-    getActionPath(type, dir) {
-        return `${this.userActionPath}/${type}/${dir}`
-    }
-
-    getAction(type, dir, data) {
-        const basePath = this.getActionPath(type, dir)
-        const config = JSON.parse($file.read(`${basePath}/config.json`).string)
-        try {
-            const script = $file.read(`${basePath}/main.js`).string
-            const MyAction = new Function("Action", "ActionEnv", "ActionData", `${script}\n return MyAction`)(
-                Action,
-                ActionEnv,
-                ActionData
-            )
-            const action = new MyAction(this.kernel, config, data)
-            return action
-        } catch (error) {
-            $ui.error(error)
-            this.kernel.error(error)
-        }
-    }
-
-    getActionHandler(type, dir) {
-        return async data => {
-            try {
-                const action = this.getAction(type, dir, data)
-                return await action.do()
-            } catch (error) {
-                $ui.error(error)
-                this.kernel.error(error)
+            // 返回新对象
+            return {
+                title: type.title,
+                items: rows,
+                rows: rows
             }
-        }
-    }
-
-    getActions(type) {
-        const actions = []
-        const typePath = `${this.userActionPath}/${type}`
-        if (!$file.exists(typePath)) return []
-        const pushAction = item => {
-            const basePath = `${typePath}/${item}/`
-            if ($file.isDirectory(basePath)) {
-                const config = JSON.parse($file.read(basePath + "config.json").string)
-                actions.push(
-                    Object.assign(config, {
-                        dir: item,
-                        type: type,
-                        name: config.name ?? item,
-                        icon: config.icon
-                    })
-                )
-            }
-        }
-        // push 有顺序的 Action
-        const order = this.getActionOrder(type)
-        order.forEach(item => pushAction(item))
-        // push 剩下的 Action
-        $file.list(typePath).forEach(item => {
-            if (order.indexOf(item) === -1) pushAction(item)
         })
-        return actions
-    }
-
-    getTypeName(type) {
-        const typeUpperCase = type.toUpperCase()
-        const l10n = $l10n(typeUpperCase)
-        const name = l10n === typeUpperCase ? type : l10n
-        this.typeNameMap[name] = type
-        return name
-    }
-
-    getTypeDir(name) {
-        return this.typeNameMap[name] ?? name
     }
 
     editActionInfoPageSheet(info, done) {
@@ -304,97 +165,24 @@ class ActionManager {
         )
     }
 
-    saveActionInfo(info) {
-        const path = `${this.userActionPath}/${info.type}/${info.dir}`
-        if (!$file.exists(path)) $file.mkdir(path)
-        $file.write({
-            data: $data({
-                string: JSON.stringify({
-                    icon: info.icon,
-                    color: info.color,
-                    name: info.name,
-                    description: info.description
-                })
-            }),
-            path: `${path}/config.json`
-        })
-    }
-
-    saveMainJs(info, content) {
-        const path = `${this.userActionPath}/${info.type}/${info.dir}`
-        const mainJsPath = `${path}/main.js`
-        if (!$file.exists(path)) $file.mkdir(path)
-        if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
-        $file.write({
-            data: $data({ string: content }),
-            path: mainJsPath
-        })
-    }
-
-    saveOrder(type, order) {
-        $file.write({
-            data: $data({ string: JSON.stringify(order) }),
-            path: `${this.userActionPath}/${type}/${this.actionOrderFile}`
-        })
-    }
-
     move(from, to, data) {
         if (from.section === to.section && from.row === to.row) return
-        // 处理 data 数据
-        data = data.map(section => {
-            section.rows = section.rows.map(item => item.info.info)
-            return section
-        })
-        const fromSection = data[from.section],
-            toSection = data[to.section]
-        const getOrder = section => {
-            const order = []
-            data[section].rows.forEach(item => order.push(item.dir))
-            return order
-        }
-        const updateUI = (insertFirst = true, type) => {
-            const actionsView = this.matrix
-            const toData = this.actionToData(Object.assign(toSection.rows[to.row], { type: type }))
-            if (insertFirst) {
-                actionsView.insert(
-                    {
-                        indexPath: $indexPath(to.section, to.row + 1), // 先插入时是插入到 to 位置的前面
-                        value: toData
-                    },
-                    false
-                )
-                actionsView.delete(from, false)
-            } else {
-                actionsView.delete(from, false)
-                actionsView.insert(
-                    {
-                        indexPath: to,
-                        value: toData
-                    },
-                    false
-                )
-            }
-        }
-        const fromType = this.getTypeDir(fromSection.title)
-        const toType = this.getTypeDir(toSection.title)
-        // 判断是否跨 section
-        if (from.section === to.section) {
-            this.saveOrder(fromType, getOrder(from.section))
-        } else {
-            // 跨 section 则同时移动 Action 目录
-            this.saveOrder(fromType, getOrder(from.section))
-            this.saveOrder(toType, getOrder(to.section))
-            $file.move({
-                src: `${this.userActionPath}/${fromType}/${toSection.rows[to.row].dir}`,
-                dst: `${this.userActionPath}/${toType}/${toSection.rows[to.row].dir}`
-            })
-        }
-        // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
-        updateUI(from.row < to.row, toType)
-    }
 
-    delete(info) {
-        $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
+        super.move(from, to, data)
+
+        // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
+        const actionsView = this.matrix
+        const toData = this.actionToData(
+            Object.assign(data[to.section].rows[to.row], { type: this.getTypeDir(data[to.section].title) })
+        )
+        if (from.row < to.row) {
+            // 先插入时是插入到 to 位置的前面 to.row + 1
+            actionsView.insert({ indexPath: $indexPath(to.section, to.row + 1), value: toData }, false)
+            actionsView.delete(from, false)
+        } else {
+            actionsView.delete(from, false)
+            actionsView.insert({ indexPath: to, value: toData }, false)
+        }
     }
 
     menuItems() {
@@ -594,20 +382,6 @@ class ActionManager {
         }
     }
 
-    actionsToData() {
-        return this.getActionTypes().map(type => {
-            const rows = []
-            this.getActions(type).forEach(action => {
-                rows.push(this.actionToData(action))
-            })
-            return {
-                title: this.getTypeName(type),
-                items: rows,
-                rows: rows
-            }
-        })
-    }
-
     getActionListView(didSelect, props = {}, events = {}) {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
@@ -631,7 +405,7 @@ class ActionManager {
                     rowHeight: 60,
                     sectionTitleHeight: 30,
                     stickyHeader: true,
-                    data: this.actionsToData(),
+                    data: this.actions,
                     template: {
                         props: { bgcolor: $color("clear") },
                         views: [
@@ -686,13 +460,12 @@ class ActionManager {
         this.matrix = Matrix.create({
             type: "matrix",
             props: {
-                id: this.matrixId,
                 columns: columns,
                 itemHeight: itemHeight,
                 spacing: spacing,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 menu: { items: this.menuItems() },
-                data: this.actionsToData(),
+                data: this.actions,
                 template: {
                     props: {
                         smoothCorners: true,
@@ -737,9 +510,7 @@ class ActionManager {
                             views: [
                                 {
                                     type: "image",
-                                    props: {
-                                        symbol: "ellipsis.circle"
-                                    },
+                                    props: { symbol: "ellipsis.circle" },
                                     layout: (make, view) => {
                                         make.center.equalTo(view.super)
                                         make.size.equalTo(BarButtonItem.style.iconSize)
@@ -763,10 +534,7 @@ class ActionManager {
                         {
                             // 用来保存信息
                             type: "view",
-                            props: {
-                                id: "info",
-                                hidden: true
-                            }
+                            props: { id: "info", hidden: true }
                         },
                         {
                             type: "label",
@@ -795,7 +563,7 @@ class ActionManager {
                 pulled: sender => {
                     $delay(0.5, () => {
                         sender.endRefreshing()
-                        this.matrix.update(this.actionsToData())
+                        this.matrix.update(this.actions)
                     })
                 }
             }
