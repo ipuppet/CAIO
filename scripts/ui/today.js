@@ -256,15 +256,14 @@ class Today extends Clips {
                             const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
                             return this.singleLineHeight + this.top_bottom + tagHeight
                         },
-                        didSelect: this.buttonTapped((sender, indexPath, data) => {
-                            const content = data.content
-                            const text = content.info.text
-                            const path = this.kernel.storage.keyToPath(text)
+                        didSelect: this.buttonTapped((sender, indexPath) => {
+                            const item = this.clips[indexPath.row]
+                            const path = this.kernel.storage.keyToPath(item.text)
                             if (path && this.kernel.fileStorage.exists(path.original)) {
                                 $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
                             } else {
-                                this.setClipboardText(data.content.info.text)
-                                this.setCopied(data.content.info.uuid, indexPath.row)
+                                this.setClipboardText(item.text)
+                                this.setCopied(item.uuid, indexPath.row)
                             }
                             $ui.toast($l10n("COPIED"))
                         })

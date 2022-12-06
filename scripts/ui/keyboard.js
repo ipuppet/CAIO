@@ -398,16 +398,15 @@ class Keyboard extends Clips {
         }
 
         const listView = superListView.views[0]
-        listView.events.didSelect = (sender, indexPath, data) => {
-            const content = data.content
-            const text = content.info.text
-            const path = this.kernel.storage.keyToPath(text)
+        listView.events.didSelect = (sender, indexPath) => {
+            const item = this.clips[indexPath.row]
+            const path = this.kernel.storage.keyToPath(item.text)
             if (path && this.kernel.fileStorage.exists(path.original)) {
                 $quicklook.open({
                     image: this.kernel.fileStorage.readSync(path.original)?.image
                 })
             } else {
-                $keyboard.insert(content.info.text)
+                $keyboard.insert(item.text)
                 if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {
                     $keyboard.next()
                 }
