@@ -9,8 +9,10 @@ const TodayActions = require("./components/today-actions")
 
 class Today extends Clips {
     // 剪贴板列个性化设置
-    left_right = 8 // 列表边距
-    top_bottom = 10 // 列表边距
+    tabLeftMargin = 8
+    horizontalMargin = 15 // 列表边距
+    verticalMargin = 10 // 列表边距
+    copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     fontSize = 14 // 字体大小
     navHeight = 38
     taptic = 1
@@ -86,7 +88,7 @@ class Today extends Clips {
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
             const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
-            const f_line = height / (this.singleLineHeight + this.top_bottom * 2)
+            const f_line = height / (this.singleLineHeight + this.verticalMargin * 2)
             const floor = Math.floor(f_line)
             this.listPageSize = floor
             if (f_line - floor >= 0.6) {
@@ -202,7 +204,9 @@ class Today extends Clips {
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.allClips[this.listSection].slice(start, end).map(data => this.lineData(data))
+        $(this.listId).data = this.allClips[this.listSection]
+            .slice(start, end)
+            .map(data => this.lineData(data, this.copied.uuid === data.uuid))
         // page index
         $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
     }
@@ -244,7 +248,7 @@ class Today extends Clips {
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
                         menu: { items: this.menuItems() },
-                        separatorInset: $insets(0, this.left_right, 0, this.left_right),
+                        separatorInset: $insets(0, this.horizontalMargin, 0, this.horizontalMargin),
                         data: [],
                         template: this.listTemplate()
                     },
@@ -252,8 +256,8 @@ class Today extends Clips {
                         ready: () => this.listReady(),
                         rowHeight: (sender, indexPath) => {
                             const tag = sender.object(indexPath).tag
-                            const tagHeight = tag.text ? this.tagContainerHeight : this.top_bottom
-                            return this.singleLineHeight + this.top_bottom + tagHeight
+                            const tagHeight = tag.text ? this.tagContainerHeight : this.verticalMargin
+                            return this.singleLineHeight + this.verticalMargin + tagHeight
                         },
                         didSelect: this.buttonTapped((sender, indexPath) => {
                             const item = this.clips[indexPath.row]
@@ -293,7 +297,7 @@ class Today extends Clips {
                 bgcolor: $color("clear"),
                 columns: 2,
                 itemHeight: this.matrixItemHeight,
-                spacing: this.left_right,
+                spacing: this.tabLeftMargin,
                 data: data.map(action => {
                     return this.kernel.actionManager.actionToData(action)
                 }),
@@ -308,7 +312,7 @@ class Today extends Clips {
                             type: "image",
                             props: {
                                 id: "color",
-                                cornerRadius: this.left_right,
+                                cornerRadius: 8,
                                 smoothCorners: true
                             },
                             layout: make => {
