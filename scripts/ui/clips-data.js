@@ -52,8 +52,11 @@ class ClipsData {
     set allClips(allClips) {
         this.#allClips = allClips.map(item => {
             return new Proxy(item ?? [], {
-                set: (obj, prop, value) => {
-                    return Reflect.set(obj, prop, value)
+                set: (target, key, value) => {
+                    return Reflect.set(target, key, value)
+                },
+                get: (target, key) => {
+                    return Reflect.get(target, key)
                 }
             })
         })

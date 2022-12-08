@@ -141,7 +141,7 @@ class ClipsEditor {
                                 bgcolor: $color("clear")
                             },
                             layout: (make, view) => {
-                                make.left.inset(this.clipsInstance.left_right)
+                                make.left.inset(this.clipsInstance.horizontalMargin)
                                 make.centerY.equalTo(view.super)
                             },
                             events: { tapped: () => this.selectAll() }
@@ -156,7 +156,7 @@ class ClipsEditor {
                                 bgcolor: $color("clear")
                             },
                             layout: (make, view) => {
-                                make.right.inset(this.clipsInstance.left_right)
+                                make.right.inset(this.clipsInstance.horizontalMargin)
                                 make.centerY.equalTo(view.super)
                             },
                             events: { tapped: () => this.deleteSelected() }
@@ -210,7 +210,7 @@ class ClipsEditor {
             props: {
                 id: this.listId,
                 bgcolor: UIKit.primaryViewBackgroundColor,
-                separatorInset: $insets(0, this.clipsInstance.left_right, 0, 0),
+                separatorInset: $insets(0, this.clipsInstance.horizontalMargin, 0, 0),
                 indicatorInsets: $insets(0, 0, this.toolBarHeight, 0),
                 data: this.clipsInstance.clips.map(data => this.lineData(data)),
                 template: this.listTemplate(),
@@ -225,7 +225,7 @@ class ClipsEditor {
                         ? this.imageContentHeight
                         : this.clipsInstance.getTextHeight(text)
 
-                    return itemHeight + this.clipsInstance.top_bottom * 2
+                    return itemHeight + this.clipsInstance.verticalMargin * 2
                 },
                 reorderBegan: indexPath => {
                     // 用于纠正 rowHeight 高度计算
@@ -274,8 +274,7 @@ class ClipsEditor {
                                 try {
                                     this.kernel.storage.deleteTable(this.clipsInstance.table)
                                     sheet.dismiss()
-                                    this.clipsInstance.loadAllClips()
-                                    this.clipsInstance.updateList()
+                                    this.clipsInstance.updateList(true)
                                 } catch (error) {
                                     this.kernel.error(error)
                                     $ui.error(error)

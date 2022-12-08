@@ -16,8 +16,9 @@ class Keyboard extends Clips {
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
-    left_right = 15 // 列表边距
-    top_bottom = 10 // 列表边距
+    horizontalMargin = 15 // 列表边距
+    verticalMargin = 10 // 列表边距
+    copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     containerMargin = 5 // 容器边距
     fontSize = 14 // 字体大小
     navHeight = 50
@@ -412,7 +413,7 @@ class Keyboard extends Clips {
                 }
             }
         }
-        listView.props.separatorInset = $insets(0, this.left_right, 0, this.left_right)
+        listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
 
         const blurBox = UIKit.blurBox(
             {

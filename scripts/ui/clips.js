@@ -24,11 +24,12 @@ class Clips extends ClipsData {
     // 剪贴板列个性化设置
     #singleLine = false
     #singleLineHeight = -1
-    left_right = 20 // 列表边距
-    top_bottom = 20 // 列表边距
+    tabLeftMargin = 20 // tab 左边距
+    horizontalMargin = 20 // 列表边距
+    verticalMargin = 20 // 列表边距
     containerMargin = 0 // list 单边边距。如果 list 未贴合屏幕左右边缘，则需要此值辅助计算文字高度
     fontSize = 16 // 字体大小
-    copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
+    copiedIndicatorSize = 6 // 已复制指示器（小绿点）大小
     imageContentHeight = 50
     tagFontSize = 14
     tagContainerHeight = 25
@@ -90,7 +91,7 @@ class Clips extends ClipsData {
                 : Math.min(
                       $text.sizeThatFits({
                           text: text,
-                          width: UIKit.windowSize.width - (this.left_right + this.containerMargin) * 2,
+                          width: UIKit.windowSize.width - (this.horizontalMargin + this.containerMargin) * 2,
                           font: $font(this.fontSize)
                       }).height,
                       this.singleLineHeight * 2
@@ -104,8 +105,7 @@ class Clips extends ClipsData {
         $app.listen({
             resume: () => {
                 // 在应用恢复响应后调用
-                this.loadAllClips()
-                this.updateList()
+                this.updateList(true)
                 $delay(0.5, () => {
                     this.readClipboard()
                 })
@@ -148,7 +148,10 @@ class Clips extends ClipsData {
         this.appListen()
     }
 
-    updateList() {
+    updateList(reload = false) {
+        if (reload) {
+            this.loadAllClips()
+        }
         $(this.listId).data = this.clips.map(data => this.lineData(data, this.copied.uuid === data.uuid))
         this.updateListBackground()
     }
@@ -444,8 +447,7 @@ class Clips extends ClipsData {
                                     } else {
                                         this.kernel.storage.deleteTag(uuid)
                                     }
-                                    this.loadAllClips()
-                                    this.updateList()
+                                    this.updateList(true)
                                 }
                             })
                         }
@@ -555,9 +557,9 @@ class Clips extends ClipsData {
             layout: (make, view) => {
                 make.centerY.equalTo(view.super)
                 if (view.prev) {
-                    make.left.equalTo(view.prev.right).offset(this.left_right)
+                    make.left.equalTo(view.prev.right).offset(this.tabLeftMargin)
                 } else {
-                    make.left.inset(this.left_right)
+                    make.left.inset(this.tabLeftMargin)
                 }
             }
         }
@@ -602,7 +604,9 @@ class Clips extends ClipsData {
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo(this.copiedIndicatorSize)
                                 // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                make.left.equalTo(view.super).inset(this.left_right / 2 - this.copiedIndicatorSize / 2)
+                                make.left
+                                    .equalTo(view.super)
+                                    .inset(this.horizontalMargin / 2 - this.copiedIndicatorSize / 2)
                             }
                         },
                         {
@@ -613,11 +617,11 @@ class Clips extends ClipsData {
                                 font: $font(this.fontSize)
                             },
                             layout: (make, view) => {
-                                make.left.right.equalTo(view.super).inset(this.left_right)
+                                make.left.right.equalTo(view.super).inset(this.horizontalMargin)
                                 if (this.#singleLine) {
                                     make.top.inset(this.imageContentHeight / 2)
                                 } else {
-                                    make.top.inset(this.top_bottom)
+                                    make.top.inset(this.verticalMargin)
                                 }
                             }
                         },
@@ -641,7 +645,7 @@ class Clips extends ClipsData {
                     },
                     layout: (make, view) => {
                         make.bottom.width.equalTo(view.super)
-                        make.left.inset(this.left_right)
+                        make.left.inset(this.horizontalMargin)
                         make.height.equalTo(this.tagContainerHeight)
                     }
                 }
@@ -657,7 +661,7 @@ class Clips extends ClipsData {
                 id,
                 associateWithNavigationBar: false,
                 bgcolor: $color("clear"),
-                separatorInset: $insets(0, this.left_right, 0, 0),
+                separatorInset: $insets(0, this.horizontalMargin, 0, 0),
                 menu: { items: this.menuItems() },
                 data,
                 template: this.listTemplate(),
@@ -687,11 +691,11 @@ class Clips extends ClipsData {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const object = sender.object(indexPath)
-                    const tagHeight = object.tag.text ? this.tagContainerHeight : this.top_bottom
+                    const tagHeight = object.tag.text ? this.tagContainerHeight : this.verticalMargin
                     const itemHeight = this.kernel.storage.isImage(object.content.text)
                         ? this.imageContentHeight
                         : this.getTextHeight(object.content.text)
-                    return itemHeight + this.top_bottom + tagHeight
+                    return itemHeight + this.verticalMargin + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
                     const item = this.clips[indexPath.row]
@@ -709,8 +713,7 @@ class Clips extends ClipsData {
                     }
                 },
                 pulled: sender => {
-                    this.loadAllClips()
-                    this.updateList()
+                    this.updateList(true)
                     $delay(0.5, () => sender.endRefreshing())
                 }
             }
