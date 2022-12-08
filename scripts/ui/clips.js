@@ -29,7 +29,7 @@ class Clips extends ClipsData {
     verticalMargin = 20 // 列表边距
     containerMargin = 0 // list 单边边距。如果 list 未贴合屏幕左右边缘，则需要此值辅助计算文字高度
     fontSize = 16 // 字体大小
-    copiedIndicatorSize = 7 // 已复制指示器（小绿点）大小
+    copiedIndicatorSize = 6 // 已复制指示器（小绿点）大小
     imageContentHeight = 50
     tagFontSize = 14
     tagContainerHeight = 25
