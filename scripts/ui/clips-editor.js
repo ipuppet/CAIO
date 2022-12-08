@@ -274,8 +274,7 @@ class ClipsEditor {
                                 try {
                                     this.kernel.storage.deleteTable(this.clipsInstance.table)
                                     sheet.dismiss()
-                                    this.clipsInstance.loadAllClips()
-                                    this.clipsInstance.updateList()
+                                    this.clipsInstance.updateList(true)
                                 } catch (error) {
                                     this.kernel.error(error)
                                     $ui.error(error)

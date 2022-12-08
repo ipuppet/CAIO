@@ -66,8 +66,7 @@ class Today extends Clips {
 
         this.setClipboarPageSize($widget.mode)
 
-        this.loadAllClips()
-        this.updateList()
+        this.updateList(true)
         this.appListen()
 
         $delay(0.5, () => this.readClipboard())

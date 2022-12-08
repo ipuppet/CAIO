@@ -104,8 +104,7 @@ class Clips extends ClipsData {
         $app.listen({
             resume: () => {
                 // 在应用恢复响应后调用
-                this.loadAllClips()
-                this.updateList()
+                this.updateList(true)
                 $delay(0.5, () => {
                     this.readClipboard()
                 })
@@ -148,7 +147,10 @@ class Clips extends ClipsData {
         this.appListen()
     }
 
-    updateList() {
+    updateList(reload = false) {
+        if (reload) {
+            this.loadAllClips()
+        }
         $(this.listId).data = this.clips.map(data => this.lineData(data, this.copied.uuid === data.uuid))
         this.updateListBackground()
     }
@@ -444,8 +446,7 @@ class Clips extends ClipsData {
                                     } else {
                                         this.kernel.storage.deleteTag(uuid)
                                     }
-                                    this.loadAllClips()
-                                    this.updateList()
+                                    this.updateList(true)
                                 }
                             })
                         }
@@ -709,8 +710,7 @@ class Clips extends ClipsData {
                     }
                 },
                 pulled: sender => {
-                    this.loadAllClips()
-                    this.updateList()
+                    this.updateList(true)
                     $delay(0.5, () => sender.endRefreshing())
                 }
             }
