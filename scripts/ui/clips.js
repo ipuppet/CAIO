@@ -604,7 +604,9 @@ class Clips extends ClipsData {
                                 make.centerY.equalTo(view.super)
                                 make.size.equalTo(this.copiedIndicatorSize)
                                 // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                make.left.equalTo(view.super).inset(this.horizontalMargin / 2 - this.copiedIndicatorSize / 2)
+                                make.left
+                                    .equalTo(view.super)
+                                    .inset(this.horizontalMargin / 2 - this.copiedIndicatorSize / 2)
                             }
                         },
                         {
