@@ -33,7 +33,7 @@ class ActionManagerData {
         this.checkUserAction()
         // sync
         $thread.background({
-            delay: 0,
+            delay: this.#syncInterval,
             handler: () => this.sync(true)
         })
     }
@@ -219,11 +219,10 @@ class ActionManagerData {
 
         // 解锁，进行下一次同步
         this.#syncLock = false
-        await $wait(this.#syncInterval)
         if (loop) {
             $thread.background({
-                delay: 0,
-                handler: () => this.sync()
+                delay: this.#syncInterval,
+                handler: () => this.sync(loop)
             })
         }
     }

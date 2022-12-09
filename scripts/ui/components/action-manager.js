@@ -29,6 +29,31 @@ class ActionManager extends ActionManagerData {
         })
     }
 
+    /**
+     * 监听同步信息
+     */
+    actionSyncStatus() {
+        $app.listen({
+            actionSyncStatus: args => {
+                if (args.status === ActionManagerData.syncStatus.syncing) {
+                    this.undateAddActionButton(true)
+                    this.undateSyncLabel($l10n("SYNCING"))
+                } else if (args.status === ActionManagerData.syncStatus.success) {
+                    try {
+                        this.matrix.update(this.actionList)
+                    } catch (error) {
+                        this.kernel.error(error)
+                        this.undateSyncLabel(error)
+                        $ui.error(error)
+                    } finally {
+                        this.undateSyncLabel()
+                        this.undateAddActionButton(false)
+                    }
+                }
+            }
+        })
+    }
+
     editActionInfoPageSheet(info, done) {
         const actionTypes = this.getActionTypes()
         const actionTypesIndex = {} // 用于反查索引
@@ -395,6 +420,22 @@ class ActionManager extends ActionManagerData {
         }
     }
 
+    undateSyncLabel(message) {
+        if (!message) {
+            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+        }
+        if ($(this.syncLabelId)) {
+            $(this.syncLabelId).text = message
+        }
+    }
+
+    undateAddActionButton(loading) {
+        const button = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId) ?? {}
+        if (button) {
+            button.setLoading(loading)
+        }
+    }
+
     getActionListView(didSelect, props = {}, events = {}) {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
@@ -466,15 +507,6 @@ class ActionManager extends ActionManagerData {
                 },
                 props
             )
-        }
-    }
-
-    undateSyncLabel(message) {
-        if (!message) {
-            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
-        }
-        if ($(this.syncLabelId)) {
-            $(this.syncLabelId).text = message
         }
     }
 
@@ -607,36 +639,16 @@ class ActionManager extends ActionManagerData {
                 },
                 pulled: sender => {
                     $delay(0.5, async () => {
-                        sender.endRefreshing()
                         await this.sync()
                         this.matrix.update(this.actionList)
                         this.undateSyncLabel()
+                        sender.endRefreshing()
                     })
                 }
             }
         })
 
-        // 监听同步信息
-        $app.listen({
-            actionSyncStatus: args => {
-                const button = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId) ?? {}
-                if (args.status === ActionManagerData.syncStatus.syncing) {
-                    button.setLoading(true)
-                    this.undateSyncLabel($l10n("SYNCING"))
-                } else if (args.status === ActionManagerData.syncStatus.success) {
-                    try {
-                        this.matrix.update(this.actionList)
-                    } catch (error) {
-                        this.kernel.error(error)
-                        this.undateSyncLabel(error)
-                        $ui.error(error)
-                    } finally {
-                        this.undateSyncLabel()
-                        button.setLoading(false)
-                    }
-                }
-            }
-        })
+        this.actionSyncStatus()
 
         return this.matrix.definition
     }
