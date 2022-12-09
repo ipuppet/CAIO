@@ -50,12 +50,14 @@ class ActionManagerData {
         return this.#actions
     }
 
-    actionsNeedReload() {
+    actionsNeedReload(needSync = false) {
         this.#actions = undefined
-        $file.write({
-            data: $data({ string: JSON.stringify({ date: Date.now() }) }),
-            path: this.localSyncFile
-        })
+        if (needSync) {
+            $file.write({
+                data: $data({ string: JSON.stringify({ date: Date.now() }) }),
+                path: this.localSyncFile
+            })
+        }
     }
 
     importExampleAction() {
@@ -197,6 +199,7 @@ class ActionManagerData {
             this.kernel.print("iCloud data copy success")
             // 通知更新 UI
             await $wait(1)
+            this.actionsNeedReload()
             $app.notify({
                 name: "actionSyncStatus",
                 object: { status: ActionManagerData.syncStatus.success }
@@ -372,7 +375,7 @@ class ActionManagerData {
         })
         this.#saveFile(info.type, info.dir, "README.md", info.readme)
 
-        this.actionsNeedReload()
+        this.actionsNeedReload(true)
     }
 
     saveMainJs(info, content) {
@@ -388,7 +391,7 @@ class ActionManagerData {
             data: $data({ string: JSON.stringify(order) }),
             path: `${this.iCloudPath}/${type}/${this.actionOrderFile}`
         })
-        this.actionsNeedReload()
+        this.actionsNeedReload(true)
     }
 
     move(from, to) {
@@ -427,13 +430,13 @@ class ActionManagerData {
             })
         }
 
-        this.actionsNeedReload()
+        this.actionsNeedReload(true)
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
         $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
-        this.actionsNeedReload()
+        this.actionsNeedReload(true)
     }
 }
 
