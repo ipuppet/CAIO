@@ -19,9 +19,9 @@ function deleteFiles(kernel, files = []) {
  * 重建表
  * @param {AppKernel} kernel
  */
-function rebuildDatabase(kernel) {
+function rebuildDatabase(kernel, oldTab, newTab) {
     const result = kernel.storage.sqlite.query(
-        `SELECT count(*), name FROM sqlite_master WHERE type = "table" AND name = "clipboard"`
+        `SELECT count(*), name FROM sqlite_master WHERE type = "table" AND name = "${oldTab}"`
     )
     if (result.error !== null) {
         throw new Error(`Code [${result.error.code}] ${result.error.domain} ${result.error.localizedDescription}`)
@@ -31,10 +31,10 @@ function rebuildDatabase(kernel) {
     result.result.close()
 
     if (count > 0) {
-        kernel.print(`copy data from old table: clipboard`)
-        kernel.storage.sqlite.update(`INSERT INTO clips SELECT * FROM clipboard`)
-        kernel.print(`drop table: clipboard`)
-        kernel.storage.sqlite.update(`DROP TABLE clipboard`)
+        kernel.print(`copy data from old table: ${oldTab}`)
+        kernel.storage.sqlite.update(`INSERT INTO ${newTab} SELECT * FROM ${oldTab}`)
+        kernel.print(`drop table: ${oldTab}`)
+        kernel.storage.sqlite.update(`DROP TABLE ${oldTab}`)
     }
 }
 
@@ -90,7 +90,7 @@ async function ver1(kernel) {
         "scripts/ui/clipboard-search.js"
     ])
 
-    rebuildDatabase(kernel)
+    rebuildDatabase(kernel, "clipboard", "clips")
 
     await rebuildUserActions(kernel, {
         uncategorized: ["ExportAllContent", "DisplayClipboard"],
@@ -104,6 +104,14 @@ async function ver1(kernel) {
     }
 }
 
+async function ver2(kernel) {
+    rebuildDatabase(kernel, "pin", "favorite")
+
+    await rebuildUserActions(kernel, {
+        uncategorized: ["ExportAllContent"]
+    })
+}
+
 /**
  *
  * @param {AppKernel} kernel
@@ -111,13 +119,17 @@ async function ver1(kernel) {
 async function compatibility(kernel) {
     if (!kernel) return
 
-    const version = 1
+    const version = 2
     const userVersion = $cache.get("compatibility.version") ?? 0
 
     try {
         if (userVersion < 1) {
             kernel.print(`compatibility: userVersion [${userVersion}] lower than [1], start action`)
             await ver1(kernel)
+        }
+        if (userVersion < 2) {
+            kernel.print(`compatibility: userVersion [${userVersion}] lower than [2], start action`)
+            await ver2(kernel)
         }
     } catch (error) {
         kernel.error(error)

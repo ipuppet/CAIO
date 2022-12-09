@@ -358,19 +358,19 @@ class Clips extends ClipsData {
         }
     }
 
-    pin(item, row) {
-        if (item?.section === "pin") {
+    favorite(item, row) {
+        if (item?.section === "favorite") {
             this.move(row, 0)
             return
         }
         const res = this.kernel.storage.getByMD5(item.md5)
-        if (res?.section === "pin") {
+        if (res?.section === "favorite") {
             Toast.warning("Already exists")
             return
         }
 
         try {
-            super.pin(item, row)
+            super.favorite(item, row)
             // UI 操作
             $(this.listId).delete($indexPath(0, row))
         } catch (error) {
@@ -677,11 +677,11 @@ class Clips extends ClipsData {
                     },
                     {
                         // 置顶
-                        title: $l10n("PIN"),
+                        title: $l10n("FAVORITE"),
                         color: $color("orange"),
                         handler: (sender, indexPath) => {
                             const content = this.clips[indexPath.row]
-                            this.pin(content, indexPath.row)
+                            this.favorite(content, indexPath.row)
                         }
                     }
                 ]

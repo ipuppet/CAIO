@@ -110,7 +110,7 @@ class Action {
      */
     getAllClips() {
         return {
-            pin: this.#kernel.storage.all("pin").map(item => item.text),
+            favorite: this.#kernel.storage.all("favorite").map(item => item.text),
             clips: this.#kernel.storage.all("clips").map(item => item.text)
         }
     }

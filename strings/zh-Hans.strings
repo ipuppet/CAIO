@@ -23,7 +23,7 @@
 "SEARCH_HISTORY" = "搜索历史";
 "SEARCH_RESULT" = "搜索结果";
 "NO_SEARCH_RESULT" = "搜索无结果";
-"PIN" = "置顶";
+"FAVORITE" = "收藏";
 "COPY" = "复制";
 "COPIED" = "已复制";
 "SORT" = "排序";

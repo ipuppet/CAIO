@@ -23,7 +23,7 @@
 "SEARCH_HISTORY" = "Search History";
 "SEARCH_RESULT" = "Search Result";
 "NO_SEARCH_RESULT" = "No item found.";
-"PIN" = "Pin";
+"FAVORITE" = "Favorite";
 "COPY" = "Copy";
 "COPIED" = "Copied";
 "SORT" = "Sort";
