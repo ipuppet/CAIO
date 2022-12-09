@@ -1,6 +1,5 @@
 {
     "icon": "trash",
     "color": "#FF0000",
-    "name": "清除剪切板",
-    "description": "清除剪切板内容"
+    "name": "清除剪切板"
 }

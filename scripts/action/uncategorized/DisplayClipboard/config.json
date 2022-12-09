@@ -1,6 +1,5 @@
 {
     "icon": "option",
     "color": "#FF6633",
-    "name": "显示剪切板",
-    "description": "显示剪切板内容"
+    "name": "显示剪切板"
 }

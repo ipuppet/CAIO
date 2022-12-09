@@ -20,7 +20,6 @@ class Today extends Clips {
     tagContainerHeight = 12
     matrixItemHeight = 50
 
-    tabItems = [$l10n("PIN"), $l10n("CLIPS"), $l10n("ACTIONS")]
     inLauncher = $app.env === $env.today && $app.widgetIndex === -1
     launcherNavHeight = 44
 
@@ -33,6 +32,8 @@ class Today extends Clips {
         this.listContainerId = "today-list-container"
         this.readClipboardButtonId = "today-nav-readClipboard"
         this.listId = "today-list"
+
+        this.tabItems.push($l10n("ACTIONS"))
 
         this.navigationBarItems = new NavigationBarItems()
         this.bottomBar = new NavigationBar()

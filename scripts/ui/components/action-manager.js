@@ -1,7 +1,7 @@
 const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
-const ActionManagerData = require("./action-manager-data")
-const { ActionEnv, ActionData, Action } = require("../../action/action")
+const ActionManagerData = require("../../dao/action-manager-data")
+const { ActionEnv, ActionData } = require("../../action/action")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -10,8 +10,10 @@ const { ActionEnv, ActionData, Action } = require("../../action/action")
 class ActionManager extends ActionManagerData {
     matrix
     reorder = {}
+    addActionButtonId = "action-manager-button-add"
+    syncLabelId = "action-manager-sync-label"
 
-    get actions() {
+    get actionList() {
         return super.actions.map(type => {
             const rows = []
             type.items.forEach(action => {
@@ -33,12 +35,18 @@ class ActionManager extends ActionManagerData {
         actionTypes.forEach((key, index) => {
             actionTypesIndex[key] = index
         })
-        this.editingActionInfo = info ?? {
-            type: "clipboard",
-            name: "MyAction",
-            color: "#CC00CC",
-            icon: "icon_062.png", // 默认星星图标
-            description: ""
+        const isNew = !Boolean(info)
+        if (isNew) {
+            this.editingActionInfo = {
+                type: "clipboard",
+                name: "MyAction",
+                color: "#CC00CC",
+                icon: "icon_062.png", // 默认星星图标
+                readme: ""
+            }
+        } else {
+            this.editingActionInfo = info
+            this.editingActionInfo.readme = this.getActionReadme(info.type, info.dir)
         }
 
         const SettingUI = new Setting({
@@ -69,7 +77,7 @@ class ActionManager extends ActionManagerData {
             this.kernel.setting.getColor(this.editingActionInfo.color)
         )
         const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, true)
-        const description = {
+        const readme = {
             type: "view",
             views: [
                 {
@@ -78,17 +86,17 @@ class ActionManager extends ActionManagerData {
                         id: "action-text",
                         textColor: $color("#000000", "secondaryText"),
                         bgcolor: $color("systemBackground"),
-                        text: this.editingActionInfo.description,
+                        text: this.editingActionInfo.readme,
                         insets: $insets(10, 10, 10, 10)
                     },
                     layout: $layout.fill,
                     events: {
                         tapped: sender => {
-                            $("actionInfoPageSheetList").scrollToOffset($point(0, info ? 230 : 280))
-                            setTimeout(() => sender.focus(), 200)
+                            $("actionInfoPageSheetList").scrollToOffset($point(0, isNew ? 280 : 230)) // 新建有分类字段
+                            $delay(0.2, () => sender.focus())
                         },
                         didChange: sender => {
-                            this.editingActionInfo.description = sender.text
+                            this.editingActionInfo.readme = sender.text
                         }
                     }
                 }
@@ -97,10 +105,10 @@ class ActionManager extends ActionManagerData {
         }
         const data = [
             { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
-            { title: $l10n("DESCRIPTION"), rows: [description] }
+            { title: $l10n("DESCRIPTION"), rows: [readme] }
         ]
         // 只有新建时才可选择类型
-        if (!info) data[0].rows = data[0].rows.concat(typeMenu)
+        if (isNew) data[0].rows = data[0].rows.concat(typeMenu)
         const sheet = new Sheet()
         sheet
             .setView({
@@ -165,23 +173,28 @@ class ActionManager extends ActionManagerData {
         )
     }
 
-    move(from, to, data) {
+    move(from, to) {
         if (from.section === to.section && from.row === to.row) return
 
-        super.move(from, to, data)
+        super.move(from, to)
 
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
         const actionsView = this.matrix
-        const toData = this.actionToData(
-            Object.assign(data[to.section].rows[to.row], { type: this.getTypeDir(data[to.section].title) })
-        )
+        // 内存数据已经为排序后的数据，故此处去 to 位置的数据
+        const data = this.actionToData(this.actions[to.section].items[to.row])
         if (from.row < to.row) {
             // 先插入时是插入到 to 位置的前面 to.row + 1
-            actionsView.insert({ indexPath: $indexPath(to.section, to.row + 1), value: toData }, false)
+            actionsView.insert(
+                {
+                    indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
+                    value: data
+                },
+                false
+            )
             actionsView.delete(from, false)
         } else {
             actionsView.delete(from, false)
-            actionsView.insert({ indexPath: to, value: toData }, false)
+            actionsView.insert({ indexPath: to, value: data }, false)
         }
     }
 
@@ -236,8 +249,7 @@ class ActionManager extends ActionManagerData {
                             try {
                                 content = __ACTIONS__[info.type][info.dir]["README.md"]
                             } catch {
-                                const basePath = this.getActionPath(info.type, info.dir)
-                                content = $file.read(basePath + "/README.md").string
+                                content = this.getActionReadme(info.type, info.dir)
                             }
                             const sheet = new Sheet()
                             sheet
@@ -279,6 +291,7 @@ class ActionManager extends ActionManagerData {
             {
                 // 添加
                 symbol: "plus.circle",
+                id: this.addActionButtonId,
                 menu: {
                     pullDown: true,
                     asPrimary: true,
@@ -405,7 +418,7 @@ class ActionManager extends ActionManagerData {
                     rowHeight: 60,
                     sectionTitleHeight: 30,
                     stickyHeader: true,
-                    data: this.actions,
+                    data: this.actionList,
                     template: {
                         props: { bgcolor: $color("clear") },
                         views: [
@@ -456,6 +469,15 @@ class ActionManager extends ActionManagerData {
         }
     }
 
+    undateSyncLabel(message) {
+        if (!message) {
+            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+        }
+        if ($(this.syncLabelId)) {
+            $(this.syncLabelId).text = message
+        }
+    }
+
     getMatrixView({ columns = 2, spacing = 15, itemHeight = 100 } = {}) {
         this.matrix = Matrix.create({
             type: "matrix",
@@ -465,7 +487,7 @@ class ActionManager extends ActionManagerData {
                 spacing: spacing,
                 bgcolor: UIKit.scrollViewBackgroundColor,
                 menu: { items: this.menuItems() },
-                data: this.actions,
+                data: this.actionList,
                 template: {
                     props: {
                         smoothCorners: true,
@@ -548,6 +570,29 @@ class ActionManager extends ActionManagerData {
                             }
                         }
                     ]
+                },
+                footer: {
+                    type: "view",
+                    props: {
+                        hidden: !this.kernel.setting.get("experimental.syncAction"),
+                        height: this.kernel.setting.get("experimental.syncAction") ? 40 : 0
+                    },
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                id: this.syncLabelId,
+                                color: $color("secondaryText"),
+                                font: $font(12),
+                                text: $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+                            },
+                            layout: (make, view) => {
+                                make.size.equalTo(view.super)
+                                make.top.inset(-30)
+                                make.left.inset(spacing)
+                            }
+                        }
+                    ]
                 }
             },
             layout: $layout.fill,
@@ -563,8 +608,31 @@ class ActionManager extends ActionManagerData {
                 pulled: sender => {
                     $delay(0.5, () => {
                         sender.endRefreshing()
-                        this.matrix.update(this.actions)
+                        this.matrix.update(this.actionList)
+                        this.undateSyncLabel()
                     })
+                }
+            }
+        })
+
+        // 监听同步信息
+        $app.listen({
+            actionSyncStatus: args => {
+                const button = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId) ?? {}
+                if (args.status === ActionManagerData.syncStatus.syncing) {
+                    button.setLoading(true)
+                    this.undateSyncLabel($l10n("SYNCING"))
+                } else if (args.status === ActionManagerData.syncStatus.success) {
+                    try {
+                        this.matrix.update(this.actionList)
+                    } catch (error) {
+                        this.kernel.error(error)
+                        this.undateSyncLabel(error)
+                        $ui.error(error)
+                    } finally {
+                        this.undateSyncLabel()
+                        button.setLoading(false)
+                    }
                 }
             }
         })
@@ -573,10 +641,10 @@ class ActionManager extends ActionManagerData {
     }
 
     getPage() {
-        const navigationView = new NavigationView()
-        navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
-        navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))
-        return navigationView.getPage()
+        this.navigationView = new NavigationView()
+        this.navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
+        this.navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))
+        return this.navigationView.getPage()
     }
 
     present() {

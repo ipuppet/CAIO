@@ -23,7 +23,7 @@
 "SEARCH_HISTORY" = "Search History";
 "SEARCH_RESULT" = "Search Result";
 "NO_SEARCH_RESULT" = "No item found.";
-"PIN" = "Pin";
+"FAVORITE" = "Favorite";
 "COPY" = "Copy";
 "COPIED" = "Copied";
 "SORT" = "Sort";
@@ -77,7 +77,8 @@
 
 "IMPORT_EXAMPLE_ACTIONS" = "Import example actions";
 "REBUILD_ACTION_DATABASE" = "Rebuild Action Database";
-"REBUILD_ACTION_DATABASE_ALERT" = "Are you sure you want to rebuild?";
+"REBUILD_ACTION_DATABASE_ALERT_TITLE" = "Are you sure you want to rebuild?";
+"REBUILD_ACTION_DATABASE_ALERT_MESSAGE" = "Rebuild also deletes the data saved in iCloud Drive!";
 "EXPORT" = "Export";
 "IMPORT" = "Import";
 "FILE_TYPE_ERROR" = "File type does not match";
@@ -118,3 +119,8 @@
 "compatibility.rebuildUserAction.alert.title" = "We need to rebuild some of the action!";
 "compatibility.rebuildUserAction.alert.message" = "If you tap the OK button, the following actions will be rebuilt:";
 "compatibility.rebuildUserAction.alert.message2" = "Only the action logic will be changed, and the name and icon will remain as it is.";
+
+"EXPERIMENTAL" = "Experimental";
+"SYNC_ACTIONS" = "Sync Actions";
+"SYNCING" = "Syncing...";
+"LAST_SYNC_AT" = "Last sync at: ";

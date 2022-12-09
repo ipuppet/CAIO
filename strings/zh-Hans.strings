@@ -23,7 +23,7 @@
 "SEARCH_HISTORY" = "搜索历史";
 "SEARCH_RESULT" = "搜索结果";
 "NO_SEARCH_RESULT" = "搜索无结果";
-"PIN" = "置顶";
+"FAVORITE" = "收藏";
 "COPY" = "复制";
 "COPIED" = "已复制";
 "SORT" = "排序";
@@ -77,7 +77,8 @@
 
 "IMPORT_EXAMPLE_ACTIONS" = "导入示例动作";
 "REBUILD_ACTION_DATABASE" = "重建动作库";
-"REBUILD_ACTION_DATABASE_ALERT" = "您确认要重建？";
+"REBUILD_ACTION_DATABASE_ALERT_TITLE" = "您确认要重建？";
+"REBUILD_ACTION_DATABASE_ALERT_MESSAGE" = "重建会同时删除保存在 iCloud 云盘中的数据！";
 "EXPORT" = "导出";
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";
@@ -118,3 +119,8 @@
 "compatibility.rebuildUserAction.alert.title" = "我们需要重建部分动作！";
 "compatibility.rebuildUserAction.alert.message" = "如果您点击 好，以下动作将会被重建：";
 "compatibility.rebuildUserAction.alert.message2" = "只有动作逻辑会被更改，名称和图标将维持现状。";
+
+"EXPERIMENTAL" = "实验功能";
+"SYNC_ACTIONS" = "动作同步";
+"SYNCING" = "正在同步...";
+"LAST_SYNC_AT" = "最后同步：";

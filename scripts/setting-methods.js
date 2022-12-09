@@ -200,18 +200,20 @@ function action() {
     kernel.setting.method.rebuildAction = animate => {
         animate.actionStart()
         $ui.alert({
-            title: $l10n("REBUILD_ACTION_DATABASE_ALERT"),
+            title: $l10n("REBUILD_ACTION_DATABASE_ALERT_TITLE"),
+            message: $l10n("REBUILD_ACTION_DATABASE_ALERT_MESSAGE"),
             actions: [
                 {
                     title: $l10n("REBUILD"),
                     style: $alertActionType.destructive,
                     handler: () => {
                         $file.delete(kernel.actionManager.userActionPath)
+                        $file.delete(kernel.actionManager.iCloudPath)
                         animate.actionDone()
                         $delay(0.8, () => $addin.restart())
                     }
                 },
-                { title: $l10n("CANCEL") }
+                { title: $l10n("CANCEL"), handler: () => animate.actionCancel() }
             ]
         })
     }

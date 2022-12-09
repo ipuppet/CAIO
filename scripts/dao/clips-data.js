@@ -16,8 +16,8 @@ class ClipsData {
     // 键为 md5，值为 1 或 undefined 用来去重
     savedClipboardIndex = {}
 
-    tabItems = [$l10n("PIN"), $l10n("CLIPS")]
-    tabItemsIndex = ["pin", "clips"]
+    tabItems = [$l10n("FAVORITE"), $l10n("CLIPS")]
+    tabItemsIndex = ["favorite", "clips"]
 
     /**
      * @param {AppKernel} kernel
@@ -309,24 +309,24 @@ class ClipsData {
         }
     }
 
-    pin(item, row) {
+    favorite(item, row) {
         item.next = this.allClips[0][0]?.uuid ?? null
         item.prev = null
 
         try {
             // 写入数据库
             this.kernel.storage.beginTransaction()
-            this.kernel.storage.insert("pin", item)
+            this.kernel.storage.insert("favorite", item)
             if (item.next) {
                 // 更改指针
                 this.allClips[0][0].prev = item.uuid
-                this.kernel.storage.update("pin", this.allClips[0][0])
+                this.kernel.storage.update("favorite", this.allClips[0][0])
             }
             this.kernel.storage.commit()
 
             // 删除原表数据
-            if (item?.section !== "pin") {
-                item.section = "pin"
+            if (item?.section !== "favorite") {
+                item.section = "favorite"
                 this.delete(item.uuid, row)
             }
 

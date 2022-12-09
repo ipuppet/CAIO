@@ -1,7 +1,7 @@
-const { Kernel } = require("./libs/easy-jsbox")
+const { Kernel } = require("../libs/easy-jsbox")
 
 /**
- * @typedef {import("./app").AppKernel} AppKernel
+ * @typedef {import("../app").AppKernel} AppKernel
  */
 
 class Storage {
@@ -13,6 +13,8 @@ class Storage {
      */
     constructor(kernel) {
         this.kernel = kernel
+
+        // 路径基于 this.kernel.fileStorage
         this.dbName = "CAIO.db"
         this.localDb = `/${this.dbName}`
         this.imagePath = `/image`
@@ -35,7 +37,7 @@ class Storage {
             "CREATE TABLE IF NOT EXISTS clips(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
         this.sqlite.update(
-            "CREATE TABLE IF NOT EXISTS pin(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
+            "CREATE TABLE IF NOT EXISTS favorite(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
         this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
     }
@@ -77,7 +79,7 @@ class Storage {
             })
         }
 
-        ;["clips", "pin"].map(folder => {
+        ;["clips", "favorite"].map(folder => {
             let data = this.all(folder)
             try {
                 const sorted = this.sort(JSON.parse(JSON.stringify(data)))
@@ -239,7 +241,7 @@ class Storage {
             sql: `
                 SELECT *, 'clips' AS section FROM clips WHERE uuid = '${uuid}'
                 UNION
-                SELECT *, 'pin' AS section FROM pin WHERE uuid = '${uuid}'
+                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = '${uuid}'
             `
             // args: [uuid, uuid]
         })
@@ -251,7 +253,7 @@ class Storage {
             sql: `
                 SELECT *, 'clips' AS section FROM clips WHERE md5 = '${md5}'
                 UNION
-                SELECT *, 'pin' AS section FROM pin WHERE md5 = '${md5}'
+                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = '${md5}'
             `
             // args: [md5, md5]
         })
@@ -262,7 +264,7 @@ class Storage {
             sql: `SELECT * from
                 (SELECT clips.*, 'clips' AS section FROM clips WHERE text like ?
                 UNION
-                SELECT pin.*, 'pin' AS section FROM pin WHERE text like ?) a
+                SELECT favorite.*, 'favorite' AS section FROM favorite WHERE text like ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid
             `,
             args: [`%${kw}%`, `%${kw}%`]

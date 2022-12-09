@@ -1,6 +1,5 @@
 {
     "icon": "crop",
     "color": "#6699CC",
-    "name": "选中的文本",
-    "description": "这是个测试 Action, 将在控制台输出当前选中的文本"
+    "name": "选中的文本"
 }
