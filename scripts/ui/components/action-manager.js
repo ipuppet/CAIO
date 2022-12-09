@@ -40,7 +40,6 @@ class ActionManager extends ActionManagerData {
                     this.undateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === ActionManagerData.syncStatus.success) {
                     try {
-                        this.actionsNeedReload()
                         this.matrix.update(this.actionList)
                     } catch (error) {
                         this.kernel.error(error)
@@ -641,6 +640,7 @@ class ActionManager extends ActionManagerData {
                 pulled: sender => {
                     $delay(0.5, async () => {
                         await this.sync()
+                        this.actionsNeedReload()
                         this.matrix.update(this.actionList)
                         this.undateSyncLabel()
                         sender.endRefreshing()
