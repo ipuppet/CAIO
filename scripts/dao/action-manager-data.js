@@ -210,6 +210,11 @@ class ActionManagerData {
             })
             // 停顿一个同步间隔
             await $wait(this.#syncInterval)
+            // 通知更新 UI
+            $app.notify({
+                name: "actionSyncStatus",
+                object: { status: ActionManagerData.syncStatus.success }
+            })
         }
 
         // 解锁，进行下一次同步
