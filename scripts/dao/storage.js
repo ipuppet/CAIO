@@ -1,7 +1,7 @@
-const { Kernel } = require("./libs/easy-jsbox")
+const { Kernel } = require("../libs/easy-jsbox")
 
 /**
- * @typedef {import("./app").AppKernel} AppKernel
+ * @typedef {import("../app").AppKernel} AppKernel
  */
 
 class Storage {

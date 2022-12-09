@@ -105,6 +105,12 @@ async function ver1(kernel) {
 }
 
 async function ver2(kernel) {
+    deleteFiles(kernel, [
+        "scripts/storage.js",
+        "scripts/ui/clips-data.js",
+        "scripts/ui/components/action-manager-data.js"
+    ])
+
     rebuildDatabase(kernel, "pin", "favorite")
 
     await rebuildUserActions(kernel, {

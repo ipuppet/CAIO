@@ -1,6 +1,6 @@
 const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
-const ActionManagerData = require("./action-manager-data")
+const ActionManagerData = require("../../dao/action-manager-data")
 const { ActionEnv, ActionData } = require("../../action/action")
 
 /**

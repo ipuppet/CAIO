@@ -9,7 +9,7 @@ const {
     Toast
 } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
-const ClipsData = require("./clips-data")
+const ClipsData = require("../dao/clips-data")
 const ClipsSearch = require("./clips-search")
 const ClipsEditor = require("./clips-editor")
 const { ActionData, ActionEnv } = require("../action/action")

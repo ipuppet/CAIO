@@ -1,7 +1,7 @@
-const { ActionEnv, ActionData, Action } = require("../../action/action")
+const { ActionEnv, ActionData, Action } = require("../action/action")
 
 /**
- * @typedef {import("../../app").AppKernel} AppKernel
+ * @typedef {import("../app").AppKernel} AppKernel
  */
 
 class ActionManagerData {
