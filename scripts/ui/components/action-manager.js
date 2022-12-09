@@ -10,6 +10,8 @@ const { ActionEnv, ActionData } = require("../../action/action")
 class ActionManager extends ActionManagerData {
     matrix
     reorder = {}
+    addActionButtonId = "action-manager-button-add"
+    syncLabelId = "action-manager-sync-label"
 
     get actionList() {
         return super.actions.map(type => {
@@ -289,6 +291,7 @@ class ActionManager extends ActionManagerData {
             {
                 // 添加
                 symbol: "plus.circle",
+                id: this.addActionButtonId,
                 menu: {
                     pullDown: true,
                     asPrimary: true,
@@ -466,6 +469,15 @@ class ActionManager extends ActionManagerData {
         }
     }
 
+    undateSyncLabel(message) {
+        if (!message) {
+            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+        }
+        if ($(this.syncLabelId)) {
+            $(this.syncLabelId).text = message
+        }
+    }
+
     getMatrixView({ columns = 2, spacing = 15, itemHeight = 100 } = {}) {
         this.matrix = Matrix.create({
             type: "matrix",
@@ -558,6 +570,29 @@ class ActionManager extends ActionManagerData {
                             }
                         }
                     ]
+                },
+                footer: {
+                    type: "view",
+                    props: {
+                        hidden: !this.kernel.setting.get("experimental.syncAction"),
+                        height: this.kernel.setting.get("experimental.syncAction") ? 40 : 0
+                    },
+                    views: [
+                        {
+                            type: "label",
+                            props: {
+                                id: this.syncLabelId,
+                                color: $color("secondaryText"),
+                                font: $font(12),
+                                text: $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+                            },
+                            layout: (make, view) => {
+                                make.size.equalTo(view.super)
+                                make.top.inset(-30)
+                                make.left.inset(spacing)
+                            }
+                        }
+                    ]
                 }
             },
             layout: $layout.fill,
@@ -574,7 +609,30 @@ class ActionManager extends ActionManagerData {
                     $delay(0.5, () => {
                         sender.endRefreshing()
                         this.matrix.update(this.actionList)
+                        this.undateSyncLabel()
                     })
+                }
+            }
+        })
+
+        // 监听同步信息
+        $app.listen({
+            actionSyncStatus: args => {
+                const button = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId) ?? {}
+                if (args.status === ActionManagerData.syncStatus.syncing) {
+                    button.setLoading(true)
+                    this.undateSyncLabel($l10n("SYNCING"))
+                } else if (args.status === ActionManagerData.syncStatus.success) {
+                    try {
+                        this.matrix.update(this.actionList)
+                    } catch (error) {
+                        this.kernel.error(error)
+                        this.undateSyncLabel(error)
+                        $ui.error(error)
+                    } finally {
+                        this.undateSyncLabel()
+                        button.setLoading(false)
+                    }
                 }
             }
         })
@@ -583,10 +641,10 @@ class ActionManager extends ActionManagerData {
     }
 
     getPage() {
-        const navigationView = new NavigationView()
-        navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
-        navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))
-        return navigationView.getPage()
+        this.navigationView = new NavigationView()
+        this.navigationView.navigationBarItems.setRightButtons(this.getNavButtons())
+        this.navigationView.setView(this.getMatrixView()).navigationBarTitle($l10n("ACTIONS"))
+        return this.navigationView.getPage()
     }
 
     present() {

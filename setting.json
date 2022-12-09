@@ -469,6 +469,33 @@
         "items": [
             {
                 "icon": [
+                    "wrench.and.screwdriver"
+                ],
+                "title": "EXPERIMENTAL",
+                "type": "child",
+                "key": "EXPERIMENTAL",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "bolt.circle"
+                                ],
+                                "title": "SYNC_ACTIONS",
+                                "type": "switch",
+                                "key": "experimental.syncAction",
+                                "value": false
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "items": [
+            {
+                "icon": [
                     "/assets/icon/github.com.jpeg",
                     "white"
                 ],

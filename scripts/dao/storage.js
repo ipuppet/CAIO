@@ -13,6 +13,8 @@ class Storage {
      */
     constructor(kernel) {
         this.kernel = kernel
+
+        // 路径基于 this.kernel.fileStorage
         this.dbName = "CAIO.db"
         this.localDb = `/${this.dbName}`
         this.imagePath = `/image`

@@ -5,7 +5,14 @@ const { ActionEnv, ActionData, Action } = require("../action/action")
  */
 
 class ActionManagerData {
+    static syncStatus = {
+        syncing: 0,
+        success: 1
+    }
+    #syncInterval = 3
+    #syncLock = false
     #actions
+
     /**
      * @param {AppKernel} kernel
      */
@@ -14,13 +21,18 @@ class ActionManagerData {
         // path
         this.actionPath = "scripts/action"
         this.actionOrderFile = "order.json"
+        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
+        this.localSyncFile = this.userActionPath + "/data.json"
         this.iCloudPath = "drive://CAIO/user_action"
-        this.iCloudDataPath = "data.json"
+        this.iCloudSyncFile = this.iCloudPath + "/data.json"
+        this.iCloudSyncFileUndownloaded = this.iCloudPath + "/.data.json.icloud"
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
         // checkUserAction
         this.checkUserAction()
+        // sync
+        this.sync()
     }
 
     get actions() {
@@ -37,6 +49,10 @@ class ActionManagerData {
 
     actionsNeedReload() {
         this.#actions = undefined
+        $file.write({
+            data: $data({ string: JSON.stringify({ date: Date.now() }) }),
+            path: this.localSyncFile
+        })
     }
 
     importExampleAction() {
@@ -82,16 +98,86 @@ class ActionManagerData {
         }
     }
 
+    #mkdir(path = "") {
+        path = path.trim("/")
+        if (!$file.exists(path)) {
+            const lastSlash = path.lastIndexOf("/")
+            if (lastSlash !== -1) {
+                const dirname = path.substring(0, lastSlash)
+                this.#mkdir(dirname)
+            }
+            $file.mkdir(path)
+        }
+    }
+
+    getSyncDate() {
+        const localSyncData = JSON.parse($file.read(this.localSyncFile).string)
+        return new Date(localSyncData.date)
+    }
+
     async sync() {
-        // TODO: Actions iCloud sync
-        return
+        if (!this.kernel.setting.get("experimental.syncAction")) {
+            return
+        }
+        while (this.#syncLock) {
+            await $wait(this.#syncInterval)
+        }
+        this.#syncLock = true
+
+        let iCloudSyncData
+        if ($file.exists(this.iCloudSyncFileUndownloaded)) {
+            iCloudSyncData = await $file.download(this.iCloudSyncFileUndownloaded)
+        } else {
+            iCloudSyncData = $file.read(this.iCloudSyncFile)
+        }
+        iCloudSyncData = JSON.parse(iCloudSyncData)
+        const localSyncData = JSON.parse($file.read(this.localSyncFile).string)
+        if (localSyncData.date < iCloudSyncData.date) {
+            this.kernel.print("local data need update")
+            $app.notify({
+                name: "actionSyncStatus",
+                object: { status: ActionManagerData.syncStatus.syncing }
+            })
+            // temp
+            const usetActionTempPath = this.tempPath + "/user_action"
+            $file.delete(usetActionTempPath)
+            this.#mkdir(usetActionTempPath)
+            // 从 iCloud 复制到 temp
+            await $file.copy({
+                src: this.iCloudPath,
+                dst: usetActionTempPath
+            })
+            // 从 temp 复制到 userActionPath
+            $file.delete(this.userActionPath)
+            this.#mkdir(this.userActionPath)
+            await $file.move({
+                src: usetActionTempPath,
+                dst: this.userActionPath
+            })
+            this.kernel.print("iCloud data copy success")
+            // 通知更新 UI
+            await $wait(1)
+            $app.notify({
+                name: "actionSyncStatus",
+                object: { status: ActionManagerData.syncStatus.success }
+            })
+        } else if (localSyncData.date > iCloudSyncData.date) {
+            // 直接更新 iCloudSyncFile
+            // 在其他方法中已经对 iCloud 文件进行了更改
+            $file.write({
+                data: $data({ string: JSON.stringify({ date: localSyncData.date }) }),
+                path: this.iCloudSyncFile
+            })
+            // 停顿一个同步间隔
+            await $wait(this.#syncInterval)
+        }
+
+        // 解锁，进行下一次同步
+        this.#syncLock = false
+        await $wait(this.#syncInterval)
         $thread.background({
             delay: 0,
-            handler: () => {
-                if ($file.exists(this.iCloudPath + `/.${this.iCloudDataPath}.icloud`))
-                    console.log($file.list("drive://CAIO"))
-                console.log($file.exists("drive://CAIO/.text.txt.icloud"))
-            }
+            handler: () => this.sync()
         })
     }
 
@@ -108,7 +194,18 @@ class ActionManagerData {
             })
         }
 
-        this.sync()
+        if (!$file.exists(this.localSyncFile)) {
+            $file.write({
+                data: $data({ string: JSON.stringify({ date: 0 }) }),
+                path: this.localSyncFile
+            })
+        }
+        if (!$file.exists(this.iCloudSyncFile)) {
+            $file.write({
+                data: $data({ string: JSON.stringify({ date: 0 }) }),
+                path: this.iCloudSyncFile
+            })
+        }
     }
 
     getActionTypes() {
