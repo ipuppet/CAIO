@@ -26,11 +26,9 @@ class ActionManagerData {
     get actions() {
         if (!this.#actions) {
             this.#actions = this.getActionTypes().map(type => {
-                const rows = this.getActions(type)
                 return {
                     title: this.getTypeName(type),
-                    items: rows,
-                    rows: rows
+                    items: this.getActions(type)
                 }
             })
         }
@@ -102,6 +100,13 @@ class ActionManagerData {
             $file.mkdir(this.userActionPath)
             this.importExampleAction()
         }
+        if (!$file.exists(this.iCloudPath) || $file.list(this.iCloudPath).length === 0) {
+            $file.mkdir(this.iCloudPath)
+            $file.copy({
+                src: this.userActionPath,
+                dst: this.iCloudPath
+            })
+        }
 
         this.sync()
     }
@@ -126,9 +131,17 @@ class ActionManagerData {
         return `${this.userActionPath}/${type}/${dir}`
     }
 
+    getActionConfig(type, dir) {
+        return JSON.parse($file.read(`${this.getActionPath(type, dir)}/config.json`).string)
+    }
+
+    getActionReadme(type, dir) {
+        return $file.read(`${this.getActionPath(type, dir)}/README.md`).string
+    }
+
     getAction(type, dir, data) {
         const basePath = this.getActionPath(type, dir)
-        const config = JSON.parse($file.read(`${basePath}/config.json`).string)
+        const config = this.getActionConfig(type, dir)
         try {
             const script = $file.read(`${basePath}/main.js`).string
             const MyAction = new Function("Action", "ActionEnv", "ActionData", `${script}\n return MyAction`)(
@@ -160,16 +173,17 @@ class ActionManagerData {
         const actions = []
         const typePath = `${this.userActionPath}/${type}`
         if (!$file.exists(typePath)) return []
-        const pushAction = item => {
-            const basePath = `${typePath}/${item}/`
+        const pushAction = dir => {
+            const basePath = `${typePath}/${dir}/`
             if ($file.isDirectory(basePath)) {
-                const config = JSON.parse($file.read(basePath + "config.json").string)
+                const config = this.getActionConfig(type, dir)
                 actions.push(
                     Object.assign(config, {
-                        dir: item,
-                        type: type,
-                        name: config.name ?? item,
-                        icon: config.icon
+                        dir,
+                        type,
+                        name: config.name ?? dir,
+                        icon: config.icon,
+                        color: config.color
                     })
                 )
             }
@@ -204,11 +218,14 @@ class ActionManagerData {
                 string: JSON.stringify({
                     icon: info.icon,
                     color: info.color,
-                    name: info.name,
-                    description: info.description
+                    name: info.name
                 })
             }),
             path: `${path}/config.json`
+        })
+        $file.write({
+            data: $data({ string: info.readme }),
+            path: `${path}/README.md`
         })
 
         this.actionsNeedReload()
@@ -223,6 +240,13 @@ class ActionManagerData {
             data: $data({ string: content }),
             path: mainJsPath
         })
+
+        const iCloudPath = `${this.iCloudPath}/${info.type}/${info.dir}`
+        if (!$file.exists(iCloudPath)) $file.mkdir(iCloudPath)
+        $file.write({
+            data: $data({ string: content }),
+            path: `${iCloudPath}/main.js`
+        })
     }
 
     saveOrder(type, order) {
@@ -230,36 +254,46 @@ class ActionManagerData {
             data: $data({ string: JSON.stringify(order) }),
             path: `${this.userActionPath}/${type}/${this.actionOrderFile}`
         })
+        $file.write({
+            data: $data({ string: JSON.stringify(order) }),
+            path: `${this.iCloudPath}/${type}/${this.actionOrderFile}`
+        })
         this.actionsNeedReload()
     }
 
-    move(from, to, data) {
+    move(from, to) {
         if (from.section === to.section && from.row === to.row) return
-        // 处理 data 数据
-        data = data.map(section => {
-            section.rows = section.rows.map(item => item.info.info)
-            return section
-        })
-        const fromSection = data[from.section],
-            toSection = data[to.section]
-        const getOrder = section => {
-            const order = []
-            data[section].rows.forEach(item => order.push(item.dir))
-            return order
+
+        const fromSection = this.actions[from.section]
+        const fromItems = fromSection.items
+        const fromType = this.getTypeDir(fromSection.title)
+
+        const getOrder = items => {
+            return items.map(item => item.dir)
         }
 
-        const fromType = this.getTypeDir(fromSection.title)
-        const toType = this.getTypeDir(toSection.title)
         // 判断是否跨 section
         if (from.section === to.section) {
-            this.saveOrder(fromType, getOrder(from.section))
+            fromItems.splice(from.row < to.row ? to.row + 1 : to.row, 0, fromItems[from.row]) // 在 to 位置插入元素
+            fromItems.splice(from.row > to.row ? from.row + 1 : from.row, 1) // 删除 from 位置元素
+            this.saveOrder(fromType, getOrder(fromItems))
         } else {
+            const toSection = this.actions[to.section]
+            const toItems = toSection.items
+            const toType = this.getTypeDir(toSection.title)
+
+            toItems.splice(to.row, 0, fromItems[from.row]) // 在 to 位置插入元素
+            fromItems.splice(from.row, 1) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
-            this.saveOrder(fromType, getOrder(from.section))
-            this.saveOrder(toType, getOrder(to.section))
+            this.saveOrder(toType, getOrder(toItems))
+            this.saveOrder(fromType, getOrder(fromItems))
             $file.move({
-                src: `${this.userActionPath}/${fromType}/${toSection.rows[to.row].dir}`,
-                dst: `${this.userActionPath}/${toType}/${toSection.rows[to.row].dir}`
+                src: `${this.userActionPath}/${fromType}/${toItems[to.row].dir}`,
+                dst: `${this.userActionPath}/${toType}/${toItems[to.row].dir}`
+            })
+            $file.move({
+                src: `${this.iCloudPath}/${fromType}/${toItems[to.row].dir}`,
+                dst: `${this.iCloudPath}/${toType}/${toItems[to.row].dir}`
             })
         }
 
@@ -268,6 +302,7 @@ class ActionManagerData {
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
+        $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
         this.actionsNeedReload()
     }
 }
