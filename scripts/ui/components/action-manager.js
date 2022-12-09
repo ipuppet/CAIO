@@ -575,7 +575,7 @@ class ActionManager extends ActionManagerData {
                     type: "view",
                     props: {
                         hidden: !this.kernel.setting.get("experimental.syncAction"),
-                        height: this.kernel.setting.get("experimental.syncAction") ? 40 : 0
+                        height: this.kernel.setting.get("experimental.syncAction") ? 50 : 0
                     },
                     views: [
                         {
