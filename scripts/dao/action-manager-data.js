@@ -32,7 +32,10 @@ class ActionManagerData {
         // checkUserAction
         this.checkUserAction()
         // sync
-        this.sync()
+        $thread.background({
+            delay: 0,
+            handler: () => this.sync(true)
+        })
     }
 
     get actions() {
@@ -110,12 +113,46 @@ class ActionManagerData {
         }
     }
 
+    async downloadFiles(path) {
+        const list = $file.list(path)
+        for (let i = 0; i < list.length; i++) {
+            const subpath = path + "/" + list[i]
+            if ($file.isDirectory(subpath)) {
+                await this.downloadFiles(subpath)
+            } else {
+                const filename = subpath.substring(subpath.lastIndexOf("/") + 1)
+                if (filename.endsWith(".icloud")) {
+                    await $file.download(subpath)
+                }
+            }
+        }
+    }
+
     getSyncDate() {
-        const localSyncData = JSON.parse($file.read(this.localSyncFile).string)
+        const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
         return new Date(localSyncData.date)
     }
 
-    async sync() {
+    checkSyncData() {
+        if (!$file.exists(this.localSyncFile)) {
+            $file.write({
+                data: $data({ string: JSON.stringify({ date: 0 }) }),
+                path: this.localSyncFile
+            })
+        }
+        if (!$file.exists(this.iCloudSyncFile)) {
+            if ($file.exists(this.iCloudSyncFileUndownloaded)) {
+                $file.download(this.iCloudSyncFileUndownloaded)
+            } else {
+                $file.write({
+                    data: $data({ string: JSON.stringify({ date: 0 }) }),
+                    path: this.iCloudSyncFile
+                })
+            }
+        }
+    }
+
+    async sync(loop = false) {
         if (!this.kernel.setting.get("experimental.syncAction")) {
             return
         }
@@ -123,6 +160,8 @@ class ActionManagerData {
             await $wait(this.#syncInterval)
         }
         this.#syncLock = true
+
+        this.checkSyncData()
 
         let iCloudSyncData
         if ($file.exists(this.iCloudSyncFileUndownloaded)) {
@@ -143,6 +182,7 @@ class ActionManagerData {
             $file.delete(usetActionTempPath)
             this.#mkdir(usetActionTempPath)
             // 从 iCloud 复制到 temp
+            await this.downloadFiles(this.iCloudPath) // download first
             await $file.copy({
                 src: this.iCloudPath,
                 dst: usetActionTempPath
@@ -175,10 +215,12 @@ class ActionManagerData {
         // 解锁，进行下一次同步
         this.#syncLock = false
         await $wait(this.#syncInterval)
-        $thread.background({
-            delay: 0,
-            handler: () => this.sync()
-        })
+        if (loop) {
+            $thread.background({
+                delay: 0,
+                handler: () => this.sync()
+            })
+        }
     }
 
     checkUserAction() {
@@ -192,23 +234,6 @@ class ActionManagerData {
                 src: this.userActionPath,
                 dst: this.iCloudPath
             })
-        }
-
-        if (!$file.exists(this.localSyncFile)) {
-            $file.write({
-                data: $data({ string: JSON.stringify({ date: 0 }) }),
-                path: this.localSyncFile
-            })
-        }
-        if (!$file.exists(this.iCloudSyncFile)) {
-            if ($file.exists(this.iCloudSyncFileUndownloaded)) {
-                $file.download(this.iCloudSyncFileUndownloaded)
-            } else {
-                $file.write({
-                    data: $data({ string: JSON.stringify({ date: 0 }) }),
-                    path: this.iCloudSyncFile
-                })
-            }
         }
     }
 

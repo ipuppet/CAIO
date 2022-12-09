@@ -606,8 +606,9 @@ class ActionManager extends ActionManagerData {
                     this.getActionHandler(info.type, info.dir)(actionData)
                 },
                 pulled: sender => {
-                    $delay(0.5, () => {
+                    $delay(0.5, async () => {
                         sender.endRefreshing()
+                        await this.sync()
                         this.matrix.update(this.actionList)
                         this.undateSyncLabel()
                     })
