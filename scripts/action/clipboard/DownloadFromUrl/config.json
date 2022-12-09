@@ -1,6 +1,5 @@
 {
     "icon": "square.and.arrow.down",
     "color": "#FF0099",
-    "name": "从链接下载",
-    "description": "从链接下载内容，如 js 文件内容等"
+    "name": "从链接下载"
 }
