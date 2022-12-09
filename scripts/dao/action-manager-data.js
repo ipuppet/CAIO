@@ -201,10 +201,14 @@ class ActionManagerData {
             })
         }
         if (!$file.exists(this.iCloudSyncFile)) {
-            $file.write({
-                data: $data({ string: JSON.stringify({ date: 0 }) }),
-                path: this.iCloudSyncFile
-            })
+            if ($file.exists(this.iCloudSyncFileUndownloaded)) {
+                $file.download(this.iCloudSyncFileUndownloaded)
+            } else {
+                $file.write({
+                    data: $data({ string: JSON.stringify({ date: 0 }) }),
+                    path: this.iCloudSyncFile
+                })
+            }
         }
     }
 
