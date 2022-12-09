@@ -210,43 +210,43 @@ class ActionManagerData {
         return this.typeNameMap[name] ?? name
     }
 
-    saveActionInfo(info) {
-        const path = `${this.userActionPath}/${info.type}/${info.dir}`
+    #saveFile(type, dir, file, data) {
+        if (typeof data !== "string") {
+            data = JSON.stringify(data)
+        }
+
+        const path = `${this.userActionPath}/${type}/${dir}`
         if (!$file.exists(path)) $file.mkdir(path)
+        if (data === $file.read(`${path}/${file}`)?.string) {
+            return
+        }
+
         $file.write({
-            data: $data({
-                string: JSON.stringify({
-                    icon: info.icon,
-                    color: info.color,
-                    name: info.name
-                })
-            }),
-            path: `${path}/config.json`
+            data: $data({ string: data }),
+            path: `${path}/${file}`
         })
+
+        const iCloudPath = `${this.iCloudPath}/${type}/${dir}`
+        if (!$file.exists(iCloudPath)) $file.mkdir(iCloudPath)
         $file.write({
-            data: $data({ string: info.readme }),
-            path: `${path}/README.md`
+            data: $data({ string: data }),
+            path: `${iCloudPath}/${file}`
         })
+    }
+
+    saveActionInfo(info) {
+        this.#saveFile(info.type, info.dir, "config.json", {
+            icon: info.icon,
+            color: info.color,
+            name: info.name
+        })
+        this.#saveFile(info.type, info.dir, "README.md", info.readme)
 
         this.actionsNeedReload()
     }
 
     saveMainJs(info, content) {
-        const path = `${this.userActionPath}/${info.type}/${info.dir}`
-        const mainJsPath = `${path}/main.js`
-        if (!$file.exists(path)) $file.mkdir(path)
-        if ($text.MD5(content) === $text.MD5($file.read(mainJsPath)?.string ?? "")) return
-        $file.write({
-            data: $data({ string: content }),
-            path: mainJsPath
-        })
-
-        const iCloudPath = `${this.iCloudPath}/${info.type}/${info.dir}`
-        if (!$file.exists(iCloudPath)) $file.mkdir(iCloudPath)
-        $file.write({
-            data: $data({ string: content }),
-            path: `${iCloudPath}/main.js`
-        })
+        this.#saveFile(info.type, info.dir, "main.js", content)
     }
 
     saveOrder(type, order) {
