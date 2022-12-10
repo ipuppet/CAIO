@@ -11,6 +11,7 @@ class ActionManager extends ActionManagerData {
     matrix
     reorder = {}
     addActionButtonId = "action-manager-button-add"
+    sortActionButtonId = "action-manager-button-sort"
     syncLabelId = "action-manager-sync-label"
 
     get actionList() {
@@ -36,7 +37,7 @@ class ActionManager extends ActionManagerData {
         $app.listen({
             actionSyncStatus: args => {
                 if (args.status === ActionManagerData.syncStatus.syncing) {
-                    this.undateAddActionButton(true)
+                    this.undateNavButton(true)
                     this.undateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === ActionManagerData.syncStatus.success) {
                     try {
@@ -47,7 +48,7 @@ class ActionManager extends ActionManagerData {
                         $ui.error(error)
                     } finally {
                         this.undateSyncLabel()
-                        this.undateAddActionButton(false)
+                        this.undateNavButton(false)
                     }
                 }
             }
@@ -364,6 +365,7 @@ class ActionManager extends ActionManagerData {
             {
                 // 排序
                 symbol: "arrow.up.arrow.down.circle",
+                id: this.sortActionButtonId,
                 tapped: (animate, sender) => {
                     $ui.popover({
                         sourceView: sender,
@@ -429,10 +431,14 @@ class ActionManager extends ActionManagerData {
         }
     }
 
-    undateAddActionButton(loading) {
-        const button = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId) ?? {}
-        if (button) {
-            button.setLoading(loading)
+    undateNavButton(loading) {
+        const addActionButton = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId)
+        if (addActionButton) {
+            addActionButton.setLoading(loading)
+        }
+        const sortActionButton = this.navigationView?.navigationBarItems?.getButton(this.sortActionButtonId)
+        if (sortActionButton) {
+            sortActionButton.setLoading(loading)
         }
     }
 
@@ -639,12 +645,12 @@ class ActionManager extends ActionManagerData {
                 },
                 pulled: sender => {
                     $delay(0.5, async () => {
-                        this.undateAddActionButton(true)
+                        this.undateNavButton(true)
                         await this.sync()
                         this.actionsNeedReload()
                         this.matrix.update(this.actionList)
                         this.undateSyncLabel()
-                        this.undateAddActionButton(false)
+                        this.undateNavButton(false)
                         sender.endRefreshing()
                     })
                 }
@@ -669,28 +675,28 @@ class ActionManager extends ActionManagerData {
         if (this.kernel.setting.get("experimental.syncAction")) {
             rightButtons.push({
                 // 同步
-                symbol: "arrow.up.arrow.down.circle",
+                symbol: "arrow.triangle.2.circlepath.circle",
                 tapped: async (animate, sender) => {
-                    animate.actionStart()
-                    this.undateAddActionButton(true)
+                    animate.start()
+                    this.undateNavButton(true)
                     await this.sync()
                     this.actionsNeedReload()
                     this.matrix.update(this.actionList)
                     this.undateSyncLabel()
-                    animate.actionDone()
-                    this.undateAddActionButton(false)
+                    animate.done()
+                    this.undateNavButton(false)
                 }
             })
         }
-        actionSheet
-            .setView(this.getMatrixView())
-            .addNavBar({
-                title: $l10n("ACTIONS"),
-                popButton: { symbol: "xmark.circle" },
-                rightButtons: rightButtons
-            })
-            .init()
-            .present()
+        actionSheet.setView(this.getMatrixView()).addNavBar({
+            title: $l10n("ACTIONS"),
+            popButton: { symbol: "xmark.circle" },
+            rightButtons: rightButtons
+        })
+
+        this.navigationView = actionSheet.navigationView
+
+        actionSheet.init().present()
     }
 }
 

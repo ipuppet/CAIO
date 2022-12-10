@@ -159,12 +159,7 @@ class ActionManagerData {
             return
         }
         if (this.#syncLock) {
-            if (loop) {
-                $thread.background({
-                    delay: this.#syncInterval,
-                    handler: () => this.sync(loop)
-                })
-            }
+            await $wait(this.#syncInterval)
             return
         }
         this.#syncLock = true

@@ -14,18 +14,18 @@ let kernel
 
 function clips() {
     kernel.setting.method.exportClipboard = animate => {
-        animate.actionStart()
+        animate.start()
         kernel.storage.export(success => {
             if (success) {
-                animate.actionDone()
+                animate.done()
             } else {
-                animate.actionCancel()
+                animate.cancel()
             }
         })
     }
 
     kernel.setting.method.importClipboard = animate => {
-        animate.actionStart()
+        animate.start()
         $ui.alert({
             title: $l10n("ALERT_INFO"),
             message: $l10n("OVERWRITE_ALERT"),
@@ -36,14 +36,14 @@ function clips() {
                         $drive.open({
                             handler: data => {
                                 if (data === undefined) {
-                                    animate.actionCancel()
+                                    animate.cancel()
                                     return
                                 }
                                 if (data.fileName.slice(-2) === "db" || data.fileName.slice(-3) === "zip") {
                                     kernel.storage
                                         .import(data)
                                         .then(() => {
-                                            animate.actionDone()
+                                            animate.done()
                                             $delay(0.3, () => {
                                                 $addin.restart()
                                             })
@@ -51,11 +51,11 @@ function clips() {
                                         .catch(error => {
                                             $ui.error(error)
                                             kernel.print(error)
-                                            animate.actionCancel()
+                                            animate.cancel()
                                         })
                                 } else {
                                     $ui.warning($l10n("FILE_TYPE_ERROR"))
-                                    animate.actionCancel()
+                                    animate.cancel()
                                 }
                             }
                         })
@@ -63,21 +63,21 @@ function clips() {
                 },
                 {
                     title: $l10n("CANCEL"),
-                    handler: () => animate.actionCancel()
+                    handler: () => animate.cancel()
                 }
             ]
         })
     }
 
     kernel.setting.method.rebuildDatabase = animate => {
-        animate.actionStart()
+        animate.start()
         const rebuildDatabase = () => {
             try {
                 kernel.storage.rebuild()
-                animate.actionDone()
+                animate.done()
                 $delay(0.8, () => $addin.restart())
             } catch (error) {
-                animate.actionCancel()
+                animate.cancel()
                 $ui.alert(error)
             }
         }
@@ -94,7 +94,7 @@ function clips() {
                 {
                     title: $l10n("CANCEL"),
                     handler: () => {
-                        animate.actionCancel()
+                        animate.cancel()
                     }
                 }
             ]
@@ -102,7 +102,7 @@ function clips() {
     }
 
     kernel.setting.method.deleteAllData = animate => {
-        animate.actionStart()
+        animate.start()
         $ui.alert({
             title: $l10n("DELETE_ALL_DATA_ALERT"),
             actions: [
@@ -111,14 +111,14 @@ function clips() {
                     style: $alertActionType.destructive,
                     handler: () => {
                         kernel.storage.deleteAllData()
-                        animate.actionDone()
+                        animate.done()
                         $delay(0.5, () => $addin.restart())
                     }
                 },
                 {
                     title: $l10n("CANCEL"),
                     handler: () => {
-                        animate.actionCancel()
+                        animate.cancel()
                     }
                 }
             ]
@@ -128,7 +128,7 @@ function clips() {
 
 function action() {
     kernel.setting.method.exportAction = animate => {
-        animate.actionStart()
+        animate.start()
         // 备份动作
         const fileName = "actions.zip"
         const tempPath = `/${fileName}`
@@ -146,9 +146,9 @@ function action() {
                     ],
                     handler: success => {
                         if (success) {
-                            animate.actionDone()
+                            animate.done()
                         } else {
-                            animate.actionCancel()
+                            animate.cancel()
                         }
                         kernel.fileStorage.delete(tempPath)
                     }
@@ -158,11 +158,11 @@ function action() {
     }
 
     kernel.setting.method.importAction = animate => {
-        animate.actionStart()
+        animate.start()
         $drive.open({
             handler: data => {
                 if (data === undefined) {
-                    animate.actionCancel()
+                    animate.cancel()
                     return
                 }
                 if (data.fileName.slice(-3) === "zip") {
@@ -180,25 +180,25 @@ function action() {
                                 }
                             })
                             $file.delete(path)
-                            animate.actionDone()
+                            animate.done()
                         }
                     })
                 } else {
                     $ui.warning($l10n("FILE_TYPE_ERROR"))
-                    animate.actionCancel()
+                    animate.cancel()
                 }
             }
         })
     }
 
     kernel.setting.method.importExampleAction = animate => {
-        animate.actionStart()
+        animate.start()
         kernel.actionManager.importExampleAction()
-        animate.actionDone()
+        animate.done()
     }
 
     kernel.setting.method.rebuildAction = animate => {
-        animate.actionStart()
+        animate.start()
         $ui.alert({
             title: $l10n("REBUILD_ACTION_DATABASE_ALERT_TITLE"),
             message: $l10n("REBUILD_ACTION_DATABASE_ALERT_MESSAGE"),
@@ -209,11 +209,11 @@ function action() {
                     handler: () => {
                         $file.delete(kernel.actionManager.userActionPath)
                         $file.delete(kernel.actionManager.iCloudPath)
-                        animate.actionDone()
+                        animate.done()
                         $delay(0.8, () => $addin.restart())
                     }
                 },
-                { title: $l10n("CANCEL"), handler: () => animate.actionCancel() }
+                { title: $l10n("CANCEL"), handler: () => animate.cancel() }
             ]
         })
     }
@@ -330,7 +330,7 @@ function settingMethods(appKernel) {
     kernel = appKernel
 
     kernel.setting.method.checkUpdate = async animate => {
-        animate.actionStart()
+        animate.start()
 
         const easyJsboxPath = "scripts/libs/easy-jsbox.js"
         if ($file.exists(easyJsboxPath)) {
@@ -379,7 +379,7 @@ function settingMethods(appKernel) {
                 } else {
                     $ui.toast("No need to update")
                 }
-                animate.actionDone()
+                animate.done()
             }
         })
     }
