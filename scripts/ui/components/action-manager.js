@@ -11,6 +11,7 @@ class ActionManager extends ActionManagerData {
     matrix
     reorder = {}
     addActionButtonId = "action-manager-button-add"
+    sortActionButtonId = "action-manager-button-sort"
     syncLabelId = "action-manager-sync-label"
 
     get actionList() {
@@ -25,6 +26,31 @@ class ActionManager extends ActionManagerData {
                 title: type.title,
                 items: rows,
                 rows: rows
+            }
+        })
+    }
+
+    /**
+     * 监听同步信息
+     */
+    actionSyncStatus() {
+        $app.listen({
+            actionSyncStatus: args => {
+                if (args.status === ActionManagerData.syncStatus.syncing) {
+                    this.undateNavButton(true)
+                    this.undateSyncLabel($l10n("SYNCING"))
+                } else if (args.status === ActionManagerData.syncStatus.success) {
+                    try {
+                        this.matrix.update(this.actionList)
+                    } catch (error) {
+                        this.kernel.error(error)
+                        this.undateSyncLabel(error)
+                        $ui.error(error)
+                    } finally {
+                        this.undateSyncLabel()
+                        this.undateNavButton(false)
+                    }
+                }
             }
         })
     }
@@ -339,6 +365,7 @@ class ActionManager extends ActionManagerData {
             {
                 // 排序
                 symbol: "arrow.up.arrow.down.circle",
+                id: this.sortActionButtonId,
                 tapped: (animate, sender) => {
                     $ui.popover({
                         sourceView: sender,
@@ -392,6 +419,26 @@ class ActionManager extends ActionManagerData {
                     : { image: $image(action.icon) },
             color: { bgcolor: this.kernel.setting.getColor(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
+        }
+    }
+
+    undateSyncLabel(message) {
+        if (!message) {
+            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+        }
+        if ($(this.syncLabelId)) {
+            $(this.syncLabelId).text = message
+        }
+    }
+
+    undateNavButton(loading) {
+        const addActionButton = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId)
+        if (addActionButton) {
+            addActionButton.setLoading(loading)
+        }
+        const sortActionButton = this.navigationView?.navigationBarItems?.getButton(this.sortActionButtonId)
+        if (sortActionButton) {
+            sortActionButton.setLoading(loading)
         }
     }
 
@@ -466,15 +513,6 @@ class ActionManager extends ActionManagerData {
                 },
                 props
             )
-        }
-    }
-
-    undateSyncLabel(message) {
-        if (!message) {
-            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
-        }
-        if ($(this.syncLabelId)) {
-            $(this.syncLabelId).text = message
         }
     }
 
@@ -575,7 +613,7 @@ class ActionManager extends ActionManagerData {
                     type: "view",
                     props: {
                         hidden: !this.kernel.setting.get("experimental.syncAction"),
-                        height: this.kernel.setting.get("experimental.syncAction") ? 40 : 0
+                        height: this.kernel.setting.get("experimental.syncAction") ? 50 : 0
                     },
                     views: [
                         {
@@ -606,36 +644,20 @@ class ActionManager extends ActionManagerData {
                     this.getActionHandler(info.type, info.dir)(actionData)
                 },
                 pulled: sender => {
-                    $delay(0.5, () => {
-                        sender.endRefreshing()
+                    $delay(0.5, async () => {
+                        this.undateNavButton(true)
+                        await this.sync()
+                        this.actionsNeedReload()
                         this.matrix.update(this.actionList)
                         this.undateSyncLabel()
+                        this.undateNavButton(false)
+                        sender.endRefreshing()
                     })
                 }
             }
         })
 
-        // 监听同步信息
-        $app.listen({
-            actionSyncStatus: args => {
-                const button = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId) ?? {}
-                if (args.status === ActionManagerData.syncStatus.syncing) {
-                    button.setLoading(true)
-                    this.undateSyncLabel($l10n("SYNCING"))
-                } else if (args.status === ActionManagerData.syncStatus.success) {
-                    try {
-                        this.matrix.update(this.actionList)
-                    } catch (error) {
-                        this.kernel.error(error)
-                        this.undateSyncLabel(error)
-                        $ui.error(error)
-                    } finally {
-                        this.undateSyncLabel()
-                        button.setLoading(false)
-                    }
-                }
-            }
-        })
+        this.actionSyncStatus()
 
         return this.matrix.definition
     }
@@ -649,17 +671,32 @@ class ActionManager extends ActionManagerData {
 
     present() {
         const actionSheet = new Sheet()
-        actionSheet
-            .setView(this.getMatrixView())
-            .addNavBar({
-                title: $l10n("ACTIONS"),
-                popButton: {
-                    symbol: "xmark.circle"
-                },
-                rightButtons: this.getNavButtons()
+        const rightButtons = this.getNavButtons()
+        if (this.kernel.setting.get("experimental.syncAction")) {
+            rightButtons.push({
+                // 同步
+                symbol: "arrow.triangle.2.circlepath.circle",
+                tapped: async (animate, sender) => {
+                    animate.start()
+                    this.undateNavButton(true)
+                    await this.sync()
+                    this.actionsNeedReload()
+                    this.matrix.update(this.actionList)
+                    this.undateSyncLabel()
+                    animate.done()
+                    this.undateNavButton(false)
+                }
             })
-            .init()
-            .present()
+        }
+        actionSheet.setView(this.getMatrixView()).addNavBar({
+            title: $l10n("ACTIONS"),
+            popButton: { symbol: "xmark.circle" },
+            rightButtons: rightButtons
+        })
+
+        this.navigationView = actionSheet.navigationView
+
+        actionSheet.init().present()
     }
 }
 

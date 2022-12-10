@@ -10,9 +10,12 @@ const KeyboardScripts = require("./components/keyboard-scripts")
 class Keyboard extends Clips {
     #readClipboardTimer
 
+    listId = "keyboard-clips-list"
+    keyboardSwitchLockId = "keyboard-switch-lock"
+    keyboardSwitchLockKey = "caio.keyboard.switch.lock"
+
     deleteTimer = undefined
     continuousDeleteTimer = undefined
-    deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
@@ -30,15 +33,14 @@ class Keyboard extends Clips {
      */
     constructor(kernel) {
         super(kernel)
-        this.listId = "keyboard-clips-list"
-        this.keyboardSwitchLockId = "keyboard-switch-lock"
-        this.keyboardSwitchLockKey = "caio.keyboard.switch.lock"
 
         this.backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
         this.backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
         this.backgroundColorDark = this.kernel.setting.getColor(
             this.kernel.setting.get("keyboard.background.color.dark")
         )
+
+        this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
 
         this.keyboardSetting()
 
@@ -75,7 +77,6 @@ class Keyboard extends Clips {
 
     listReady() {
         this.updateList()
-        this.appListen()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
             this.#readClipboardTimer = $timer.schedule({
