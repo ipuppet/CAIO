@@ -157,7 +157,10 @@ class Clips extends ClipsData {
     }
 
     updateListBackground() {
-        $(this.listId + "-empty-list-background").hidden = this.clips.length > 0
+        const bg = $(this.listId + "-empty-list-background")
+        if (bg) {
+            bg.hidden = this.clips.length > 0
+        }
     }
 
     updateCopied(copied = {}) {
@@ -193,8 +196,8 @@ class Clips extends ClipsData {
         this.updateCopied(copied)
 
         if (isUpdateIndicator) {
-            const listView = $(this.listId)
             $delay(0.3, () => {
+                const listView = $(this.listId)
                 listView.cell($indexPath(0, oldRow)).get("copied").hidden = true
                 listView.cell($indexPath(0, row)).get("copied").hidden = false
             })
@@ -254,21 +257,21 @@ class Clips extends ClipsData {
         return false
     }
 
-    add(item, uiUpdate) {
+    add(item) {
         try {
             const data = super.add(item)
-            if (typeof uiUpdate === "function") {
-                uiUpdate(data)
-            } else {
-                // 在列表中插入行
-                $(this.listId).insert({
-                    indexPath: $indexPath(0, 0),
-                    value: this.lineData(data)
-                })
-                // 被复制的元素向下移动了一个单位
-                if (this.copied?.tabIndex === this.tabIndex) {
-                    this.setCopied(this.copied.uuid, this.copied?.row + 1, false)
-                }
+
+            // 先修改背景，让 list 显示出来
+            this.updateListBackground()
+
+            // 在列表中插入行
+            $(this.listId).insert({
+                indexPath: $indexPath(0, 0),
+                value: this.lineData(data)
+            })
+            // 被复制的元素向下移动了一个单位
+            if (this.copied?.tabIndex === this.tabIndex) {
+                this.setCopied(this.copied.uuid, this.copied?.row + 1, false)
             }
 
             return data
@@ -285,6 +288,8 @@ class Clips extends ClipsData {
                 this.copied = {}
                 $clipboard.clear()
             }
+
+            this.updateListBackground()
         } catch (error) {
             $ui.alert(error)
         }

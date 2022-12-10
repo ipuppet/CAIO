@@ -639,10 +639,12 @@ class ActionManager extends ActionManagerData {
                 },
                 pulled: sender => {
                     $delay(0.5, async () => {
+                        this.undateAddActionButton(true)
                         await this.sync()
                         this.actionsNeedReload()
                         this.matrix.update(this.actionList)
                         this.undateSyncLabel()
+                        this.undateAddActionButton(false)
                         sender.endRefreshing()
                     })
                 }
@@ -663,14 +665,29 @@ class ActionManager extends ActionManagerData {
 
     present() {
         const actionSheet = new Sheet()
+        const rightButtons = this.getNavButtons()
+        if (this.kernel.setting.get("experimental.syncAction")) {
+            rightButtons.push({
+                // 同步
+                symbol: "arrow.up.arrow.down.circle",
+                tapped: async (animate, sender) => {
+                    animate.actionStart()
+                    this.undateAddActionButton(true)
+                    await this.sync()
+                    this.actionsNeedReload()
+                    this.matrix.update(this.actionList)
+                    this.undateSyncLabel()
+                    animate.actionDone()
+                    this.undateAddActionButton(false)
+                }
+            })
+        }
         actionSheet
             .setView(this.getMatrixView())
             .addNavBar({
                 title: $l10n("ACTIONS"),
-                popButton: {
-                    symbol: "xmark.circle"
-                },
-                rightButtons: this.getNavButtons()
+                popButton: { symbol: "xmark.circle" },
+                rightButtons: rightButtons
             })
             .init()
             .present()

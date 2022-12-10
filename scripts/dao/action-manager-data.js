@@ -158,8 +158,14 @@ class ActionManagerData {
         if (!this.kernel.setting.get("experimental.syncAction")) {
             return
         }
-        while (this.#syncLock) {
-            await $wait(this.#syncInterval)
+        if (this.#syncLock) {
+            if (loop) {
+                $thread.background({
+                    delay: this.#syncInterval,
+                    handler: () => this.sync(loop)
+                })
+            }
+            return
         }
         this.#syncLock = true
 
