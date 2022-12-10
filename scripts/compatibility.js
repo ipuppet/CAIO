@@ -104,7 +104,7 @@ async function ver1(kernel) {
     }
 }
 
-async function ver2(kernel) {
+async function ver2(kernel, userVersion) {
     deleteFiles(kernel, [
         "scripts/storage.js",
         "scripts/ui/clips-data.js",
@@ -113,9 +113,12 @@ async function ver2(kernel) {
 
     rebuildDatabase(kernel, "pin", "favorite")
 
-    await rebuildUserActions(kernel, {
-        uncategorized: ["ExportAllContent"]
-    })
+    if (userVersion !== 1) {
+        // 用户版本为 1 的时候已经修改了 ExportAllContent
+        await rebuildUserActions(kernel, {
+            uncategorized: ["ExportAllContent"]
+        })
+    }
 }
 
 /**
@@ -135,7 +138,7 @@ async function compatibility(kernel) {
         }
         if (userVersion < 2) {
             kernel.print(`compatibility: userVersion [${userVersion}] lower than [2], start action`)
-            await ver2(kernel)
+            await ver2(kernel, userVersion)
         }
     } catch (error) {
         kernel.error(error)
