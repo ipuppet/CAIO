@@ -7,10 +7,12 @@ const { View, UIKit, Sheet } = require("../libs/easy-jsbox")
 
 class ClipsEditor {
     static symbol = { selected: "checkmark.circle.fill", unselected: "circle" }
+    #textHeightCache = {}
 
     listId = "clips-list-editor"
     reorder = {}
     toolBarHeight = 44
+    containerMargin = 30
 
     #editorSelected = undefined
     #editorSelectedContainer = {}
@@ -91,6 +93,20 @@ class ClipsEditor {
 
     set editorSelected(editorSelected) {
         this.#editorSelected = editorSelected
+    }
+
+    getTextHeight(text) {
+        if (!this.#textHeightCache[text]) {
+            this.#textHeightCache[text] = Math.min(
+                $text.sizeThatFits({
+                    text: text,
+                    width: UIKit.windowSize.width - (this.clipsInstance.horizontalMargin + this.containerMargin) * 2,
+                    font: $font(this.clipsInstance.fontSize)
+                }).height,
+                this.clipsInstance.singleLineHeight * 2
+            )
+        }
+        return this.#textHeightCache[text]
     }
 
     selectAll() {
@@ -185,7 +201,12 @@ class ClipsEditor {
         const template = this.clipsInstance.listTemplate()
         template.views[0].layout = (make, view) => {
             make.height.right.equalTo(view.super)
-            make.left.inset(30)
+            make.left.inset(this.containerMargin)
+        }
+        template.views[1].layout = (make, view) => {
+            make.bottom.width.equalTo(view.super)
+            make.left.inset(this.clipsInstance.horizontalMargin + this.containerMargin)
+            make.height.equalTo(this.clipsInstance.tagContainerHeight)
         }
         template.views.push({
             type: "image",
@@ -196,7 +217,7 @@ class ClipsEditor {
             },
             layout: (make, view) => {
                 make.centerY.equalTo(view.super)
-                make.left.inset(15)
+                make.left.inset(this.containerMargin / 2)
                 make.size.equalTo($size(25, 25))
             }
         })
@@ -222,8 +243,8 @@ class ClipsEditor {
                 rowHeight: (sender, indexPath) => {
                     const text = this.clipsInstance.clips[indexPath.row].text
                     const itemHeight = this.kernel.storage.isImage(text)
-                        ? this.imageContentHeight
-                        : this.clipsInstance.getTextHeight(text)
+                        ? this.clipsInstance.imageContentHeight
+                        : this.getTextHeight(text)
 
                     return itemHeight + this.clipsInstance.verticalMargin * 2
                 },
