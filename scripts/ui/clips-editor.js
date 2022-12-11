@@ -65,15 +65,9 @@ class ClipsEditor {
 
                     key = Number(key)
 
-                    const isEmpty = this.editorSelectedIsEmpty
+                    this.updateToolBar()
 
-                    const editorButton = $(this.listId + "-select-button")
-                    const deleteButton = $(this.listId + "-delete-button")
-                    editorButton.title = this.editorSelectedIsFull ? $l10n("DESELECT_ALL") : $l10n("SELECT_ALL")
-                    deleteButton.hidden = isEmpty
-
-                    const listView = $(this.listId)
-                    listView.data = this.clipsInstance.clips.map((data, i) => {
+                    $(this.listId).data = this.clipsInstance.clips.map((data, i) => {
                         const item = this.lineData(data)
                         item.checkmark = {
                             symbol: editorSelected[i] ? ClipsEditor.symbol.selected : ClipsEditor.symbol.unselected
@@ -81,18 +75,11 @@ class ClipsEditor {
                         return item
                     })
 
-                    // 有行被选中则禁止排序
-                    listView.reorder = isEmpty
-
                     return true
                 }
             })
         }
         return this.#editorSelected
-    }
-
-    set editorSelected(editorSelected) {
-        this.#editorSelected = editorSelected
     }
 
     getTextHeight(text) {
@@ -137,7 +124,21 @@ class ClipsEditor {
                         listView.delete(row)
                     }
                 })
+
+            // 重置选中的项目
+            this.#editorSelected = undefined
+            this.updateToolBar()
         })
+    }
+
+    updateToolBar() {
+        const isEmpty = this.editorSelectedIsEmpty
+        const editorButton = $(this.listId + "-select-button")
+        const deleteButton = $(this.listId + "-delete-button")
+        editorButton.title = this.editorSelectedIsFull ? $l10n("DESELECT_ALL") : $l10n("SELECT_ALL")
+        deleteButton.hidden = isEmpty
+        // 有行被选中则禁止排序
+        $(this.listId).reorder = isEmpty
     }
 
     getToolBarView() {
