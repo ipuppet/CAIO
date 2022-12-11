@@ -127,7 +127,7 @@ class Clips extends ClipsData {
                 const uuid = $context.query["copy"]
                 const content = this.kernel.storage.getByUUID(uuid)
                 this.setClipboardText(content.text)
-                this.setCopied(uuid, this.getRowByUUID(uuid))
+                this.setCopied(this.getRowByUUID(uuid))
                 $ui.success($l10n("COPIED"))
             } else if ($context.query["add"]) {
                 this.getAddTextView()
@@ -176,7 +176,8 @@ class Clips extends ClipsData {
      * @param {boolean} isUpdateIndicator
      * @returns
      */
-    setCopied(uuid, row, isUpdateIndicator = true) {
+    setCopied(row, isUpdateIndicator = true) {
+        const uuid = this.clips[row].uuid
         if (
             !uuid ||
             (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex && row === this.copied?.row)
@@ -247,10 +248,10 @@ class Clips extends ClipsData {
             const md5 = $text.MD5(text)
             if (this.savedClipboardIndex[md5]) {
                 const res = this.kernel.storage.getByMD5(md5)
-                this.setCopied(res.uuid, this.getRowByUUID(res.uuid))
+                this.setCopied(this.getRowByUUID(res.uuid))
             } else {
-                const data = this.add(text)
-                this.copy(text, data.uuid, 0)
+                this.add(text)
+                this.copy(0)
             }
         }
 
@@ -271,10 +272,8 @@ class Clips extends ClipsData {
             })
             // 被复制的元素向下移动了一个单位
             if (this.copied?.tabIndex === this.tabIndex) {
-                this.setCopied(this.copied.uuid, this.copied?.row + 1, false)
+                this.setCopied(this.copied?.row + 1, false)
             }
-
-            return data
         } catch (error) {
             $ui.alert(error)
         }
@@ -295,11 +294,11 @@ class Clips extends ClipsData {
         }
     }
 
-    update(uuid, text, row) {
-        if (super.update(uuid, text, row)) {
+    update(text, row) {
+        if (super.update(text, row)) {
             // 更新列表
             this.updateList()
-            if (uuid === this.copied.uuid) {
+            if (this.clips[row].uuid === this.copied.uuid) {
                 this.setClipboardText(text)
                 this.updateCopied({ text })
             }
@@ -346,7 +345,7 @@ class Clips extends ClipsData {
                 if (this.copied.tabIndex === this.tabIndex) {
                     if (this.copied.row === from) {
                         // 被移动的行是被复制的行
-                        this.setCopied(this.copied.uuid, to)
+                        this.setCopied(to)
                     } else if (
                         (this.copied.row > from && this.copied.row < to) ||
                         (this.copied.row < from && this.copied.row > to) ||
@@ -354,7 +353,7 @@ class Clips extends ClipsData {
                     ) {
                         // 被复制的行介于 from 和 _to 之间或等于 _to
                         // 从上往下移动则 -1 否则 +1
-                        this.setCopied(this.copied.uuid, from < to ? this.copied.row - 1 : this.copied.row + 1)
+                        this.setCopied(from < to ? this.copied.row - 1 : this.copied.row + 1)
                     }
                 }
             }
@@ -364,7 +363,7 @@ class Clips extends ClipsData {
     }
 
     favorite(row) {
-        let item = this.clips[row]
+        const item = this.clips[row]
 
         if (item?.section === "favorite") {
             this.move(row, 0)
@@ -388,11 +387,10 @@ class Clips extends ClipsData {
 
     /**
      * 复制
-     * @param {*} text
-     * @param {*} uuid
-     * @param {number} index 被复制的行的索引
+     * @param {number} row 被复制的行
      */
-    copy(text, uuid, row) {
+    copy(row) {
+        const text = this.clips[row]
         const path = this.kernel.storage.keyToPath(text)
         if (path && this.kernel.fileStorage.exists(path.original)) {
             $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
@@ -403,7 +401,7 @@ class Clips extends ClipsData {
         // 将被复制的行移动到最前端
         if (isMoveToTop) this.move(row, 0)
         // 写入缓存并更新数据
-        this.setCopied(uuid, isMoveToTop ? 0 : row)
+        this.setCopied(isMoveToTop ? 0 : row)
     }
 
     edit(text, callback) {
@@ -485,10 +483,7 @@ class Clips extends ClipsData {
                     {
                         title: $l10n("COPY"),
                         symbol: "square.on.square",
-                        handler: (sender, indexPath) => {
-                            const item = this.clips[indexPath.row]
-                            this.copy(item.text, item.uuid, indexPath.row)
-                        }
+                        handler: (sender, indexPath) => this.copy(indexPath.row)
                     },
                     {
                         title: $l10n("DELETE"),
@@ -677,10 +672,7 @@ class Clips extends ClipsData {
                         // 复制
                         title: $l10n("COPY"),
                         color: $color("systemLink"),
-                        handler: (sender, indexPath) => {
-                            const item = this.clips[indexPath.row]
-                            this.copy(item.text, item.uuid, indexPath.row)
-                        }
+                        handler: (sender, indexPath) => this.copy(indexPath.row)
                     },
                     {
                         // 收藏
@@ -714,7 +706,7 @@ class Clips extends ClipsData {
                         })
                     } else {
                         this.edit(item.text, text => {
-                            if (item.md5 !== $text.MD5(text)) this.update(item.uuid, text, indexPath.row)
+                            if (item.md5 !== $text.MD5(text)) this.update(text, indexPath.row)
                         })
                     }
                 },

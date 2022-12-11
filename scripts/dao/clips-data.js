@@ -185,7 +185,7 @@ class ClipsData {
         }
     }
 
-    update(uuid, text, row) {
+    update(text, row) {
         const md5 = $text.MD5(text)
 
         // 更新索引
@@ -197,7 +197,7 @@ class ClipsData {
         Object.assign(this.clips[row], { text, md5 })
 
         try {
-            this.kernel.storage.updateText(this.table, uuid, text)
+            this.kernel.storage.updateText(this.table, this.clips[row].uuid, text)
 
             this.kernel.print(`data changed at index [${row}]\n${oldData}\n↓\n${text}`)
 
@@ -310,7 +310,7 @@ class ClipsData {
     }
 
     favorite(row) {
-        let item = this.clips[row]
+        const item = this.clips[row]
 
         item.next = this.allClips[0][0]?.uuid ?? null
         item.prev = null
