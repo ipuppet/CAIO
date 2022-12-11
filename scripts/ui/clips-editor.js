@@ -173,7 +173,9 @@ class ClipsEditor {
                                 bgcolor: $color("clear")
                             },
                             layout: (make, view) => {
-                                make.right.inset(this.clipsInstance.horizontalMargin)
+                                make.height.equalTo(view.super)
+                                make.width.equalTo(this.clipsInstance.horizontalMargin * 2)
+                                make.right.inset(this.clipsInstance.horizontalMargin / 2)
                                 make.centerY.equalTo(view.super)
                             },
                             events: { tapped: () => this.deleteSelected() }

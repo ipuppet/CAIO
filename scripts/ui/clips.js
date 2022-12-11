@@ -199,7 +199,10 @@ class Clips extends ClipsData {
         if (isUpdateIndicator) {
             $delay(0.3, () => {
                 const listView = $(this.listId)
-                listView.cell($indexPath(0, oldRow)).get("copied").hidden = true
+                const oldCell = listView.cell($indexPath(0, oldRow))
+                if (oldCell) {
+                    oldCell.get("copied").hidden = true
+                }
                 listView.cell($indexPath(0, row)).get("copied").hidden = false
             })
         }
@@ -271,19 +274,21 @@ class Clips extends ClipsData {
                 value: this.lineData(data)
             })
             // 被复制的元素向下移动了一个单位
-            if (this.copied?.tabIndex === this.tabIndex) {
-                this.setCopied(this.copied?.row + 1, false)
+            if (this.copied?.tabIndex === this.tabIndex && this.copied?.row < this.clips.length) {
+                this.setCopied(this.copied.row + 1, false)
             }
         } catch (error) {
             $ui.alert(error)
+            this.kernel.error(error)
         }
     }
 
     delete(row) {
         try {
+            const deleteedItem = this.getCopy(this.clips[row])
             super.delete(row)
             // 删除剪切板信息
-            if (this.copied.uuid === this.clips[row].uuid) {
+            if (this.copied.uuid === deleteedItem.uuid) {
                 this.copied = {}
                 $clipboard.clear()
             }
@@ -291,11 +296,13 @@ class Clips extends ClipsData {
             this.updateListBackground()
         } catch (error) {
             $ui.alert(error)
+            this.kernel.error(error)
         }
     }
 
     update(text, row) {
-        if (super.update(text, row)) {
+        try {
+            super.update(text, row)
             // 更新列表
             this.updateList()
             if (this.clips[row].uuid === this.copied.uuid) {
@@ -304,9 +311,11 @@ class Clips extends ClipsData {
             }
 
             return true
+        } catch (error) {
+            this.kernel.error(error)
+            $ui.alert(error)
+            return false
         }
-
-        return false
     }
 
     /**
@@ -359,6 +368,7 @@ class Clips extends ClipsData {
             }
         } catch (error) {
             $ui.alert(error)
+            this.kernel.error(error)
         }
     }
 
@@ -379,7 +389,7 @@ class Clips extends ClipsData {
         try {
             super.favorite(row)
             // UI 操作
-            $(this.listId).delete($indexPath(0, row))
+            $(this.listId).delete(row)
         } catch (error) {
             $ui.alert(error)
         }
@@ -390,7 +400,7 @@ class Clips extends ClipsData {
      * @param {number} row 被复制的行
      */
     copy(row) {
-        const text = this.clips[row]
+        const text = this.clips[row].text
         const path = this.kernel.storage.keyToPath(text)
         if (path && this.kernel.fileStorage.exists(path.original)) {
             $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
