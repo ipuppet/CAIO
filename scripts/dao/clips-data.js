@@ -79,6 +79,11 @@ class ClipsData {
         return true
     }
 
+    getCopy(src, assign = {}) {
+        const copy = JSON.parse(JSON.stringify(src))
+        return Object.assign(copy, assign)
+    }
+
     /**
      * 警告！该方法可能消耗大量资源
      * @param {string} uuid
@@ -107,7 +112,6 @@ class ClipsData {
             text: item,
             md5: null,
             image: null,
-            tag: "",
             prev: null,
             next: this.clips[0] ? this.clips[0].uuid : null
         }
@@ -138,73 +142,61 @@ class ClipsData {
 
             return data
         } catch (error) {
-            this.kernel.error(error)
             this.kernel.storage.rollback()
             throw error
         }
     }
 
-    delete(uuid, row) {
-        const folder = this.table
+    delete(row) {
+        const table = this.table
+        const item = this.clips[row]
+        const prev = this.clips[row - 1]
+        const next = this.clips[row + 1]
 
         try {
             // 删除数据库中的值
             this.kernel.storage.beginTransaction()
-            this.kernel.storage.delete(folder, uuid)
+            this.kernel.storage.delete(table, item.uuid)
             // 更改指针
-            if (this.clips[row - 1]) {
-                const prevItem = {
-                    uuid: this.clips[row - 1].uuid,
-                    text: this.clips[row - 1].text,
-                    prev: this.clips[row - 1].prev,
-                    next: this.clips[row].next // next 指向被删除元素的 next
-                }
-                this.kernel.storage.update(folder, prevItem)
-                this.clips[row - 1] = prevItem
+            if (prev) {
+                // prev 的 next 指向被删除元素的 next
+                prev.next = item.next
+                this.kernel.storage.update(table, prev)
             }
-            if (this.clips[row + 1]) {
-                const nextItem = {
-                    uuid: this.clips[row + 1].uuid,
-                    text: this.clips[row + 1].text,
-                    prev: this.clips[row].prev, // prev 指向被删除元素的 prev
-                    next: this.clips[row + 1].next
-                }
-                this.kernel.storage.update(folder, nextItem)
-                this.clips[row + 1] = nextItem
+            if (next) {
+                // next 的 prev 指向被删除元素的 prev
+                next.prev = item.prev
+                this.kernel.storage.update(table, next)
             }
             this.kernel.storage.commit()
 
             // update index
-            delete this.savedClipboardIndex[this.clips[row].md5]
+            delete this.savedClipboardIndex[item.md5]
             // 删除内存中的值
             this.clips.splice(row, 1)
         } catch (error) {
-            this.kernel.error(error)
             this.kernel.storage.rollback()
             throw error
         }
     }
 
-    update(uuid, text, row) {
+    update(text, row) {
         const md5 = $text.MD5(text)
+        const item = this.clips[row]
 
         // 更新索引
-        delete this.savedClipboardIndex[this.clips[row].md5]
+        delete this.savedClipboardIndex[item.md5]
         this.savedClipboardIndex[md5] = 1
 
         // 更新内存数据
-        const oldData = this.clips[row].text
-        Object.assign(this.clips[row], { text, md5 })
+        const oldData = item.text
+        Object.assign(item, { text, md5 })
 
         try {
-            this.kernel.storage.updateText(this.table, uuid, text)
-
+            this.kernel.storage.updateText(this.table, item.uuid, text)
             this.kernel.print(`data changed at index [${row}]\n${oldData}\n↓\n${text}`)
-
-            return true
         } catch (error) {
-            this.kernel.error(error)
-            return false
+            throw error
         }
     }
 
@@ -212,16 +204,10 @@ class ClipsData {
      * 将from位置的元素移动到to位置
      * @param {number} from
      * @param {number} to
-     * @param {number} section
      */
     move(from, to) {
         if (from === to) return
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
-
-        const getCopy = (src, assign = {}) => {
-            const copy = JSON.parse(JSON.stringify(src))
-            return Object.assign(copy, assign)
-        }
 
         const table = this.table
         if (!this.clips[to]) {
@@ -238,21 +224,21 @@ class ClipsData {
             this.kernel.storage.beginTransaction() // 开启事务
 
             // 保存上下文环境，from 上下的元素可能是 to
-            const oldFromItem = getCopy(this.clips[from])
-            const oldToItem = getCopy(this.clips[to])
+            const oldFromItem = this.getCopy(this.clips[from])
+            const oldToItem = this.getCopy(this.clips[to])
 
             /**
              * 修改将被删除元素前后元素指针
              */
             if (this.clips[from - 1]) {
                 // from 位置的上一个元素
-                const fromPrevItem = getCopy(this.clips[from - 1], { next: this.clips[from].next })
+                const fromPrevItem = this.getCopy(this.clips[from - 1], { next: this.clips[from].next })
                 this.kernel.storage.update(table, fromPrevItem)
                 this.clips[from - 1] = fromPrevItem
             }
             if (this.clips[from + 1]) {
                 // from 位置的下一个元素
-                const fromNextItem = getCopy(this.clips[from + 1], { prev: this.clips[from].prev })
+                const fromNextItem = this.getCopy(this.clips[from + 1], { prev: this.clips[from].prev })
                 this.kernel.storage.update(table, fromNextItem)
                 this.clips[from + 1] = fromNextItem
             }
@@ -261,7 +247,7 @@ class ClipsData {
              * 在 to 上方插入元素
              */
             if (this.clips[to - 1]) {
-                const toPrevItem = getCopy(
+                const toPrevItem = this.getCopy(
                     this.clips[to - 1], // 原来 to 位置的上一个元素
                     { next: this.clips[from].uuid } // 指向即将被移动元素的 uuid
                 )
@@ -269,7 +255,7 @@ class ClipsData {
                 this.clips[to - 1] = toPrevItem
             }
 
-            const toItem = getCopy(
+            const toItem = this.getCopy(
                 oldToItem, // 原来 to 位置的元素
                 {
                     prev: oldFromItem.uuid, // 指向即将被移动的元素
@@ -277,7 +263,7 @@ class ClipsData {
                 }
             )
             this.kernel.storage.update(table, toItem)
-            const fromItem = getCopy(
+            const fromItem = this.getCopy(
                 oldFromItem, // 被移动元素
                 {
                     prev: this.clips[to].prev, // 前面的代码可能更改此值，因为 from 上下的元素可能就是 to
@@ -298,7 +284,6 @@ class ClipsData {
             // 提交事务
             this.kernel.storage.commit()
         } catch (error) {
-            this.kernel.error(error)
             this.kernel.storage.rollback()
             throw error
         } finally {
@@ -309,7 +294,9 @@ class ClipsData {
         }
     }
 
-    favorite(item, row) {
+    favorite(row) {
+        const item = this.getCopy(this.clips[row])
+
         item.next = this.allClips[0][0]?.uuid ?? null
         item.prev = null
 
@@ -324,15 +311,15 @@ class ClipsData {
             }
             this.kernel.storage.commit()
 
-            // 删除原表数据
-            if (item?.section !== "favorite") {
-                item.section = "favorite"
-                this.delete(item.uuid, row)
-            }
-
             // 保存到内存中
             this.allClips[0].unshift(item)
             this.savedClipboardIndex[item.md5] = 1
+
+            // 删除原表数据
+            if (item?.section !== "favorite") {
+                item.section = "favorite"
+                this.delete(row)
+            }
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()

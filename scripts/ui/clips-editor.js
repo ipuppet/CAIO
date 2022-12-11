@@ -7,10 +7,12 @@ const { View, UIKit, Sheet } = require("../libs/easy-jsbox")
 
 class ClipsEditor {
     static symbol = { selected: "checkmark.circle.fill", unselected: "circle" }
+    #textHeightCache = {}
 
     listId = "clips-list-editor"
     reorder = {}
     toolBarHeight = 44
+    containerMargin = 30
 
     #editorSelected = undefined
     #editorSelectedContainer = {}
@@ -63,24 +65,15 @@ class ClipsEditor {
 
                     key = Number(key)
 
-                    const isEmpty = this.editorSelectedIsEmpty
+                    this.updateToolBar()
 
-                    const editorButton = $(this.listId + "-select-button")
-                    const deleteButton = $(this.listId + "-delete-button")
-                    editorButton.title = this.editorSelectedIsFull ? $l10n("DESELECT_ALL") : $l10n("SELECT_ALL")
-                    deleteButton.hidden = isEmpty
-
-                    const listView = $(this.listId)
-                    listView.data = this.clipsInstance.clips.map((data, i) => {
+                    $(this.listId).data = this.clipsInstance.clips.map((data, i) => {
                         const item = this.lineData(data)
                         item.checkmark = {
                             symbol: editorSelected[i] ? ClipsEditor.symbol.selected : ClipsEditor.symbol.unselected
                         }
                         return item
                     })
-
-                    // 有行被选中则禁止排序
-                    listView.reorder = isEmpty
 
                     return true
                 }
@@ -89,8 +82,18 @@ class ClipsEditor {
         return this.#editorSelected
     }
 
-    set editorSelected(editorSelected) {
-        this.#editorSelected = editorSelected
+    getTextHeight(text) {
+        if (!this.#textHeightCache[text]) {
+            this.#textHeightCache[text] = Math.min(
+                $text.sizeThatFits({
+                    text: text,
+                    width: UIKit.windowSize.width - (this.clipsInstance.horizontalMargin + this.containerMargin) * 2,
+                    font: $font(this.clipsInstance.fontSize)
+                }).height,
+                this.clipsInstance.singleLineHeight * 2
+            )
+        }
+        return this.#textHeightCache[text]
     }
 
     selectAll() {
@@ -115,13 +118,27 @@ class ClipsEditor {
                         const clip = this.clipsInstance.clips[row]
                         this.kernel.print(`delete selected: [${row}]\n${clip.text}`)
 
-                        this.clipsInstance.delete(clip.uuid, row)
+                        this.clipsInstance.delete(row)
                         clipsListView.delete(row)
 
                         listView.delete(row)
                     }
                 })
+
+            // 重置选中的项目
+            this.#editorSelected = undefined
+            this.updateToolBar()
         })
+    }
+
+    updateToolBar() {
+        const isEmpty = this.editorSelectedIsEmpty
+        const editorButton = $(this.listId + "-select-button")
+        const deleteButton = $(this.listId + "-delete-button")
+        editorButton.title = this.editorSelectedIsFull ? $l10n("DESELECT_ALL") : $l10n("SELECT_ALL")
+        deleteButton.hidden = isEmpty
+        // 有行被选中则禁止排序
+        $(this.listId).reorder = isEmpty
     }
 
     getToolBarView() {
@@ -156,7 +173,9 @@ class ClipsEditor {
                                 bgcolor: $color("clear")
                             },
                             layout: (make, view) => {
-                                make.right.inset(this.clipsInstance.horizontalMargin)
+                                make.height.equalTo(view.super)
+                                make.width.equalTo(this.clipsInstance.horizontalMargin * 2)
+                                make.right.inset(this.clipsInstance.horizontalMargin / 2)
                                 make.centerY.equalTo(view.super)
                             },
                             events: { tapped: () => this.deleteSelected() }
@@ -185,7 +204,12 @@ class ClipsEditor {
         const template = this.clipsInstance.listTemplate()
         template.views[0].layout = (make, view) => {
             make.height.right.equalTo(view.super)
-            make.left.inset(30)
+            make.left.inset(this.containerMargin)
+        }
+        template.views[1].layout = (make, view) => {
+            make.bottom.width.equalTo(view.super)
+            make.left.inset(this.clipsInstance.horizontalMargin + this.containerMargin)
+            make.height.equalTo(this.clipsInstance.tagContainerHeight)
         }
         template.views.push({
             type: "image",
@@ -196,7 +220,7 @@ class ClipsEditor {
             },
             layout: (make, view) => {
                 make.centerY.equalTo(view.super)
-                make.left.inset(15)
+                make.left.inset(this.containerMargin / 2)
                 make.size.equalTo($size(25, 25))
             }
         })
@@ -222,8 +246,8 @@ class ClipsEditor {
                 rowHeight: (sender, indexPath) => {
                     const text = this.clipsInstance.clips[indexPath.row].text
                     const itemHeight = this.kernel.storage.isImage(text)
-                        ? this.imageContentHeight
-                        : this.clipsInstance.getTextHeight(text)
+                        ? this.clipsInstance.imageContentHeight
+                        : this.getTextHeight(text)
 
                     return itemHeight + this.clipsInstance.verticalMargin * 2
                 },
