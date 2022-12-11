@@ -118,7 +118,7 @@ class ClipsEditor {
                         const clip = this.clipsInstance.clips[row]
                         this.kernel.print(`delete selected: [${row}]\n${clip.text}`)
 
-                        this.clipsInstance.delete(clip.uuid, row)
+                        this.clipsInstance.delete(row)
                         clipsListView.delete(row)
 
                         listView.delete(row)

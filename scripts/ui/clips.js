@@ -280,11 +280,11 @@ class Clips extends ClipsData {
         }
     }
 
-    delete(uuid, row) {
+    delete(row) {
         try {
-            super.delete(uuid, row)
+            super.delete(row)
             // 删除剪切板信息
-            if (this.copied.uuid === uuid) {
+            if (this.copied.uuid === this.clips[row].uuid) {
                 this.copied = {}
                 $clipboard.clear()
             }
@@ -363,11 +363,14 @@ class Clips extends ClipsData {
         }
     }
 
-    favorite(item, row) {
+    favorite(row) {
+        let item = this.clips[row]
+
         if (item?.section === "favorite") {
             this.move(row, 0)
             return
         }
+
         const res = this.kernel.storage.getByMD5(item.md5)
         if (res?.section === "favorite") {
             Toast.warning("Already exists")
@@ -375,7 +378,7 @@ class Clips extends ClipsData {
         }
 
         try {
-            super.favorite(item, row)
+            super.favorite(row)
             // UI 操作
             $(this.listId).delete($indexPath(0, row))
         } catch (error) {
@@ -493,8 +496,7 @@ class Clips extends ClipsData {
                         destructive: true,
                         handler: (sender, indexPath) => {
                             this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                const item = this.clips[indexPath.row]
-                                this.delete(item.uuid, indexPath.row)
+                                this.delete(indexPath.row)
                                 sender.delete(indexPath)
                             })
                         }
@@ -681,12 +683,11 @@ class Clips extends ClipsData {
                         }
                     },
                     {
-                        // 置顶
+                        // 收藏
                         title: $l10n("FAVORITE"),
                         color: $color("orange"),
                         handler: (sender, indexPath) => {
-                            const content = this.clips[indexPath.row]
-                            this.favorite(content, indexPath.row)
+                            this.favorite(indexPath.row)
                         }
                     }
                 ]

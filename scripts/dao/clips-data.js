@@ -144,13 +144,13 @@ class ClipsData {
         }
     }
 
-    delete(uuid, row) {
+    delete(row) {
         const folder = this.table
 
         try {
             // 删除数据库中的值
             this.kernel.storage.beginTransaction()
-            this.kernel.storage.delete(folder, uuid)
+            this.kernel.storage.delete(folder, this.clips[row].uuid)
             // 更改指针
             if (this.clips[row - 1]) {
                 const prevItem = {
@@ -309,7 +309,9 @@ class ClipsData {
         }
     }
 
-    favorite(item, row) {
+    favorite(row) {
+        let item = this.clips[row]
+
         item.next = this.allClips[0][0]?.uuid ?? null
         item.prev = null
 
@@ -324,15 +326,15 @@ class ClipsData {
             }
             this.kernel.storage.commit()
 
-            // 删除原表数据
-            if (item?.section !== "favorite") {
-                item.section = "favorite"
-                this.delete(item.uuid, row)
-            }
-
             // 保存到内存中
             this.allClips[0].unshift(item)
             this.savedClipboardIndex[item.md5] = 1
+
+            // 删除原表数据
+            if (item?.section !== "favorite") {
+                item.section = "favorite"
+                this.delete(row)
+            }
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()
