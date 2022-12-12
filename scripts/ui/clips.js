@@ -177,7 +177,7 @@ class Clips extends ClipsData {
      * @returns
      */
     setCopied(row, isUpdateIndicator = true) {
-        const uuid = this.clips[row].uuid
+        const uuid = this.clips[row]?.uuid
         if (
             !uuid ||
             (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex && row === this.copied?.row)
@@ -220,9 +220,6 @@ class Clips extends ClipsData {
                 return
             }
 
-            // 切换标签页
-            this.switchTab(1, true) // clips
-
             // 仅手动模式下保存图片
             if ($clipboard.images?.length > 0) {
                 if (manual) {
@@ -251,8 +248,12 @@ class Clips extends ClipsData {
             const md5 = $text.MD5(text)
             if (this.savedClipboardIndex[md5]) {
                 const res = this.kernel.storage.getByMD5(md5)
+                // 切换标签页
+                this.switchTab(this.tabItemsIndex.indexOf(res.section), true)
                 this.setCopied(this.getRowByUUID(res.uuid))
             } else {
+                // 切换标签页
+                this.switchTab(1, true) // clips
                 this.add(text)
                 this.copy(0)
             }
