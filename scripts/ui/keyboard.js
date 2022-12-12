@@ -167,6 +167,7 @@ class Keyboard extends Clips {
             type: "view",
             views: buttons.map((button, i) => {
                 const barButtonItem = new BarButtonItem()
+                barButtonItem.buttonEdges = 0
                 return barButtonItem
                     .setAlign(UIKit.align.right)
                     .setSymbol(button.symbol)
