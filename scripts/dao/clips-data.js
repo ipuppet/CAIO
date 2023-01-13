@@ -105,7 +105,7 @@ class ClipsData {
         }
     }
 
-    add(item) {
+    addItem(item) {
         // 元数据
         const data = {
             uuid: $text.uuid,
@@ -147,7 +147,7 @@ class ClipsData {
         }
     }
 
-    delete(row) {
+    deleteItem(row, deleteTag = true) {
         const table = this.table
         const item = this.clips[row]
         const prev = this.clips[row - 1]
@@ -168,6 +168,10 @@ class ClipsData {
                 next.prev = item.prev
                 this.kernel.storage.update(table, next)
             }
+
+            if (deleteTag) {
+                this.kernel.storage.deleteTag(item.uuid)
+            }
             this.kernel.storage.commit()
 
             // update index
@@ -180,7 +184,7 @@ class ClipsData {
         }
     }
 
-    update(text, row) {
+    updateItem(text, row) {
         const md5 = $text.MD5(text)
         const item = this.clips[row]
 
@@ -205,7 +209,7 @@ class ClipsData {
      * @param {number} from
      * @param {number} to
      */
-    move(from, to) {
+    moveItem(from, to) {
         if (from === to) return
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
 
@@ -294,7 +298,7 @@ class ClipsData {
         }
     }
 
-    favorite(row) {
+    favoriteItem(row) {
         const item = this.getCopy(this.clips[row])
 
         item.next = this.allClips[0][0]?.uuid ?? null
@@ -311,15 +315,12 @@ class ClipsData {
             }
             this.kernel.storage.commit()
 
+            // 删除原表数据，此处不删除标签
+            this.deleteItem(row, false)
+
             // 保存到内存中
             this.allClips[0].unshift(item)
             this.savedClipboardIndex[item.md5] = 1
-
-            // 删除原表数据
-            if (item?.section !== "favorite") {
-                item.section = "favorite"
-                this.delete(row)
-            }
         } catch (error) {
             this.kernel.error(error)
             this.kernel.storage.rollback()
