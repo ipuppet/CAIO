@@ -134,7 +134,7 @@ async function ver3(kernel) {
 async function compatibility(kernel) {
     if (!kernel) return
 
-    const version = 2
+    const version = 3
     const userVersion = $cache.get("compatibility.version") ?? 0
 
     try {
