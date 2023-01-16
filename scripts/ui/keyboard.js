@@ -415,6 +415,7 @@ class Keyboard extends Clips {
                 }
             }
         }
+        listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
 
         const blurBox = UIKit.blurBox(
@@ -442,11 +443,24 @@ class Keyboard extends Clips {
             },
             views: [
                 {
-                    type: "image",
-                    props: {
-                        image: this.backgroundImage,
-                        hidden: this.backgroundImage === null
-                    },
+                    type: "view",
+                    props: { hidden: this.backgroundImage === null },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                image: this.backgroundImage,
+                                hidden: this.backgroundImage === null
+                            },
+                            layout: $layout.fill
+                        },
+                        {
+                            // 深色模式降低亮度
+                            type: "view",
+                            props: { bgcolor: $color("clear", $rgba(0, 0, 0, 0.3)) },
+                            layout: $layout.fill
+                        }
+                    ],
                     layout: $layout.fill
                 },
                 this.getTopBarView(),
