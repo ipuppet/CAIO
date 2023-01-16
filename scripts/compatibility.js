@@ -121,6 +121,12 @@ async function ver2(kernel, userVersion) {
     }
 }
 
+async function ver3(kernel) {
+    await rebuildUserActions(kernel, {
+        clipboard: ["SendToWin"]
+    })
+}
+
 /**
  *
  * @param {AppKernel} kernel
@@ -139,6 +145,10 @@ async function compatibility(kernel) {
         if (userVersion < 2) {
             kernel.print(`compatibility: userVersion [${userVersion}] lower than [2], start action`)
             await ver2(kernel, userVersion)
+        }
+        if (userVersion < 3) {
+            kernel.print(`compatibility: userVersion [${userVersion}] lower than [3], start action`)
+            await ver3(kernel)
         }
     } catch (error) {
         kernel.error(error)
