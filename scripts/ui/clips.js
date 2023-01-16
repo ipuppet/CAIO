@@ -264,7 +264,7 @@ class Clips extends ClipsData {
 
     add(item) {
         try {
-            const data = super.add(item)
+            const data = super.addItem(item)
 
             // 先修改背景，让 list 显示出来
             this.updateListBackground()
@@ -287,7 +287,7 @@ class Clips extends ClipsData {
     delete(row) {
         try {
             const deleteedItem = this.getCopy(this.clips[row])
-            super.delete(row)
+            super.deleteItem(row)
             // 删除剪切板信息
             if (this.copied.uuid === deleteedItem.uuid) {
                 this.copied = {}
@@ -303,7 +303,7 @@ class Clips extends ClipsData {
 
     update(text, row) {
         try {
-            super.update(text, row)
+            super.updateItem(text, row)
             // 更新列表
             this.updateList()
             if (this.clips[row].uuid === this.copied.uuid) {
@@ -329,7 +329,7 @@ class Clips extends ClipsData {
         if (from === to) return
 
         try {
-            super.move(from, to)
+            super.moveItem(from, to)
 
             if (!updateUI) return
             // 操作 UI
@@ -388,7 +388,7 @@ class Clips extends ClipsData {
         }
 
         try {
-            super.favorite(row)
+            super.favoriteItem(row)
             // UI 操作
             $(this.listId).delete(row)
         } catch (error) {
@@ -593,7 +593,7 @@ class Clips extends ClipsData {
         return {
             copied: { hidden: !indicator },
             image,
-            tag: { text: data.tag },
+            tag: { text: data.tag ?? "" },
             content
         }
     }

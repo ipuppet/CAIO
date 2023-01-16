@@ -341,20 +341,12 @@ class Storage {
     }
     delete(table, uuid) {
         const clip = this.getByUUID(uuid)
-        this.beginTransaction()
-        try {
-            const result = this.sqlite.update({
-                sql: `DELETE FROM ${table} WHERE uuid = ?`,
-                args: [uuid]
-            })
-            if (!result.result) {
-                throw result.error
-            }
-            this.deleteTag(uuid)
-            this.commit()
-        } catch (error) {
-            this.rollback()
-            throw error
+        const result = this.sqlite.update({
+            sql: `DELETE FROM ${table} WHERE uuid = ?`,
+            args: [uuid]
+        })
+        if (!result.result) {
+            throw result.error
         }
 
         // delete image file

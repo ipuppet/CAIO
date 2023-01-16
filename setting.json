@@ -387,6 +387,7 @@
                                 "title": "CLICK_ACTION",
                                 "type": "menu",
                                 "key": "widget.2x2.widgetURL",
+                                "pullDown": true,
                                 "items": [
                                     "ADD",
                                     "ACTIONS",
