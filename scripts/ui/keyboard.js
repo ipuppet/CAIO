@@ -20,10 +20,11 @@ class Keyboard extends Clips {
 
     // 剪贴板列个性化设置
     horizontalMargin = 15 // 列表边距
-    verticalMargin = 10 // 列表边距
+    verticalMargin = 12 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     containerMargin = 5 // 容器边距
     fontSize = 14 // 字体大小
+    tagFontSize = 12
     navHeight = 50
 
     menuItemActionMaxCount = 3
@@ -236,6 +237,12 @@ class Keyboard extends Clips {
         }
     }
 
+    /**
+     * 底部按钮
+     * @param {*} button 
+     * @param {*} align 
+     * @returns 
+     */
     getButtonView(button, align) {
         const size = $size(38, 38)
         const edges = this.containerMargin

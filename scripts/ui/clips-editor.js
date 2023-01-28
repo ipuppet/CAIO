@@ -90,7 +90,7 @@ class ClipsEditor {
                     width: UIKit.windowSize.width - (this.clipsInstance.horizontalMargin + this.containerMargin) * 2,
                     font: $font(this.clipsInstance.fontSize)
                 }).height,
-                this.clipsInstance.singleLineHeight * 2
+                this.clipsInstance.singleLineContentHeight * 2
             )
         }
         return this.#textHeightCache[text]
@@ -209,7 +209,7 @@ class ClipsEditor {
         template.views[1].layout = (make, view) => {
             make.bottom.width.equalTo(view.super)
             make.left.inset(this.clipsInstance.horizontalMargin + this.containerMargin)
-            make.height.equalTo(this.clipsInstance.tagContainerHeight)
+            make.height.equalTo(this.clipsInstance.verticalMargin)
         }
         template.views.push({
             type: "image",

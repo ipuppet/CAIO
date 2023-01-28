@@ -23,7 +23,8 @@ class Clips extends ClipsData {
 
     // 剪贴板列个性化设置
     #singleLine = false
-    #singleLineHeight = -1
+    #singleLineContentHeight = -1
+    #tagHeight = -1
     tabLeftMargin = 20 // tab 左边距
     horizontalMargin = 20 // 列表边距
     verticalMargin = 20 // 列表边距
@@ -32,7 +33,6 @@ class Clips extends ClipsData {
     copiedIndicatorSize = 6 // 已复制指示器（小绿点）大小
     imageContentHeight = 50
     tagFontSize = 14
-    tagContainerHeight = 25
     menuItemActionMaxCount = 5
 
     tabHeight = 44
@@ -67,35 +67,39 @@ class Clips extends ClipsData {
         })
     }
 
-    get singleLineHeight() {
-        if (this.#singleLineHeight < 0) {
-            this.#singleLineHeight = $text.sizeThatFits({
-                text: "A",
-                width: this.fontSize,
-                font: $font(this.fontSize)
-            }).height
+    get tagHeight() {
+        if (this.#tagHeight < 0) {
+            this.#tagHeight = this.getTextHeight($font(this.tagFontSize))
         }
-        return this.#singleLineHeight
+        return this.#tagHeight
+    }
+
+    get singleLineContentHeight() {
+        if (this.#singleLineContentHeight < 0) {
+            this.#singleLineContentHeight = this.getTextHeight($font(this.fontSize))
+        }
+        return this.#singleLineContentHeight
     }
 
     setSingleLine() {
         this.#singleLine = true
         // 图片高度与文字一致
-        this.imageContentHeight = this.singleLineHeight
+        this.imageContentHeight = this.singleLineContentHeight
     }
 
-    getTextHeight(text) {
+    getTextHeight(font, text = "a") {
+        return $text.sizeThatFits({
+            text,
+            font,
+            width: UIKit.windowSize.width - (this.horizontalMargin + this.containerMargin) * 2
+        }).height
+    }
+
+    getContentHeight(text) {
         if (!this.#textHeightCache[text]) {
             this.#textHeightCache[text] = this.#singleLine
-                ? this.singleLineHeight
-                : Math.min(
-                      $text.sizeThatFits({
-                          text: text,
-                          width: UIKit.windowSize.width - (this.horizontalMargin + this.containerMargin) * 2,
-                          font: $font(this.fontSize)
-                      }).height,
-                      this.singleLineHeight * 2
-                  )
+                ? this.singleLineContentHeight
+                : Math.min(this.getTextHeight($font(this.fontSize), text), this.singleLineContentHeight * 2)
         }
         return this.#textHeightCache[text]
     }
@@ -631,36 +635,33 @@ class Clips extends ClipsData {
                             },
                             layout: (make, view) => {
                                 make.left.right.equalTo(view.super).inset(this.horizontalMargin)
-                                if (this.#singleLine) {
-                                    make.top.inset(this.imageContentHeight / 2)
-                                } else {
-                                    make.top.inset(this.verticalMargin)
-                                }
+                                make.centerY.equalTo(view.super)
                             }
                         },
                         {
-                            type: "image",
+                            type: "label",
                             props: {
-                                id: "image",
-                                hidden: true
+                                id: "tag",
+                                lines: 1,
+                                color: $color("lightGray"),
+                                font: $font(this.tagFontSize)
                             },
-                            layout: $layout.fill
+                            layout: (make, view) => {
+                                make.bottom.equalTo(view.super)
+                                make.left.right.equalTo(view.prev)
+                                make.height.equalTo(this.tagHeight)
+                            }
                         }
                     ],
                     layout: $layout.fill
                 },
                 {
-                    type: "label",
+                    type: "image",
                     props: {
-                        id: "tag",
-                        color: $color("systemGray2"),
-                        font: $font(this.tagFontSize)
+                        id: "image",
+                        hidden: true
                     },
-                    layout: (make, view) => {
-                        make.bottom.width.equalTo(view.super)
-                        make.left.inset(this.horizontalMargin)
-                        make.height.equalTo(this.tagContainerHeight)
-                    }
+                    layout: $layout.fill
                 }
             ]
         }
@@ -700,11 +701,11 @@ class Clips extends ClipsData {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const object = sender.object(indexPath)
-                    const tagHeight = object.tag.text ? this.tagContainerHeight : this.verticalMargin
+                    const tagHeight = object.tag.text && object.tag.text !== "" ? this.tagHeight : this.verticalMargin
                     const itemHeight = this.kernel.storage.isImage(object.content.text)
                         ? this.imageContentHeight
-                        : this.getTextHeight(object.content.text)
-                    return itemHeight + this.verticalMargin + tagHeight
+                        : this.getContentHeight(object.content.text)
+                    return this.verticalMargin + itemHeight + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
                     const item = this.clips[indexPath.row]
