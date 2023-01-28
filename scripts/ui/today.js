@@ -1,5 +1,5 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { View, UIKit, BarButtonItem, NavigationBarItems, NavigationBar } = require("../libs/easy-jsbox")
+const { View, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips")
 const TodayActions = require("./components/today-actions")
 
@@ -14,10 +14,9 @@ class Today extends Clips {
     verticalMargin = 10 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     fontSize = 14 // 字体大小
-    navHeight = 38
+    tagFontSize = 12
+    navHeight = 34
     taptic = 1
-    tagFontSize = 10
-    tagContainerHeight = 12
     matrixItemHeight = 50
 
     inLauncher = $app.env === $env.today && $app.widgetIndex === -1
@@ -32,12 +31,10 @@ class Today extends Clips {
         this.listContainerId = "today-list-container"
         this.readClipboardButtonId = "today-nav-readClipboard"
         this.listId = "today-list"
+        this.pageIndexId = "today-list-page-index"
 
         this.tabItems.push($l10n("ACTIONS"))
 
-        this.navigationBarItems = new NavigationBarItems()
-        this.bottomBar = new NavigationBar()
-        this.bottomBar.navigationBarItems = this.navigationBarItems
         this.todayActions = new TodayActions(this.kernel)
 
         // 剪切板分页显示
@@ -89,7 +86,7 @@ class Today extends Clips {
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
             const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
-            const f_line = height / (this.singleLineHeight + this.verticalMargin * 2)
+            const f_line = height / (this.singleLineContentHeight + this.verticalMargin + this.tagHeight)
             const floor = Math.floor(f_line)
             this.listPageSize = floor
             if (f_line - floor >= 0.6) {
@@ -105,36 +102,6 @@ class Today extends Clips {
             }
             tapped(...args)
         }
-    }
-
-    navButtons() {
-        const buttons = [
-            {
-                // 手动读取剪切板
-                symbol: "square.and.arrow.down.on.square",
-                props: {
-                    id: this.readClipboardButtonId,
-                    hidden: this.isActionPage
-                },
-                tapped: this.buttonTapped(animate => {
-                    animate.start()
-                    if (this.readClipboard(true)) {
-                        animate.done()
-                    } else {
-                        animate.cancel()
-                    }
-                })
-            }
-        ]
-        return buttons.map(button => {
-            const barButtonItem = new BarButtonItem()
-            barButtonItem
-                .setAlign(UIKit.align.right)
-                .setSymbol(button.symbol)
-                .setEvent("tapped", button.tapped)
-                .setProps(button.props ?? {})
-            return barButtonItem.definition
-        })
     }
 
     switchTab(index) {
@@ -153,6 +120,33 @@ class Today extends Clips {
     }
 
     getNavBarView() {
+        const buttons = [
+            {
+                // 手动读取剪切板
+                symbol: "square.and.arrow.down.on.square",
+                props: {
+                    id: this.readClipboardButtonId,
+                    hidden: this.isActionPage
+                },
+                tapped: this.buttonTapped(animate => {
+                    animate.start()
+                    if (this.readClipboard(true)) {
+                        animate.done()
+                    } else {
+                        animate.cancel()
+                    }
+                })
+            }
+        ].map(button => {
+            const barButtonItem = new BarButtonItem()
+            barButtonItem
+                .setAlign(UIKit.align.right)
+                .setSymbol(button.symbol)
+                .setEvent("tapped", button.tapped)
+                .setProps(button.props ?? {})
+            return barButtonItem.definition
+        })
+
         return {
             // 顶部按钮栏
             type: "view",
@@ -160,7 +154,7 @@ class Today extends Clips {
                 {
                     type: "view",
                     layout: $layout.fill,
-                    views: [this.tabView(), { type: "label" }, ...this.navButtons()]
+                    views: [this.tabView(), ...buttons]
                 }
             ],
             layout: (make, view) => {
@@ -171,32 +165,57 @@ class Today extends Clips {
     }
 
     getBottomBarView() {
-        this.navigationBarItems
-            .setLeftButtons([
-                {
-                    symbol: "chevron.backward.circle",
+        const getButton = align => {
+            const symbol = align === UIKit.align.left ? "chevron.backward.circle" : "chevron.forward.circle"
+            return {
+                type: "button",
+                props: {
+                    symbol,
+                    bgcolor: $color("clear"),
+                    tintColor: UIKit.textColor
+                },
+                layout: make => {
+                    if (align === UIKit.align.left) {
+                        make.left.inset(this.horizontalMargin)
+                    } else {
+                        make.right.inset(this.horizontalMargin)
+                    }
+                    make.centerY.equalTo(view.super)
+                },
+                events: {
                     tapped: this.buttonTapped(() => {
-                        this.clipboardPrevPage()
+                        if (align === UIKit.align.left) {
+                            this.clipboardPrevPage()
+                        } else {
+                            this.clipboardNextPage()
+                        }
                     })
                 }
-            ])
-            .setRightButtons([
+            }
+        }
+
+        const view = {
+            type: "view",
+            views: [
+                getButton(UIKit.align.left),
+                getButton(UIKit.align.right),
                 {
-                    symbol: "chevron.forward.circle",
-                    tapped: this.buttonTapped(() => {
-                        this.clipboardNextPage()
-                    })
+                    type: "label",
+                    props: {
+                        id: this.pageIndexId,
+                        align: $align.center,
+                        text: this.listPageNow[this.listSection] + 1
+                    },
+                    layout: (make, view) => {
+                        make.bottom.left.right.equalTo(view.super.safeArea)
+                        make.center.equalTo(view.super)
+                    }
                 }
-            ])
-        this.bottomBar
-            .setTitle(this.listPageNow[this.listSection] + 1)
-            .setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
-
-        const view = this.bottomBar.getNavigationBarView()
-
-        view.layout = (make, view) => {
-            make.bottom.left.right.equalTo(view.super.safeArea)
-            make.top.equalTo(view.prev.bottom)
+            ],
+            layout: (make, view) => {
+                make.bottom.left.right.equalTo(view.super.safeArea)
+                make.height.equalTo(this.navHeight)
+            }
         }
 
         return view
@@ -209,7 +228,7 @@ class Today extends Clips {
             .slice(start, end)
             .map(data => this.lineData(data, this.copied.uuid === data.uuid))
         // page index
-        $(this.bottomBar.id + "-small-title").text = this.listPageNow[this.listSection] + 1
+        $(this.pageIndexId).text = this.listPageNow[this.listSection] + 1
     }
 
     clipboardPrevPage() {
@@ -255,11 +274,7 @@ class Today extends Clips {
                     },
                     events: {
                         ready: () => this.listReady(),
-                        rowHeight: (sender, indexPath) => {
-                            const tag = sender.object(indexPath).tag
-                            const tagHeight = tag.text ? this.tagContainerHeight : this.verticalMargin
-                            return this.singleLineHeight + this.verticalMargin + tagHeight
-                        },
+                        rowHeight: () => this.verticalMargin + this.singleLineContentHeight + this.tagHeight,
                         didSelect: this.buttonTapped((sender, indexPath) => {
                             const item = this.clips[indexPath.row]
                             const path = this.kernel.storage.keyToPath(item.text)
