@@ -221,6 +221,11 @@ class Today extends Clips {
         return view
     }
 
+    delete(...arge){
+        super.delete(...arge)
+        this.updateList()
+    }
+
     updateList() {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize

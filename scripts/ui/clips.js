@@ -506,8 +506,8 @@ class Clips extends ClipsData {
                         destructive: true,
                         handler: (sender, indexPath) => {
                             this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                this.delete(indexPath.row)
                                 sender.delete(indexPath)
+                                this.delete(indexPath.row)
                             })
                         }
                     }
