@@ -72,9 +72,9 @@ class Today extends Clips {
         $delay(0.5, () => this.readClipboard())
     }
 
-    readClipboard(manual = false) {
+    async readClipboard(manual = false) {
         if (!this.isActionPage && $app.env === $env.today) {
-            super.readClipboard(manual)
+            await super.readClipboard(manual)
             return true
         }
         return false
@@ -96,11 +96,11 @@ class Today extends Clips {
     }
 
     buttonTapped(tapped, tapticEngine = true) {
-        return (...args) => {
+        return async (...args) => {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
                 $device.taptic(this.taptic)
             }
-            tapped(...args)
+            await tapped(...args)
         }
     }
 
@@ -128,9 +128,9 @@ class Today extends Clips {
                     id: this.readClipboardButtonId,
                     hidden: this.isActionPage
                 },
-                tapped: this.buttonTapped(animate => {
+                tapped: this.buttonTapped(async animate => {
                     animate.start()
-                    if (this.readClipboard(true)) {
+                    if (await this.readClipboard(true)) {
                         animate.done()
                     } else {
                         animate.cancel()
@@ -221,7 +221,7 @@ class Today extends Clips {
         return view
     }
 
-    delete(...arge){
+    delete(...arge) {
         super.delete(...arge)
         this.updateList()
     }

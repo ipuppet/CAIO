@@ -212,9 +212,21 @@ class Clips extends ClipsData {
         }
     }
 
-    readClipboard(manual = false) {
+    async readClipboard(manual = false) {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
             this.kernel.print("read clipboard")
+
+            // 仅手动模式下保存图片
+            if ($clipboard.images?.length > 0) {
+                if (manual) {
+                    await $wait(0.1)
+                    $clipboard.images.forEach(image => {
+                        this.add(image)
+                    })
+                    return true
+                }
+                return false
+            }
 
             // 剪切板没有变化则直接退出
             if (!this.isChanged) {
@@ -222,19 +234,6 @@ class Clips extends ClipsData {
                     $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
                 }
                 return
-            }
-
-            // 仅手动模式下保存图片
-            if ($clipboard.images?.length > 0) {
-                if (manual) {
-                    $clipboard.images.forEach(image => {
-                        this.add(image)
-                    })
-
-                    return true
-                }
-
-                return false
             }
 
             const text = $clipboard.text
@@ -262,7 +261,6 @@ class Clips extends ClipsData {
                 this.copy(0)
             }
         }
-
         return false
     }
 
@@ -582,11 +580,51 @@ class Clips extends ClipsData {
         }
     }
 
+    quickLookImage(path) {
+        const originalPath = this.kernel.fileStorage.filePath(path.original)
+        const sheet = new Sheet()
+        sheet
+            .setView({
+                type: "view",
+                views: [
+                    {
+                        type: "scroll",
+                        props: {
+                            zoomEnabled: true,
+                            maxZoomScale: 3
+                        },
+                        layout: $layout.fill,
+                        views: [
+                            {
+                                type: "image",
+                                props: { src: originalPath },
+                                layout: $layout.fill
+                            }
+                        ]
+                    }
+                ],
+                layout: $layout.fill
+            })
+            //.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
+            .addNavBar({
+                title: $l10n("PREVIEW"),
+                popButton: { title: $l10n("CLOSE") },
+                rightButtons: [
+                    {
+                        symbol: "square.and.arrow.up",
+                        tapped: () => $share.sheet(this.kernel.fileStorage.readSync(path.original))
+                    }
+                ]
+            })
+            .init()
+            .present()
+    }
+
     lineData(data, indicator = false) {
         const image = { hidden: true }
         const content = { text: "" }
 
-        const path = this.kernel.storage.keyToPath(data.text)
+        const path = this.kernel.storage.keyToPath(data.text, false)
         if (path) {
             image.src = path.preview
             image.hidden = false
@@ -700,11 +738,13 @@ class Clips extends ClipsData {
             events: {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
-                    const object = sender.object(indexPath)
-                    const tagHeight = object.tag.text && object.tag.text !== "" ? this.tagHeight : this.verticalMargin
-                    const itemHeight = this.kernel.storage.isImage(object.content.text)
+                    const text = this.clips[indexPath.row].text
+                    const tag = this.clips[indexPath.row].tag
+
+                    const tagHeight = tag && tag !== "" ? this.tagHeight : this.verticalMargin
+                    const itemHeight = this.kernel.storage.isImage(text)
                         ? this.imageContentHeight
-                        : this.getContentHeight(object.content.text)
+                        : this.getContentHeight(text)
                     return this.verticalMargin + itemHeight + tagHeight
                 },
                 didSelect: (sender, indexPath, data) => {
@@ -712,10 +752,7 @@ class Clips extends ClipsData {
                     const text = item.text
                     const path = this.kernel.storage.keyToPath(text)
                     if (path && this.kernel.fileStorage.exists(path.original)) {
-                        // TODO: preview image
-                        $quicklook.open({
-                            image: this.kernel.fileStorage.readSync(path.original)?.image
-                        })
+                        this.quickLookImage(path)
                     } else {
                         this.edit(item.text, text => {
                             if (item.md5 !== $text.MD5(text)) this.update(text, indexPath.row)
@@ -779,9 +816,9 @@ class Clips extends ClipsData {
                 },
                 {
                     symbol: "square.and.arrow.down.on.square",
-                    tapped: animate => {
+                    tapped: async animate => {
                         animate.start()
-                        this.readClipboard(true)
+                        await this.readClipboard(true)
                         animate.done()
                     }
                 }

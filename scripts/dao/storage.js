@@ -279,9 +279,15 @@ class Storage {
         path = JSON.stringify(path)
         return `@image=${path}`
     }
-    keyToPath(key) {
+    keyToPath(key, fileStoragePath = true) {
         if (this.isImage(key)) {
-            return JSON.parse(key.slice(7))
+            const image = JSON.parse(key.slice(7))
+            if (fileStoragePath) {
+                return image
+            }
+            image.original = this.kernel.fileStorage.basePath + image.original
+            image.preview = this.kernel.fileStorage.basePath + image.preview
+            return image
         }
         return false
     }

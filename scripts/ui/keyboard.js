@@ -112,11 +112,11 @@ class Keyboard extends Clips {
     }
 
     keyboardTapped(tapped, tapticEngine = true, level = 1) {
-        return (...args) => {
+        return async (...args) => {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
                 $device.taptic(level)
             }
-            tapped(...args)
+            await tapped(...args)
         }
     }
 
@@ -130,9 +130,9 @@ class Keyboard extends Clips {
             {
                 // 手动读取剪切板
                 symbol: "square.and.arrow.down.on.square",
-                tapped: this.keyboardTapped(animate => {
+                tapped: this.keyboardTapped(async animate => {
                     animate.start()
-                    this.readClipboard(true)
+                    await this.readClipboard(true)
                     animate.done()
                 })
             },
@@ -239,9 +239,9 @@ class Keyboard extends Clips {
 
     /**
      * 底部按钮
-     * @param {*} button 
-     * @param {*} align 
-     * @returns 
+     * @param {*} button
+     * @param {*} align
+     * @returns
      */
     getButtonView(button, align) {
         const size = $size(38, 38)
@@ -412,9 +412,7 @@ class Keyboard extends Clips {
             const item = this.clips[indexPath.row]
             const path = this.kernel.storage.keyToPath(item.text)
             if (path && this.kernel.fileStorage.exists(path.original)) {
-                $quicklook.open({
-                    image: this.kernel.fileStorage.readSync(path.original)?.image
-                })
+                this.quickLookImage(path)
             } else {
                 $keyboard.insert(item.text)
                 if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {
