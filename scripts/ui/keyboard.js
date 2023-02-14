@@ -427,7 +427,16 @@ class Keyboard extends Clips {
         return {
             type: "view",
             props: { id: this.actionsId, hidden: true },
-            views: [this.kernel.actionManager.getActionMiniView()],
+            views: [
+                this.kernel.actionManager.getActionMiniView(async () => {
+                    return new ActionData({
+                        env: ActionEnv.keyboard,
+                        textBeforeInput: $keyboard.textBeforeInput,
+                        textAfterInput: $keyboard.textAfterInput,
+                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
+                    })
+                })
+            ],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.left.equalTo(this.containerMargin)
