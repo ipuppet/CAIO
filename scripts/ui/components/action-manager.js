@@ -516,7 +516,7 @@ class ActionManager extends ActionManagerData {
         }
     }
 
-    getActionMiniView(actions) {
+    getActionMiniView(getActionData, actions) {
         if (!actions) {
             actions = []
             super.actions.forEach(dir => {
@@ -593,12 +593,9 @@ class ActionManager extends ActionManagerData {
                         return this.actionToData(action)
                     })
                 },
-                didSelect: (sender, indexPath, data) => {
+                didSelect: async (sender, indexPath, data) => {
                     const info = data.info.info
-                    const actionData = new ActionData({
-                        env: ActionEnv.today,
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
-                    })
+                    const actionData = await getActionData(info)
                     this.getActionHandler(info.type, info.dir)(actionData)
                 }
             }

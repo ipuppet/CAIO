@@ -317,7 +317,14 @@ class Today extends Clips {
         return {
             type: "view",
             props: { id: this.actionsId, hidden: this.tabIndex !== 2 },
-            views: [this.kernel.actionManager.getActionMiniView(actions)],
+            views: [
+                this.kernel.actionManager.getActionMiniView(info => {
+                    return new ActionData({
+                        env: ActionEnv.today,
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
+                    })
+                }, actions)
+            ],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.left.right.bottom.equalTo(view.super.safeArea)
