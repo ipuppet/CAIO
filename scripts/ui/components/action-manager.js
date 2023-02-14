@@ -446,7 +446,7 @@ class ActionManager extends ActionManagerData {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
                 const info = data.info.info
-                const action = this.kernel.actionManager.getActionHandler(info.type, info.dir)
+                const action = this.getActionHandler(info.type, info.dir)
                 didSelect(action)
             }
         }
@@ -513,6 +513,95 @@ class ActionManager extends ActionManagerData {
                 },
                 props
             )
+        }
+    }
+
+    getActionMiniView(actions) {
+        if (!actions) {
+            actions = []
+            super.actions.forEach(dir => {
+                actions = actions.concat(dir.items)
+            })
+        }
+
+        const matrixItemHeight = 50
+        return {
+            type: "matrix",
+            props: {
+                bgcolor: $color("clear"),
+                columns: 2,
+                itemHeight: matrixItemHeight,
+                spacing: 8,
+                data: [],
+                template: {
+                    props: {
+                        smoothCorners: true,
+                        cornerRadius: 10,
+                        bgcolor: $color($rgba(255, 255, 255, 0.3), $rgba(0, 0, 0, 0.3))
+                    },
+                    views: [
+                        {
+                            type: "image",
+                            props: {
+                                id: "color",
+                                cornerRadius: 8,
+                                smoothCorners: true
+                            },
+                            layout: make => {
+                                const size = matrixItemHeight - 20
+                                make.top.left.inset((matrixItemHeight - size) / 2)
+                                make.size.equalTo($size(size, size))
+                            }
+                        },
+                        {
+                            type: "image",
+                            props: {
+                                id: "icon",
+                                tintColor: $color("#ffffff")
+                            },
+                            layout: (make, view) => {
+                                make.edges.equalTo(view.prev).insets(5)
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "name",
+                                font: $font(14)
+                            },
+                            layout: (make, view) => {
+                                make.bottom.top.inset(10)
+                                make.left.equalTo(view.prev.prev.right).offset(10)
+                                make.right.inset(10)
+                            }
+                        },
+                        {
+                            // 用来保存信息
+                            type: "view",
+                            props: {
+                                id: "info",
+                                hidden: true
+                            }
+                        }
+                    ]
+                }
+            },
+            layout: $layout.fill,
+            events: {
+                ready: sender => {
+                    sender.data = actions.map(action => {
+                        return this.actionToData(action)
+                    })
+                },
+                didSelect: (sender, indexPath, data) => {
+                    const info = data.info.info
+                    const actionData = new ActionData({
+                        env: ActionEnv.today,
+                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
+                    })
+                    this.getActionHandler(info.type, info.dir)(actionData)
+                }
+            }
         }
     }
 

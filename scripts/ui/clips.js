@@ -40,6 +40,8 @@ class Clips extends ClipsData {
     copied = $cache.get("clips.copied") ?? {}
     #textHeightCache = {}
 
+    viewController
+
     /**
      * @param {AppKernel} kernel
      */
@@ -47,24 +49,6 @@ class Clips extends ClipsData {
         super(kernel)
 
         this.viewController = new ViewController()
-
-        this.search = new ClipsSearch(this.kernel)
-        this.search.setCallback(res => {
-            const sheet = new Sheet()
-            sheet
-                .setView(
-                    this.getListView(
-                        this.listId + "-search-result",
-                        res.map(data => this.lineData(data))
-                    )
-                )
-                .addNavBar({
-                    title: $l10n("SEARCH_RESULT"),
-                    popButton: { title: $l10n("DONE"), tapped: () => this.search.dismiss() }
-                })
-                .init()
-                .present()
-        })
     }
 
     get tagHeight() {
@@ -782,6 +766,24 @@ class Clips extends ClipsData {
     }
 
     getNavigationView() {
+        const search = new ClipsSearch(this.kernel)
+        search.setCallback(res => {
+            const sheet = new Sheet()
+            sheet
+                .setView(
+                    this.getListView(
+                        this.listId + "-search-result",
+                        res.map(data => this.lineData(data))
+                    )
+                )
+                .addNavBar({
+                    title: $l10n("SEARCH_RESULT"),
+                    popButton: { title: $l10n("DONE"), tapped: () => search.dismiss() }
+                })
+                .init()
+                .present()
+        })
+
         const menuView = this.tabView()
         menuView.type = "menu"
         menuView.layout = (make, view) => {
@@ -795,11 +797,11 @@ class Clips extends ClipsData {
             make.bottom.left.right.equalTo(view.super)
             make.top.equalTo(view.prev.bottom)
         }
-        view.views.push(this.search.getSearchHistoryView())
+        view.views.push(search.getSearchHistoryView())
 
         const navigationView = new NavigationView().navigationBarTitle($l10n("CLIPS")).setView(view)
         navigationView.navigationBarItems
-            .setTitleView(this.search.getSearchBarView())
+            .setTitleView(search.getSearchBarView())
             .pinTitleView()
             .setRightButtons([
                 {
