@@ -333,16 +333,6 @@
                         "items": [
                             {
                                 "icon": [
-                                    "cursor.rays",
-                                    "#FF8C00"
-                                ],
-                                "title": "TAPTIC_ENGINE_FOR_DELETE",
-                                "type": "switch",
-                                "key": "keyboard.tapticEngineForDelete",
-                                "value": true
-                            },
-                            {
-                                "icon": [
                                     "rays",
                                     "#FFCC33"
                                 ],
