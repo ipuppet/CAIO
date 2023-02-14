@@ -117,7 +117,9 @@ class Keyboard extends Clips {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
                 $device.taptic(level)
             }
-            await tapped(...args)
+            if (typeof tapped === "function") {
+                await tapped(...args)
+            }
         }
     }
 
@@ -342,16 +344,13 @@ class Keyboard extends Clips {
                 // delete
                 symbol: "delete.left",
                 events: {
-                    touchesBegan: this.keyboardTapped(() => {
+                    touchesBegan: this.keyboardTapped(async () => {
                         $keyboard.delete()
+                        $delay(this.continuousDeleteDelay, () => this.keyboardTapped()())
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
-                                handler: this.keyboardTapped(
-                                    () => $keyboard.delete(),
-                                    this.kernel.setting.get("keyboard.tapticEngineForDelete"),
-                                    0
-                                )
+                                handler: () => $keyboard.delete()
                             })
                         })
                     }),
@@ -360,6 +359,8 @@ class Keyboard extends Clips {
                         this.continuousDeleteTimer?.cancel()
                         this.deleteTimer = undefined
                         this.continuousDeleteTimer = undefined
+
+                        this.keyboardTapped()()
                     }
                 }
             }
