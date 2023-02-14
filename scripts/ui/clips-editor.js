@@ -206,11 +206,7 @@ class ClipsEditor {
             make.height.right.equalTo(view.super)
             make.left.inset(this.containerMargin)
         }
-        template.views[1].layout = (make, view) => {
-            make.bottom.width.equalTo(view.super)
-            make.left.inset(this.clipsInstance.horizontalMargin + this.containerMargin)
-            make.height.equalTo(this.clipsInstance.verticalMargin)
-        }
+
         template.views.push({
             type: "image",
             props: {
