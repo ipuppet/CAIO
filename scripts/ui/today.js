@@ -8,16 +8,21 @@ const TodayActions = require("./components/today-actions")
  */
 
 class Today extends Clips {
+    actionsId = "today-list-actions"
+    listContainerId = "today-list-container"
+    readClipboardButtonId = "today-nav-readClipboard"
+    listId = "today-list"
+    pageIndexId = "today-list-page-index"
+
     // 剪贴板列个性化设置
     tabLeftMargin = 8
     horizontalMargin = 15 // 列表边距
-    verticalMargin = 10 // 列表边距
+    verticalMargin = 5 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     fontSize = 14 // 字体大小
     tagFontSize = 12
     navHeight = 34
     taptic = 1
-    matrixItemHeight = 50
 
     inLauncher = $app.env === $env.today && $app.widgetIndex === -1
     launcherNavHeight = 44
@@ -27,11 +32,6 @@ class Today extends Clips {
      */
     constructor(kernel) {
         super(kernel)
-        this.actionsId = "today-list-actions"
-        this.listContainerId = "today-list-container"
-        this.readClipboardButtonId = "today-nav-readClipboard"
-        this.listId = "today-list"
-        this.pageIndexId = "today-list-page-index"
 
         this.tabItems.push($l10n("ACTIONS"))
 
@@ -66,7 +66,9 @@ class Today extends Clips {
 
         this.setClipboarPageSize($widget.mode)
 
-        this.updateList(true)
+        if (this.tabIndex < 2) {
+            this.updateList()
+        }
         this.appListen()
 
         $delay(0.5, () => this.readClipboard())
@@ -307,97 +309,18 @@ class Today extends Clips {
     }
 
     getActionView() {
-        let data = this.todayActions.getActions()
-        if (data.length === 0) {
-            data = this.todayActions.getAllActions()
-        }
-
-        const matrixView = {
-            type: "matrix",
-            props: {
-                bgcolor: $color("clear"),
-                columns: 2,
-                itemHeight: this.matrixItemHeight,
-                spacing: this.tabLeftMargin,
-                data: data.map(action => {
-                    return this.kernel.actionManager.actionToData(action)
-                }),
-                template: {
-                    props: {
-                        smoothCorners: true,
-                        cornerRadius: 10,
-                        bgcolor: $color($rgba(255, 255, 255, 0.3), $rgba(0, 0, 0, 0.3))
-                    },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                id: "color",
-                                cornerRadius: 8,
-                                smoothCorners: true
-                            },
-                            layout: make => {
-                                const size = this.matrixItemHeight - 20
-                                make.top.left.inset((this.matrixItemHeight - size) / 2)
-                                make.size.equalTo($size(size, size))
-                            }
-                        },
-                        {
-                            type: "image",
-                            props: {
-                                id: "icon",
-                                tintColor: $color("#ffffff")
-                            },
-                            layout: (make, view) => {
-                                make.edges.equalTo(view.prev).insets(5)
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "name",
-                                font: $font(14)
-                            },
-                            layout: (make, view) => {
-                                make.bottom.top.inset(10)
-                                make.left.equalTo(view.prev.prev.right).offset(10)
-                                make.right.inset(10)
-                            }
-                        },
-                        {
-                            // 用来保存信息
-                            type: "view",
-                            props: {
-                                id: "info",
-                                hidden: true
-                            }
-                        }
-                    ]
-                }
-            },
-            layout: $layout.fill,
-            events: {
-                didSelect: (sender, indexPath, data) => {
-                    const info = data.info.info
-                    const actionData = new ActionData({
-                        env: ActionEnv.today,
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
-                    })
-                    this.kernel.actionManager.getActionHandler(info.type, info.dir)(actionData)
-                }
-            }
+        let actions = this.todayActions.getActions()
+        if (actions.length === 0) {
+            actions = this.todayActions.getAllActions()
         }
 
         return {
             type: "view",
-            props: {
-                id: this.actionsId,
-                hidden: this.tabIndex !== 2
-            },
-            views: [matrixView],
+            props: { id: this.actionsId, hidden: this.tabIndex !== 2 },
+            views: [this.kernel.actionManager.getActionMiniView(actions)],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
-                make.bottom.left.right.equalTo(view.super.safeArea)
+                make.left.right.bottom.equalTo(view.super.safeArea)
             }
         }
     }
@@ -411,7 +334,7 @@ class Today extends Clips {
             views: [
                 {
                     type: "view",
-                    views: [this.getNavBarView(), this.getListView(), this.getActionView()],
+                    views: [this.getNavBarView(), this.getActionView(), this.getListView()],
                     layout: $layout.fill
                 }
             ],

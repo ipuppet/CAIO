@@ -11,6 +11,7 @@ class Keyboard extends Clips {
     #readClipboardTimer
 
     listId = "keyboard-clips-list"
+    actionsId = "keyboard-list-actions"
     keyboardSwitchLockId = "keyboard-switch-lock"
     keyboardSwitchLockKey = "caio.keyboard.switch.lock"
 
@@ -139,27 +140,10 @@ class Keyboard extends Clips {
             {
                 // Action
                 symbol: "bolt.circle",
-                tapped: this.keyboardTapped((animate, sender) => {
-                    const popover = $ui.popover({
-                        sourceView: sender,
-                        directions: $popoverDirection.up,
-                        size: $size(200, 300),
-                        views: [
-                            this.kernel.actionManager.getActionListView(action => {
-                                popover.dismiss()
-                                $delay(0.5, async () => {
-                                    const actionData = new ActionData({
-                                        env: ActionEnv.keyboard,
-                                        textBeforeInput: $keyboard.textBeforeInput,
-                                        textAfterInput: $keyboard.textAfterInput,
-                                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
-                                    })
-
-                                    action(actionData)
-                                })
-                            })
-                        ]
-                    })
+                tapped: this.keyboardTapped(() => {
+                    let flag = $(this.actionsId).hidden === true
+                    $(this.listId).hidden = flag
+                    $(this.actionsId).hidden = !flag
                 })
             }
         ]
@@ -439,6 +423,20 @@ class Keyboard extends Clips {
         return superListView
     }
 
+    getActionView() {
+        return {
+            type: "view",
+            props: { id: this.actionsId, hidden: true },
+            views: [this.kernel.actionManager.getActionMiniView()],
+            layout: (make, view) => {
+                make.top.equalTo(this.navHeight)
+                make.left.equalTo(this.containerMargin)
+                make.right.equalTo(-this.containerMargin)
+                make.bottom.equalTo(-this.navHeight)
+            }
+        }
+    }
+
     getView() {
         return {
             type: "view",
@@ -470,7 +468,8 @@ class Keyboard extends Clips {
                 },
                 this.getTopBarView(),
                 this.getListView(),
-                this.getBottomBarView()
+                this.getBottomBarView(),
+                this.getActionView()
             ],
             layout: $layout.fill
         }
