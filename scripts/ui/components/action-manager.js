@@ -774,15 +774,17 @@ class ActionManager extends ActionManagerData {
                 }
             })
         }
-        actionSheet.setView(this.getMatrixView()).addNavBar({
-            title: $l10n("ACTIONS"),
-            popButton: { symbol: "xmark.circle" },
-            rightButtons: rightButtons
-        })
+        actionSheet
+            .setView(this.getMatrixView())
+            .addNavBar({
+                title: $l10n("ACTIONS"),
+                popButton: { symbol: "xmark.circle" },
+                rightButtons: rightButtons
+            })
+            .init()
 
         this.navigationView = actionSheet.navigationView
-
-        actionSheet.init().present()
+        actionSheet.present()
     }
 }
 

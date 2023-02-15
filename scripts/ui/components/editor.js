@@ -97,16 +97,20 @@ class Editor {
         this.text = text
         navButtons.unshift(this.getActionButton())
         const sheet = new Sheet()
-        sheet.setView(this.getView(type)).addNavBar({
-            title,
-            popButton: {
-                title: $l10n("DONE"),
-                tapped: () => callback(this.text)
-            },
-            rightButtons: navButtons
-        })
+        sheet
+            .setView(this.getView(type))
+            .addNavBar({
+                title,
+                popButton: {
+                    title: $l10n("DONE"),
+                    tapped: () => callback(this.text)
+                },
+                rightButtons: navButtons
+            })
+            .init()
+
         sheet.navigationView.navigationBar.contentViewHeightOffset = 0
-        sheet.init().present()
+        sheet.present()
     }
 
     /**
