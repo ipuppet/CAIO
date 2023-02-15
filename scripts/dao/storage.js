@@ -27,7 +27,20 @@ class Storage {
 
         this.exportFileName = "CAIO.zip"
 
+        this.webdav = this.kernel.setting.get("webdav.status")
+        if (this.webdav) {
+            this.webdavHost = this.kernel.setting.get("webdav.host")
+            this.webdavUser = this.kernel.setting.get("webdav.user")
+            this.webdavPassword = this.kernel.setting.get("webdav.password")
+            this.webdavSync()
+        }
+
         this.init()
+    }
+
+    // TODO WebDAV
+    async webdavSync() {
+        if (!this.webdav) return
     }
 
     init() {

@@ -487,6 +487,64 @@
         "items": [
             {
                 "icon": [
+                    "cloud"
+                ],
+                "title": "WebDAV",
+                "type": "child",
+                "key": "webdav.config",
+                "children": [
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "cloud"
+                                ],
+                                "title": "WebDAV",
+                                "type": "switch",
+                                "key": "webdav.status",
+                                "value": false
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
+                                "icon": [
+                                    "link"
+                                ],
+                                "title": "HOST",
+                                "type": "input",
+                                "key": "webdav.host",
+                                "value": ""
+                            },
+                            {
+                                "icon": [
+                                    "person"
+                                ],
+                                "title": "USER",
+                                "type": "input",
+                                "key": "webdav.user",
+                                "value": ""
+                            },
+                            {
+                                "icon": [
+                                    "person.badge.key"
+                                ],
+                                "title": "PASSWORD",
+                                "type": "input",
+                                "key": "webdav.password",
+                                "value": ""
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "items": [
+            {
+                "icon": [
                     "/assets/icon/github.com.jpeg",
                     "white"
                 ],

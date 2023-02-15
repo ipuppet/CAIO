@@ -43,7 +43,7 @@ class ClipsData {
     }
 
     get allClips() {
-        if (this.#allClips.length === 0) {
+        if (!this.#allClips || this.#allClips.length === 0) {
             this.loadAllClips()
         }
         return this.#allClips
