@@ -144,7 +144,7 @@ class Keyboard extends Clips {
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped(() => {
                     let flag = $(this.actionsId).hidden === true
-                    $(this.listId).hidden = flag
+                    $(this.listId + "-container").hidden = flag
                     $(this.actionsId).hidden = !flag
                 })
             }
@@ -386,6 +386,7 @@ class Keyboard extends Clips {
 
     getListView() {
         const superListView = super.getListView()
+        superListView.setProp("id", this.listId + "-container")
         superListView.layout = (make, view) => {
             make.top.equalTo(this.navHeight)
             make.width.equalTo(view.super)
