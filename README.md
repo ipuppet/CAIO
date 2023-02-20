@@ -33,3 +33,13 @@ You can also use the packaged files directly [dist/CAIO-en.json](./dist/CAIO-en.
 > Click to copy, long press to trigger the action.
 
 Please try to avoid using the Today Widget when JSBox is running CAIO.
+
+## WebDAV
+
+> Sync data with WebDAV.
+
+Config Example:
+Host: https://example.com/dav
+User: guest
+Password: password123
+Bast Path: /path/to/save/appdata

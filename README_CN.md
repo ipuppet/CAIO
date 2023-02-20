@@ -33,3 +33,13 @@ npm run build
 > 点击复制，长按触发动作。
 
 请尽量避免在 JSBox 运行 CAIO 时使用 Today Widget
+
+## WebDAV
+
+> 通过 WebDAV 同步数据
+
+示例配置:
+Host: https://example.com/dav
+User: guest
+Password: password123
+Bast Path: /path/to/save/appdata
