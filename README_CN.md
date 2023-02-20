@@ -38,8 +38,8 @@ npm run build
 
 > 通过 WebDAV 同步数据
 
-示例配置:
-Host: https://example.com/dav
-User: guest
-Password: password123
+示例配置:  
+Host: https://example.com/dav  
+User: guest  
+Password: password123  
 Bast Path: /path/to/save/appdata

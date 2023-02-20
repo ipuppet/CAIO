@@ -38,8 +38,8 @@ Please try to avoid using the Today Widget when JSBox is running CAIO.
 
 > Sync data with WebDAV.
 
-Config Example:
-Host: https://example.com/dav
-User: guest
-Password: password123
+Config Example:  
+Host: https://example.com/dav  
+User: guest  
+Password: password123  
 Bast Path: /path/to/save/appdata
