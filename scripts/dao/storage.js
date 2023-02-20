@@ -32,6 +32,17 @@ class Storage {
         this.init()
     }
 
+    setNeedSync() {
+        if (!this.kernel.setting.get("webdav.status")) return
+        this.webdavSync.updateLocalSyncData()
+        this.webdavSync.sync()
+    }
+
+    async sync() {
+        if (!this.kernel.setting.get("webdav.status")) return
+        await this.webdavSync.sync()
+    }
+
     async initWebdavSync() {
         if (!this.kernel.setting.get("webdav.status")) return
 
@@ -126,13 +137,13 @@ class Storage {
         })
 
         this.kernel.fileStorage.copy(db, this.localDb)
-        this.webdavSync.update()
+        this.setNeedSync()
     }
 
     deleteAllData() {
         this.kernel.fileStorage.delete(this.imagePath)
         this.kernel.fileStorage.delete(this.localDb)
-        this.webdavSync.update()
+        this.setNeedSync()
     }
 
     clearTemp() {
@@ -320,7 +331,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.webdavSync.update()
+        this.setNeedSync()
     }
 
     all(table) {
@@ -348,7 +359,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.webdavSync.update()
+        this.setNeedSync()
     }
     update(table, clip) {
         if (Object.keys(clip).length < 4 || typeof clip.uuid !== "string") return
@@ -359,7 +370,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.webdavSync.update()
+        this.setNeedSync()
     }
     updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
@@ -370,7 +381,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.webdavSync.update()
+        this.setNeedSync()
     }
     delete(table, uuid) {
         const clip = this.getByUUID(uuid)
@@ -388,7 +399,13 @@ class Storage {
             this.kernel.fileStorage.delete(path.original)
             this.kernel.fileStorage.delete(path.preview)
         }
-        this.webdavSync.update()
+        if (this.deleteSyncTimer) {
+            this.deleteSyncTimer.cancel()
+        }
+        this.deleteSyncTimer = $delay(0.3, () => {
+            this.setNeedSync()
+            this.deleteSyncTimer = undefined
+        })
     }
     isEmpty() {
         const result = this.sqlite.query(`SELECT * FROM clips favorite limit 1`)
@@ -403,7 +420,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.webdavSync.update()
+        this.setNeedSync()
     }
     deleteTag(uuid) {
         const tagResult = this.sqlite.update({
@@ -413,7 +430,7 @@ class Storage {
         if (!tagResult.result) {
             throw tagResult.error
         }
-        this.webdavSync.update()
+        this.setNeedSync()
     }
 }
 

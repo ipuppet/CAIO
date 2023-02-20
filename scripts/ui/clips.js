@@ -749,7 +749,8 @@ class Clips extends ClipsData {
                         })
                     }
                 },
-                pulled: sender => {
+                pulled: async sender => {
+                    await this.kernel.storage.sync()
                     this.updateList(true)
                     $delay(0.5, () => sender.endRefreshing())
                 }

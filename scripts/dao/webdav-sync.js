@@ -74,11 +74,6 @@ class WebDAVSync {
         this.localSyncData = { date: Date.now() }
     }
 
-    update() {
-        this.updateLocalSyncData()
-        this.sync()
-    }
-
     reset() {
         this.localSyncData = { date: 0 }
     }
