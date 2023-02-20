@@ -17,6 +17,7 @@ class Keyboard extends Clips {
 
     deleteTimer = undefined
     continuousDeleteTimer = undefined
+    continuousDeleteTapticTimer = undefined
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
@@ -346,7 +347,9 @@ class Keyboard extends Clips {
                 events: {
                     touchesBegan: this.keyboardTapped(async () => {
                         $keyboard.delete()
-                        $delay(this.continuousDeleteDelay, () => this.keyboardTapped()())
+                        this.continuousDeleteTapticTimer = $delay(this.continuousDeleteDelay, () =>
+                            this.keyboardTapped()()
+                        )
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
@@ -357,10 +360,9 @@ class Keyboard extends Clips {
                     touchesEnded: () => {
                         this.deleteTimer?.invalidate()
                         this.continuousDeleteTimer?.cancel()
+                        this.continuousDeleteTapticTimer?.cancel()
                         this.deleteTimer = undefined
                         this.continuousDeleteTimer = undefined
-
-                        this.keyboardTapped()()
                     }
                 }
             }
