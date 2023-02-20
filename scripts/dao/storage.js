@@ -1,4 +1,5 @@
 const { Kernel } = require("../libs/easy-jsbox")
+const WebDAVSync = require("./webdav-sync")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -27,20 +28,26 @@ class Storage {
 
         this.exportFileName = "CAIO.zip"
 
-        this.webdav = this.kernel.setting.get("webdav.status")
-        if (this.webdav) {
-            this.webdavHost = this.kernel.setting.get("webdav.host")
-            this.webdavUser = this.kernel.setting.get("webdav.user")
-            this.webdavPassword = this.kernel.setting.get("webdav.password")
-            this.webdavSync()
-        }
-
+        this.initWebdavSync()
         this.init()
     }
 
-    // TODO WebDAV
-    async webdavSync() {
-        if (!this.webdav) return
+    async initWebdavSync() {
+        if (!this.kernel.setting.get("webdav.status")) return
+
+        try {
+            this.webdavSync = new WebDAVSync({
+                kernel: this.kernel,
+                host: this.kernel.setting.get("webdav.host"),
+                user: this.kernel.setting.get("webdav.user"),
+                password: this.kernel.setting.get("webdav.password"),
+                basepath: this.kernel.setting.get("webdav.basepath")
+            })
+            await this.webdavSync.init()
+        } catch (error) {
+            this.kernel.error(error)
+            throw error
+        }
     }
 
     init() {
@@ -119,11 +126,13 @@ class Storage {
         })
 
         this.kernel.fileStorage.copy(db, this.localDb)
+        this.webdavSync.update()
     }
 
     deleteAllData() {
         this.kernel.fileStorage.delete(this.imagePath)
         this.kernel.fileStorage.delete(this.localDb)
+        this.webdavSync.update()
     }
 
     clearTemp() {
@@ -166,6 +175,7 @@ class Storage {
             // image
             this.kernel.fileStorage.move(this.tempImagePath, this.imagePath)
         }
+        this.webdavSync.reset()
     }
 
     sort(data, maxLoop = 9000) {
@@ -310,6 +320,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
+        this.webdavSync.update()
     }
 
     all(table) {
@@ -337,6 +348,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
+        this.webdavSync.update()
     }
     update(table, clip) {
         if (Object.keys(clip).length < 4 || typeof clip.uuid !== "string") return
@@ -347,6 +359,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
+        this.webdavSync.update()
     }
     updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
@@ -357,6 +370,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
+        this.webdavSync.update()
     }
     delete(table, uuid) {
         const clip = this.getByUUID(uuid)
@@ -374,6 +388,11 @@ class Storage {
             this.kernel.fileStorage.delete(path.original)
             this.kernel.fileStorage.delete(path.preview)
         }
+        this.webdavSync.update()
+    }
+    isEmpty() {
+        const result = this.sqlite.query(`SELECT * FROM clips favorite limit 1`)
+        return this.parse(result).length === 0
     }
 
     setTag(uuid, tag) {
@@ -384,6 +403,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
+        this.webdavSync.update()
     }
     deleteTag(uuid) {
         const tagResult = this.sqlite.update({
@@ -393,6 +413,7 @@ class Storage {
         if (!tagResult.result) {
             throw tagResult.error
         }
+        this.webdavSync.update()
     }
 }
 

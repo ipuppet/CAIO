@@ -228,7 +228,10 @@ class Today extends Clips {
         this.updateList()
     }
 
-    updateList() {
+    updateList(reload = false) {
+        if (reload) {
+            this.loadAllClips()
+        }
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
         $(this.listId).data = this.allClips[this.listSection]

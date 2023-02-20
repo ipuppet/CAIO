@@ -487,7 +487,8 @@
         "items": [
             {
                 "icon": [
-                    "cloud"
+                    "cloud",
+                    "#FF9900"
                 ],
                 "title": "WebDAV",
                 "type": "child",
@@ -497,7 +498,8 @@
                         "items": [
                             {
                                 "icon": [
-                                    "cloud"
+                                    "cloud",
+                                    "#FF9900"
                                 ],
                                 "title": "WebDAV",
                                 "type": "switch",
@@ -533,6 +535,15 @@
                                 "title": "PASSWORD",
                                 "type": "input",
                                 "key": "webdav.password",
+                                "value": ""
+                            },
+                            {
+                                "icon": [
+                                    "link"
+                                ],
+                                "title": "BASEPATH",
+                                "type": "input",
+                                "key": "webdav.basepath",
                                 "value": ""
                             }
                         ]

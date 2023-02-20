@@ -124,3 +124,12 @@
 "SYNC_ACTIONS" = "Sync Actions";
 "SYNCING" = "Syncing...";
 "LAST_SYNC_AT" = "Last sync at: ";
+
+"HOST" = "Host";
+"USER" = "User";
+"PASSWORD" = "Password";
+"BASEPATH" = "Base Path";
+"DATABASE_CONFLICT" = "A data synchronization conflict occurred";
+"DATABASE_CONFLICT_MESSAGE" = "Local database: WebDAV database will be overwritten\nWebDAV database: Local database will be overwritten";
+"WEBDAV_DATABASE" = "WebDAV database";
+"LOCAL_DATABASE" = "Local database";
