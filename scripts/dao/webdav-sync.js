@@ -72,19 +72,19 @@ class WebDAVSync {
     }
 
     updateLocalSyncData() {
-        const localSyncDate = JSON.parse(this.localSyncData.string).date
+        const localSyncDate = JSON.parse(this.localSyncData.string).timestamp
         if (localSyncDate === 0) {
             return
         }
-        this.localSyncData = { date: Date.now() }
+        this.localSyncData = { timestamp: Date.now() }
     }
 
     initLocalSyncDate() {
-        this.localSyncData = { date: 0 }
+        this.localSyncData = { timestamp: 0 }
     }
 
     async syncStatus() {
-        const localSyncDate = JSON.parse(this.localSyncData.string).date
+        const localSyncDate = JSON.parse(this.localSyncData.string).timestamp
 
         let webdavResp
         try {
@@ -99,7 +99,7 @@ class WebDAVSync {
             }
             throw error
         }
-        const webdavSyncDate = webdavResp.data.date
+        const webdavSyncDate = webdavResp.data.timestamp
 
         const ld = new Date(localSyncDate)
         const wd = new Date(webdavSyncDate)
@@ -111,6 +111,8 @@ class WebDAVSync {
             }
             return WebDAVSync.step.needPull
         } else {
+            console.log(ld)
+            console.log(webdavResp.data)
             return WebDAVSync.step.stay
         }
     }
