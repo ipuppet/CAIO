@@ -32,10 +32,6 @@ class WebDavSyncClip extends WebDavSync {
         await this.sync()
     }
 
-    isEmpty() {
-        return this.kernel.storage.isEmpty()
-    }
-
     async initImagePath() {
         let exists = await this.webdav.exists(this.webdavImagePath)
         if (!exists) {
@@ -48,6 +44,10 @@ class WebDavSyncClip extends WebDavSync {
                 }
             })
         }
+    }
+
+    isEmpty() {
+        return this.kernel.storage.isEmpty()
     }
 
     async webdavImages() {
