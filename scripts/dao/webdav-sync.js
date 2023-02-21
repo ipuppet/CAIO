@@ -1,4 +1,4 @@
-const { WebDAV } = require("../libs/easy-jsbox")
+const { WebDAV, FileStorage } = require("../libs/easy-jsbox")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -26,6 +26,8 @@ class WebDAVSync {
      */
     kernel
 
+    initLocalTimestamp = 0
+
     webdavSyncDataPath = "/sync.json"
     webdavDbPath = "/CAIO.db"
     webdavImagePath = "/image"
@@ -34,7 +36,7 @@ class WebDAVSync {
         let path = this.kernel.fileStorage.filePath(this.#fsLocalSyncDataPath)
         let data = $data({ path })
         if (!data) {
-            this.initLocalSyncDate()
+            this.localSyncData = { timestamp: this.initLocalTimestamp }
             data = $data({ path })
         }
         return data
@@ -63,60 +65,142 @@ class WebDAVSync {
         this.webdav.namespace = "JSBox.CAIO"
     }
 
+    async initImagePath() {
+        let exists = await this.webdav.exists(this.webdavImagePath)
+        if (!exists) {
+            await this.webdav.mkdir(this.webdavImagePath)
+            const initDir = ["/image/original", "/image/preview"]
+            initDir.map(async item => {
+                let exists = await this.webdav.exists(item)
+                if (!exists) {
+                    await this.webdav.mkdir(item)
+                }
+            })
+        }
+    }
+
     async init() {
         let exists = await this.webdav.exists("/")
         if (!exists) {
             await this.webdav.mkdir("/")
         }
+        await this.initImagePath()
+
         await this.sync()
     }
 
-    updateLocalSyncData() {
-        const localSyncDate = JSON.parse(this.localSyncData.string).timestamp
-        if (localSyncDate === 0) {
+    async webdavImages() {
+        const resp = await this.webdav.ls(this.webdavImagePath, "infinity")
+        const rootElement = resp.rootElement
+        const baseUrl = rootElement.firstChild({ xPath: "//D:response/D:href" }).string
+        const original = [],
+            preview = []
+        rootElement.children().map(item => {
+            /**
+             * @type {string}
+             */
+            const href = item.firstChild({ tag: "href" })?.string?.replace(baseUrl, "")
+            if (href.endsWith("/")) return
+            if (href.startsWith("original")) {
+                original.push(href.substring(9))
+            } else if (href.startsWith("preview")) {
+                preview.push(href.substring(8))
+            }
+        })
+        return { original, preview }
+    }
+
+    updateLocalTimestamp() {
+        const localTimestamp = JSON.parse(this.localSyncData.string).timestamp
+        if (localTimestamp === this.initLocalTimestamp) {
             return
         }
+        this.newLocalTimestamp()
+    }
+    newLocalTimestamp() {
         this.localSyncData = { timestamp: Date.now() }
     }
 
-    initLocalSyncDate() {
-        this.localSyncData = { timestamp: 0 }
-    }
-
     async syncStatus() {
-        const localSyncDate = JSON.parse(this.localSyncData.string).timestamp
+        const localTimestamp = JSON.parse(this.localSyncData.string).timestamp
 
         let webdavResp
         try {
             webdavResp = await this.webdav.get(this.webdavSyncDataPath)
         } catch (error) {
             if (error.code === 404) {
-                if (localSyncDate === 0) {
+                if (localTimestamp === this.initLocalTimestamp) {
                     // init
-                    this.updateLocalSyncData()
+                    this.updateLocalTimestamp()
                 }
                 return WebDAVSync.step.needPush
             }
             throw error
         }
-        const webdavSyncDate = webdavResp.data.timestamp
+        const webdavTimestamp = webdavResp.data.timestamp
 
-        const ld = new Date(localSyncDate)
-        const wd = new Date(webdavSyncDate)
-        if (ld > wd) {
+        const li = Number(localTimestamp)
+        const wi = Number(webdavTimestamp)
+
+        if (wi === 0) {
+            // 重置 webdav 数据
+            this.newLocalTimestamp()
+            await this.push()
+            return WebDAVSync.step.stay
+        }
+
+        if (li > wi) {
             return WebDAVSync.step.needPush
-        } else if (ld < wd) {
-            if (!this.kernel.storage.isEmpty() && localSyncDate === 0) {
+        } else if (li < wi) {
+            if (!this.kernel.storage.isEmpty() && localTimestamp === this.initLocalTimestamp) {
                 return WebDAVSync.step.conflict
             }
             return WebDAVSync.step.needPull
         } else {
-            console.log(ld)
-            console.log(webdavResp.data)
             return WebDAVSync.step.stay
         }
     }
 
+    async syncImages() {
+        const webdavImages = await this.webdavImages()
+        const dbImages = this.kernel.storage.allImageFromDb(false)
+        const localImages = this.kernel.storage.localImagesFromFile()
+        // 删除本地多余图片
+        Object.keys(localImages).map(key => {
+            localImages[key].forEach(async image => {
+                if (!dbImages[key].includes(image)) {
+                    const localPath = FileStorage.join(this.kernel.storage.imagePath[key], image)
+                    this.kernel.fileStorage.delete(localPath)
+                }
+            })
+        })
+        // 从 webdav 下载本地缺失图片或上传 webdav 缺失图片
+        Object.keys(dbImages).map(key => {
+            dbImages[key].forEach(async image => {
+                const webdavPath = FileStorage.join(this.webdavImagePath, key, image)
+                const localPath = FileStorage.join(this.kernel.storage.imagePath[key], image)
+                if (webdavImages[key].includes(image) && !this.kernel.fileStorage.exists(localPath)) {
+                    const resp = await this.webdav.get(webdavPath)
+                    this.kernel.fileStorage.writeSync(localPath, resp.rawData)
+                    this.kernel.print(`Image downloaded: ${localPath}`)
+                } else if (!webdavImages[key].includes(image)) {
+                    const file = this.kernel.fileStorage.readSync(localPath)
+                    await this.webdav.put(webdavPath, file)
+                    this.kernel.print(`Image uploaded: ${webdavPath}`)
+                }
+            })
+        })
+        // 遍历 webdavImages 删除 webdav 中本地没有的图片
+        Object.keys(webdavImages).map(key => {
+            webdavImages[key].forEach(async image => {
+                if (!dbImages[key].includes(image)) {
+                    const webdavPath = FileStorage.join(this.webdavImagePath, key, image)
+                    await this.webdav.delete(webdavPath)
+                    this.kernel.print(`Image deleted: ${webdavPath}`)
+                }
+            })
+        })
+    }
     async pull() {
         let webdavResp = await this.webdav.get(this.webdavDbPath)
         this.localDb = webdavResp.rawData
@@ -129,10 +213,14 @@ class WebDAVSync {
         this.localSyncData = syncData
 
         this.kernel.storage.init()
+
+        await this.syncImages()
     }
     async push() {
         await this.webdav.put(this.webdavDbPath, this.localDb)
         await this.webdav.put(this.webdavSyncDataPath, this.localSyncData)
+
+        await this.syncImages()
     }
 
     async sync() {
@@ -156,7 +244,12 @@ class WebDAVSync {
                 if (resp.index === 2) {
                     return
                 }
-                resp.index === 0 ? await this.pull() : await this.push()
+                if (resp.index === 0) {
+                    await this.pull()
+                } else {
+                    this.newLocalTimestamp()
+                    await this.push()
+                }
             } else {
                 $app.notify({
                     name: "clipSyncStatus",

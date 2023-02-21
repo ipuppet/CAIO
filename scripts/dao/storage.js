@@ -18,9 +18,13 @@ class Storage {
         // 路径基于 this.kernel.fileStorage
         this.dbName = "CAIO.db"
         this.localDb = `/${this.dbName}`
-        this.imagePath = `/image`
-        this.imageOriginalPath = `${this.imagePath}/original`
-        this.imagePreviewPath = `${this.imagePath}/preview`
+
+        const imageBasePath = `/image`
+        this.imagePath = {
+            base: imageBasePath,
+            original: `${imageBasePath}/original`,
+            preview: `${imageBasePath}/preview`
+        }
 
         this.tempPath = `/temp`
         this.tempDbFile = `${this.tempPath}/${this.dbName}`
@@ -34,7 +38,7 @@ class Storage {
 
     setNeedSync() {
         if (!this.kernel.setting.get("webdav.status")) return
-        this.webdavSync.updateLocalSyncData()
+        this.webdavSync.updateLocalTimestamp()
         this.webdavSync.sync()
     }
 
@@ -141,7 +145,7 @@ class Storage {
     }
 
     deleteAllData() {
-        this.kernel.fileStorage.delete(this.imagePath)
+        this.kernel.fileStorage.delete(this.imagePath.base)
         this.kernel.fileStorage.delete(this.localDb)
         this.setNeedSync()
     }
@@ -153,7 +157,7 @@ class Storage {
     async export(callback) {
         this.clearTemp()
         this.kernel.fileStorage.copy(this.localDb, this.tempDbFile)
-        this.kernel.fileStorage.copy(this.imagePath, this.tempImagePath)
+        this.kernel.fileStorage.copy(this.imagePath.base, this.tempImagePath)
         const exportFile = this.tempPath + "/" + this.exportFileName
         await $archiver.zip({
             directory: this.kernel.fileStorage.filePath(this.tempPath),
@@ -184,9 +188,9 @@ class Storage {
             }
             this.kernel.fileStorage.move(this.tempDbFile, this.localDb)
             // image
-            this.kernel.fileStorage.move(this.tempImagePath, this.imagePath)
+            this.kernel.fileStorage.move(this.tempImagePath, this.imagePath.base)
         }
-        this.webdavSync.initLocalSyncDate()
+        this.webdavSync.newLocalTimestamp()
     }
 
     sort(data, maxLoop = 9000) {
@@ -345,8 +349,8 @@ class Storage {
             const image = clip.image
             const fileName = $text.uuid
             const path = {
-                original: `${this.imageOriginalPath}/${fileName}.png`,
-                preview: `${this.imagePreviewPath}/${fileName}.jpg`
+                original: `${this.imagePath.original}/${fileName}.png`,
+                preview: `${this.imagePath.preview}/${fileName}.jpg`
             }
             this.kernel.fileStorage.write(path.original, image.png)
             this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
@@ -410,6 +414,37 @@ class Storage {
     isEmpty() {
         const result = this.sqlite.query(`SELECT * FROM clips favorite limit 1`)
         return this.parse(result).length === 0
+    }
+    allImageFromDb(sortByImage = true) {
+        const result = this.sqlite.query(`SELECT * FROM clips favorite WHERE text like "@image=%"`)
+        const images = this.parse(result)?.map(item => {
+            let path = this.keyToPath(item.text)
+            path.preview = path.preview.replace(this.imagePath.preview, "")
+            if (path.preview.startsWith("/")) {
+                path.preview = path.preview.substring(1)
+            }
+
+            path.original = path.original.replace(this.imagePath.original, "")
+            if (path.original.startsWith("/")) {
+                path.original = path.original.substring(1)
+            }
+            return path
+        })
+        const original = [],
+            preview = []
+        if (!sortByImage) {
+            // 图片单独分到 original 和 preview
+            images.forEach(i => {
+                original.push(i.original)
+                preview.push(i.preview)
+            })
+        }
+        return !sortByImage ? { original, preview } : images
+    }
+    localImagesFromFile() {
+        const original = this.kernel.fileStorage.readSync(this.kernel.storage.imagePath.original)
+        const preview = this.kernel.fileStorage.readSync(this.kernel.storage.imagePath.preview)
+        return { original, preview }
     }
 
     setTag(uuid, tag) {
