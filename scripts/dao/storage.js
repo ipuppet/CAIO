@@ -1,5 +1,5 @@
 const { Kernel } = require("../libs/easy-jsbox")
-const WebDAVSync = require("./webdav-sync")
+const WebDavSyncClip = require("./webdav-sync-clip")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -51,7 +51,7 @@ class Storage {
         if (!this.kernel.setting.get("webdav.status")) return
 
         try {
-            this.webdavSync = new WebDAVSync({
+            this.webdavSync = new WebDavSyncClip({
                 kernel: this.kernel,
                 host: this.kernel.setting.get("webdav.host"),
                 user: this.kernel.setting.get("webdav.user"),
@@ -66,6 +66,7 @@ class Storage {
     }
 
     init() {
+        if (this.sqlite) this.sqlite.close()
         // 初始化表
         this.sqlite = $sqlite.open(this.kernel.fileStorage.filePath(this.localDb))
         this.sqlite.update(
@@ -190,7 +191,7 @@ class Storage {
             // image
             this.kernel.fileStorage.move(this.tempImagePath, this.imagePath.base)
         }
-        this.webdavSync.newLocalTimestamp()
+        this.webdavSync.updateLocalTimestamp()
     }
 
     sort(data, maxLoop = 9000) {

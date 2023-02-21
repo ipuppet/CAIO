@@ -155,7 +155,7 @@ class ActionManagerData {
     }
 
     async sync(loop = false) {
-        if (!this.kernel.setting.get("experimental.syncAction")) {
+        if (!this.kernel.setting.get("experimental.syncAction") || this.kernel.setting.get("webdav.status")) {
             return
         }
         if (this.#syncLock) {
@@ -229,6 +229,10 @@ class ActionManagerData {
                 handler: () => this.sync(loop)
             })
         }
+    }
+
+    async syncWithWebDav() {
+        if (!this.kernel.setting.get("webdav.status")) return
     }
 
     checkUserAction() {

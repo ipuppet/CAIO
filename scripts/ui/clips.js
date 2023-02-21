@@ -13,7 +13,7 @@ const ClipsData = require("../dao/clips-data")
 const ClipsSearch = require("./clips-search")
 const ClipsEditor = require("./clips-editor")
 const { ActionData, ActionEnv } = require("../action/action")
-const WebDAVSync = require("../dao/webdav-sync")
+const WebDavSync = require("../dao/webdav-sync")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -100,8 +100,11 @@ class Clips extends ClipsData {
                 })
             },
             clipSyncStatus: args => {
-                if (args.status === WebDAVSync.status.success) {
-                    this.updateList(true)
+                if (args.status === WebDavSync.status.success) {
+                    console.log(args.updateList)
+                    if (args.updateList) {
+                        this.updateList(true)
+                    }
                 }
             }
         })
