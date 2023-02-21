@@ -171,6 +171,7 @@ class WebDAVSync {
                 if (!dbImages[key].includes(image)) {
                     const localPath = FileStorage.join(this.kernel.storage.imagePath[key], image)
                     this.kernel.fileStorage.delete(localPath)
+                    this.kernel.print(`Local image deleted: ${localPath}`)
                 }
             })
         })
@@ -182,11 +183,11 @@ class WebDAVSync {
                 if (webdavImages[key].includes(image) && !this.kernel.fileStorage.exists(localPath)) {
                     const resp = await this.webdav.get(webdavPath)
                     this.kernel.fileStorage.writeSync(localPath, resp.rawData)
-                    this.kernel.print(`Image downloaded: ${localPath}`)
+                    this.kernel.print(`WebDAV image downloaded: ${localPath}`)
                 } else if (!webdavImages[key].includes(image)) {
                     const file = this.kernel.fileStorage.readSync(localPath)
                     await this.webdav.put(webdavPath, file)
-                    this.kernel.print(`Image uploaded: ${webdavPath}`)
+                    this.kernel.print(`WebDAV image uploaded: ${webdavPath}`)
                 }
             })
         })
@@ -196,7 +197,7 @@ class WebDAVSync {
                 if (!dbImages[key].includes(image)) {
                     const webdavPath = FileStorage.join(this.webdavImagePath, key, image)
                     await this.webdav.delete(webdavPath)
-                    this.kernel.print(`Image deleted: ${webdavPath}`)
+                    this.kernel.print(`WebDAV image deleted: ${webdavPath}`)
                 }
             })
         })
