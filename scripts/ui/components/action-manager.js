@@ -38,18 +38,18 @@ class ActionManager extends ActionManagerData {
         $app.listen({
             actionSyncStatus: args => {
                 if (args.status === WebDavSync.status.syncing) {
-                    this.undateNavButton(true)
-                    this.undateSyncLabel($l10n("SYNCING"))
+                    this.updateNavButton(true)
+                    this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success) {
                     try {
                         this.matrix.update(this.actionList)
                     } catch (error) {
                         this.kernel.error(error)
-                        this.undateSyncLabel(error)
+                        this.updateSyncLabel(error)
                         $ui.error(error)
                     } finally {
-                        this.undateSyncLabel()
-                        this.undateNavButton(false)
+                        this.updateSyncLabel()
+                        this.updateNavButton(false)
                     }
                 }
             }
@@ -423,7 +423,7 @@ class ActionManager extends ActionManagerData {
         }
     }
 
-    undateSyncLabel(message) {
+    updateSyncLabel(message) {
         if (!message) {
             message = $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
         }
@@ -432,7 +432,7 @@ class ActionManager extends ActionManagerData {
         }
     }
 
-    undateNavButton(loading) {
+    updateNavButton(loading) {
         const addActionButton = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId)
         if (addActionButton) {
             addActionButton.setLoading(loading)
@@ -732,12 +732,12 @@ class ActionManager extends ActionManagerData {
                 },
                 pulled: sender => {
                     $delay(0.5, async () => {
-                        this.undateNavButton(true)
+                        this.updateNavButton(true)
                         await this.sync()
                         this.actionsNeedReload()
                         this.matrix.update(this.actionList)
-                        this.undateSyncLabel()
-                        this.undateNavButton(false)
+                        this.updateSyncLabel()
+                        this.updateNavButton(false)
                         sender.endRefreshing()
                     })
                 }
@@ -765,13 +765,13 @@ class ActionManager extends ActionManagerData {
                 symbol: "arrow.triangle.2.circlepath.circle",
                 tapped: async (animate, sender) => {
                     animate.start()
-                    this.undateNavButton(true)
+                    this.updateNavButton(true)
                     await this.sync()
                     this.actionsNeedReload()
                     this.matrix.update(this.actionList)
-                    this.undateSyncLabel()
+                    this.updateSyncLabel()
                     animate.done()
-                    this.undateNavButton(false)
+                    this.updateNavButton(false)
                 }
             })
         }
