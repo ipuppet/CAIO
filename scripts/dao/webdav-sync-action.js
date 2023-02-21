@@ -6,7 +6,7 @@ const WebDavSync = require("./webdav-sync")
  */
 
 class WebDavSyncAction extends WebDavSync {
-    localSyncDataPath = "/sync.json"
+    localSyncDataPath = "/user_action/sync.json"
     webdavSyncDataPath = "/sync.json"
 
     tempPath = "/temp"
