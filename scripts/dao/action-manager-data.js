@@ -57,6 +57,7 @@ class ActionManagerData {
     actionsNeedReload(needSync = false) {
         this.#actions = undefined
         if (needSync) {
+            this.isNew = false
             $file.write({
                 data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
                 path: this.localSyncFile
