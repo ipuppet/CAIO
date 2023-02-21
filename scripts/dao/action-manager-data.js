@@ -61,6 +61,7 @@ class ActionManagerData {
                 data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
                 path: this.localSyncFile
             })
+            this.syncWithWebDav()
         }
     }
 
@@ -401,12 +402,12 @@ class ActionManagerData {
             name: info.name
         })
         this.#saveFile(info.type, info.dir, "README.md", info.readme)
-
         this.actionsNeedReload(true)
     }
 
     saveMainJs(info, content) {
         this.#saveFile(info.type, info.dir, "main.js", content)
+        this.actionsNeedReload(true)
     }
 
     saveOrder(type, order) {
