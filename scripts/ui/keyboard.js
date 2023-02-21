@@ -119,7 +119,11 @@ class Keyboard extends Clips {
                 $device.taptic(level)
             }
             if (typeof tapped === "function") {
-                await tapped(...args)
+                try {
+                    await tapped(...args)
+                } catch (error) {
+                    this.kernel.error(error)
+                }
             }
         }
     }
@@ -136,8 +140,13 @@ class Keyboard extends Clips {
                 symbol: "square.and.arrow.down.on.square",
                 tapped: this.keyboardTapped(async animate => {
                     animate.start()
-                    await this.readClipboard(true)
-                    animate.done()
+                    try {
+                        await this.readClipboard(true)
+                        animate.done()
+                    } catch (error) {
+                        animate.cancel()
+                        throw error
+                    }
                 })
             },
             {

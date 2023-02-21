@@ -101,7 +101,6 @@ class Clips extends ClipsData {
             },
             clipSyncStatus: args => {
                 if (args.status === WebDavSync.status.success) {
-                    console.log(args.updateList)
                     if (args.updateList) {
                         this.updateList(true)
                     }
@@ -161,7 +160,11 @@ class Clips extends ClipsData {
     }
 
     updateCopied(copied = {}) {
-        Object.assign(this.copied, copied)
+        if (copied === null) {
+            this.copied = {}
+        } else {
+            Object.assign(this.copied, copied)
+        }
         this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
@@ -189,20 +192,27 @@ class Clips extends ClipsData {
         copied.tabIndex = this.tabIndex
         copied.row = row
 
-        const oldRow = this.copied.row
-
         this.updateCopied(copied)
 
         if (isUpdateIndicator) {
             $delay(0.3, () => {
                 const listView = $(this.listId)
-                const oldCell = listView.cell($indexPath(0, oldRow))
+                const oldCell = listView.cell($indexPath(0, this.copied.row))
                 if (oldCell) {
                     oldCell.get("copied").hidden = true
                 }
                 listView.cell($indexPath(0, row)).get("copied").hidden = false
             })
         }
+    }
+
+    clearCopied() {
+        const listView = $(this.listId)
+        const oldCell = listView.cell($indexPath(0, this.copied.row))
+        if (oldCell) {
+            oldCell.get("copied").hidden = true
+        }
+        this.updateCopied(null)
     }
 
     async readClipboard(manual = false) {
@@ -216,29 +226,30 @@ class Clips extends ClipsData {
                     $clipboard.images.forEach(image => {
                         this.add(image)
                     })
-                    return true
+                    return
                 }
-                return false
+                return
             }
 
             // 剪切板没有变化则直接退出
-            if (!this.isChanged) {
-                if (manual) {
-                    $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
-                }
+            if (!manual && !this.isChanged) {
                 return
             }
 
             const text = $clipboard.text
 
             if (!text || text === "") {
-                return false
+                this.clearCopied()
+                return
             }
 
             // 判断 copied 是否和剪切板一致
             // 开发模式下，清空数据后该值仍然存在，可能造成：无法保存相同的数据
             if (this.copied.text === text) {
-                return false
+                if (manual) {
+                    $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
+                }
+                return
             }
 
             const md5 = $text.MD5(text)
@@ -254,7 +265,6 @@ class Clips extends ClipsData {
                 this.copy(0)
             }
         }
-        return false
     }
 
     add(item) {
@@ -830,8 +840,13 @@ class Clips extends ClipsData {
                     symbol: "square.and.arrow.down.on.square",
                     tapped: async animate => {
                         animate.start()
-                        await this.readClipboard(true)
-                        animate.done()
+                        try {
+                            await this.readClipboard(true)
+                            animate.done()
+                        } catch (error) {
+                            animate.cancel()
+                            this.kernel.error(error)
+                        }
                     }
                 }
             ])

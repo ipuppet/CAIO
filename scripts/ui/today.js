@@ -77,9 +77,7 @@ class Today extends Clips {
     async readClipboard(manual = false) {
         if (!this.isActionPage && $app.env === $env.today) {
             await super.readClipboard(manual)
-            return true
         }
-        return false
     }
 
     setClipboarPageSize(mode) {
@@ -132,10 +130,12 @@ class Today extends Clips {
                 },
                 tapped: this.buttonTapped(async animate => {
                     animate.start()
-                    if (await this.readClipboard(true)) {
+                    try {
+                        await this.readClipboard(true)
                         animate.done()
-                    } else {
+                    } catch (error) {
                         animate.cancel()
+                        throw error
                     }
                 })
             }
