@@ -13,7 +13,8 @@ class WebDAVSync {
     }
     static status = {
         syncing: 0,
-        success: 1
+        success: 1,
+        nochange: 2
     }
 
     /**
@@ -141,8 +142,7 @@ class WebDAVSync {
             const syncStatus = await this.syncStatus()
             this.kernel.print(`syncStatus: ${syncStatus}`)
             if (syncStatus === WebDAVSync.step.needPush) {
-                await this.webdav.put(this.webdavDbPath, this.localDb)
-                await this.webdav.put(this.webdavSyncDataPath, this.localSyncData)
+                await this.push()
             } else if (syncStatus === WebDAVSync.step.needPull) {
                 await this.pull()
             } else if (syncStatus === WebDAVSync.step.conflict) {
@@ -156,7 +156,10 @@ class WebDAVSync {
                 }
                 resp.index === 0 ? await this.pull() : await this.push()
             } else {
-                // 直接返回，不触发 $app.notify
+                $app.notify({
+                    name: "clipSyncStatus",
+                    object: { status: WebDAVSync.status.nochange }
+                })
                 return
             }
         } catch (error) {
