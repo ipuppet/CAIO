@@ -3,3 +3,4 @@
 .vscode
 node_modules
 .parcel-cache
+test.js

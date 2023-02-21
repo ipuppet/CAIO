@@ -26,6 +26,11 @@ class WebDavSync {
         nochange: 2,
         fail: 3
     }
+    static conflictKeep = {
+        local: 0,
+        webdav: 1,
+        cancel: 2
+    }
 
     /**
      * @type {WebDAV}
@@ -81,10 +86,30 @@ class WebDavSync {
         this.localSyncData = Object.assign(this.localSyncData, { timestamp })
     }
 
-    async init() {
-        let exists = await this.webdav.exists("/")
+    /**
+     *
+     * @param {string} path
+     */
+    async init(path = this.webdav.basepath) {
+        const webdav = new WebDAV({
+            host: this.webdav.host,
+            user: this.webdav.user,
+            password: this.webdav.password,
+            basepath: path
+        })
+        let exists = await webdav.exists("/")
         if (!exists) {
-            await this.webdav.mkdir("/")
+            try {
+                await webdav.mkdir("/")
+            } catch (error) {
+                if (error.code === 409) {
+                    // 递归创建目录
+                    await this.init(path.substring(0, path.lastIndexOf("/")))
+                    await this.init(path)
+                    return
+                }
+                throw error
+            }
         }
     }
 
@@ -92,7 +117,7 @@ class WebDavSync {
      * 要同步的数据是否是刚刚初始化的（无内容）状态
      * @returns {boolean}
      */
-    isEmpty() {
+    isNew() {
         return false
     }
 
@@ -155,11 +180,33 @@ class WebDavSync {
         }
         if (localTimestamp < webdavTimestamp) {
             // WebDAV 有数据，本地 sync 时间戳为 0，发生数据冲突
-            if (!this.isEmpty() && localTimestamp === this.initLocalTimestamp) {
+            if (!this.isNew() && localTimestamp === this.initLocalTimestamp) {
                 return WebDavSync.step.conflict
             }
             return WebDavSync.step.needPull
         }
+    }
+
+    async conflict(name = "") {
+        const actions = []
+        actions[WebDavSync.conflictKeep.local] = $l10n("LOCAL_DATA")
+        actions[WebDavSync.conflictKeep.webdav] = $l10n("WEBDAV_DATA")
+        actions[WebDavSync.conflictKeep.cancel] = $l10n("CANCEL")
+        const resp = await $ui.alert({
+            title: $l10n("DATA_CONFLICT"),
+            message: $l10n("DATA_CONFLICT_MESSAGE") + ` (${name})`,
+            actions
+        })
+        if (resp.index !== WebDavSync.conflictKeep.cancel) {
+            if (resp.index === WebDavSync.conflictKeep.local) {
+                this.kernel.print(`conflict resolve: keep local database`)
+                await this.push()
+            } else {
+                this.kernel.print(`conflict resolve: keep WebDAV database`)
+                await this.pull()
+            }
+        }
+        return resp.index
     }
 }
 

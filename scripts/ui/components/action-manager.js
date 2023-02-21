@@ -2,6 +2,7 @@ const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require
 const Editor = require("./editor")
 const ActionManagerData = require("../../dao/action-manager-data")
 const { ActionEnv, ActionData } = require("../../action/action")
+const WebDavSync = require("../../dao/webdav-sync")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -36,10 +37,10 @@ class ActionManager extends ActionManagerData {
     actionSyncStatus() {
         $app.listen({
             actionSyncStatus: args => {
-                if (args.status === ActionManagerData.syncStatus.syncing) {
+                if (args.status === WebDavSync.status.syncing) {
                     this.undateNavButton(true)
                     this.undateSyncLabel($l10n("SYNCING"))
-                } else if (args.status === ActionManagerData.syncStatus.success) {
+                } else if (args.status === WebDavSync.status.success) {
                     try {
                         this.matrix.update(this.actionList)
                     } catch (error) {
@@ -424,7 +425,7 @@ class ActionManager extends ActionManagerData {
 
     undateSyncLabel(message) {
         if (!message) {
-            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+            message = $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
         }
         if ($(this.syncLabelId)) {
             $(this.syncLabelId).text = message
@@ -708,7 +709,7 @@ class ActionManager extends ActionManagerData {
                                 id: this.syncLabelId,
                                 color: $color("secondaryText"),
                                 font: $font(12),
-                                text: $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+                                text: $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
                             },
                             layout: (make, view) => {
                                 make.size.equalTo(view.super)

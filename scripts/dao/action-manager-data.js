@@ -1,14 +1,11 @@
 const { ActionEnv, ActionData, Action } = require("../action/action")
+const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
 class ActionManagerData {
-    static syncStatus = {
-        syncing: 0,
-        success: 1
-    }
     #syncInterval = 3
     #syncLock = false
     #actions
@@ -23,10 +20,10 @@ class ActionManagerData {
         this.actionOrderFile = "order.json"
         this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
-        this.localSyncFile = this.userActionPath + "/data.json"
+        this.localSyncFile = this.userActionPath + "/sync.json"
         this.iCloudPath = "drive://CAIO/user_action"
-        this.iCloudSyncFile = this.iCloudPath + "/data.json"
-        this.iCloudSyncFileUndownloaded = this.iCloudPath + "/.data.json.icloud"
+        this.iCloudSyncFile = this.iCloudPath + "/sync.json"
+        this.iCloudSyncFileUndownloaded = this.iCloudPath + "/.sync.json.icloud"
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
         // checkUserAction
@@ -50,11 +47,18 @@ class ActionManagerData {
         return this.#actions
     }
 
+    get isNew() {
+        return $cache.get("caio.action.isNew") ?? false
+    }
+    set isNew(isNew) {
+        $cache.get("caio.action.isNew", isNew)
+    }
+
     actionsNeedReload(needSync = false) {
         this.#actions = undefined
         if (needSync) {
             $file.write({
-                data: $data({ string: JSON.stringify({ date: Date.now() }) }),
+                data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
                 path: this.localSyncFile
             })
         }
@@ -132,13 +136,13 @@ class ActionManagerData {
 
     getSyncDate() {
         const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
-        return new Date(localSyncData.date)
+        return new Date(localSyncData.timestamp)
     }
 
     checkSyncData() {
         if (!$file.exists(this.localSyncFile)) {
             $file.write({
-                data: $data({ string: JSON.stringify({ date: 0 }) }),
+                data: $data({ string: JSON.stringify({ timestamp: 0 }) }),
                 path: this.localSyncFile
             })
         }
@@ -147,7 +151,7 @@ class ActionManagerData {
                 $file.download(this.iCloudSyncFileUndownloaded)
             } else {
                 $file.write({
-                    data: $data({ string: JSON.stringify({ date: 0 }) }),
+                    data: $data({ string: JSON.stringify({ timestamp: 0 }) }),
                     path: this.iCloudSyncFile
                 })
             }
@@ -155,7 +159,11 @@ class ActionManagerData {
     }
 
     async sync(loop = false) {
-        if (!this.kernel.setting.get("experimental.syncAction") || this.kernel.setting.get("webdav.status")) {
+        if (!this.kernel.setting.get("experimental.syncAction")) {
+            return
+        }
+        if (this.kernel.setting.get("webdav.status")) {
+            await this.syncWithWebDav()
             return
         }
         if (this.#syncLock) {
@@ -174,11 +182,11 @@ class ActionManagerData {
         }
         iCloudSyncData = JSON.parse(iCloudSyncData)
         const localSyncData = JSON.parse($file.read(this.localSyncFile).string)
-        if (localSyncData.date < iCloudSyncData.date) {
+        if (localSyncData.timestamp < iCloudSyncData.timestamp) {
             this.kernel.print("local data need update")
             $app.notify({
                 name: "actionSyncStatus",
-                object: { status: ActionManagerData.syncStatus.syncing }
+                object: { status: WebDavSyncAction.status.syncing }
             })
             // temp
             const usetActionTempPath = this.tempPath + "/user_action"
@@ -203,13 +211,13 @@ class ActionManagerData {
             this.actionsNeedReload()
             $app.notify({
                 name: "actionSyncStatus",
-                object: { status: ActionManagerData.syncStatus.success }
+                object: { status: WebDavSyncAction.status.success }
             })
-        } else if (localSyncData.date > iCloudSyncData.date) {
+        } else if (localSyncData.timestamp > iCloudSyncData.timestamp) {
             // 直接更新 iCloudSyncFile
             // 在其他方法中已经对 iCloud 文件进行了更改
             $file.write({
-                data: $data({ string: JSON.stringify({ date: localSyncData.date }) }),
+                data: $data({ string: JSON.stringify({ timestamp: localSyncData.timestamp }) }),
                 path: this.iCloudSyncFile
             })
             // 停顿一个同步间隔
@@ -217,7 +225,7 @@ class ActionManagerData {
             // 通知更新 UI
             $app.notify({
                 name: "actionSyncStatus",
-                object: { status: ActionManagerData.syncStatus.success }
+                object: { status: WebDavSyncAction.status.success }
             })
         }
 
@@ -233,11 +241,25 @@ class ActionManagerData {
 
     async syncWithWebDav() {
         if (!this.kernel.setting.get("webdav.status")) return
+        try {
+            this.webdavSync = new WebDavSyncAction({
+                kernel: this.kernel,
+                host: this.kernel.setting.get("webdav.host"),
+                user: this.kernel.setting.get("webdav.user"),
+                password: this.kernel.setting.get("webdav.password"),
+                basepath: this.kernel.setting.get("webdav.basepath")
+            })
+            await this.webdavSync.init()
+        } catch (error) {
+            this.kernel.error(error)
+            throw error
+        }
     }
 
     checkUserAction() {
         if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
             $file.mkdir(this.userActionPath)
+            this.isNew = false
             this.importExampleAction()
         }
         if (!$file.exists(this.iCloudPath) || $file.list(this.iCloudPath).length === 0) {

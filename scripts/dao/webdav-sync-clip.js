@@ -6,11 +6,6 @@ const WebDavSync = require("./webdav-sync")
  */
 
 class WebDavSyncClip extends WebDavSync {
-    static conflictKeep = {
-        local: 0,
-        webdav: 1,
-        cancel: 2
-    }
     localSyncDataPath = "/sync.json"
     webdavSyncDataPath = "/sync.json"
 
@@ -46,7 +41,7 @@ class WebDavSyncClip extends WebDavSync {
         }
     }
 
-    isEmpty() {
+    isNew() {
         return this.kernel.storage.isEmpty()
     }
 
@@ -120,32 +115,13 @@ class WebDavSyncClip extends WebDavSync {
 
         this.kernel.storage.init()
         await this.syncImages()
+        this.kernel.print(`clip webdav sync: pulled`)
     }
     async push() {
         await this.webdav.put(this.webdavDbPath, this.localDb)
         await this.uploadSyncData()
         await this.syncImages()
-    }
-    async conflict() {
-        const actions = []
-        actions[WebDavSyncClip.conflictKeep.local] = $l10n("LOCAL_DATABASE")
-        actions[WebDavSyncClip.conflictKeep.webdav] = $l10n("WEBDAV_DATABASE")
-        actions[WebDavSyncClip.conflictKeep.cancel] = $l10n("CANCEL")
-        const resp = await $ui.alert({
-            title: $l10n("DATABASE_CONFLICT"),
-            message: $l10n("DATABASE_CONFLICT_MESSAGE"),
-            actions
-        })
-        if (resp.index !== WebDavSyncClip.conflictKeep.cancel) {
-            if (resp.index === WebDavSyncClip.conflictKeep.local) {
-                this.kernel.print(`conflict resolve: keep local database`)
-                await this.push()
-            } else {
-                this.kernel.print(`conflict resolve: keep WebDAV database`)
-                await this.pull()
-            }
-        }
-        return resp.index
+        this.kernel.print(`clip webdav sync: pushed`)
     }
 
     async sync() {
@@ -156,14 +132,14 @@ class WebDavSyncClip extends WebDavSync {
         let isPull = false
         try {
             const syncStep = await this.nextSyncStep()
-            this.kernel.print(`nextSyncStep: ${WebDavSync.stepName[syncStep]}`)
+            this.kernel.print(`clip nextSyncStep: ${WebDavSync.stepName[syncStep]}`)
             if (syncStep === WebDavSync.step.needPush || syncStep === WebDavSync.step.init) {
                 await this.push()
             } else if (syncStep === WebDavSync.step.needPull) {
                 await this.pull()
                 isPull = true
             } else if (syncStep === WebDavSync.step.conflict) {
-                const resp = await this.conflict()
+                const resp = await this.conflict($l10n("CLIPS"))
                 if (resp === WebDavSyncClip.conflictKeep.webdav) {
                     isPull = true
                 }

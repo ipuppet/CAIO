@@ -124,12 +124,13 @@
 "SYNC_ACTIONS" = "Sync Actions";
 "SYNCING" = "Syncing...";
 "LAST_SYNC_AT" = "Last sync at: ";
+"MODIFIED" = "Modified: ";
 
 "HOST" = "Host";
 "USER" = "User";
 "PASSWORD" = "Password";
 "BASEPATH" = "Base Path";
-"DATABASE_CONFLICT" = "A data synchronization conflict occurred";
-"DATABASE_CONFLICT_MESSAGE" = "Select the database you want to keep";
-"WEBDAV_DATABASE" = "WebDAV database";
-"LOCAL_DATABASE" = "Local database";
+"DATA_CONFLICT" = "A data synchronization conflict occurred";
+"DATA_CONFLICT_MESSAGE" = "Select the data you want to keep";
+"WEBDAV_DATA" = "WebDAV data";
+"LOCAL_DATA" = "Local data";
