@@ -478,22 +478,7 @@
                                 "value": false
                             }
                         ]
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        "items": [
-            {
-                "icon": [
-                    "cloud",
-                    "#FF9900"
-                ],
-                "title": "WebDAV",
-                "type": "child",
-                "key": "webdav.config",
-                "children": [
+                    },
                     {
                         "items": [
                             {
@@ -502,49 +487,64 @@
                                     "#FF9900"
                                 ],
                                 "title": "WebDAV",
-                                "type": "switch",
-                                "key": "webdav.status",
-                                "value": false
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": [
-                                    "link"
-                                ],
-                                "title": "HOST",
-                                "type": "input",
-                                "key": "webdav.host",
-                                "value": ""
-                            },
-                            {
-                                "icon": [
-                                    "person"
-                                ],
-                                "title": "USER",
-                                "type": "input",
-                                "key": "webdav.user",
-                                "value": ""
-                            },
-                            {
-                                "icon": [
-                                    "person.badge.key"
-                                ],
-                                "title": "PASSWORD",
-                                "type": "input",
-                                "key": "webdav.password",
-                                "value": ""
-                            },
-                            {
-                                "icon": [
-                                    "link"
-                                ],
-                                "title": "BASEPATH",
-                                "type": "input",
-                                "key": "webdav.basepath",
-                                "value": ""
+                                "type": "child",
+                                "key": "webdav.config",
+                                "children": [
+                                    {
+                                        "items": [
+                                            {
+                                                "icon": [
+                                                    "cloud",
+                                                    "#FF9900"
+                                                ],
+                                                "title": "WebDAV",
+                                                "type": "switch",
+                                                "key": "webdav.status",
+                                                "value": false
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "items": [
+                                            {
+                                                "icon": [
+                                                    "link"
+                                                ],
+                                                "title": "HOST",
+                                                "type": "input",
+                                                "key": "webdav.host",
+                                                "value": ""
+                                            },
+                                            {
+                                                "icon": [
+                                                    "person"
+                                                ],
+                                                "title": "USER",
+                                                "type": "input",
+                                                "key": "webdav.user",
+                                                "value": ""
+                                            },
+                                            {
+                                                "icon": [
+                                                    "person.badge.key"
+                                                ],
+                                                "title": "PASSWORD",
+                                                "type": "input",
+                                                "key": "webdav.password",
+                                                "value": ""
+                                            },
+                                            {
+                                                "icon": [
+                                                    "link"
+                                                ],
+                                                "title": "BASEPATH",
+                                                "type": "input",
+                                                "key": "webdav.basepath",
+                                                "value": ""
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         ]
                     }
