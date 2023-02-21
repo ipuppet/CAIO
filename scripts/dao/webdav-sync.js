@@ -246,10 +246,10 @@ class WebDAVSync {
                     return
                 }
                 if (resp.index === 0) {
-                    await this.pull()
-                } else {
                     this.newLocalTimestamp()
                     await this.push()
+                } else {
+                    await this.pull()
                 }
             } else {
                 $app.notify({

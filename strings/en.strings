@@ -130,6 +130,6 @@
 "PASSWORD" = "Password";
 "BASEPATH" = "Base Path";
 "DATABASE_CONFLICT" = "A data synchronization conflict occurred";
-"DATABASE_CONFLICT_MESSAGE" = "Local database: WebDAV database will be overwritten\nWebDAV database: Local database will be overwritten";
+"DATABASE_CONFLICT_MESSAGE" = "Select the database you want to keep";
 "WEBDAV_DATABASE" = "WebDAV database";
 "LOCAL_DATABASE" = "Local database";
