@@ -186,7 +186,7 @@ class Storage {
             // image
             this.kernel.fileStorage.move(this.tempImagePath, this.imagePath)
         }
-        this.webdavSync.reset()
+        this.webdavSync.initLocalSyncDate()
     }
 
     sort(data, maxLoop = 9000) {

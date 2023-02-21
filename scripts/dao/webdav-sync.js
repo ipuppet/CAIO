@@ -33,7 +33,7 @@ class WebDAVSync {
         let path = this.kernel.fileStorage.filePath(this.#fsLocalSyncDataPath)
         let data = $data({ path })
         if (!data) {
-            this.localSyncData = { date: 0 }
+            this.initLocalSyncDate()
             data = $data({ path })
         }
         return data
@@ -71,10 +71,14 @@ class WebDAVSync {
     }
 
     updateLocalSyncData() {
+        const localSyncDate = JSON.parse(this.localSyncData.string).date
+        if (localSyncDate === 0) {
+            return
+        }
         this.localSyncData = { date: Date.now() }
     }
 
-    reset() {
+    initLocalSyncDate() {
         this.localSyncData = { date: 0 }
     }
 
