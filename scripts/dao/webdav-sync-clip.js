@@ -24,7 +24,7 @@ class WebDavSyncClip extends WebDavSync {
     async init() {
         await super.init()
         await this.initImagePath()
-        await this.sync()
+        this.sync()
     }
 
     async initImagePath() {
@@ -124,7 +124,7 @@ class WebDavSyncClip extends WebDavSync {
         this.kernel.print(`clip webdav sync: pushed`)
     }
 
-    async sync() {
+    async #sync() {
         $app.notify({
             name: "clipSyncStatus",
             object: { status: WebDavSync.status.syncing }
@@ -168,6 +168,21 @@ class WebDavSyncClip extends WebDavSync {
                 }
             })
         }
+    }
+
+    sync() {
+        if (this.syncTimer) this.syncTimer.cancel()
+        this.syncTimer = $delay(0.5, () => {
+            this.#sync()
+        })
+    }
+
+    upload() {
+        if (this.uploadTimer) this.uploadTimer.cancel()
+        this.uploadTimer = $delay(0.5, () => {
+            this.updateLocalTimestamp()
+            this.#sync()
+        })
     }
 }
 

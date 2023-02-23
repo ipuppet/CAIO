@@ -83,6 +83,8 @@
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
+"UNABLE_CREATE_ACTION" = "无法创建动作";
+"ACTION_NAME_ALREADY_EXISTS" = "动作 ${name} 已存在";
 
 "KEYBOARD" = "键盘";
 "KEYBOARD_HEIGHT" = "键盘高度";

@@ -165,7 +165,7 @@ class ActionManagerData {
             return
         }
         if (this.kernel.setting.get("webdav.status")) {
-            await this.syncWithWebDav()
+            await this.initSyncWithWebDav()
             return
         }
         if (this.#syncLock) {
@@ -241,7 +241,7 @@ class ActionManagerData {
         }
     }
 
-    async syncWithWebDav() {
+    async initSyncWithWebDav() {
         if (!this.kernel.setting.get("webdav.status")) return
         try {
             this.webdavSync = new WebDavSyncAction({
@@ -255,6 +255,13 @@ class ActionManagerData {
         } catch (error) {
             this.kernel.error(error)
             throw error
+        }
+    }
+
+    async syncWithWebDav() {
+        if (!this.kernel.setting.get("webdav.status")) return
+        if (this.webdavSync) {
+            this.webdavSync.sync()
         }
     }
 
@@ -283,10 +290,32 @@ class ActionManagerData {
         )
     }
 
-    getActionOrder(type) {
-        const path = `${this.userActionPath}/${type}/${this.actionOrderFile}`
-        if ($file.exists(path)) return JSON.parse($file.read(path).string)
-        else return []
+    getActionOrder(type, must = false) {
+        const typePath = `${this.userActionPath}/${type}`
+        const orderPath = `${typePath}/${this.actionOrderFile}`
+        if ($file.exists(orderPath)) {
+            const order = JSON.parse($file.read(orderPath).string)
+            const filtered = order.filter(action => {
+                if ($file.exists(`${typePath}/${action}`)) {
+                    return true
+                }
+                return false
+            })
+            if (filtered.length !== order.length) {
+                this.saveOrder(type, filtered)
+            }
+            return filtered
+        } else {
+            if (must) {
+                const order = []
+                $file.list(typePath).forEach(item => {
+                    order.push(item)
+                })
+                return order
+            } else {
+                return []
+            }
+        }
     }
 
     getActionPath(type, dir) {
@@ -458,14 +487,20 @@ class ActionManagerData {
                 dst: `${this.iCloudPath}/${toType}/${toItems[to.row].dir}`
             })
         }
-
-        this.actionsNeedReload(true)
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
         $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
         this.actionsNeedReload(true)
+    }
+
+    exists(info) {
+        const path = `${this.userActionPath}/${info.type}/${info.dir}`
+        if ($file.exists(path)) {
+            return true
+        }
+        return false
     }
 }
 

@@ -20,7 +20,7 @@ class WebDavSyncAction extends WebDavSync {
 
     async init() {
         await super.init()
-        await this.sync()
+        this.sync()
     }
 
     isNew() {
@@ -57,7 +57,7 @@ class WebDavSyncAction extends WebDavSync {
         this.kernel.print(`action webdav sync: pushed`)
     }
 
-    async sync() {
+    async #sync() {
         $app.notify({
             name: "actionSyncStatus",
             object: { status: WebDavSync.status.syncing }
@@ -101,6 +101,13 @@ class WebDavSyncAction extends WebDavSync {
                 }
             })
         }
+    }
+
+    sync() {
+        if (this.syncTimer) this.syncTimer.cancel()
+        this.syncTimer = $delay(1, () => {
+            this.#sync()
+        })
     }
 }
 

@@ -36,17 +36,6 @@ class Storage {
         this.init()
     }
 
-    setNeedSync() {
-        if (!this.kernel.setting.get("webdav.status")) return
-        this.webdavSync.updateLocalTimestamp()
-        this.webdavSync.sync()
-    }
-
-    async sync() {
-        if (!this.kernel.setting.get("webdav.status")) return
-        await this.webdavSync.sync()
-    }
-
     async initWebdavSync() {
         if (!this.kernel.setting.get("webdav.status")) return
 
@@ -63,6 +52,17 @@ class Storage {
             this.kernel.error(error)
             throw error
         }
+    }
+
+    needUpload() {
+        if (!this.kernel.setting.get("webdav.status")) return
+        this.webdavSync.upload()
+    }
+
+    sync() {
+        if (!this.kernel.setting.get("webdav.status")) return false
+        this.webdavSync.sync()
+        return true
     }
 
     init() {
@@ -142,13 +142,13 @@ class Storage {
         })
 
         this.kernel.fileStorage.copy(db, this.localDb)
-        this.setNeedSync()
+        this.needUpload()
     }
 
     deleteAllData() {
         this.kernel.fileStorage.delete(this.imagePath.base)
         this.kernel.fileStorage.delete(this.localDb)
-        this.setNeedSync()
+        this.needUpload()
     }
 
     clearTemp() {
@@ -336,7 +336,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.setNeedSync()
+        this.needUpload()
     }
 
     all(table) {
@@ -364,7 +364,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.setNeedSync()
+        this.needUpload()
     }
     update(table, clip) {
         if (Object.keys(clip).length < 4 || typeof clip.uuid !== "string") return
@@ -375,7 +375,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.setNeedSync()
+        this.needUpload()
     }
     updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
@@ -386,7 +386,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.setNeedSync()
+        this.needUpload()
     }
     delete(table, uuid) {
         const clip = this.getByUUID(uuid)
@@ -404,13 +404,7 @@ class Storage {
             this.kernel.fileStorage.delete(path.original)
             this.kernel.fileStorage.delete(path.preview)
         }
-        if (this.deleteSyncTimer) {
-            this.deleteSyncTimer.cancel()
-        }
-        this.deleteSyncTimer = $delay(0.3, () => {
-            this.setNeedSync()
-            this.deleteSyncTimer = undefined
-        })
+        this.needUpload()
     }
     isEmpty() {
         const result = this.sqlite.query(`SELECT * FROM clips favorite limit 1`)
@@ -456,7 +450,7 @@ class Storage {
         if (!result.result) {
             throw result.error
         }
-        this.setNeedSync()
+        this.needUpload()
     }
     deleteTag(uuid) {
         const tagResult = this.sqlite.update({
@@ -466,7 +460,7 @@ class Storage {
         if (!tagResult.result) {
             throw tagResult.error
         }
-        this.setNeedSync()
+        this.needUpload()
     }
 }
 

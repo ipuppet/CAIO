@@ -17,16 +17,15 @@ class ActionManager extends ActionManagerData {
 
     get actionList() {
         return super.actions.map(type => {
-            const rows = []
+            const items = []
             type.items.forEach(action => {
-                rows.push(this.actionToData(action))
+                items.push(this.actionToData(action))
             })
 
             // 返回新对象
             return {
                 title: type.title,
-                items: rows,
-                rows: rows
+                items: items
             }
         })
     }
@@ -42,7 +41,7 @@ class ActionManager extends ActionManagerData {
                     this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success) {
                     try {
-                        this.matrix.update(this.actionList)
+                        this.matrix.data = this.actionList
                     } catch (error) {
                         this.kernel.error(error)
                         this.updateSyncLabel(error)
@@ -58,14 +57,10 @@ class ActionManager extends ActionManagerData {
 
     editActionInfoPageSheet(info, done) {
         const actionTypes = this.getActionTypes()
-        const actionTypesIndex = {} // 用于反查索引
-        actionTypes.forEach((key, index) => {
-            actionTypesIndex[key] = index
-        })
         const isNew = !Boolean(info)
         if (isNew) {
             this.editingActionInfo = {
-                type: "clipboard",
+                type: actionTypes[0],
                 name: "MyAction",
                 color: "#CC00CC",
                 icon: "icon_062.png", // 默认星星图标
@@ -79,17 +74,10 @@ class ActionManager extends ActionManagerData {
         const SettingUI = new Setting({
             structure: {},
             set: (key, value) => {
-                if (key === "type") {
-                    this.editingActionInfo[key] = value[1]
-                } else {
-                    this.editingActionInfo[key] = value
-                }
+                this.editingActionInfo[key] = value
                 return true
             },
             get: (key, _default = null) => {
-                if (key === "type") {
-                    return actionTypesIndex[this.editingActionInfo.type]
-                }
                 if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key))
                     return this.editingActionInfo[key]
                 else return _default
@@ -103,7 +91,14 @@ class ActionManager extends ActionManagerData {
             $l10n("ICON"),
             this.kernel.setting.getColor(this.editingActionInfo.color)
         )
-        const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, true)
+        const typeMenu = SettingUI.createMenu(
+            "type",
+            ["tag.circle", "#33CC33"],
+            $l10n("TYPE"),
+            actionTypes,
+            actionTypes,
+            true
+        )
         const readme = {
             type: "view",
             views: [
@@ -137,6 +132,26 @@ class ActionManager extends ActionManagerData {
         // 只有新建时才可选择类型
         if (isNew) data[0].rows = data[0].rows.concat(typeMenu)
         const sheet = new Sheet()
+        const sheetDone = async () => {
+            if (isNew) {
+                this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
+                if (this.exists(this.editingActionInfo)) {
+                    const resp = await $ui.alert({
+                        title: $l10n("UNABLE_CREATE_ACTION"),
+                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replace("${name}", this.editingActionInfo.name)
+                    })
+                    if (resp.index === 1) return
+                }
+                // reorder
+                const order = this.getActionOrder(this.editingActionInfo.type, true)
+                order.unshift(this.editingActionInfo.dir)
+                this.saveOrder(this.editingActionInfo.type, order)
+            }
+            sheet.dismiss()
+            this.saveActionInfo(this.editingActionInfo)
+            await $wait(0.6) // 等待 sheet 关闭
+            if (done) done(this.editingActionInfo)
+        }
         sheet
             .setView({
                 type: "list",
@@ -154,16 +169,13 @@ class ActionManager extends ActionManagerData {
             })
             .addNavBar({
                 title: "",
-                popButton: {
-                    title: $l10n("DONE"),
-                    tapped: () => {
-                        if (!this.editingActionInfo.dir) {
-                            this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
-                        }
-                        this.saveActionInfo(this.editingActionInfo)
-                        if (done) done(this.editingActionInfo)
+                popButton: { title: $l10n("CANCEL") },
+                rightButtons: [
+                    {
+                        title: $l10n("DONE"),
+                        tapped: async () => await sheetDone()
                     }
-                }
+                ]
             })
             .init()
             .present()
@@ -180,6 +192,23 @@ class ActionManager extends ActionManagerData {
             [
                 {
                     symbol: "book.circle",
+                    tapped: () => {
+                        const content = $file.read("scripts/action/README.md").string
+                        const sheet = new Sheet()
+                        sheet
+                            .setView({
+                                type: "markdown",
+                                props: { content: content },
+                                layout: (make, view) => {
+                                    make.size.equalTo(view.super)
+                                }
+                            })
+                            .init()
+                            .present()
+                    }
+                },
+                {
+                    symbol: "play.circle",
                     tapped: () => {
                         const content = $file.read("scripts/action/README.md").string
                         const sheet = new Sheet()
@@ -326,13 +355,14 @@ class ActionManager extends ActionManagerData {
                         {
                             title: $l10n("CREATE_NEW_ACTION"),
                             handler: () => {
-                                this.editActionInfoPageSheet(null, info => {
+                                this.editActionInfoPageSheet(null, async info => {
                                     this.matrix.insert({
                                         indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
                                         value: this.actionToData(info)
                                     })
                                     const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                                     this.saveMainJs(info, MainJsTemplate)
+                                    await $wait(0.3)
                                     this.editActionMainJs(MainJsTemplate, info)
                                 })
                             }
@@ -466,7 +496,14 @@ class ActionManager extends ActionManagerData {
                     rowHeight: 60,
                     sectionTitleHeight: 30,
                     stickyHeader: true,
-                    data: this.actionList,
+                    data: (() => {
+                        const data = this.actionList
+                        data.map(type => {
+                            type.rows = type.items
+                            return type
+                        })
+                        return data
+                    })(),
                     template: {
                         props: { bgcolor: $color("clear") },
                         views: [
@@ -735,7 +772,7 @@ class ActionManager extends ActionManagerData {
                         this.updateNavButton(true)
                         await this.sync()
                         this.actionsNeedReload()
-                        this.matrix.update(this.actionList)
+                        this.matrix.data = this.actionList
                         this.updateSyncLabel()
                         this.updateNavButton(false)
                         sender.endRefreshing()
@@ -768,7 +805,7 @@ class ActionManager extends ActionManagerData {
                     this.updateNavButton(true)
                     await this.sync()
                     this.actionsNeedReload()
-                    this.matrix.update(this.actionList)
+                    this.matrix.data = this.actionList
                     this.updateSyncLabel()
                     animate.done()
                     this.updateNavButton(false)
