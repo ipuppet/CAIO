@@ -56,13 +56,12 @@ class Storage {
 
     needUpload() {
         if (!this.kernel.setting.get("webdav.status")) return
-        this.webdavSync.upload()
+        this.webdavSync.needUpload()
     }
 
     sync() {
-        if (!this.kernel.setting.get("webdav.status")) return false
+        if (!this.kernel.setting.get("webdav.status")) return
         this.webdavSync.sync()
-        return true
     }
 
     init() {

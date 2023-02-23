@@ -104,9 +104,9 @@ class Clips extends ClipsData {
                 if (args.status === WebDavSync.status.success) {
                     if (args.updateList) {
                         this.updateList(true)
-                        if (list) list.endRefreshing()
                     }
-                } else if (args.status === WebDavSync.status.syncing) {
+                    if (list) list.endRefreshing()
+                } else if (args.status === WebDavSync.status.syncing && args.animate) {
                     if (list) list.beginRefreshing()
                 }
             }
@@ -768,11 +768,10 @@ class Clips extends ClipsData {
                 },
                 pulled: sender => {
                     this.updateList(true)
-                    if (this.kernel.storage.sync()) {
-                        // 若开启了同步则通过 $app.listen 关闭加载动画
-                        return
+                    this.kernel.storage.sync()
+                    if (!this.kernel.setting.get("webdav.status")) {
+                        $delay(0.5, () => sender.endRefreshing())
                     }
-                    $delay(0.5, () => sender.endRefreshing())
                 }
             }
         }

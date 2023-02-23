@@ -57,11 +57,14 @@ class WebDavSyncAction extends WebDavSync {
         this.kernel.print(`action webdav sync: pushed`)
     }
 
-    async #sync() {
+    notify(option) {
         $app.notify({
             name: "actionSyncStatus",
-            object: { status: WebDavSync.status.syncing }
+            object: option
         })
+    }
+
+    async #sync() {
         let isPull = false
         try {
             const syncStep = await this.nextSyncStep()
@@ -77,35 +80,36 @@ class WebDavSyncAction extends WebDavSync {
                     isPull = true
                 }
             } else {
-                $app.notify({
-                    name: "actionSyncStatus",
-                    object: { status: WebDavSync.status.nochange }
-                })
+                this.notify({ status: WebDavSync.status.nochange })
                 return
             }
         } catch (error) {
-            $app.notify({
-                name: "actionSyncStatus",
-                object: {
-                    status: WebDavSync.status.fail,
-                    error
-                }
+            this.notify({
+                status: WebDavSync.status.fail,
+                error
             })
             throw error
         } finally {
-            $app.notify({
-                name: "actionSyncStatus",
-                object: {
-                    status: WebDavSync.status.success,
-                    updateList: isPull
-                }
+            this.notify({
+                status: WebDavSync.status.success,
+                updateList: isPull
             })
         }
     }
 
     sync() {
+        this.notify({ status: WebDavSync.status.syncing, animate: true })
         if (this.syncTimer) this.syncTimer.cancel()
-        this.syncTimer = $delay(1, () => {
+        this.syncTimer = $delay(0.5, () => {
+            this.#sync(true)
+        })
+    }
+
+    needUpload() {
+        this.notify({ status: WebDavSync.status.syncing })
+        if (this.uploadTimer) this.uploadTimer.cancel()
+        this.uploadTimer = $delay(0.5, () => {
+            this.updateLocalTimestamp()
             this.#sync()
         })
     }

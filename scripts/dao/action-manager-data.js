@@ -1,3 +1,4 @@
+const { FileStorage } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
 const WebDavSyncAction = require("./webdav-sync-action")
 
@@ -54,6 +55,10 @@ class ActionManagerData {
         $cache.get("caio.action.isNew", isNew)
     }
 
+    get isEnableWebDavSync() {
+        return this.kernel.setting.get("webdav.status") && this.kernel.setting.get("experimental.syncAction")
+    }
+
     actionsNeedReload(needSync = false) {
         this.#actions = undefined
         if (needSync) {
@@ -62,7 +67,6 @@ class ActionManagerData {
                 data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
                 path: this.localSyncFile
             })
-            this.syncWithWebDav()
         }
     }
 
@@ -165,7 +169,9 @@ class ActionManagerData {
             return
         }
         if (this.kernel.setting.get("webdav.status")) {
-            await this.initSyncWithWebDav()
+            if (!this.webdavSync) {
+                await this.initSyncWithWebDav()
+            }
             return
         }
         if (this.#syncLock) {
@@ -242,7 +248,7 @@ class ActionManagerData {
     }
 
     async initSyncWithWebDav() {
-        if (!this.kernel.setting.get("webdav.status")) return
+        if (!this.isEnableWebDavSync) return
         try {
             this.webdavSync = new WebDavSyncAction({
                 kernel: this.kernel,
@@ -258,11 +264,14 @@ class ActionManagerData {
         }
     }
 
-    async syncWithWebDav() {
-        if (!this.kernel.setting.get("webdav.status")) return
-        if (this.webdavSync) {
-            this.webdavSync.sync()
-        }
+    syncWithWebDav() {
+        if (!this.isEnableWebDavSync) return
+        this.webdavSync.sync()
+    }
+
+    needUpload() {
+        if (!this.isEnableWebDavSync) return
+        this.webdavSync.needUpload()
     }
 
     checkUserAction() {
@@ -401,55 +410,62 @@ class ActionManagerData {
         return this.typeNameMap[name] ?? name
     }
 
-    #saveFile(type, dir, file, data) {
+    #saveFile(data, ...args) {
         if (typeof data !== "string") {
             data = JSON.stringify(data)
         }
 
-        const path = `${this.userActionPath}/${type}/${dir}`
+        const fullPath = FileStorage.join(this.userActionPath, ...args)
+        const path = fullPath.substring(0, fullPath.lastIndexOf("/"))
         if (!$file.exists(path)) $file.mkdir(path)
-        if (data === $file.read(`${path}/${file}`)?.string) {
+        const fileString = $file.read(fullPath)?.string
+        let fileData
+        try {
+            fileData = JSON.stringify(JSON.parse(fileString))
+        } catch {
+            fileData = fileString
+        }
+        if (data === fileData) {
             return
         }
 
         $file.write({
             data: $data({ string: data }),
-            path: `${path}/${file}`
+            path: fullPath
         })
 
-        const iCloudPath = `${this.iCloudPath}/${type}/${dir}`
+        const iCloudFullPath = FileStorage.join(this.iCloudPath, ...args)
+        const iCloudPath = fullPath.substring(0, fullPath.lastIndexOf("/"))
         if (!$file.exists(iCloudPath)) $file.mkdir(iCloudPath)
         $file.write({
             data: $data({ string: data }),
-            path: `${iCloudPath}/${file}`
+            path: iCloudFullPath
         })
+
+        this.needUpload()
+        this.actionsNeedReload()
     }
 
     saveActionInfo(info) {
-        this.#saveFile(info.type, info.dir, "config.json", {
-            icon: info.icon,
-            color: info.color,
-            name: info.name
-        })
-        this.#saveFile(info.type, info.dir, "README.md", info.readme)
-        this.actionsNeedReload(true)
+        this.#saveFile(
+            {
+                icon: info.icon,
+                color: info.color,
+                name: info.name
+            },
+            info.type,
+            info.dir,
+            "config.json"
+        )
+        this.#saveFile(info.readme, info.type, info.dir, "README.md")
     }
 
     saveMainJs(info, content) {
-        this.#saveFile(info.type, info.dir, "main.js", content)
-        this.actionsNeedReload(true)
+        this.#saveFile(content, info.type, info.dir, "main.js")
     }
 
     saveOrder(type, order) {
-        $file.write({
-            data: $data({ string: JSON.stringify(order) }),
-            path: `${this.userActionPath}/${type}/${this.actionOrderFile}`
-        })
-        $file.write({
-            data: $data({ string: JSON.stringify(order) }),
-            path: `${this.iCloudPath}/${type}/${this.actionOrderFile}`
-        })
-        this.actionsNeedReload(true)
+        this.#saveFile(JSON.stringify(order), type, this.actionOrderFile)
     }
 
     move(from, to) {
@@ -492,7 +508,8 @@ class ActionManagerData {
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
         $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
-        this.actionsNeedReload(true)
+        this.needUpload()
+        this.actionsNeedReload()
     }
 
     exists(info) {

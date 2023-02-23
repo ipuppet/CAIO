@@ -13,6 +13,7 @@ class ActionManager extends ActionManagerData {
     reorder = {}
     addActionButtonId = "action-manager-button-add"
     sortActionButtonId = "action-manager-button-sort"
+    syncButtonId = "action-manager-button-sync"
     syncLabelId = "action-manager-sync-label"
 
     get actionList() {
@@ -36,7 +37,7 @@ class ActionManager extends ActionManagerData {
     actionSyncStatus() {
         $app.listen({
             actionSyncStatus: args => {
-                if (args.status === WebDavSync.status.syncing) {
+                if (args.status === WebDavSync.status.syncing && args.animate) {
                     this.updateNavButton(true)
                     this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success) {
@@ -49,6 +50,7 @@ class ActionManager extends ActionManagerData {
                     } finally {
                         this.updateSyncLabel()
                         this.updateNavButton(false)
+                        $(this.matrix.id)?.endRefreshing()
                     }
                 }
             }
@@ -149,7 +151,7 @@ class ActionManager extends ActionManagerData {
             }
             sheet.dismiss()
             this.saveActionInfo(this.editingActionInfo)
-            await $wait(0.6) // 等待 sheet 关闭
+            await $wait(0.3) // 等待 sheet 关闭
             if (done) done(this.editingActionInfo)
         }
         sheet
@@ -255,17 +257,14 @@ class ActionManager extends ActionManagerData {
         const data = this.actionToData(this.actions[to.section].items[to.row])
         if (from.row < to.row) {
             // 先插入时是插入到 to 位置的前面 to.row + 1
-            actionsView.insert(
-                {
-                    indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
-                    value: data
-                },
-                false
-            )
-            actionsView.delete(from, false)
+            actionsView.insert({
+                indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
+                value: data
+            })
+            actionsView.delete(from)
         } else {
-            actionsView.delete(from, false)
-            actionsView.insert({ indexPath: to, value: data }, false)
+            actionsView.delete(from)
+            actionsView.insert({ indexPath: to, value: data })
         }
     }
 
@@ -485,6 +484,10 @@ class ActionManager extends ActionManagerData {
         const sortActionButton = this.navigationView?.navigationBarItems?.getButton(this.sortActionButtonId)
         if (sortActionButton) {
             sortActionButton.setLoading(loading)
+        }
+        const syncButton = this.navigationView?.navigationBarItems?.getButton(this.syncButtonId)
+        if (syncButton) {
+            syncButton.setLoading(loading)
         }
     }
 
@@ -782,16 +785,17 @@ class ActionManager extends ActionManagerData {
                     })
                     this.getActionHandler(info.type, info.dir)(actionData)
                 },
-                pulled: sender => {
-                    $delay(0.5, async () => {
+                pulled: async sender => {
+                    if (this.isEnableWebDavSync) {
+                        this.syncWithWebDav()
+                    } else {
                         this.updateNavButton(true)
                         await this.sync()
-                        this.actionsNeedReload()
                         this.matrix.data = this.actionList
                         this.updateSyncLabel()
                         this.updateNavButton(false)
                         sender.endRefreshing()
-                    })
+                    }
                 }
             }
         })
@@ -814,16 +818,18 @@ class ActionManager extends ActionManagerData {
         if (this.kernel.setting.get("experimental.syncAction")) {
             rightButtons.push({
                 // 同步
+                id: this.syncButtonId,
                 symbol: "arrow.triangle.2.circlepath.circle",
                 tapped: async (animate, sender) => {
-                    animate.start()
-                    this.updateNavButton(true)
-                    await this.sync()
-                    this.actionsNeedReload()
-                    this.matrix.data = this.actionList
-                    this.updateSyncLabel()
-                    animate.done()
-                    this.updateNavButton(false)
+                    if (this.isEnableWebDavSync) {
+                        this.syncWithWebDav()
+                    } else {
+                        this.updateNavButton(true)
+                        await this.sync()
+                        this.matrix.data = this.actionList
+                        this.updateSyncLabel()
+                        this.updateNavButton(false)
+                    }
                 }
             })
         }
