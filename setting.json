@@ -8,7 +8,6 @@
                 ],
                 "type": "child",
                 "title": "CLIPS",
-                "key": "clipboard",
                 "children": [
                     {
                         "items": [
@@ -29,7 +28,6 @@
                                 ],
                                 "title": "Tips",
                                 "type": "script",
-                                "key": "clipboard.tips.universal",
                                 "value": "$ui.alert({title:$l10n('UNIVERSAL_CLIPBOARD'),message:$l10n('UNIVERSAL_CLIPBOARD_TIPS')})"
                             }
                         ]
@@ -66,7 +64,6 @@
                                 ],
                                 "title": "EXPORT",
                                 "type": "script",
-                                "key": "clipboard.export",
                                 "value": "this.method.exportClipboard"
                             },
                             {
@@ -76,7 +73,6 @@
                                 ],
                                 "title": "IMPORT",
                                 "type": "script",
-                                "key": "clipboard.import",
                                 "value": "this.method.importClipboard"
                             }
                         ]
@@ -90,7 +86,6 @@
                                 ],
                                 "title": "REBUILD_DATABASE",
                                 "type": "script",
-                                "key": "clipboard.rebuildDatabase",
                                 "value": "this.method.rebuildDatabase"
                             },
                             {
@@ -100,7 +95,6 @@
                                 ],
                                 "title": "DELETE_ALL_DATA",
                                 "type": "script",
-                                "key": "clipboard.deleteAllData",
                                 "value": "this.method.deleteAllData"
                             }
                         ]
@@ -114,7 +108,6 @@
                 ],
                 "type": "child",
                 "title": "ACTIONS",
-                "key": "action",
                 "children": [
                     {
                         "items": [
@@ -125,7 +118,6 @@
                                 ],
                                 "title": "IMPORT_EXAMPLE_ACTIONS",
                                 "type": "script",
-                                "key": "action.importExampleAction",
                                 "value": "this.method.importExampleAction"
                             }
                         ]
@@ -138,7 +130,6 @@
                                 ],
                                 "title": "EXPORT",
                                 "type": "script",
-                                "key": "action.export",
                                 "value": "this.method.exportAction"
                             },
                             {
@@ -148,7 +139,6 @@
                                 ],
                                 "title": "IMPORT",
                                 "type": "script",
-                                "key": "action.import",
                                 "value": "this.method.importAction"
                             }
                         ]
@@ -162,7 +152,6 @@
                                 ],
                                 "title": "REBUILD_ACTION_DATABASE",
                                 "type": "script",
-                                "key": "action.rebuildAction",
                                 "value": "this.method.rebuildAction"
                             }
                         ]
@@ -176,7 +165,6 @@
                 ],
                 "type": "child",
                 "title": "EDITOR",
-                "key": "editor",
                 "children": [
                     {
                         "title": "CLIPS",
@@ -237,7 +225,6 @@
                 ],
                 "type": "child",
                 "title": "KEYBOARD",
-                "key": "keyboard",
                 "children": [
                     {
                         "items": [
@@ -324,7 +311,6 @@
                                 ],
                                 "title": "QUICK_START_SCRIPTS",
                                 "type": "script",
-                                "key": "keyboard.setKeyboardQuickStart",
                                 "value": "this.method.setKeyboardQuickStart"
                             }
                         ]
@@ -352,7 +338,6 @@
                 ],
                 "type": "child",
                 "title": "WIDGET",
-                "key": "widget",
                 "children": [
                     {
                         "items": [
@@ -362,7 +347,6 @@
                                 ],
                                 "title": "PREVIEW",
                                 "type": "script",
-                                "key": "previewWidget",
                                 "value": "this.method.previewWidget"
                             }
                         ]
@@ -396,7 +380,6 @@
                 ],
                 "type": "child",
                 "title": "TODAY_WIDGET",
-                "key": "todayWidget",
                 "children": [
                     {
                         "items": [
@@ -406,7 +389,6 @@
                                 ],
                                 "title": "PREVIEW",
                                 "type": "script",
-                                "key": "todayWidget.preview",
                                 "value": "this.method.previewTodayWidget"
                             }
                         ]
@@ -419,7 +401,6 @@
                                 ],
                                 "title": "ACTIONS",
                                 "type": "script",
-                                "key": "todayWidget.setTodayWidgetActions",
                                 "value": "this.method.setTodayWidgetActions"
                             }
                         ]
@@ -451,7 +432,6 @@
                 ],
                 "title": "FILE_MANAGEMENT",
                 "type": "script",
-                "key": "fileManager",
                 "value": "this.method.fileManager"
             }
         ]
@@ -462,9 +442,8 @@
                 "icon": [
                     "wrench.and.screwdriver"
                 ],
-                "title": "EXPERIMENTAL",
                 "type": "child",
-                "key": "EXPERIMENTAL",
+                "title": "EXPERIMENTAL",
                 "children": [
                     {
                         "items": [
@@ -486,9 +465,8 @@
                                     "cloud",
                                     "#FF9900"
                                 ],
-                                "title": "WebDAV",
                                 "type": "child",
-                                "key": "webdav.config",
+                                "title": "WebDAV",
                                 "children": [
                                     {
                                         "items": [
@@ -561,7 +539,6 @@
                 ],
                 "title": "Github",
                 "type": "info",
-                "key": "github",
                 "value": [
                     "ipuppet/CAIO",
                     "https://github.com/ipuppet/CAIO"
@@ -574,7 +551,6 @@
                 ],
                 "title": "Telegram",
                 "type": "info",
-                "key": "telegram",
                 "value": [
                     "JSBoxTG",
                     "https://t.me/JSBoxTG"
@@ -587,7 +563,6 @@
                 ],
                 "title": "AUTHOR",
                 "type": "info",
-                "key": "author",
                 "value": [
                     "ipuppet",
                     "https://blog.ultagic.com"
@@ -599,7 +574,6 @@
                 ],
                 "title": "CHECK_UPDATE",
                 "type": "script",
-                "key": "checkUpdate",
                 "value": "this.method.checkUpdate"
             },
             {
@@ -609,7 +583,6 @@
                 ],
                 "title": "README",
                 "type": "script",
-                "key": "readme",
                 "value": "this.method.readme"
             }
         ]
