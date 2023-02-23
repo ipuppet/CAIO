@@ -30,6 +30,7 @@
 class MyAction extends Action {
     /**
      * 系统会调用 do() 方法
+     * 在编辑模式如果提供了返回值，则可弹窗预览返回值
      */
     do() {
         console.log(this.text)
@@ -53,6 +54,12 @@ class MyAction extends Action {
 
 ### 父类的方法：
 ```js
+/**
+ * 编辑动作状态下提供预览数据
+ * @returns {ActionData}
+ */
+preview(): ActionData
+
 /**
  * 重写该防范返回 l10n 对象可注入 l10n
  * l10n() {
@@ -117,6 +124,7 @@ getUrls(): []
 ### <span id="ActionEnv">ActionEnv</span>
 ```js
 class ActionEnv {
+    static build = -1 // 动作编辑器
     static today = 0
     static editor = 1
     static clipboard = 2

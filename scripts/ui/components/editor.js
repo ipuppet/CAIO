@@ -84,7 +84,7 @@ class Editor {
                 ready: sender => {
                     if (this.text === "")
                         // 自动弹出键盘
-                        setTimeout(() => sender.focus(), 500)
+                        $delay(0.5, () => sender.focus())
                 },
                 didChange: sender => {
                     this.text = sender.text

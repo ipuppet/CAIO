@@ -3,9 +3,12 @@ const { Kernel, Sheet } = require("../libs/easy-jsbox")
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  * @typedef {Action} Action
+ * @typedef {ActionEnv} ActionEnv
+ * @typedef {ActionData} ActionData
  */
 
 class ActionEnv {
+    static build = -1
     static today = 0
     static editor = 1
     static clipboard = 2
@@ -61,6 +64,10 @@ class Action {
         this.#kernel = kernel
         this.config = config
 
+        if (data.env === ActionEnv.build) {
+            data = this.preview()
+            data.env = ActionEnv.build // 忽略 preview 返回的 env
+        }
         Object.assign(this, data)
 
         this.originalContent = this.text
@@ -69,6 +76,14 @@ class Action {
         Object.keys(l10n).forEach(language => {
             Kernel.l10n(language, l10n[language])
         })
+    }
+
+    /**
+     * 编辑动作状态下提供预览数据
+     * @returns {ActionData}
+     */
+    preview() {
+        return new ActionData({ env: ActionEnv.build })
     }
 
     l10n() {

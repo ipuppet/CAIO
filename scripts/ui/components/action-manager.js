@@ -209,19 +209,34 @@ class ActionManager extends ActionManagerData {
                 },
                 {
                     symbol: "play.circle",
-                    tapped: () => {
-                        const content = $file.read("scripts/action/README.md").string
-                        const sheet = new Sheet()
-                        sheet
-                            .setView({
-                                type: "markdown",
-                                props: { content: content },
-                                layout: (make, view) => {
-                                    make.size.equalTo(view.super)
-                                }
-                            })
-                            .init()
-                            .present()
+                    tapped: async () => {
+                        this.saveMainJs(info, editor.text)
+                        let actionRest = await this.getActionHandler(
+                            info.type,
+                            info.dir
+                        )(new ActionData({ env: ActionEnv.build }))
+                        if (actionRest !== undefined) {
+                            if (typeof actionRest === "object") {
+                                actionRest = JSON.stringify(actionRest, null, 2)
+                            }
+                            const sheet = new Sheet()
+                            sheet
+                                .setView({
+                                    type: "code",
+                                    props: {
+                                        lineNumbers: true,
+                                        editable: false,
+                                        text: actionRest
+                                    },
+                                    layout: $layout.fill
+                                })
+                                .addNavBar({
+                                    title: "",
+                                    popButton: { title: $l10n("DONE") }
+                                })
+                                .init()
+                                .present()
+                        }
                     }
                 }
             ],
