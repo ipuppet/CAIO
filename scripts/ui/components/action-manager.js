@@ -460,9 +460,9 @@ class ActionManager extends ActionManagerData {
         return {
             name: { text: action.name },
             icon:
-                action.icon.slice(0, 5) === "icon_"
+                action?.icon?.slice(0, 5) === "icon_"
                     ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                    : { image: $image(action.icon) },
+                    : { image: $image(action?.icon) },
             color: { bgcolor: this.kernel.setting.getColor(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
         }
