@@ -6,11 +6,11 @@ const { Kernel, Sheet } = require("../libs/easy-jsbox")
  */
 
 class ActionEnv {
-    static keyboard = 0
     static today = 0
     static editor = 1
     static clipboard = 2
     static action = 3
+    static keyboard = 4
 }
 class ActionData {
     env
