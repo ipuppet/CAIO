@@ -234,11 +234,12 @@ class Today extends Clips {
         }
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.allClips[this.listSection]
-            .slice(start, end)
-            .map(data => this.lineData(data, this.copied.uuid === data.uuid))
+        const all = this.allClips[this.listSection]
+        $(this.listId).data = all.slice(start, end).map(data => this.lineData(data, this.copied.uuid === data.uuid))
         // page index
-        $(this.pageIndexId).text = this.listPageNow[this.listSection] + 1
+        const pageNow = this.listPageNow[this.listSection] + 1
+        const pageCount = Math.ceil(all.length / this.listPageSize)
+        $(this.pageIndexId).text = `${pageNow}/${pageCount}`
     }
 
     clipboardPrevPage() {
