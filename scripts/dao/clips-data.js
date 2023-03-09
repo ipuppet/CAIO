@@ -53,9 +53,9 @@ class ClipsData {
     }
 
     get allClips() {
-        this.#allClips.forEach(clips => {
+        this.#allClips.forEach((clips, tabIndex) => {
             if (!clips) {
-                this.#allClips[this.tabIndex] = this.#initData(this.table)
+                this.#allClips[tabIndex] = this.#initData(this.table)
                 this.kernel.print(`init clips: ${this.table}`)
             }
         })
@@ -152,7 +152,9 @@ class ClipsData {
     }
 
     getClipCopy(src, assign = {}) {
-        return new Clip(Object.assign(JSON.parse(JSON.stringify(src)), assign))
+        const clip = new Clip(src)
+        Object.assign(clip, assign)
+        return clip
     }
 
     /**
@@ -361,12 +363,13 @@ class ClipsData {
         }
     }
 
-    favoriteItem(row) {
-        const clip = this.getClipCopy(this.clips[row])
-
-        clip.next = this.allClips[0][0]?.uuid ?? null
-        clip.prev = null
-        clip.section = "favorite"
+    favoriteItem(uuid) {
+        const clip = this.getClipCopy(this.getClip(uuid), {
+            next: this.allClips[0][0]?.uuid ?? null,
+            prev: null,
+            section: "favorite"
+        })
+        console.log(clip)
 
         try {
             // 写入数据库

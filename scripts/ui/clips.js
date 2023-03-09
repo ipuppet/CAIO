@@ -358,11 +358,11 @@ class Clips extends ClipsData {
         }
     }
 
-    favorite(row) {
-        const clip = this.clips[row]
+    favorite(index) {
+        const clip = this.getByIndex(index)
 
         if (clip?.section === "favorite") {
-            this.move(row, 0)
+            this.move(index, 0)
             return
         }
 
@@ -373,9 +373,9 @@ class Clips extends ClipsData {
         }
 
         try {
-            super.favoriteItem(row)
+            super.favoriteItem(clip.uuid)
             // UI 操作
-            $(this.listId).delete(row)
+            $(this.listId).delete(index)
         } catch (error) {
             $ui.alert(error)
         }
@@ -697,9 +697,7 @@ class Clips extends ClipsData {
                         // 收藏
                         title: $l10n("FAVORITE"),
                         color: $color("orange"),
-                        handler: (sender, indexPath) => {
-                            this.favorite(indexPath.row)
-                        }
+                        handler: (sender, indexPath) => this.favorite(indexPath.row)
                     }
                 ]
             },
