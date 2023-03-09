@@ -304,12 +304,12 @@ class Clips extends ClipsData {
         }
     }
 
-    update(text, row) {
+    update(text, uuid) {
         try {
-            super.updateItem(text, row)
+            super.updateItem(text, uuid)
             // 更新列表
             this.updateList()
-            if (this.clips[row].uuid === this.copied.uuid) {
+            if (uuid === this.copied.uuid) {
                 this.setClipboardText(text)
             }
 
@@ -707,13 +707,10 @@ class Clips extends ClipsData {
             events: {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
-                    const text = this.getByIndex(indexPath).text
-                    const tag = this.getByIndex(indexPath).tag
+                    const clip = this.getByIndex(indexPath)
 
-                    const tagHeight = tag && tag !== "" ? this.tagHeight : this.verticalMargin
-                    const itemHeight = this.kernel.storage.isImage(text)
-                        ? this.imageContentHeight
-                        : this.getContentHeight(text)
+                    const tagHeight = clip.tag && clip.tag !== "" ? this.tagHeight : this.verticalMargin
+                    const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                     return this.verticalMargin + itemHeight + tagHeight
                 },
                 didSelect: (sender, indexPath) => {
@@ -722,7 +719,7 @@ class Clips extends ClipsData {
                         this.quickLookImage(clip.imageOriginal)
                     } else {
                         this.edit(clip.text, text => {
-                            if (clip.md5 !== $text.MD5(text)) this.update(text, indexPath.row)
+                            if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
                         })
                     }
                 },

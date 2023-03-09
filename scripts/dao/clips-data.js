@@ -190,7 +190,6 @@ class ClipsData {
         // 元数据
         const clip = new Clip({
             uuid: $text.uuid,
-            text: item,
             section: this.table,
             md5: null,
             prev: null,
@@ -198,10 +197,10 @@ class ClipsData {
         })
         if (typeof item === "string") {
             if (item.trim() === "") return
-            clip.md5 = $text.MD5(item)
+            clip.text = item
         } else if (typeof item === "object") {
-            clip.text = ""
-            clip.setImage(item)
+            clip.fileStorage = this.kernel.fileStorage
+            clip.text = this.kernel.storage.saveImage(item)
         } else {
             return
         }
@@ -261,9 +260,9 @@ class ClipsData {
         }
     }
 
-    updateItem(text, row) {
+    updateItem(text, uuid) {
         const md5 = $text.MD5(text)
-        const clip = this.clips[row]
+        const clip = this.getClip(uuid)
 
         // 更新索引
         delete this.clipsMD5Map[clip.md5]
@@ -275,7 +274,7 @@ class ClipsData {
 
         try {
             this.kernel.storage.updateText(this.table, clip.uuid, text)
-            this.kernel.print(`data changed at index [${row}]\n${oldData}\n↓\n${text}`)
+            this.kernel.print(`data changed at index [${this.getIndexByUUID(uuid)}]\n${oldData}\n↓\n${text}`)
         } catch (error) {
             throw error
         }

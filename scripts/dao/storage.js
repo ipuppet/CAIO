@@ -11,16 +11,28 @@ class Clip {
      * @type {FileStorage}
      */
     fileStorage
-    /**
-     * @type {boolean}
-     */
-    image = false
     fsPath
     imagePath
+    #text
+
+    static isImage(text = "") {
+        return text?.startsWith("@image=")
+    }
+    static pathToKey(path) {
+        path = JSON.stringify(path)
+        return `@image=${path}`
+    }
+    static keyToPath(key) {
+        if (Clip.isImage(key)) {
+            const image = JSON.parse(key.slice(7))
+            return image
+        }
+        return false
+    }
 
     constructor({ uuid, section, text = "", md5, tag = "", prev = null, next = null } = {}) {
         if (!uuid || !section) {
-            throw new Error("Clip create faild")
+            throw new Error("Clip create faild: uuid or section undefined")
         }
         this.uuid = uuid
         this.section = section
@@ -29,6 +41,23 @@ class Clip {
         this.tag = tag
         this.prev = prev
         this.next = next
+    }
+
+    get text() {
+        return this.#text
+    }
+    set text(text) {
+        this.#text = text
+        if (Clip.isImage(text)) {
+            this.#setFsPath(Clip.keyToPath(text))
+        }
+    }
+
+    /**
+     * @type {boolean}
+     */
+    get image() {
+        return Clip.isImage(this.text)
     }
 
     get imageOriginal() {
@@ -46,12 +75,12 @@ class Clip {
         }
     }
 
-    setImage(image) {
-        this.image = true
-        this.fsPath = image
+    #setFsPath(path) {
+        if (!this.fileStorage) return
+        this.fsPath = path
         this.imagePath = {
-            original: this.fileStorage.filePath(this.fsPath.original),
-            preview: this.fileStorage.filePath(this.fsPath.preview)
+            original: this.fileStorage.filePath(path.original),
+            preview: this.fileStorage.filePath(path.preview)
         }
     }
 }
@@ -251,9 +280,9 @@ class Storage {
     }
 
     /**
-     * 
-     * @param {Clip[]} data 
-     * @param {number} maxLoop 
+     *
+     * @param {Clip[]} data
+     * @param {number} maxLoop
      * @returns {Clip[]}
      */
     sort(data, maxLoop = 9000) {
@@ -297,19 +326,19 @@ class Storage {
         }
         const data = []
         while (result.next()) {
+            const text = result.get("text")
             const clip = new Clip({
                 uuid: result.get("uuid"),
                 section: result.get("section"),
-                text: result.get("text"),
                 md5: result.get("md5"),
                 tag: result.get("tag") ?? "",
                 prev: result.get("prev") ?? null,
                 next: result.get("next") ?? null
             })
-            if (this.isImage(clip.text)) {
-                clip.setImage(this.#keyToPath(clip.text))
+            if (Clip.isImage(text)) {
                 clip.fileStorage = this.kernel.fileStorage
             }
+            clip.text = text
             data.push(clip)
         }
         result.close()
@@ -378,21 +407,6 @@ class Storage {
         return this.parse(result)
     }
 
-    isImage(text) {
-        return text?.startsWith("@image=")
-    }
-    #pathToKey(path) {
-        path = JSON.stringify(path)
-        return `@image=${path}`
-    }
-    #keyToPath(key) {
-        if (this.isImage(key)) {
-            const image = JSON.parse(key.slice(7))
-            return image
-        }
-        return false
-    }
-
     deleteTable(table) {
         const result = this.sqlite.update(`DELETE FROM ${table}`)
         if (!result.result) {
@@ -408,9 +422,8 @@ class Storage {
         )
         return this.parse(result)
     }
-    insert(clip) {
-        if (clip.image) {
-            const image = clip.imageOriginal
+    saveImage(image) {
+        if (typeof image === "object") {
             const fileName = $text.uuid
             const path = {
                 original: `${this.imagePath.original}/${fileName}.png`,
@@ -418,8 +431,11 @@ class Storage {
             }
             this.kernel.fileStorage.write(path.original, image.png)
             this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
-            clip.text = this.#pathToKey(path)
+            return Clip.pathToKey(path)
         }
+        throw new Error("saveImageError: image not an object")
+    }
+    insert(clip) {
         const result = this.sqlite.update({
             sql: `INSERT INTO ${clip.section} (uuid, text, md5, prev, next) values (?, ?, ?, ?, ?)`,
             args: [clip.uuid, clip.text, $text.MD5(clip.text), clip.prev, clip.next]
