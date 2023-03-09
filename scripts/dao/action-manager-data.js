@@ -30,6 +30,7 @@ class ActionManagerData {
         // checkUserAction
         this.checkUserAction()
         // sync
+        this.sync() // 立即同步一次
         $thread.background({
             delay: this.#syncInterval,
             handler: () => this.sync(true)
@@ -59,15 +60,8 @@ class ActionManagerData {
         return this.kernel.setting.get("webdav.status") && this.kernel.setting.get("experimental.syncAction")
     }
 
-    actionsNeedReload(needSync = false) {
+    actionsNeedReload() {
         this.#actions = undefined
-        if (needSync) {
-            this.isNew = false
-            $file.write({
-                data: $data({ string: JSON.stringify({ timestamp: Date.now() }) }),
-                path: this.localSyncFile
-            })
-        }
     }
 
     importExampleAction() {
@@ -111,6 +105,7 @@ class ActionManagerData {
                 }
             })
         }
+        this.needUpload()
     }
 
     #mkdir(path = "") {
@@ -272,6 +267,7 @@ class ActionManagerData {
     needUpload() {
         if (!this.isEnableWebDavSync) return
         this.webdavSync.needUpload()
+        this.actionsNeedReload()
     }
 
     checkUserAction() {
@@ -443,7 +439,6 @@ class ActionManagerData {
         })
 
         this.needUpload()
-        this.actionsNeedReload()
     }
 
     saveActionInfo(info) {
@@ -509,7 +504,6 @@ class ActionManagerData {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
         $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
         this.needUpload()
-        this.actionsNeedReload()
     }
 
     exists(info) {
