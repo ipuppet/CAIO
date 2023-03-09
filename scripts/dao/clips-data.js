@@ -53,10 +53,10 @@ class ClipsData {
     }
 
     get allClips() {
-        this.#allClips.forEach((clips, tabIndex) => {
-            if (!clips) {
-                this.#allClips[tabIndex] = this.#initData(this.table)
-                this.kernel.print(`init clips: ${this.table}`)
+        this.tabItemsIndex.forEach((table, tabIndex) => {
+            if (!this.#allClips[tabIndex]) {
+                this.#allClips[tabIndex] = this.#initData(table)
+                this.kernel.print(`init clips: ${table}`)
             }
         })
         return this.#allClips
@@ -153,6 +153,7 @@ class ClipsData {
 
     getClipCopy(src, assign = {}) {
         const clip = new Clip(src)
+        clip.fileStorage = src.fileStorage
         Object.assign(clip, assign)
         return clip
     }
@@ -228,7 +229,7 @@ class ClipsData {
         }
     }
 
-    deleteItem(uuid, deleteTag = true) {
+    deleteItem(uuid, deleteOther = true) {
         const index = this.getIndexByUUID(uuid)
         const clip = this.clips[index]
         const prev = this.clips[index - 1]
@@ -237,7 +238,7 @@ class ClipsData {
         try {
             // 删除数据库中的值
             this.kernel.storage.beginTransaction()
-            this.kernel.storage.delete(this.table, uuid)
+            this.kernel.storage.delete(this.table, uuid, deleteOther)
             // 更改指针
             if (prev) {
                 // prev 的 next 指向被删除元素的 next
@@ -248,10 +249,6 @@ class ClipsData {
                 // next 的 prev 指向被删除元素的 prev
                 next.prev = clip.prev
                 this.kernel.storage.update(next)
-            }
-
-            if (deleteTag) {
-                this.kernel.storage.deleteTag(uuid)
             }
             this.kernel.storage.commit()
 
@@ -369,7 +366,6 @@ class ClipsData {
             prev: null,
             section: "favorite"
         })
-        console.log(clip)
 
         try {
             // 写入数据库
@@ -383,7 +379,7 @@ class ClipsData {
             }
             this.kernel.storage.commit()
 
-            // 删除原表数据，此处不删除标签
+            // 删除原表数据，此处不删除标签和图片
             this.deleteItem(clip.uuid, false)
 
             this.setNeedReload()
