@@ -7,7 +7,7 @@ const {
     Setting,
     FileManager
 } = require("./libs/easy-jsbox")
-const Storage = require("./dao/storage")
+const { Storage } = require("./dao/storage")
 const Clips = require("./ui/clips")
 const ActionManager = require("./ui/components/action-manager")
 

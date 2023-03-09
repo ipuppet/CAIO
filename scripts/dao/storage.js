@@ -3,7 +3,58 @@ const WebDavSyncClip = require("./webdav-sync-clip")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../libs/easy-jsbox").FileStorage} FileStorage
  */
+
+class Clip {
+    /**
+     * @type {FileStorage}
+     */
+    fileStorage
+    /**
+     * @type {boolean}
+     */
+    image = false
+    fsPath
+    imagePath
+
+    constructor({ uuid, section, text = "", md5, tag = "", prev = null, next = null } = {}) {
+        if (!uuid || !section) {
+            throw new Error("Clip create faild")
+        }
+        this.uuid = uuid
+        this.section = section
+        this.text = text
+        this.md5 = md5 ?? $text.MD5(this.text)
+        this.tag = tag
+        this.prev = prev
+        this.next = next
+    }
+
+    get imageOriginal() {
+        return this.#getImage("original")
+    }
+    get imagePreview() {
+        return this.#getImage("preview")
+    }
+
+    #getImage(type) {
+        if (this.image) {
+            if (this.fileStorage.exists(this.fsPath[type])) {
+                return this.fileStorage.readSync(this.fsPath[type])?.image
+            }
+        }
+    }
+
+    setImage(image) {
+        this.image = true
+        this.fsPath = image
+        this.imagePath = {
+            original: this.fileStorage.filePath(this.fsPath.original),
+            preview: this.fileStorage.filePath(this.fsPath.preview)
+        }
+    }
+}
 
 class Storage {
     sqlite
@@ -75,6 +126,8 @@ class Storage {
             "CREATE TABLE IF NOT EXISTS favorite(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, md5 TEXT, prev TEXT, next TEXT)"
         )
         this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
+
+        this.kernel.print("init database")
     }
 
     rebuild() {
@@ -86,23 +139,24 @@ class Storage {
 
         const action = (data, folder) => {
             const rebuildData = []
-            data.forEach(item => {
-                const data = {
-                    uuid: item.uuid,
-                    text: item.text,
-                    md5: item.md5,
-                    tag: item.tag,
-                    image: item.image,
+            data.forEach(clip => {
+                const data = new Clip({
+                    uuid: clip.uuid,
+                    text: clip.text,
+                    section: clip.section,
+                    md5: clip.md5,
+                    tag: clip.tag,
                     prev: null,
                     next: rebuildData[0]?.uuid ?? null
-                }
+                })
                 storage.beginTransaction()
                 try {
-                    storage.insert(folder, data)
+                    storage.insert(data)
                     if (data.next) {
                         // 更改指针
                         rebuildData[0].prev = data.uuid
-                        storage.update(folder, rebuildData[0])
+                        rebuildData[0].section = folder
+                        storage.update(rebuildData[0])
                     }
                     storage.commit()
                     rebuildData.unshift(data)
@@ -117,7 +171,7 @@ class Storage {
         ;["clips", "favorite"].map(folder => {
             let data = this.all(folder)
             try {
-                const sorted = this.sort(JSON.parse(JSON.stringify(data)))
+                const sorted = this.sort(data)
                 if (sorted.length > data.length) {
                     throw new Error()
                 }
@@ -128,10 +182,10 @@ class Storage {
 
         // tag
         const tagQuery = this.sqlite.query(`SELECT * FROM tag`)
-        this.parseTag(tagQuery).forEach(item => {
+        this.parseTag(tagQuery).forEach(clip => {
             storage.beginTransaction()
             try {
-                storage.setTag(item.uuid, item.tag)
+                storage.setTag(clip.uuid, clip.tag)
                 storage.commit()
             } catch (error) {
                 storage.rollback()
@@ -142,12 +196,15 @@ class Storage {
 
         this.kernel.fileStorage.copy(db, this.localDb)
         this.needUpload()
+
+        this.kernel.print("database rebuild")
     }
 
     deleteAllData() {
         this.kernel.fileStorage.delete(this.imagePath.base)
         this.kernel.fileStorage.delete(this.localDb)
         this.needUpload()
+        this.kernel.print("delete all database")
     }
 
     clearTemp() {
@@ -193,16 +250,22 @@ class Storage {
         this.webdavSync.updateLocalTimestamp()
     }
 
+    /**
+     * 
+     * @param {Clip[]} data 
+     * @param {number} maxLoop 
+     * @returns {Clip[]}
+     */
     sort(data, maxLoop = 9000) {
         const dataObj = {}
         let length = 0
         let header = null
-        data.forEach(item => {
+        data.forEach(clip => {
             // 构建结构
-            dataObj[item.uuid] = item
+            dataObj[clip.uuid] = clip
             // 寻找头节点
-            if (item.prev === null) {
-                header = item.uuid
+            if (clip.prev === null) {
+                header = clip.uuid
             }
             // 统计长度
             length++
@@ -234,7 +297,7 @@ class Storage {
         }
         const data = []
         while (result.next()) {
-            data.push({
+            const clip = new Clip({
                 uuid: result.get("uuid"),
                 section: result.get("section"),
                 text: result.get("text"),
@@ -243,6 +306,11 @@ class Storage {
                 prev: result.get("prev") ?? null,
                 next: result.get("next") ?? null
             })
+            if (this.isImage(clip.text)) {
+                clip.setImage(this.#keyToPath(clip.text))
+                clip.fileStorage = this.kernel.fileStorage
+            }
+            data.push(clip)
         }
         result.close()
         return data
@@ -273,7 +341,7 @@ class Storage {
         this.sqlite.rollback()
     }
 
-    getByUUID(uuid) {
+    getByUUID(uuid = "") {
         uuid = uuid.replace("'", "")
         const result = this.sqlite.query({
             sql: `
@@ -313,18 +381,13 @@ class Storage {
     isImage(text) {
         return text?.startsWith("@image=")
     }
-    pathToKey(path) {
+    #pathToKey(path) {
         path = JSON.stringify(path)
         return `@image=${path}`
     }
-    keyToPath(key, fileStoragePath = true) {
+    #keyToPath(key) {
         if (this.isImage(key)) {
             const image = JSON.parse(key.slice(7))
-            if (fileStoragePath) {
-                return image
-            }
-            image.original = this.kernel.fileStorage.basePath + image.original
-            image.preview = this.kernel.fileStorage.basePath + image.preview
             return image
         }
         return false
@@ -336,6 +399,7 @@ class Storage {
             throw result.error
         }
         this.needUpload()
+        this.kernel.print(`delete table ${table}`)
     }
 
     all(table) {
@@ -344,9 +408,9 @@ class Storage {
         )
         return this.parse(result)
     }
-    insert(table, clip) {
+    insert(clip) {
         if (clip.image) {
-            const image = clip.image
+            const image = clip.imageOriginal
             const fileName = $text.uuid
             const path = {
                 original: `${this.imagePath.original}/${fileName}.png`,
@@ -354,10 +418,10 @@ class Storage {
             }
             this.kernel.fileStorage.write(path.original, image.png)
             this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
-            clip.text = this.pathToKey(path)
+            clip.text = this.#pathToKey(path)
         }
         const result = this.sqlite.update({
-            sql: `INSERT INTO ${table} (uuid, text, md5, prev, next) values (?, ?, ?, ?, ?)`,
+            sql: `INSERT INTO ${clip.section} (uuid, text, md5, prev, next) values (?, ?, ?, ?, ?)`,
             args: [clip.uuid, clip.text, $text.MD5(clip.text), clip.prev, clip.next]
         })
         if (!result.result) {
@@ -365,10 +429,10 @@ class Storage {
         }
         this.needUpload()
     }
-    update(table, clip) {
+    update(clip) {
         if (Object.keys(clip).length < 4 || typeof clip.uuid !== "string") return
         const result = this.sqlite.update({
-            sql: `UPDATE ${table} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
+            sql: `UPDATE ${clip.section} SET text = ?, md5 = ?, prev = ?, next = ? WHERE uuid = ?`,
             args: [clip.text, $text.MD5(clip.text), clip.prev, clip.next, clip.uuid]
         })
         if (!result.result) {
@@ -398,10 +462,9 @@ class Storage {
         }
 
         // delete image file
-        const path = this.keyToPath(clip?.text)
-        if (path) {
-            this.kernel.fileStorage.delete(path.original)
-            this.kernel.fileStorage.delete(path.preview)
+        if (clip?.image) {
+            this.kernel.fileStorage.delete(clip.fsPath.original)
+            this.kernel.fileStorage.delete(clip.fsPath.preview)
         }
         this.needUpload()
     }
@@ -411,18 +474,20 @@ class Storage {
     }
     allImageFromDb(sortByImage = true) {
         const result = this.sqlite.query(`SELECT * FROM clips favorite WHERE text like "@image=%"`)
-        const images = this.parse(result)?.map(item => {
-            let path = this.keyToPath(item.text)
-            path.preview = path.preview.replace(this.imagePath.preview, "")
-            if (path.preview.startsWith("/")) {
-                path.preview = path.preview.substring(1)
-            }
+        const images = this.parse(result)?.map(clip => {
+            if (clip.image) {
+                const path = clip.imageOriginal
+                path.preview = path.preview.replace(this.imagePath.preview, "")
+                if (path.preview.startsWith("/")) {
+                    path.preview = path.preview.substring(1)
+                }
 
-            path.original = path.original.replace(this.imagePath.original, "")
-            if (path.original.startsWith("/")) {
-                path.original = path.original.substring(1)
+                path.original = path.original.replace(this.imagePath.original, "")
+                if (path.original.startsWith("/")) {
+                    path.original = path.original.substring(1)
+                }
+                return path
             }
-            return path
         })
         const original = [],
             preview = []
@@ -463,4 +528,4 @@ class Storage {
     }
 }
 
-module.exports = Storage
+module.exports = { Clip, Storage }
