@@ -70,7 +70,7 @@ class Clip {
     #getImage(type) {
         if (this.image) {
             if (this.fileStorage.exists(this.fsPath[type])) {
-                return this.fileStorage.readSync(this.fsPath[type])?.image
+                return this.fileStorage.readSync(this.fsPath[type])
             }
         }
     }
@@ -495,7 +495,7 @@ class Storage {
         const result = this.sqlite.query(`SELECT * FROM clips favorite WHERE text like "@image=%"`)
         const images = this.parse(result)?.map(clip => {
             if (clip.image) {
-                const path = clip.imageOriginal
+                const path = clip.fsPath
                 path.preview = path.preview.replace(this.imagePath.preview, "")
                 if (path.preview.startsWith("/")) {
                     path.preview = path.preview.substring(1)

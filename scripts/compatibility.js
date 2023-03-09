@@ -139,6 +139,12 @@ function ver4() {
     }
 }
 
+async function ver5(kernel) {
+    await rebuildUserActions(kernel, {
+        uncategorized: ["DisplayClipboard"]
+    })
+}
+
 /**
  *
  * @param {AppKernel} kernel
@@ -146,7 +152,7 @@ function ver4() {
 async function compatibility(kernel) {
     if (!kernel) return
 
-    const version = 4
+    const version = 5
     const userVersion = $cache.get("compatibility.version") ?? 0
 
     try {
@@ -165,6 +171,10 @@ async function compatibility(kernel) {
         if (userVersion < 4) {
             kernel.print(`compatibility: userVersion [${userVersion}] lower than [4], start action`)
             ver4()
+        }
+        if (userVersion < 5) {
+            kernel.print(`compatibility: userVersion [${userVersion}] lower than [5], start action`)
+            ver5(kernel)
         }
     } catch (error) {
         kernel.error(error)

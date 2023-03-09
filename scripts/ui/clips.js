@@ -461,7 +461,7 @@ class Clips extends ClipsData {
                         symbol: "square.and.arrow.up",
                         handler: (sender, indexPath) => {
                             const clip = this.getByIndex(indexPath)
-                            $share.sheet(clip.image ? clip.imageOriginal.png : clip.text)
+                            $share.sheet(clip.image ? clip.imageOriginal : clip.text)
                         }
                     },
                     {
@@ -549,45 +549,6 @@ class Clips extends ClipsData {
                 }
             }
         }
-    }
-
-    quickLookImage(image) {
-        const sheet = new Sheet()
-        sheet
-            .setView({
-                type: "view",
-                views: [
-                    {
-                        type: "scroll",
-                        props: {
-                            zoomEnabled: true,
-                            maxZoomScale: 3
-                        },
-                        layout: $layout.fill,
-                        views: [
-                            {
-                                type: "image",
-                                props: { data: image.png },
-                                layout: $layout.fill
-                            }
-                        ]
-                    }
-                ],
-                layout: $layout.fill
-            })
-            //.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
-            .addNavBar({
-                title: $l10n("PREVIEW"),
-                popButton: { title: $l10n("CLOSE") },
-                rightButtons: [
-                    {
-                        symbol: "square.and.arrow.up",
-                        tapped: () => $share.sheet(image.png)
-                    }
-                ]
-            })
-            .init()
-            .present()
     }
 
     lineData(data, indicator = false) {
@@ -714,7 +675,7 @@ class Clips extends ClipsData {
                 didSelect: (sender, indexPath) => {
                     const clip = this.getByIndex(indexPath)
                     if (clip.image) {
-                        this.quickLookImage(clip.imageOriginal)
+                        this.kernel.quickLookImage(clip.imageOriginal)
                     } else {
                         this.edit(clip.text, text => {
                             if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)

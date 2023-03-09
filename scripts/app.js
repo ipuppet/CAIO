@@ -5,6 +5,7 @@ const {
     Kernel,
     FileStorage,
     Setting,
+    Sheet,
     FileManager
 } = require("./libs/easy-jsbox")
 const { Storage } = require("./dao/storage")
@@ -76,6 +77,45 @@ class AppKernel extends Kernel {
                 { title: $l10n("CANCEL") }
             ]
         })
+    }
+
+    quickLookImage(image) {
+        const sheet = new Sheet()
+        sheet
+            .setView({
+                type: "view",
+                views: [
+                    {
+                        type: "scroll",
+                        props: {
+                            zoomEnabled: true,
+                            maxZoomScale: 3
+                        },
+                        layout: $layout.fill,
+                        views: [
+                            {
+                                type: "image",
+                                props: { data: image },
+                                layout: $layout.fill
+                            }
+                        ]
+                    }
+                ],
+                layout: $layout.fill
+            })
+            //.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
+            .addNavBar({
+                title: $l10n("PREVIEW"),
+                popButton: { title: $l10n("CLOSE") },
+                rightButtons: [
+                    {
+                        symbol: "square.and.arrow.up",
+                        tapped: () => $share.sheet(image)
+                    }
+                ]
+            })
+            .init()
+            .present()
     }
 }
 

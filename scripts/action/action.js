@@ -119,6 +119,10 @@ class Action {
             .present()
     }
 
+    quickLookImage(image) {
+        this.#kernel.quickLookImage(image)
+    }
+
     /**
      * 获取所有剪切板数据
      * @returns Array

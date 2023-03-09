@@ -408,7 +408,7 @@ class Keyboard extends Clips {
         listView.events.didSelect = (sender, indexPath) => {
             const clip = this.clips[indexPath.row]
             if (clip.image) {
-                this.quickLookImage(clip.imageOriginal)
+                this.kernel.quickLookImage(clip.imageOriginal)
             } else {
                 $keyboard.insert(clip.text)
                 if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {
