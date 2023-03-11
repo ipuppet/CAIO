@@ -2,6 +2,7 @@ const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require
 const Editor = require("./editor")
 const ActionManagerData = require("../../dao/action-manager-data")
 const { ActionEnv, ActionData } = require("../../action/action")
+const WebDavSync = require("../../dao/webdav-sync")
 
 /**
  * @typedef {import("../../app").AppKernel} AppKernel
@@ -12,20 +13,20 @@ class ActionManager extends ActionManagerData {
     reorder = {}
     addActionButtonId = "action-manager-button-add"
     sortActionButtonId = "action-manager-button-sort"
+    syncButtonId = "action-manager-button-sync"
     syncLabelId = "action-manager-sync-label"
 
     get actionList() {
         return super.actions.map(type => {
-            const rows = []
+            const items = []
             type.items.forEach(action => {
-                rows.push(this.actionToData(action))
+                items.push(this.actionToData(action))
             })
 
             // 返回新对象
             return {
                 title: type.title,
-                items: rows,
-                rows: rows
+                items: items
             }
         })
     }
@@ -36,19 +37,20 @@ class ActionManager extends ActionManagerData {
     actionSyncStatus() {
         $app.listen({
             actionSyncStatus: args => {
-                if (args.status === ActionManagerData.syncStatus.syncing) {
-                    this.undateNavButton(true)
-                    this.undateSyncLabel($l10n("SYNCING"))
-                } else if (args.status === ActionManagerData.syncStatus.success) {
+                if (args.status === WebDavSync.status.syncing && args.animate) {
+                    this.updateNavButton(true)
+                    this.updateSyncLabel($l10n("SYNCING"))
+                } else if (args.status === WebDavSync.status.success) {
                     try {
-                        this.matrix.update(this.actionList)
+                        this.matrix.data = this.actionList
                     } catch (error) {
                         this.kernel.error(error)
-                        this.undateSyncLabel(error)
+                        this.updateSyncLabel(error)
                         $ui.error(error)
                     } finally {
-                        this.undateSyncLabel()
-                        this.undateNavButton(false)
+                        this.updateSyncLabel()
+                        this.updateNavButton(false)
+                        $(this.matrix.id)?.endRefreshing()
                     }
                 }
             }
@@ -57,14 +59,10 @@ class ActionManager extends ActionManagerData {
 
     editActionInfoPageSheet(info, done) {
         const actionTypes = this.getActionTypes()
-        const actionTypesIndex = {} // 用于反查索引
-        actionTypes.forEach((key, index) => {
-            actionTypesIndex[key] = index
-        })
         const isNew = !Boolean(info)
         if (isNew) {
             this.editingActionInfo = {
-                type: "clipboard",
+                type: actionTypes[0],
                 name: "MyAction",
                 color: "#CC00CC",
                 icon: "icon_062.png", // 默认星星图标
@@ -78,17 +76,10 @@ class ActionManager extends ActionManagerData {
         const SettingUI = new Setting({
             structure: {},
             set: (key, value) => {
-                if (key === "type") {
-                    this.editingActionInfo[key] = value[1]
-                } else {
-                    this.editingActionInfo[key] = value
-                }
+                this.editingActionInfo[key] = value
                 return true
             },
             get: (key, _default = null) => {
-                if (key === "type") {
-                    return actionTypesIndex[this.editingActionInfo.type]
-                }
                 if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key))
                     return this.editingActionInfo[key]
                 else return _default
@@ -102,7 +93,14 @@ class ActionManager extends ActionManagerData {
             $l10n("ICON"),
             this.kernel.setting.getColor(this.editingActionInfo.color)
         )
-        const typeMenu = SettingUI.createMenu("type", ["tag.circle", "#33CC33"], $l10n("TYPE"), actionTypes, true)
+        const typeMenu = SettingUI.createMenu(
+            "type",
+            ["tag.circle", "#33CC33"],
+            $l10n("TYPE"),
+            actionTypes,
+            actionTypes,
+            true
+        )
         const readme = {
             type: "view",
             views: [
@@ -136,6 +134,26 @@ class ActionManager extends ActionManagerData {
         // 只有新建时才可选择类型
         if (isNew) data[0].rows = data[0].rows.concat(typeMenu)
         const sheet = new Sheet()
+        const sheetDone = async () => {
+            if (isNew) {
+                this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
+                if (this.exists(this.editingActionInfo)) {
+                    const resp = await $ui.alert({
+                        title: $l10n("UNABLE_CREATE_ACTION"),
+                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replace("${name}", this.editingActionInfo.name)
+                    })
+                    if (resp.index === 1) return
+                }
+                // reorder
+                const order = this.getActionOrder(this.editingActionInfo.type, true)
+                order.unshift(this.editingActionInfo.dir)
+                this.saveOrder(this.editingActionInfo.type, order)
+            }
+            sheet.dismiss()
+            this.saveActionInfo(this.editingActionInfo)
+            await $wait(0.3) // 等待 sheet 关闭
+            if (done) done(this.editingActionInfo)
+        }
         sheet
             .setView({
                 type: "list",
@@ -153,16 +171,13 @@ class ActionManager extends ActionManagerData {
             })
             .addNavBar({
                 title: "",
-                popButton: {
-                    title: $l10n("DONE"),
-                    tapped: () => {
-                        if (!this.editingActionInfo.dir) {
-                            this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
-                        }
-                        this.saveActionInfo(this.editingActionInfo)
-                        if (done) done(this.editingActionInfo)
+                popButton: { title: $l10n("CANCEL") },
+                rightButtons: [
+                    {
+                        title: $l10n("DONE"),
+                        tapped: async () => await sheetDone()
                     }
-                }
+                ]
             })
             .init()
             .present()
@@ -193,6 +208,38 @@ class ActionManager extends ActionManagerData {
                             .init()
                             .present()
                     }
+                },
+                {
+                    symbol: "play.circle",
+                    tapped: async () => {
+                        this.saveMainJs(info, editor.text)
+                        let actionRest = await this.getActionHandler(
+                            info.type,
+                            info.dir
+                        )(new ActionData({ env: ActionEnv.build }))
+                        if (actionRest !== undefined) {
+                            if (typeof actionRest === "object") {
+                                actionRest = JSON.stringify(actionRest, null, 2)
+                            }
+                            const sheet = new Sheet()
+                            sheet
+                                .setView({
+                                    type: "code",
+                                    props: {
+                                        lineNumbers: true,
+                                        editable: false,
+                                        text: actionRest
+                                    },
+                                    layout: $layout.fill
+                                })
+                                .addNavBar({
+                                    title: "",
+                                    popButton: { title: $l10n("DONE") }
+                                })
+                                .init()
+                                .present()
+                        }
+                    }
                 }
             ],
             "code"
@@ -210,17 +257,14 @@ class ActionManager extends ActionManagerData {
         const data = this.actionToData(this.actions[to.section].items[to.row])
         if (from.row < to.row) {
             // 先插入时是插入到 to 位置的前面 to.row + 1
-            actionsView.insert(
-                {
-                    indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
-                    value: data
-                },
-                false
-            )
-            actionsView.delete(from, false)
+            actionsView.insert({
+                indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
+                value: data
+            })
+            actionsView.delete(from)
         } else {
-            actionsView.delete(from, false)
-            actionsView.insert({ indexPath: to, value: data }, false)
+            actionsView.delete(from)
+            actionsView.insert({ indexPath: to, value: data })
         }
     }
 
@@ -325,13 +369,14 @@ class ActionManager extends ActionManagerData {
                         {
                             title: $l10n("CREATE_NEW_ACTION"),
                             handler: () => {
-                                this.editActionInfoPageSheet(null, info => {
+                                this.editActionInfoPageSheet(null, async info => {
                                     this.matrix.insert({
                                         indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
                                         value: this.actionToData(info)
                                     })
                                     const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                                     this.saveMainJs(info, MainJsTemplate)
+                                    await $wait(0.3)
                                     this.editActionMainJs(MainJsTemplate, info)
                                 })
                             }
@@ -414,24 +459,24 @@ class ActionManager extends ActionManagerData {
         return {
             name: { text: action.name },
             icon:
-                action.icon.slice(0, 5) === "icon_"
+                action?.icon?.slice(0, 5) === "icon_"
                     ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                    : { image: $image(action.icon) },
+                    : { image: $image(action?.icon) },
             color: { bgcolor: this.kernel.setting.getColor(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
         }
     }
 
-    undateSyncLabel(message) {
+    updateSyncLabel(message) {
         if (!message) {
-            message = $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+            message = $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
         }
         if ($(this.syncLabelId)) {
             $(this.syncLabelId).text = message
         }
     }
 
-    undateNavButton(loading) {
+    updateNavButton(loading) {
         const addActionButton = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId)
         if (addActionButton) {
             addActionButton.setLoading(loading)
@@ -439,6 +484,10 @@ class ActionManager extends ActionManagerData {
         const sortActionButton = this.navigationView?.navigationBarItems?.getButton(this.sortActionButtonId)
         if (sortActionButton) {
             sortActionButton.setLoading(loading)
+        }
+        const syncButton = this.navigationView?.navigationBarItems?.getButton(this.syncButtonId)
+        if (syncButton) {
+            syncButton.setLoading(loading)
         }
     }
 
@@ -465,7 +514,14 @@ class ActionManager extends ActionManagerData {
                     rowHeight: 60,
                     sectionTitleHeight: 30,
                     stickyHeader: true,
-                    data: this.actionList,
+                    data: (() => {
+                        const data = this.actionList
+                        data.map(type => {
+                            type.rows = type.items
+                            return type
+                        })
+                        return data
+                    })(),
                     template: {
                         props: { bgcolor: $color("clear") },
                         views: [
@@ -708,7 +764,7 @@ class ActionManager extends ActionManagerData {
                                 id: this.syncLabelId,
                                 color: $color("secondaryText"),
                                 font: $font(12),
-                                text: $l10n("LAST_SYNC_AT") + this.getSyncDate().toLocaleString()
+                                text: $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
                             },
                             layout: (make, view) => {
                                 make.size.equalTo(view.super)
@@ -729,16 +785,17 @@ class ActionManager extends ActionManagerData {
                     })
                     this.getActionHandler(info.type, info.dir)(actionData)
                 },
-                pulled: sender => {
-                    $delay(0.5, async () => {
-                        this.undateNavButton(true)
+                pulled: async sender => {
+                    if (this.isEnableWebDavSync) {
+                        this.syncWithWebDav()
+                    } else {
+                        this.updateNavButton(true)
                         await this.sync()
-                        this.actionsNeedReload()
-                        this.matrix.update(this.actionList)
-                        this.undateSyncLabel()
-                        this.undateNavButton(false)
+                        this.matrix.data = this.actionList
+                        this.updateSyncLabel()
+                        this.updateNavButton(false)
                         sender.endRefreshing()
-                    })
+                    }
                 }
             }
         })
@@ -761,28 +818,32 @@ class ActionManager extends ActionManagerData {
         if (this.kernel.setting.get("experimental.syncAction")) {
             rightButtons.push({
                 // 同步
+                id: this.syncButtonId,
                 symbol: "arrow.triangle.2.circlepath.circle",
                 tapped: async (animate, sender) => {
-                    animate.start()
-                    this.undateNavButton(true)
-                    await this.sync()
-                    this.actionsNeedReload()
-                    this.matrix.update(this.actionList)
-                    this.undateSyncLabel()
-                    animate.done()
-                    this.undateNavButton(false)
+                    if (this.isEnableWebDavSync) {
+                        this.syncWithWebDav()
+                    } else {
+                        this.updateNavButton(true)
+                        await this.sync()
+                        this.matrix.data = this.actionList
+                        this.updateSyncLabel()
+                        this.updateNavButton(false)
+                    }
                 }
             })
         }
-        actionSheet.setView(this.getMatrixView()).addNavBar({
-            title: $l10n("ACTIONS"),
-            popButton: { symbol: "xmark.circle" },
-            rightButtons: rightButtons
-        })
+        actionSheet
+            .setView(this.getMatrixView())
+            .addNavBar({
+                title: $l10n("ACTIONS"),
+                popButton: { symbol: "xmark.circle" },
+                rightButtons: rightButtons
+            })
+            .init()
 
         this.navigationView = actionSheet.navigationView
-
-        actionSheet.init().present()
+        actionSheet.present()
     }
 }
 

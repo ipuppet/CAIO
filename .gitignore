@@ -1,5 +1,7 @@
+.DS_Store
 .output
 .idea
 .vscode
 node_modules
 .parcel-cache
+test.js

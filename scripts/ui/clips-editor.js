@@ -98,37 +98,50 @@ class ClipsEditor {
 
     selectAll() {
         const isFull = this.editorSelectedIsFull
-        this.clipsInstance.clips.forEach((item, i) => {
+        this.clipsInstance.clips.forEach((_, i) => {
             this.editorSelected[i] = !isFull
         })
     }
 
     deleteSelected() {
         this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+            const keys = Object.keys(this.editorSelected)
+            if (keys.length === this.clipsInstance.clips.length) {
+                this.deleteTable()
+                return
+            }
             const listView = $(this.listId)
             const clipsListView = $(this.clipsInstance.listId)
             // 倒叙删除，防止索引错乱
-            Object.keys(this.editorSelected)
-                .reverse()
-                .forEach(row => {
-                    const isSelected = this.editorSelected[row]
-                    if (isSelected) {
-                        row = Number(row)
+            keys.reverse().forEach(row => {
+                const isSelected = this.editorSelected[row]
+                if (isSelected) {
+                    row = Number(row)
 
-                        const clip = this.clipsInstance.clips[row]
-                        this.kernel.print(`delete selected: [${row}]\n${clip.text}`)
+                    const clip = this.clipsInstance.clips[row]
+                    this.kernel.print(`delete selected: [${row}]\n${clip.text}`)
 
-                        this.clipsInstance.delete(row)
-                        clipsListView.delete(row)
+                    this.clipsInstance.delete(clip.uuid)
+                    clipsListView.delete(row)
 
-                        listView.delete(row)
-                    }
-                })
-
+                    listView.delete(row)
+                }
+            })
             // 重置选中的项目
             this.#editorSelected = undefined
             this.updateToolBar()
         })
+    }
+
+    deleteTable() {
+        try {
+            this.kernel.storage.deleteTable(this.clipsInstance.table)
+            this.sheet.dismiss()
+            this.clipsInstance.updateList(true)
+        } catch (error) {
+            this.kernel.error(error)
+            $ui.error(error)
+        }
     }
 
     updateToolBar() {
@@ -240,10 +253,10 @@ class ClipsEditor {
             },
             events: {
                 rowHeight: (sender, indexPath) => {
-                    const text = this.clipsInstance.clips[indexPath.row].text
-                    const itemHeight = this.kernel.storage.isImage(text)
+                    const clip = this.clipsInstance.clips[indexPath.row]
+                    const itemHeight = clip.image
                         ? this.clipsInstance.imageContentHeight
-                        : this.getTextHeight(text)
+                        : this.getTextHeight(clip.text)
 
                     return itemHeight + this.clipsInstance.verticalMargin * 2
                 },
@@ -270,8 +283,8 @@ class ClipsEditor {
     }
 
     presentSheet() {
-        const sheet = new Sheet()
-        sheet
+        this.sheet = new Sheet()
+        this.sheet
             .setView(View.createFromViews([this.getListEditerView(), this.getToolBarView()]))
             .addNavBar({
                 title: "",
@@ -290,15 +303,7 @@ class ClipsEditor {
                                 ]
                             })
                             if (res.index === 0) {
-                                // 确认删除
-                                try {
-                                    this.kernel.storage.deleteTable(this.clipsInstance.table)
-                                    sheet.dismiss()
-                                    this.clipsInstance.updateList(true)
-                                } catch (error) {
-                                    this.kernel.error(error)
-                                    $ui.error(error)
-                                }
+                                this.deleteTable()
                             }
                         }
                     }

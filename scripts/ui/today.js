@@ -77,9 +77,7 @@ class Today extends Clips {
     async readClipboard(manual = false) {
         if (!this.isActionPage && $app.env === $env.today) {
             await super.readClipboard(manual)
-            return true
         }
-        return false
     }
 
     setClipboarPageSize(mode) {
@@ -132,10 +130,12 @@ class Today extends Clips {
                 },
                 tapped: this.buttonTapped(async animate => {
                     animate.start()
-                    if (await this.readClipboard(true)) {
+                    try {
+                        await this.readClipboard(true)
                         animate.done()
-                    } else {
+                    } catch (error) {
                         animate.cancel()
+                        throw error
                     }
                 })
             }
@@ -228,14 +228,18 @@ class Today extends Clips {
         this.updateList()
     }
 
-    updateList() {
+    updateList(reload = false) {
+        if (reload) {
+            this.setNeedReload()
+        }
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
-        $(this.listId).data = this.allClips[this.listSection]
-            .slice(start, end)
-            .map(data => this.lineData(data, this.copied.uuid === data.uuid))
+        const all = this.clips
+        $(this.listId).data = all.slice(start, end).map(data => this.lineData(data, this.copied.uuid === data.uuid))
         // page index
-        $(this.pageIndexId).text = this.listPageNow[this.listSection] + 1
+        const pageNow = this.listPageNow[this.listSection] + 1
+        const pageCount = Math.ceil(all.length / this.listPageSize)
+        $(this.pageIndexId).text = `${pageNow}/${pageCount}`
     }
 
     clipboardPrevPage() {
@@ -246,7 +250,7 @@ class Today extends Clips {
     }
 
     clipboardNextPage() {
-        const maxPage = Math.ceil(this.allClips[this.listSection].length / this.listPageSize)
+        const maxPage = Math.ceil(this.clips.length / this.listPageSize)
         if (this.listPageNow[this.listSection] < maxPage - 1) {
             this.listPageNow[this.listSection]++
             this.updateList()
@@ -283,13 +287,12 @@ class Today extends Clips {
                         ready: () => this.listReady(),
                         rowHeight: () => this.verticalMargin + this.singleLineContentHeight + this.tagHeight,
                         didSelect: this.buttonTapped((sender, indexPath) => {
-                            const item = this.clips[indexPath.row]
-                            const path = this.kernel.storage.keyToPath(item.text)
-                            if (path && this.kernel.fileStorage.exists(path.original)) {
-                                $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
+                            const clip = this.clips[indexPath.row]
+                            if (clip.image) {
+                                $clipboard.image = clip.imageOriginal
                             } else {
-                                this.setClipboardText(item.text)
-                                this.setCopied(indexPath.row)
+                                this.setClipboardText(clip.text)
+                                this.setCopied(clip.uuid)
                             }
                             $ui.toast($l10n("COPIED"))
                         })

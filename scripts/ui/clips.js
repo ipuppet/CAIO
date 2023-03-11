@@ -13,6 +13,7 @@ const ClipsData = require("../dao/clips-data")
 const ClipsSearch = require("./clips-search")
 const ClipsEditor = require("./clips-editor")
 const { ActionData, ActionEnv } = require("../action/action")
+const WebDavSync = require("../dao/webdav-sync")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
@@ -65,6 +66,13 @@ class Clips extends ClipsData {
         return this.#singleLineContentHeight
     }
 
+    getByIndex(index) {
+        if (typeof index === "object") {
+            index = index.row
+        }
+        return this.clips[index]
+    }
+
     setSingleLine() {
         this.#singleLine = true
         // 图片高度与文字一致
@@ -97,6 +105,17 @@ class Clips extends ClipsData {
                 $delay(0.5, () => {
                     this.readClipboard()
                 })
+            },
+            clipSyncStatus: args => {
+                const list = $(this.listId)
+                if (args.status === WebDavSync.status.success) {
+                    if (args.updateList) {
+                        this.updateList(true)
+                    }
+                    if (list) list.endRefreshing()
+                } else if (args.status === WebDavSync.status.syncing && args.animate) {
+                    if (list) list.beginRefreshing()
+                }
             }
         })
     }
@@ -113,9 +132,7 @@ class Clips extends ClipsData {
         $delay(0.5, () => {
             if ($context.query["copy"]) {
                 const uuid = $context.query["copy"]
-                const content = this.kernel.storage.getByUUID(uuid)
-                this.setClipboardText(content.text)
-                this.setCopied(this.getRowByUUID(uuid))
+                this.setCopied(uuid)
                 $ui.success($l10n("COPIED"))
             } else if ($context.query["add"]) {
                 this.getAddTextView()
@@ -138,7 +155,7 @@ class Clips extends ClipsData {
 
     updateList(reload = false) {
         if (reload) {
-            this.loadAllClips()
+            this.setNeedReload()
         }
         $(this.listId).data = this.clips.map(data => this.lineData(data, this.copied.uuid === data.uuid))
         this.updateListBackground()
@@ -151,49 +168,60 @@ class Clips extends ClipsData {
         }
     }
 
-    updateCopied(copied = {}) {
-        Object.assign(this.copied, copied)
+    updateCopied(copied = null) {
+        const oldCopied = this.copied?.uuid
+        $delay(0.3, () => {
+            try {
+                const listView = $(this.listId)
+                const oldCell = listView.cell($indexPath(0, this.getIndexByUUID(oldCopied)))
+                if (oldCell) {
+                    oldCell.get("copied").hidden = true
+                }
+                if (copied) {
+                    listView.cell($indexPath(0, this.getIndexByUUID(copied.uuid))).get("copied").hidden = false
+                }
+            } catch (error) {
+                this.kernel.error(`setCopied: ${error}`)
+            }
+        })
+
+        if (!copied) {
+            this.copied = {}
+        } else {
+            Object.assign(this.copied, copied)
+        }
         this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
 
     /**
      * 将元素标记为 copied
-     * @param {string|undefined} uuid 若为 undefined 则清空剪切板
-     * @param {number} row
+     * @param {string} uuid
      * @param {boolean} isUpdateIndicator
      * @returns
      */
-    setCopied(row, isUpdateIndicator = true) {
-        const uuid = this.clips[row]?.uuid
-        if (
-            !uuid ||
-            (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex && row === this.copied?.row)
-        ) {
+    setCopied(uuid) {
+        if (!uuid || (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex)) {
             return
         }
 
         let copied = {}
         if (this.copied.uuid !== uuid) {
-            copied = this.kernel.storage.getByUUID(uuid) ?? {}
+            copied = this.getClip(uuid) ?? {}
         }
         copied.tabIndex = this.tabIndex
-        copied.row = row
-
-        const oldRow = this.copied.row
 
         this.updateCopied(copied)
+        this.setClipboardText(copied.text)
+    }
 
-        if (isUpdateIndicator) {
-            $delay(0.3, () => {
-                const listView = $(this.listId)
-                const oldCell = listView.cell($indexPath(0, oldRow))
-                if (oldCell) {
-                    oldCell.get("copied").hidden = true
-                }
-                listView.cell($indexPath(0, row)).get("copied").hidden = false
-            })
+    clearCopied() {
+        const listView = $(this.listId)
+        const oldCell = listView.cell($indexPath(0, this.getIndexByUUID(this.copied.uuid)))
+        if (oldCell) {
+            oldCell.get("copied").hidden = true
         }
+        this.updateCopied(null)
     }
 
     async readClipboard(manual = false) {
@@ -207,45 +235,38 @@ class Clips extends ClipsData {
                     $clipboard.images.forEach(image => {
                         this.add(image)
                     })
-                    return true
+                    return
                 }
-                return false
+                return
+            }
+            // 剪切板没有变化则直接退出
+            if (!manual && !this.isChanged) {
+                return
             }
 
-            // 剪切板没有变化则直接退出
-            if (!this.isChanged) {
+            const text = $clipboard.text
+            if (!text || text === "") {
+                this.clearCopied()
+                return
+            }
+            // 判断 copied 是否和剪切板一致
+            // 开发模式下，清空数据后该值仍然存在，可能造成：无法保存相同的数据
+            if (this.getClip(this.copied?.uuid)?.text === text) {
                 if (manual) {
                     $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
                 }
                 return
             }
-
-            const text = $clipboard.text
-
-            if (!text || text === "") {
-                return false
-            }
-
-            // 判断 copied 是否和剪切板一致
-            // 开发模式下，清空数据后该值仍然存在，可能造成：无法保存相同的数据
-            if (this.copied.text === text) {
-                return false
-            }
-
-            const md5 = $text.MD5(text)
-            if (this.savedClipboardIndex[md5]) {
-                const res = this.kernel.storage.getByMD5(md5)
-                // 切换标签页
-                this.switchTab(this.tabItemsIndex.indexOf(res.section), true)
-                this.setCopied(this.getRowByUUID(res.uuid))
+            if (this.exists(text)) {
+                const res = this.kernel.storage.getByMD5($text.MD5(text))
+                this.switchTab(this.tabItemsMap[res.section], true)
+                this.setCopied(res.uuid)
             } else {
-                // 切换标签页
                 this.switchTab(1, true) // clips
-                this.add(text)
-                this.copy(0)
+                const data = this.add(text)
+                this.setCopied(data.uuid)
             }
         }
-        return false
     }
 
     add(item) {
@@ -260,23 +281,19 @@ class Clips extends ClipsData {
                 indexPath: $indexPath(0, 0),
                 value: this.lineData(data)
             })
-            // 被复制的元素向下移动了一个单位
-            if (this.copied?.tabIndex === this.tabIndex && this.copied?.row < this.clips.length) {
-                this.setCopied(this.copied.row + 1, false)
-            }
+            return data
         } catch (error) {
             $ui.alert(error)
             this.kernel.error(error)
         }
     }
 
-    delete(row) {
+    delete(uuid) {
         try {
-            const deleteedItem = this.getCopy(this.clips[row])
-            super.deleteItem(row)
+            super.deleteItem(uuid)
             // 删除剪切板信息
-            if (this.copied.uuid === deleteedItem.uuid) {
-                this.copied = {}
+            if (this.copied.uuid === uuid) {
+                this.updateCopied(null)
                 $clipboard.clear()
             }
 
@@ -287,14 +304,13 @@ class Clips extends ClipsData {
         }
     }
 
-    update(text, row) {
+    update(text, uuid) {
         try {
-            super.updateItem(text, row)
+            super.updateItem(text, uuid)
             // 更新列表
             this.updateList()
-            if (this.clips[row].uuid === this.copied.uuid) {
+            if (uuid === this.copied.uuid) {
                 this.setClipboardText(text)
-                this.updateCopied({ text })
             }
 
             return true
@@ -336,47 +352,30 @@ class Clips extends ClipsData {
                     value: this.lineData(this.clips[to])
                 })
             }
-            // 修正指示器
-            if (this.copied.tabIndex !== undefined) {
-                if (this.copied.tabIndex === this.tabIndex) {
-                    if (this.copied.row === from) {
-                        // 被移动的行是被复制的行
-                        this.setCopied(to)
-                    } else if (
-                        (this.copied.row > from && this.copied.row < to) ||
-                        (this.copied.row < from && this.copied.row > to) ||
-                        this.copied.row === to
-                    ) {
-                        // 被复制的行介于 from 和 _to 之间或等于 _to
-                        // 从上往下移动则 -1 否则 +1
-                        this.setCopied(from < to ? this.copied.row - 1 : this.copied.row + 1)
-                    }
-                }
-            }
         } catch (error) {
             $ui.alert(error)
             this.kernel.error(error)
         }
     }
 
-    favorite(row) {
-        const item = this.clips[row]
+    favorite(index) {
+        const clip = this.getByIndex(index)
 
-        if (item?.section === "favorite") {
-            this.move(row, 0)
+        if (clip?.section === "favorite") {
+            this.move(index, 0)
             return
         }
 
-        const res = this.kernel.storage.getByMD5(item.md5)
+        const res = this.kernel.storage.getByUUID(clip.uuid)
         if (res?.section === "favorite") {
             Toast.warning("Already exists")
             return
         }
 
         try {
-            super.favoriteItem(row)
+            super.favoriteItem(clip.uuid)
             // UI 操作
-            $(this.listId).delete(row)
+            $(this.listId).delete(index)
         } catch (error) {
             $ui.alert(error)
         }
@@ -384,21 +383,18 @@ class Clips extends ClipsData {
 
     /**
      * 复制
-     * @param {number} row 被复制的行
+     * @param {string} uuid 被复制的 uuid
      */
-    copy(row) {
-        const text = this.clips[row].text
-        const path = this.kernel.storage.keyToPath(text)
-        if (path && this.kernel.fileStorage.exists(path.original)) {
-            $clipboard.image = this.kernel.fileStorage.readSync(path.original).image
+    copy(uuid) {
+        const clip = this.getClip(uuid)
+        if (clip.image) {
+            $clipboard.image = clip.imageOriginal
         } else {
-            this.setClipboardText(text)
+            this.setCopied(uuid)
         }
         const isMoveToTop = this.tabIndex !== 0
         // 将被复制的行移动到最前端
-        if (isMoveToTop) this.move(row, 0)
-        // 写入缓存并更新数据
-        this.setCopied(isMoveToTop ? 0 : row)
+        if (isMoveToTop) this.move(this.getIndexByUUID(uuid), 0)
     }
 
     edit(text, callback) {
@@ -439,7 +435,7 @@ class Clips extends ClipsData {
                         title: $l10n("TAG"),
                         symbol: "tag",
                         handler: (sender, indexPath) => {
-                            const uuid = this.clips[indexPath.row].uuid
+                            const uuid = this.getByIndex(indexPath).uuid
                             $input.text({
                                 placeholder: $l10n("ADD_TAG"),
                                 text: sender.text,
@@ -464,23 +460,14 @@ class Clips extends ClipsData {
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
                         handler: (sender, indexPath) => {
-                            const text = this.clips[indexPath.row].text
-                            let shareContent = text
-                            const path = this.kernel.storage.keyToPath(text)
-                            if (path && this.kernel.fileStorage.exists(path.original)) {
-                                const image = this.kernel.fileStorage.readSync(path.original)?.image?.png
-                                shareContent = {
-                                    name: image.fileName,
-                                    data: image
-                                }
-                            }
-                            $share.sheet([shareContent])
+                            const clip = this.getByIndex(indexPath)
+                            $share.sheet(clip.image ? clip.imageOriginal : clip.text)
                         }
                     },
                     {
                         title: $l10n("COPY"),
                         symbol: "square.on.square",
-                        handler: (sender, indexPath) => this.copy(indexPath.row)
+                        handler: (sender, indexPath) => this.copy(this.getByIndex(indexPath).uuid)
                     },
                     {
                         title: $l10n("DELETE"),
@@ -489,7 +476,7 @@ class Clips extends ClipsData {
                         handler: (sender, indexPath) => {
                             this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
                                 sender.delete(indexPath)
-                                this.delete(indexPath.row)
+                                this.delete(this.getByIndex(indexPath).uuid)
                             })
                         }
                     }
@@ -504,7 +491,7 @@ class Clips extends ClipsData {
         const action = action => {
             const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
             action.handler = (sender, indexPath) => {
-                const item = this.clips[indexPath.row]
+                const item = this.getByIndex(indexPath)
                 const actionData = new ActionData({
                     env: ActionEnv.clipboard,
                     text: item.text,
@@ -564,53 +551,12 @@ class Clips extends ClipsData {
         }
     }
 
-    quickLookImage(path) {
-        const originalPath = this.kernel.fileStorage.filePath(path.original)
-        const sheet = new Sheet()
-        sheet
-            .setView({
-                type: "view",
-                views: [
-                    {
-                        type: "scroll",
-                        props: {
-                            zoomEnabled: true,
-                            maxZoomScale: 3
-                        },
-                        layout: $layout.fill,
-                        views: [
-                            {
-                                type: "image",
-                                props: { src: originalPath },
-                                layout: $layout.fill
-                            }
-                        ]
-                    }
-                ],
-                layout: $layout.fill
-            })
-            //.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
-            .addNavBar({
-                title: $l10n("PREVIEW"),
-                popButton: { title: $l10n("CLOSE") },
-                rightButtons: [
-                    {
-                        symbol: "square.and.arrow.up",
-                        tapped: () => $share.sheet(this.kernel.fileStorage.readSync(path.original))
-                    }
-                ]
-            })
-            .init()
-            .present()
-    }
-
     lineData(data, indicator = false) {
         const image = { hidden: true }
         const content = { text: "" }
 
-        const path = this.kernel.storage.keyToPath(data.text, false)
-        if (path) {
-            image.src = path.preview
+        if (data.image) {
+            image.src = data.imagePath.preview
             image.hidden = false
         } else {
             content.text = data.text
@@ -706,15 +652,13 @@ class Clips extends ClipsData {
                         // 复制
                         title: $l10n("COPY"),
                         color: $color("systemLink"),
-                        handler: (sender, indexPath) => this.copy(indexPath.row)
+                        handler: (sender, indexPath) => this.copy(this.getByIndex(indexPath).uuid)
                     },
                     {
                         // 收藏
                         title: $l10n("FAVORITE"),
                         color: $color("orange"),
-                        handler: (sender, indexPath) => {
-                            this.favorite(indexPath.row)
-                        }
+                        handler: (sender, indexPath) => this.favorite(indexPath.row)
                     }
                 ]
             },
@@ -722,30 +666,28 @@ class Clips extends ClipsData {
             events: {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
-                    const text = this.clips[indexPath.row].text
-                    const tag = this.clips[indexPath.row].tag
+                    const clip = this.getByIndex(indexPath)
 
-                    const tagHeight = tag && tag !== "" ? this.tagHeight : this.verticalMargin
-                    const itemHeight = this.kernel.storage.isImage(text)
-                        ? this.imageContentHeight
-                        : this.getContentHeight(text)
+                    const tagHeight = clip.tag && clip.tag !== "" ? this.tagHeight : this.verticalMargin
+                    const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                     return this.verticalMargin + itemHeight + tagHeight
                 },
-                didSelect: (sender, indexPath, data) => {
-                    const item = this.clips[indexPath.row]
-                    const text = item.text
-                    const path = this.kernel.storage.keyToPath(text)
-                    if (path && this.kernel.fileStorage.exists(path.original)) {
-                        this.quickLookImage(path)
+                didSelect: (sender, indexPath) => {
+                    const clip = this.getByIndex(indexPath)
+                    if (clip.image) {
+                        Kernel.quickLookImage(clip.imageOriginal)
                     } else {
-                        this.edit(item.text, text => {
-                            if (item.md5 !== $text.MD5(text)) this.update(text, indexPath.row)
+                        this.edit(clip.text, text => {
+                            if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
                         })
                     }
                 },
                 pulled: sender => {
                     this.updateList(true)
-                    $delay(0.5, () => sender.endRefreshing())
+                    this.kernel.storage.sync()
+                    if (!this.kernel.setting.get("webdav.status")) {
+                        $delay(0.5, () => sender.endRefreshing())
+                    }
                 }
             }
         }
@@ -820,8 +762,13 @@ class Clips extends ClipsData {
                     symbol: "square.and.arrow.down.on.square",
                     tapped: async animate => {
                         animate.start()
-                        await this.readClipboard(true)
-                        animate.done()
+                        try {
+                            await this.readClipboard(true)
+                            animate.done()
+                        } catch (error) {
+                            animate.cancel()
+                            this.kernel.error(error)
+                        }
                     }
                 }
             ])

@@ -80,6 +80,8 @@ async function rebuildUserActions(kernel, actions = {}) {
             }
         })
     }
+
+    kernel.actionManager.needUpload()
 }
 
 async function ver1(kernel) {
@@ -127,6 +129,24 @@ async function ver3(kernel) {
     })
 }
 
+function ver4() {
+    const actionSyncDataPath = "/storage/user_action/data.json"
+    if ($file.exists(actionSyncDataPath)) {
+        const date = JSON.parse($file.read(actionSyncDataPath).string).date
+        $file.write({
+            data: $data({ string: JSON.stringify({ timestamp: date }) }),
+            path: "/storage/user_action/sync.json"
+        })
+        $file.delete(actionSyncDataPath)
+    }
+}
+
+async function ver5(kernel) {
+    await rebuildUserActions(kernel, {
+        uncategorized: ["DisplayClipboard"]
+    })
+}
+
 /**
  *
  * @param {AppKernel} kernel
@@ -134,7 +154,7 @@ async function ver3(kernel) {
 async function compatibility(kernel) {
     if (!kernel) return
 
-    const version = 3
+    const version = 5
     const userVersion = $cache.get("compatibility.version") ?? 0
 
     try {
@@ -149,6 +169,14 @@ async function compatibility(kernel) {
         if (userVersion < 3) {
             kernel.print(`compatibility: userVersion [${userVersion}] lower than [3], start action`)
             await ver3(kernel)
+        }
+        if (userVersion < 4) {
+            kernel.print(`compatibility: userVersion [${userVersion}] lower than [4], start action`)
+            ver4()
+        }
+        if (userVersion < 5) {
+            kernel.print(`compatibility: userVersion [${userVersion}] lower than [5], start action`)
+            ver5(kernel)
         }
     } catch (error) {
         kernel.error(error)

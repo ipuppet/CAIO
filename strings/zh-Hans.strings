@@ -83,6 +83,8 @@
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
+"UNABLE_CREATE_ACTION" = "无法创建动作";
+"ACTION_NAME_ALREADY_EXISTS" = "动作 ${name} 已存在";
 
 "KEYBOARD" = "键盘";
 "KEYBOARD_HEIGHT" = "键盘高度";
@@ -124,3 +126,13 @@
 "SYNC_ACTIONS" = "动作同步";
 "SYNCING" = "正在同步...";
 "LAST_SYNC_AT" = "最后同步：";
+"MODIFIED" = "最近修改：";
+
+"HOST" = "Host";
+"USER" = "User";
+"PASSWORD" = "Password";
+"BASEPATH" = "Base Path";
+"DATA_CONFLICT" = "数据同步发生冲突";
+"DATA_CONFLICT_MESSAGE" = "请选择想要保留的数据";
+"WEBDAV_DATA" = "WebDAV 数据";
+"LOCAL_DATA" = "本地数据";

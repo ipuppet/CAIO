@@ -83,6 +83,8 @@
 "IMPORT" = "Import";
 "FILE_TYPE_ERROR" = "File type does not match";
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
+"UNABLE_CREATE_ACTION" = "Unable to create action";
+"ACTION_NAME_ALREADY_EXISTS" = "Action ${name} already exists";
 
 "KEYBOARD" = "Keyboard";
 "KEYBOARD_HEIGHT" = "Keyboard Height";
@@ -124,3 +126,13 @@
 "SYNC_ACTIONS" = "Sync Actions";
 "SYNCING" = "Syncing...";
 "LAST_SYNC_AT" = "Last sync at: ";
+"MODIFIED" = "Modified: ";
+
+"HOST" = "Host";
+"USER" = "User";
+"PASSWORD" = "Password";
+"BASEPATH" = "Base Path";
+"DATA_CONFLICT" = "A data synchronization conflict occurred";
+"DATA_CONFLICT_MESSAGE" = "Select the data you want to keep";
+"WEBDAV_DATA" = "WebDAV data";
+"LOCAL_DATA" = "Local data";

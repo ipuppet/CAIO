@@ -1,14 +1,12 @@
+const { FileStorage } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
+const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
 class ActionManagerData {
-    static syncStatus = {
-        syncing: 0,
-        success: 1
-    }
     #syncInterval = 3
     #syncLock = false
     #actions
@@ -23,15 +21,16 @@ class ActionManagerData {
         this.actionOrderFile = "order.json"
         this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
-        this.localSyncFile = this.userActionPath + "/data.json"
+        this.localSyncFile = this.userActionPath + "/sync.json"
         this.iCloudPath = "drive://CAIO/user_action"
-        this.iCloudSyncFile = this.iCloudPath + "/data.json"
-        this.iCloudSyncFileUndownloaded = this.iCloudPath + "/.data.json.icloud"
+        this.iCloudSyncFile = this.iCloudPath + "/sync.json"
+        this.iCloudSyncFileUndownloaded = this.iCloudPath + "/.sync.json.icloud"
         // 用来存储被美化的 Action 分类名称
         this.typeNameMap = {}
         // checkUserAction
         this.checkUserAction()
         // sync
+        this.sync() // 立即同步一次
         $thread.background({
             delay: this.#syncInterval,
             handler: () => this.sync(true)
@@ -50,14 +49,19 @@ class ActionManagerData {
         return this.#actions
     }
 
-    actionsNeedReload(needSync = false) {
+    get isNew() {
+        return $cache.get("caio.action.isNew") ?? false
+    }
+    set isNew(isNew) {
+        $cache.get("caio.action.isNew", isNew)
+    }
+
+    get isEnableWebDavSync() {
+        return this.kernel.setting.get("webdav.status") && this.kernel.setting.get("experimental.syncAction")
+    }
+
+    actionsNeedReload() {
         this.#actions = undefined
-        if (needSync) {
-            $file.write({
-                data: $data({ string: JSON.stringify({ date: Date.now() }) }),
-                path: this.localSyncFile
-            })
-        }
     }
 
     importExampleAction() {
@@ -101,6 +105,7 @@ class ActionManagerData {
                 }
             })
         }
+        this.needUpload()
     }
 
     #mkdir(path = "") {
@@ -132,13 +137,13 @@ class ActionManagerData {
 
     getSyncDate() {
         const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
-        return new Date(localSyncData.date)
+        return new Date(localSyncData.timestamp)
     }
 
     checkSyncData() {
         if (!$file.exists(this.localSyncFile)) {
             $file.write({
-                data: $data({ string: JSON.stringify({ date: 0 }) }),
+                data: $data({ string: JSON.stringify({ timestamp: 0 }) }),
                 path: this.localSyncFile
             })
         }
@@ -147,7 +152,7 @@ class ActionManagerData {
                 $file.download(this.iCloudSyncFileUndownloaded)
             } else {
                 $file.write({
-                    data: $data({ string: JSON.stringify({ date: 0 }) }),
+                    data: $data({ string: JSON.stringify({ timestamp: 0 }) }),
                     path: this.iCloudSyncFile
                 })
             }
@@ -156,6 +161,12 @@ class ActionManagerData {
 
     async sync(loop = false) {
         if (!this.kernel.setting.get("experimental.syncAction")) {
+            return
+        }
+        if (this.kernel.setting.get("webdav.status")) {
+            if (!this.webdavSync) {
+                await this.initSyncWithWebDav()
+            }
             return
         }
         if (this.#syncLock) {
@@ -174,11 +185,11 @@ class ActionManagerData {
         }
         iCloudSyncData = JSON.parse(iCloudSyncData)
         const localSyncData = JSON.parse($file.read(this.localSyncFile).string)
-        if (localSyncData.date < iCloudSyncData.date) {
+        if (localSyncData.timestamp < iCloudSyncData.timestamp) {
             this.kernel.print("local data need update")
             $app.notify({
                 name: "actionSyncStatus",
-                object: { status: ActionManagerData.syncStatus.syncing }
+                object: { status: WebDavSyncAction.status.syncing }
             })
             // temp
             const usetActionTempPath = this.tempPath + "/user_action"
@@ -203,13 +214,13 @@ class ActionManagerData {
             this.actionsNeedReload()
             $app.notify({
                 name: "actionSyncStatus",
-                object: { status: ActionManagerData.syncStatus.success }
+                object: { status: WebDavSyncAction.status.success }
             })
-        } else if (localSyncData.date > iCloudSyncData.date) {
+        } else if (localSyncData.timestamp > iCloudSyncData.timestamp) {
             // 直接更新 iCloudSyncFile
             // 在其他方法中已经对 iCloud 文件进行了更改
             $file.write({
-                data: $data({ string: JSON.stringify({ date: localSyncData.date }) }),
+                data: $data({ string: JSON.stringify({ timestamp: localSyncData.timestamp }) }),
                 path: this.iCloudSyncFile
             })
             // 停顿一个同步间隔
@@ -217,7 +228,7 @@ class ActionManagerData {
             // 通知更新 UI
             $app.notify({
                 name: "actionSyncStatus",
-                object: { status: ActionManagerData.syncStatus.success }
+                object: { status: WebDavSyncAction.status.success }
             })
         }
 
@@ -231,9 +242,38 @@ class ActionManagerData {
         }
     }
 
+    async initSyncWithWebDav() {
+        if (!this.isEnableWebDavSync) return
+        try {
+            this.webdavSync = new WebDavSyncAction({
+                kernel: this.kernel,
+                host: this.kernel.setting.get("webdav.host"),
+                user: this.kernel.setting.get("webdav.user"),
+                password: this.kernel.setting.get("webdav.password"),
+                basepath: this.kernel.setting.get("webdav.basepath")
+            })
+            await this.webdavSync.init()
+        } catch (error) {
+            this.kernel.error(error)
+            throw error
+        }
+    }
+
+    syncWithWebDav() {
+        if (!this.isEnableWebDavSync) return
+        this.webdavSync.sync()
+    }
+
+    needUpload() {
+        if (!this.isEnableWebDavSync) return
+        this.webdavSync.needUpload()
+        this.actionsNeedReload()
+    }
+
     checkUserAction() {
         if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
             $file.mkdir(this.userActionPath)
+            this.isNew = false
             this.importExampleAction()
         }
         if (!$file.exists(this.iCloudPath) || $file.list(this.iCloudPath).length === 0) {
@@ -255,10 +295,32 @@ class ActionManagerData {
         )
     }
 
-    getActionOrder(type) {
-        const path = `${this.userActionPath}/${type}/${this.actionOrderFile}`
-        if ($file.exists(path)) return JSON.parse($file.read(path).string)
-        else return []
+    getActionOrder(type, must = false) {
+        const typePath = `${this.userActionPath}/${type}`
+        const orderPath = `${typePath}/${this.actionOrderFile}`
+        if ($file.exists(orderPath)) {
+            const order = JSON.parse($file.read(orderPath).string)
+            const filtered = order.filter(action => {
+                if ($file.exists(`${typePath}/${action}`)) {
+                    return true
+                }
+                return false
+            })
+            if (filtered.length !== order.length) {
+                this.saveOrder(type, filtered)
+            }
+            return filtered
+        } else {
+            if (must) {
+                const order = []
+                $file.list(typePath).forEach(item => {
+                    order.push(item)
+                })
+                return order
+            } else {
+                return []
+            }
+        }
     }
 
     getActionPath(type, dir) {
@@ -344,55 +406,61 @@ class ActionManagerData {
         return this.typeNameMap[name] ?? name
     }
 
-    #saveFile(type, dir, file, data) {
+    #saveFile(data, ...args) {
         if (typeof data !== "string") {
             data = JSON.stringify(data)
         }
 
-        const path = `${this.userActionPath}/${type}/${dir}`
+        const fullPath = FileStorage.join(this.userActionPath, ...args)
+        const path = fullPath.substring(0, fullPath.lastIndexOf("/"))
         if (!$file.exists(path)) $file.mkdir(path)
-        if (data === $file.read(`${path}/${file}`)?.string) {
+        const fileString = $file.read(fullPath)?.string
+        let fileData
+        try {
+            fileData = JSON.stringify(JSON.parse(fileString))
+        } catch {
+            fileData = fileString
+        }
+        if (data === fileData) {
             return
         }
 
         $file.write({
             data: $data({ string: data }),
-            path: `${path}/${file}`
+            path: fullPath
         })
 
-        const iCloudPath = `${this.iCloudPath}/${type}/${dir}`
+        const iCloudFullPath = FileStorage.join(this.iCloudPath, ...args)
+        const iCloudPath = fullPath.substring(0, fullPath.lastIndexOf("/"))
         if (!$file.exists(iCloudPath)) $file.mkdir(iCloudPath)
         $file.write({
             data: $data({ string: data }),
-            path: `${iCloudPath}/${file}`
+            path: iCloudFullPath
         })
+
+        this.needUpload()
     }
 
     saveActionInfo(info) {
-        this.#saveFile(info.type, info.dir, "config.json", {
-            icon: info.icon,
-            color: info.color,
-            name: info.name
-        })
-        this.#saveFile(info.type, info.dir, "README.md", info.readme)
-
-        this.actionsNeedReload(true)
+        this.#saveFile(
+            {
+                icon: info.icon,
+                color: info.color,
+                name: info.name
+            },
+            info.type,
+            info.dir,
+            "config.json"
+        )
+        this.#saveFile(info.readme, info.type, info.dir, "README.md")
     }
 
     saveMainJs(info, content) {
-        this.#saveFile(info.type, info.dir, "main.js", content)
+        this.#saveFile(content, info.type, info.dir, "main.js")
     }
 
     saveOrder(type, order) {
-        $file.write({
-            data: $data({ string: JSON.stringify(order) }),
-            path: `${this.userActionPath}/${type}/${this.actionOrderFile}`
-        })
-        $file.write({
-            data: $data({ string: JSON.stringify(order) }),
-            path: `${this.iCloudPath}/${type}/${this.actionOrderFile}`
-        })
-        this.actionsNeedReload(true)
+        this.#saveFile(JSON.stringify(order), type, this.actionOrderFile)
     }
 
     move(from, to) {
@@ -430,14 +498,20 @@ class ActionManagerData {
                 dst: `${this.iCloudPath}/${toType}/${toItems[to.row].dir}`
             })
         }
-
-        this.actionsNeedReload(true)
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
         $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
-        this.actionsNeedReload(true)
+        this.needUpload()
+    }
+
+    exists(info) {
+        const path = `${this.userActionPath}/${info.type}/${info.dir}`
+        if ($file.exists(path)) {
+            return true
+        }
+        return false
     }
 }
 

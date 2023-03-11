@@ -1,5 +1,5 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { UIKit, BarButtonItem } = require("../libs/easy-jsbox")
+const { Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -17,6 +17,7 @@ class Keyboard extends Clips {
 
     deleteTimer = undefined
     continuousDeleteTimer = undefined
+    continuousDeleteTapticTimer = undefined
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
@@ -118,7 +119,11 @@ class Keyboard extends Clips {
                 $device.taptic(level)
             }
             if (typeof tapped === "function") {
-                await tapped(...args)
+                try {
+                    await tapped(...args)
+                } catch (error) {
+                    this.kernel.error(error)
+                }
             }
         }
     }
@@ -135,8 +140,13 @@ class Keyboard extends Clips {
                 symbol: "square.and.arrow.down.on.square",
                 tapped: this.keyboardTapped(async animate => {
                     animate.start()
-                    await this.readClipboard(true)
-                    animate.done()
+                    try {
+                        await this.readClipboard(true)
+                        animate.done()
+                    } catch (error) {
+                        animate.cancel()
+                        throw error
+                    }
                 })
             },
             {
@@ -144,7 +154,7 @@ class Keyboard extends Clips {
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped(() => {
                     let flag = $(this.actionsId).hidden === true
-                    $(this.listId).hidden = flag
+                    $(this.listId + "-container").hidden = flag
                     $(this.actionsId).hidden = !flag
                 })
             }
@@ -346,7 +356,9 @@ class Keyboard extends Clips {
                 events: {
                     touchesBegan: this.keyboardTapped(async () => {
                         $keyboard.delete()
-                        $delay(this.continuousDeleteDelay, () => this.keyboardTapped()())
+                        this.continuousDeleteTapticTimer = $delay(this.continuousDeleteDelay, () =>
+                            this.keyboardTapped()()
+                        )
                         this.continuousDeleteTimer = $delay(this.continuousDeleteDelay, () => {
                             this.deleteTimer = $timer.schedule({
                                 interval: this.deleteDelay,
@@ -357,10 +369,9 @@ class Keyboard extends Clips {
                     touchesEnded: () => {
                         this.deleteTimer?.invalidate()
                         this.continuousDeleteTimer?.cancel()
+                        this.continuousDeleteTapticTimer?.cancel()
                         this.deleteTimer = undefined
                         this.continuousDeleteTimer = undefined
-
-                        this.keyboardTapped()()
                     }
                 }
             }
@@ -386,6 +397,7 @@ class Keyboard extends Clips {
 
     getListView() {
         const superListView = super.getListView()
+        superListView.setProp("id", this.listId + "-container")
         superListView.layout = (make, view) => {
             make.top.equalTo(this.navHeight)
             make.width.equalTo(view.super)
@@ -394,12 +406,11 @@ class Keyboard extends Clips {
 
         const listView = superListView.views[0]
         listView.events.didSelect = (sender, indexPath) => {
-            const item = this.clips[indexPath.row]
-            const path = this.kernel.storage.keyToPath(item.text)
-            if (path && this.kernel.fileStorage.exists(path.original)) {
-                this.quickLookImage(path)
+            const clip = this.clips[indexPath.row]
+            if (clip.image) {
+                Kernel.quickLookImage(clip.imageOriginal)
             } else {
-                $keyboard.insert(item.text)
+                $keyboard.insert(clip.text)
                 if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {
                     $keyboard.next()
                 }
