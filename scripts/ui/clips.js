@@ -675,7 +675,7 @@ class Clips extends ClipsData {
                 didSelect: (sender, indexPath) => {
                     const clip = this.getByIndex(indexPath)
                     if (clip.image) {
-                        this.kernel.quickLookImage(clip.imageOriginal)
+                        Kernel.quickLookImage(clip.imageOriginal)
                     } else {
                         this.edit(clip.text, text => {
                             if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)

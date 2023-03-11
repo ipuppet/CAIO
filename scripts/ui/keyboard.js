@@ -1,5 +1,5 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { UIKit, BarButtonItem } = require("../libs/easy-jsbox")
+const { Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -408,7 +408,7 @@ class Keyboard extends Clips {
         listView.events.didSelect = (sender, indexPath) => {
             const clip = this.clips[indexPath.row]
             if (clip.image) {
-                this.kernel.quickLookImage(clip.imageOriginal)
+                Kernel.quickLookImage(clip.imageOriginal)
             } else {
                 $keyboard.insert(clip.text)
                 if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {

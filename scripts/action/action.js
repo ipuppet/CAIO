@@ -120,7 +120,7 @@ class Action {
     }
 
     quickLookImage(image) {
-        this.#kernel.quickLookImage(image)
+        Kernel.quickLookImage(image)
     }
 
     /**
