@@ -106,7 +106,8 @@ class ClipsEditor {
     deleteSelected() {
         this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
             const keys = Object.keys(this.editorSelected)
-            if (keys.length === this.clipsInstance.clips.length) {
+            const selectedCount = keys.filter(k => this.editorSelected[k]).length
+            if (selectedCount === this.clipsInstance.clips.length) {
                 this.deleteTable()
                 return
             }
