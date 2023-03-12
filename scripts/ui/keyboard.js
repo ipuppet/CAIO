@@ -37,11 +37,9 @@ class Keyboard extends Clips {
     constructor(kernel) {
         super(kernel)
 
-        this.backgroundImage = this.kernel.setting.getImage("keyboard.background.image")
-        this.backgroundColor = this.kernel.setting.getColor(this.kernel.setting.get("keyboard.background.color"))
-        this.backgroundColorDark = this.kernel.setting.getColor(
-            this.kernel.setting.get("keyboard.background.color.dark")
-        )
+        this.backgroundImage = this.kernel.setting.get("keyboard.background.image").image
+        this.backgroundColor = this.kernel.setting.get("keyboard.background.color")
+        this.backgroundColorDark = this.kernel.setting.get("keyboard.background.color.dark")
 
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
 
