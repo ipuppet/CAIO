@@ -80,7 +80,7 @@ async function rebuildUserActions(kernel, actions = {}) {
             }
         })
     }
-
+    kernel.actionManager.setNeedReload()
     kernel.actionManager.needUpload()
 }
 

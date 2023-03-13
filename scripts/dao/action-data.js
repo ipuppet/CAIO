@@ -45,6 +45,7 @@ class ActionManagerData {
                     items: this.getActions(type)
                 }
             })
+            this.kernel.print(`init actions`)
         }
         return this.#actions
     }
@@ -60,8 +61,9 @@ class ActionManagerData {
         return this.kernel.setting.get("webdav.status") && this.kernel.setting.get("experimental.syncAction")
     }
 
-    actionsNeedReload() {
+    setNeedReload() {
         this.#actions = undefined
+        this.needUpload()
     }
 
     importExampleAction() {
@@ -105,7 +107,7 @@ class ActionManagerData {
                 }
             })
         }
-        this.needUpload()
+        this.setNeedReload()
     }
 
     #mkdir(path = "") {
@@ -211,7 +213,7 @@ class ActionManagerData {
             this.kernel.print("iCloud data copy success")
             // 通知更新 UI
             await $wait(1)
-            this.actionsNeedReload()
+            this.setNeedReload()
             $app.notify({
                 name: "actionSyncStatus",
                 object: { status: WebDavSyncAction.status.success }
@@ -267,7 +269,6 @@ class ActionManagerData {
     needUpload() {
         if (!this.isEnableWebDavSync) return
         this.webdavSync.needUpload()
-        this.actionsNeedReload()
     }
 
     checkUserAction() {
@@ -437,8 +438,7 @@ class ActionManagerData {
             data: $data({ string: data }),
             path: iCloudFullPath
         })
-
-        this.needUpload()
+        this.setNeedReload()
     }
 
     saveActionInfo(info) {
@@ -467,7 +467,7 @@ class ActionManagerData {
         if (from.section === to.section && from.row === to.row) return
 
         const fromSection = this.actions[from.section]
-        const fromItems = fromSection.items
+        let fromItems = fromSection.items
         const fromType = this.getTypeDir(fromSection.title)
 
         const getOrder = items => {
@@ -476,8 +476,10 @@ class ActionManagerData {
 
         // 判断是否跨 section
         if (from.section === to.section) {
-            fromItems.splice(from.row < to.row ? to.row + 1 : to.row, 0, fromItems[from.row]) // 在 to 位置插入元素
-            fromItems.splice(from.row > to.row ? from.row + 1 : from.row, 1) // 删除 from 位置元素
+            const to_i = from.row < to.row ? to.row + 1 : to.row
+            const from_i = from.row > to.row ? from.row + 1 : from.row
+            fromItems.splice(to_i, 0, fromItems[from.row]) // 在 to 位置插入元素
+            fromItems = fromItems.filter((_, i) => i !== from_i)
             this.saveOrder(fromType, getOrder(fromItems))
         } else {
             const toSection = this.actions[to.section]
@@ -485,10 +487,8 @@ class ActionManagerData {
             const toType = this.getTypeDir(toSection.title)
 
             toItems.splice(to.row, 0, fromItems[from.row]) // 在 to 位置插入元素
-            fromItems.splice(from.row, 1) // 删除 from 位置元素
+            fromItems = fromItems.filter((_, i) => i !== from.row) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
-            this.saveOrder(toType, getOrder(toItems))
-            this.saveOrder(fromType, getOrder(fromItems))
             $file.move({
                 src: `${this.userActionPath}/${fromType}/${toItems[to.row].dir}`,
                 dst: `${this.userActionPath}/${toType}/${toItems[to.row].dir}`
@@ -497,13 +497,15 @@ class ActionManagerData {
                 src: `${this.iCloudPath}/${fromType}/${toItems[to.row].dir}`,
                 dst: `${this.iCloudPath}/${toType}/${toItems[to.row].dir}`
             })
+            this.saveOrder(toType, getOrder(toItems))
+            this.saveOrder(fromType, getOrder(fromItems))
         }
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
         $file.delete(`${this.iCloudPath}/${info.type}/${info.dir}`)
-        this.needUpload()
+        this.setNeedReload()
     }
 
     exists(info) {
