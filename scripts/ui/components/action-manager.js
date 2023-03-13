@@ -80,7 +80,6 @@ class ActionManager extends ActionManagerData {
 
         const SettingUI = new Setting({
             structure: [],
-            userData: this.editingActionInfo,
             set: (key, value) => {
                 this.editingActionInfo[key] = value
                 return true
@@ -92,7 +91,6 @@ class ActionManager extends ActionManagerData {
             }
         })
         SettingUI.loadConfig()
-        console.log(SettingUI.get("name"))
         const nameInput = SettingUI.loader({
             type: "input",
             key: "name",
