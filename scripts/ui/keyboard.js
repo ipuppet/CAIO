@@ -37,7 +37,7 @@ class Keyboard extends Clips {
     constructor(kernel) {
         super(kernel)
 
-        this.backgroundImage = this.kernel.setting.get("keyboard.background.image").image
+        this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
         this.backgroundColor = this.kernel.setting.get("keyboard.background.color")
         this.backgroundColorDark = this.kernel.setting.get("keyboard.background.color.dark")
 
