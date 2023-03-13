@@ -2,30 +2,21 @@
     {
         "items": [
             {
-                "icon": [
-                    "doc.on.clipboard",
-                    "#FFCC66"
-                ],
+                "icon": ["doc.on.clipboard", "#FFCC66"],
                 "type": "child",
                 "title": "CLIPS",
                 "children": [
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "link",
-                                    "#FF6633"
-                                ],
+                                "icon": ["link", "#FF6633"],
                                 "title": "UNIVERSAL_CLIPBOARD",
                                 "type": "switch",
                                 "key": "clipboard.universal",
                                 "value": true
                             },
                             {
-                                "icon": [
-                                    "cursorarrow.rays",
-                                    "#FF6633"
-                                ],
+                                "icon": ["cursorarrow.rays", "#FF6633"],
                                 "title": "Tips",
                                 "type": "script",
                                 "value": "$ui.alert({title:$l10n('UNIVERSAL_CLIPBOARD'),message:$l10n('UNIVERSAL_CLIPBOARD_TIPS')})"
@@ -35,20 +26,14 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "text.alignleft",
-                                    "#FFCC66"
-                                ],
+                                "icon": ["text.alignleft", "#FFCC66"],
                                 "title": "MAX_ITEM_LENGTH",
                                 "type": "number",
                                 "key": "clipboard.maxItemLength",
                                 "value": 100
                             },
                             {
-                                "icon": [
-                                    "square.and.arrow.down.on.square",
-                                    "#FF6633"
-                                ],
+                                "icon": ["square.and.arrow.down.on.square", "#FF6633"],
                                 "title": "AUTO_SAVE",
                                 "type": "switch",
                                 "key": "clipboard.autoSave",
@@ -59,18 +44,13 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "square.and.arrow.up"
-                                ],
+                                "icon": "square.and.arrow.up",
                                 "title": "EXPORT",
                                 "type": "script",
                                 "value": "this.method.exportClipboard"
                             },
                             {
-                                "icon": [
-                                    "square.and.arrow.down",
-                                    "#FFCC33"
-                                ],
+                                "icon": ["square.and.arrow.down", "#FFCC33"],
                                 "title": "IMPORT",
                                 "type": "script",
                                 "value": "this.method.importClipboard"
@@ -80,19 +60,13 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "arrow.2.circlepath",
-                                    "red"
-                                ],
+                                "icon": ["arrow.2.circlepath", "red"],
                                 "title": "REBUILD_DATABASE",
                                 "type": "script",
                                 "value": "this.method.rebuildDatabase"
                             },
                             {
-                                "icon": [
-                                    "trash",
-                                    "red"
-                                ],
+                                "icon": ["trash", "red"],
                                 "title": "DELETE_ALL_DATA",
                                 "type": "script",
                                 "value": "this.method.deleteAllData"
@@ -102,20 +76,14 @@
                 ]
             },
             {
-                "icon": [
-                    "bolt.circle",
-                    "#FF6633"
-                ],
+                "icon": ["bolt.circle", "#FF6633"],
                 "type": "child",
                 "title": "ACTIONS",
                 "children": [
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "bolt.circle",
-                                    "#FF6633"
-                                ],
+                                "icon": ["bolt.circle", "#FF6633"],
                                 "title": "IMPORT_EXAMPLE_ACTIONS",
                                 "type": "script",
                                 "value": "this.method.importExampleAction"
@@ -125,18 +93,13 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "square.and.arrow.up"
-                                ],
+                                "icon": "square.and.arrow.up",
                                 "title": "EXPORT",
                                 "type": "script",
                                 "value": "this.method.exportAction"
                             },
                             {
-                                "icon": [
-                                    "square.and.arrow.down",
-                                    "#FFCC33"
-                                ],
+                                "icon": ["square.and.arrow.down", "#FFCC33"],
                                 "title": "IMPORT",
                                 "type": "script",
                                 "value": "this.method.importAction"
@@ -146,10 +109,7 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "arrow.2.circlepath",
-                                    "red"
-                                ],
+                                "icon": ["arrow.2.circlepath", "red"],
                                 "title": "REBUILD_ACTION_DATABASE",
                                 "type": "script",
                                 "value": "this.method.rebuildAction"
@@ -159,10 +119,7 @@
                 ]
             },
             {
-                "icon": [
-                    "pencil.circle",
-                    "#CC0099"
-                ],
+                "icon": ["pencil.circle", "#CC0099"],
                 "type": "child",
                 "title": "EDITOR",
                 "children": [
@@ -170,10 +127,7 @@
                         "title": "CLIPS",
                         "items": [
                             {
-                                "icon": [
-                                    "wand.and.stars",
-                                    "#FF6633"
-                                ],
+                                "icon": ["wand.and.stars", "#FF6633"],
                                 "title": "TEXT_INSETS",
                                 "type": "number",
                                 "key": "editor.text.insets",
@@ -185,30 +139,21 @@
                         "title": "CODE",
                         "items": [
                             {
-                                "icon": [
-                                    "list.number",
-                                    "#6699CC"
-                                ],
+                                "icon": ["list.number", "#6699CC"],
                                 "title": "SHOW_LINE_NUMBER",
                                 "type": "switch",
                                 "key": "editor.code.lineNumbers",
                                 "value": false
                             },
                             {
-                                "icon": [
-                                    "wand.and.stars",
-                                    "#FF6633"
-                                ],
+                                "icon": ["wand.and.stars", "#FF6633"],
                                 "title": "LIGHT_MODE_THEME",
                                 "type": "input",
                                 "key": "editor.code.lightTheme",
                                 "value": "atom-one-light"
                             },
                             {
-                                "icon": [
-                                    "wand.and.stars",
-                                    "#FF6633"
-                                ],
+                                "icon": ["wand.and.stars", "#FF6633"],
                                 "title": "DARK_MODE_THEME",
                                 "type": "input",
                                 "key": "editor.code.darkTheme",
@@ -219,19 +164,14 @@
                 ]
             },
             {
-                "icon": [
-                    "keyboard",
-                    "#a2a5a6"
-                ],
+                "icon": ["keyboard", "#a2a5a6"],
                 "type": "child",
                 "title": "KEYBOARD",
                 "children": [
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "rectangle.3.offgrid.fill"
-                                ],
+                                "icon": "rectangle.3.offgrid.fill",
                                 "title": "PREVIEW",
                                 "type": "push",
                                 "key": "keyboard.previewAndHeight",
@@ -243,30 +183,21 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "sun.min",
-                                    "#A569BD"
-                                ],
+                                "icon": ["sun.min", "#A569BD"],
                                 "title": "BACKGROUND_COLOR",
                                 "type": "color",
                                 "key": "keyboard.background.color",
                                 "value": "#D1D3D9"
                             },
                             {
-                                "icon": [
-                                    "sun.min",
-                                    "#A569BD"
-                                ],
+                                "icon": ["sun.min", "#A569BD"],
                                 "title": "BACKGROUND_COLOR_DARK",
                                 "type": "color",
                                 "key": "keyboard.background.color.dark",
                                 "value": "#313131"
                             },
                             {
-                                "icon": [
-                                    "photo",
-                                    "#FFCC66"
-                                ],
+                                "icon": ["photo", "#FFCC66"],
                                 "title": "BACKGROUND_IMAGE",
                                 "type": "image",
                                 "key": "keyboard.background.image"
@@ -276,39 +207,28 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "globe",
-                                    "#1899c4"
-                                ],
+                                "icon": ["globe", "#1899c4"],
                                 "title": "SWITCH_AFTER_INSERT",
                                 "type": "switch",
                                 "key": "keyboard.switchAfterInsert",
                                 "value": false
                             },
                             {
-                                "icon": [
-                                    "cursor.rays",
-                                    "#FF8C00"
-                                ],
+                                "icon": ["cursor.rays", "#FF8C00"],
                                 "title": "TAPTIC_ENGINE",
                                 "type": "switch",
                                 "key": "keyboard.tapticEngine",
                                 "value": true
                             },
                             {
-                                "icon": [
-                                    "option",
-                                    "#157EFB"
-                                ],
+                                "icon": ["option", "#157EFB"],
                                 "title": "JSBOX_TOOLBAR",
                                 "type": "switch",
                                 "key": "keyboard.showJSBoxToolbar",
                                 "value": false
                             },
                             {
-                                "icon": [
-                                    "paperplane"
-                                ],
+                                "icon": "paperplane",
                                 "title": "QUICK_START_SCRIPTS",
                                 "type": "script",
                                 "value": "this.method.setKeyboardQuickStart"
@@ -318,10 +238,7 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "rays",
-                                    "#FFCC33"
-                                ],
+                                "icon": ["rays", "#FFCC33"],
                                 "title": "DELETE_DELAY",
                                 "type": "number",
                                 "key": "keyboard.deleteDelay",
@@ -332,19 +249,14 @@
                 ]
             },
             {
-                "icon": [
-                    "rectangle.3.offgrid.fill",
-                    "#1899c4"
-                ],
+                "icon": ["rectangle.3.offgrid.fill", "#1899c4"],
                 "type": "child",
                 "title": "WIDGET",
                 "children": [
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "rectangle.3.offgrid.fill"
-                                ],
+                                "icon": "rectangle.3.offgrid.fill",
                                 "title": "PREVIEW",
                                 "type": "script",
                                 "value": "this.method.previewWidget"
@@ -355,18 +267,12 @@
                         "title": "2x2",
                         "items": [
                             {
-                                "icon": [
-                                    "link"
-                                ],
+                                "icon": "link",
                                 "title": "CLICK_ACTION",
                                 "type": "menu",
                                 "key": "widget.2x2.widgetURL",
                                 "pullDown": true,
-                                "items": [
-                                    "ADD",
-                                    "ACTIONS",
-                                    "CLIPS"
-                                ],
+                                "items": ["ADD", "ACTIONS", "CLIPS"],
                                 "value": 2
                             }
                         ]
@@ -374,19 +280,14 @@
                 ]
             },
             {
-                "icon": [
-                    "filemenu.and.selection",
-                    "#ebcc34"
-                ],
+                "icon": ["filemenu.and.selection", "#ebcc34"],
                 "type": "child",
                 "title": "TODAY_WIDGET",
                 "children": [
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "rectangle.3.offgrid.fill"
-                                ],
+                                "icon": "rectangle.3.offgrid.fill",
                                 "title": "PREVIEW",
                                 "type": "script",
                                 "value": "this.method.previewTodayWidget"
@@ -396,9 +297,7 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "bolt.circle"
-                                ],
+                                "icon": "bolt.circle",
                                 "title": "ACTIONS",
                                 "type": "script",
                                 "value": "this.method.setTodayWidgetActions"
@@ -412,24 +311,15 @@
     {
         "items": [
             {
-                "icon": [
-                    "rectangle.topthird.inset.filled",
-                    "#A569BD"
-                ],
+                "icon": ["rectangle.topthird.inset.filled", "#A569BD"],
                 "title": "DISPLAY_MODE",
                 "type": "tab",
                 "key": "mainUIDisplayMode",
-                "items": [
-                    "CLASSIC",
-                    "MODERN"
-                ],
+                "items": ["CLASSIC", "MODERN"],
                 "value": 0
             },
             {
-                "icon": [
-                    "folder.fill",
-                    "#FF9900"
-                ],
+                "icon": ["folder.fill", "#FF9900"],
                 "title": "FILE_MANAGEMENT",
                 "type": "script",
                 "value": "this.method.fileManager"
@@ -439,18 +329,14 @@
     {
         "items": [
             {
-                "icon": [
-                    "wrench.and.screwdriver"
-                ],
+                "icon": "wrench.and.screwdriver",
                 "type": "child",
                 "title": "EXPERIMENTAL",
                 "children": [
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "bolt.circle"
-                                ],
+                                "icon": "bolt.circle",
                                 "title": "SYNC_ACTIONS",
                                 "type": "switch",
                                 "key": "experimental.syncAction",
@@ -461,20 +347,14 @@
                     {
                         "items": [
                             {
-                                "icon": [
-                                    "cloud",
-                                    "#FF9900"
-                                ],
+                                "icon": ["cloud", "#FF9900"],
                                 "type": "child",
                                 "title": "WebDAV",
                                 "children": [
                                     {
                                         "items": [
                                             {
-                                                "icon": [
-                                                    "cloud",
-                                                    "#FF9900"
-                                                ],
+                                                "icon": ["cloud", "#FF9900"],
                                                 "title": "WebDAV",
                                                 "type": "switch",
                                                 "key": "webdav.status",
@@ -485,36 +365,28 @@
                                     {
                                         "items": [
                                             {
-                                                "icon": [
-                                                    "link"
-                                                ],
+                                                "icon": "link",
                                                 "title": "HOST",
                                                 "type": "input",
                                                 "key": "webdav.host",
                                                 "value": ""
                                             },
                                             {
-                                                "icon": [
-                                                    "person"
-                                                ],
+                                                "icon": "person",
                                                 "title": "USER",
                                                 "type": "input",
                                                 "key": "webdav.user",
                                                 "value": ""
                                             },
                                             {
-                                                "icon": [
-                                                    "person.badge.key"
-                                                ],
+                                                "icon": "person.badge.key",
                                                 "title": "PASSWORD",
                                                 "type": "input",
                                                 "key": "webdav.password",
                                                 "value": ""
                                             },
                                             {
-                                                "icon": [
-                                                    "link"
-                                                ],
+                                                "icon": "link",
                                                 "title": "BASEPATH",
                                                 "type": "input",
                                                 "key": "webdav.basepath",
@@ -533,54 +405,31 @@
     {
         "items": [
             {
-                "icon": [
-                    "/assets/icon/github.com.jpeg",
-                    "white"
-                ],
+                "icon": ["/assets/icon/github.com.jpeg", "white"],
                 "title": "Github",
                 "type": "info",
-                "value": [
-                    "ipuppet/CAIO",
-                    "https://github.com/ipuppet/CAIO"
-                ]
+                "value": ["ipuppet/CAIO", "https://github.com/ipuppet/CAIO"]
             },
             {
-                "icon": [
-                    "/assets/icon/telegram.png",
-                    "white"
-                ],
+                "icon": ["/assets/icon/telegram.png", "white"],
                 "title": "Telegram",
                 "type": "info",
-                "value": [
-                    "JSBoxTG",
-                    "https://t.me/JSBoxTG"
-                ]
+                "value": ["JSBoxTG", "https://t.me/JSBoxTG"]
             },
             {
-                "icon": [
-                    "person.fill",
-                    "#FF9900"
-                ],
+                "icon": ["person.fill", "#FF9900"],
                 "title": "AUTHOR",
                 "type": "info",
-                "value": [
-                    "ipuppet",
-                    "https://blog.ultagic.com"
-                ]
+                "value": ["ipuppet", "https://blog.ultagic.com"]
             },
             {
-                "icon": [
-                    "arrow.2.circlepath"
-                ],
+                "icon": "arrow.2.circlepath",
                 "title": "CHECK_UPDATE",
                 "type": "script",
                 "value": "this.method.checkUpdate"
             },
             {
-                "icon": [
-                    "book.fill",
-                    "#A569BD"
-                ],
+                "icon": ["book.fill", "#A569BD"],
                 "title": "README",
                 "type": "script",
                 "value": "this.method.readme"

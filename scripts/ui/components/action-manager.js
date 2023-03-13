@@ -1,6 +1,6 @@
 const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const Editor = require("./editor")
-const ActionManagerData = require("../../dao/action-manager-data")
+const ActionManagerData = require("../../dao/action-data")
 const { ActionEnv, ActionData } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
 
@@ -57,6 +57,11 @@ class ActionManager extends ActionManagerData {
         })
     }
 
+    getColor(color, _default = null) {
+        if (!color) return _default
+        return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
+    }
+
     editActionInfoPageSheet(info, done) {
         const actionTypes = this.getActionTypes()
         const isNew = !Boolean(info)
@@ -74,7 +79,7 @@ class ActionManager extends ActionManagerData {
         }
 
         const SettingUI = new Setting({
-            structure: {},
+            structure: [],
             set: (key, value) => {
                 this.editingActionInfo[key] = value
                 return true
@@ -85,22 +90,35 @@ class ActionManager extends ActionManagerData {
                 else return _default
             }
         })
-        const nameInput = SettingUI.createInput("name", ["pencil.circle", "#FF3366"], $l10n("NAME"))
-        const createColor = SettingUI.createColor("color", ["pencil.tip.crop.circle", "#0066CC"], $l10n("COLOR"))
-        const iconInput = SettingUI.createIcon(
-            "icon",
-            ["star.circle", "#FF9933"],
-            $l10n("ICON"),
-            this.kernel.setting.getColor(this.editingActionInfo.color)
-        )
-        const typeMenu = SettingUI.createMenu(
-            "type",
-            ["tag.circle", "#33CC33"],
-            $l10n("TYPE"),
-            actionTypes,
-            actionTypes,
-            true
-        )
+        SettingUI.loadConfig()
+        const nameInput = SettingUI.loader({
+            type: "input",
+            key: "name",
+            icon: ["pencil.circle", "#FF3366"],
+            title: $l10n("NAME")
+        }).create()
+        const createColor = SettingUI.loader({
+            type: "color",
+            key: "color",
+            icon: ["pencil.tip.crop.circle", "#0066CC"],
+            title: $l10n("COLOR")
+        }).create()
+        const iconInput = SettingUI.loader({
+            type: "icon",
+            key: "icon",
+            icon: ["star.circle", "#FF9933"],
+            title: $l10n("ICON"),
+            bgcolor: this.getColor(this.editingActionInfo.color)
+        }).create()
+        const typeMenu = SettingUI.loader({
+            type: "menu",
+            key: "type",
+            icon: ["tag.circle", "#33CC33"],
+            title: $l10n("TYPE"),
+            items: actionTypes,
+            values: actionTypes,
+            pullDown: true
+        }).create()
         const readme = {
             type: "view",
             views: [
@@ -281,7 +299,7 @@ class ActionManager extends ActionManagerData {
                     this.editActionInfoPageSheet(oldInfo, info => {
                         // 更新视图信息
                         view.get("info").info = info
-                        view.get("color").bgcolor = this.kernel.setting.getColor(info.color)
+                        view.get("color").bgcolor = this.getColor(info.color)
                         view.get("name").text = info.name
                         if (info.icon.slice(0, 5) === "icon_") {
                             view.get("icon").icon = $icon(info.icon.slice(5, info.icon.indexOf(".")), $color("#ffffff"))
@@ -462,7 +480,7 @@ class ActionManager extends ActionManagerData {
                 action?.icon?.slice(0, 5) === "icon_"
                     ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
                     : { image: $image(action?.icon) },
-            color: { bgcolor: this.kernel.setting.getColor(action.color) },
+            color: { bgcolor: this.getColor(action.color) },
             info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
         }
     }
