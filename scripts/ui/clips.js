@@ -16,6 +16,7 @@ const { ActionData, ActionEnv } = require("../action/action")
 const WebDavSync = require("../dao/webdav-sync")
 
 /**
+ * @typedef {import("../dao/storage").Clip} Clip
  * @typedef {import("../app").AppKernel} AppKernel
  */
 
@@ -25,15 +26,15 @@ class Clips extends ClipsData {
     // 剪贴板列个性化设置
     #singleLine = false
     #singleLineContentHeight = -1
-    #tagHeight = -1
     tabLeftMargin = 20 // tab 左边距
     horizontalMargin = 20 // 列表边距
-    verticalMargin = 20 // 列表边距
+    verticalMargin = 14 // 列表边距
     containerMargin = 0 // list 单边边距。如果 list 未贴合屏幕左右边缘，则需要此值辅助计算文字高度
     fontSize = 16 // 字体大小
     copiedIndicatorSize = 6 // 已复制指示器（小绿点）大小
     imageContentHeight = 50
-    tagFontSize = 14
+    tagHeight = this.verticalMargin + 5
+    tagColor = $color("lightGray")
     menuItemActionMaxCount = 5
 
     tabHeight = 44
@@ -50,13 +51,6 @@ class Clips extends ClipsData {
         super(kernel)
 
         this.viewController = new ViewController()
-    }
-
-    get tagHeight() {
-        if (this.#tagHeight < 0) {
-            this.#tagHeight = this.getTextHeight($font(this.tagFontSize))
-        }
-        return this.#tagHeight
     }
 
     get singleLineContentHeight() {
@@ -334,24 +328,25 @@ class Clips extends ClipsData {
             super.moveItem(from, to)
 
             if (!updateUI) return
-            // 操作 UI
-            const listView = $(this.listId)
-            // 移动列表
-            if (from < to) {
-                // 从上往下移动
-                listView.insert({
-                    indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
-                    value: this.lineData(this.clips[to])
-                })
-                listView.delete($indexPath(0, from))
-            } else {
-                // 从下往上移动
-                listView.delete($indexPath(0, from))
-                listView.insert({
-                    indexPath: $indexPath(0, to),
-                    value: this.lineData(this.clips[to])
-                })
-            }
+            this.updateList()
+            // // 操作 UI
+            // const listView = $(this.listId)
+            // // 移动列表
+            // if (from < to) {
+            //     // 从上往下移动
+            //     listView.insert({
+            //         indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
+            //         value: this.lineData(this.clips[to])
+            //     })
+            //     listView.delete($indexPath(0, from))
+            // } else {
+            //     // 从下往上移动
+            //     listView.delete($indexPath(0, from))
+            //     listView.insert({
+            //         indexPath: $indexPath(0, to),
+            //         value: this.lineData(this.clips[to])
+            //     })
+            // }
         } catch (error) {
             $ui.alert(error)
             this.kernel.error(error)
@@ -551,21 +546,26 @@ class Clips extends ClipsData {
         }
     }
 
-    lineData(data, indicator = false) {
+    /**
+     * @param {Clip} clip
+     * @param {boolean} indicator
+     * @returns
+     */
+    lineData(clip, indicator = false) {
         const image = { hidden: true }
         const content = { text: "" }
 
-        if (data.image) {
-            image.src = data.imagePath.preview
+        if (clip.image) {
+            image.src = clip.imagePath.preview
             image.hidden = false
         } else {
-            content.text = data.text
+            content.text = clip.text
         }
 
         return {
             copied: { hidden: !indicator },
             image,
-            tag: { text: data.tag ?? "" },
+            tag: { text: clip.tag, hidden: !clip.hasTag },
             content
         }
     }
@@ -603,7 +603,7 @@ class Clips extends ClipsData {
                             },
                             layout: (make, view) => {
                                 make.left.right.equalTo(view.super).inset(this.horizontalMargin)
-                                make.centerY.equalTo(view.super)
+                                make.top.equalTo(this.verticalMargin)
                             }
                         },
                         {
@@ -611,8 +611,9 @@ class Clips extends ClipsData {
                             props: {
                                 id: "tag",
                                 lines: 1,
-                                color: $color("lightGray"),
-                                font: $font(this.tagFontSize)
+                                color: this.tagColor,
+                                autoFontSize: true,
+                                align: $align.leading
                             },
                             layout: (make, view) => {
                                 make.bottom.equalTo(view.super)
@@ -667,8 +668,7 @@ class Clips extends ClipsData {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const clip = this.getByIndex(indexPath)
-
-                    const tagHeight = clip.tag && clip.tag !== "" ? this.tagHeight : this.verticalMargin
+                    const tagHeight = clip.hasTag ? this.tagHeight : this.verticalMargin
                     const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                     return this.verticalMargin + itemHeight + tagHeight
                 },
@@ -708,16 +708,30 @@ class Clips extends ClipsData {
     }
 
     getNavigationView() {
+        const sheet = new Sheet()
+        const getView = res => {
+            const view = this.getListView(
+                this.listId + "-search-result",
+                res.map(data => this.lineData(data))
+            )
+            delete view.views[0].events.pulled
+            view.views[0].events.didSelect = (sender, indexPath) => {
+                const clip = this.getByIndex(indexPath)
+                if (clip.image) {
+                    Kernel.quickLookImage(clip.imageOriginal)
+                } else {
+                    sheet.dismiss()
+                    this.edit(clip.text, text => {
+                        if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
+                    })
+                }
+            }
+            return view
+        }
         const search = new ClipsSearch(this.kernel)
         search.setCallback(res => {
-            const sheet = new Sheet()
             sheet
-                .setView(
-                    this.getListView(
-                        this.listId + "-search-result",
-                        res.map(data => this.lineData(data))
-                    )
-                )
+                .setView(getView(res))
                 .addNavBar({
                     title: $l10n("SEARCH_RESULT"),
                     popButton: { title: $l10n("DONE"), tapped: () => search.dismiss() }

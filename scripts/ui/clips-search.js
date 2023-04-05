@@ -157,8 +157,8 @@ class ClipsSearch {
             if (history.length > 20) {
                 history = history.slice(-20)
             }
-            $(this.listId + "-history").data = this.searchHistory
             $cache.set("caio.search.history", history)
+            $(this.listId + "-history").data = this.searchHistory
         }
     }
 

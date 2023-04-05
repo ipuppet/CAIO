@@ -26,7 +26,7 @@ class Keyboard extends Clips {
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     containerMargin = 5 // 容器边距
     fontSize = 14 // 字体大小
-    tagFontSize = 12
+    tagHeight = this.verticalMargin + 3
     navHeight = 50
 
     menuItemActionMaxCount = 3
@@ -42,8 +42,6 @@ class Keyboard extends Clips {
         this.backgroundColorDark = this.kernel.setting.get("keyboard.background.color.dark")
 
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
-
-        this.keyboardSetting()
 
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
@@ -96,19 +94,7 @@ class Keyboard extends Clips {
     keyboardSetting() {
         if ($app.env !== $env.keyboard) return
 
-        const timer = $timer.schedule({
-            interval: 0,
-            handler: () => {
-                if ($keyboard.height !== this.keyboardHeight) {
-                    $keyboard.height = this.keyboardHeight
-                } else {
-                    timer.invalidate()
-                }
-            }
-        })
-        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
-            $keyboard.barHidden = true
-        }
+        $keyboard.height = this.keyboardHeight
     }
 
     keyboardTapped(tapped, tapticEngine = true, level = 1) {
@@ -299,7 +285,7 @@ class Keyboard extends Clips {
         const rightButtons = []
 
         // 切换键盘
-        if (!$device.hasFaceID || $device.isIpadPro) {
+        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar") && (!$device.hasFaceID || $device.isIpadPro)) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
@@ -416,6 +402,7 @@ class Keyboard extends Clips {
         }
         listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
+        delete listView.events.pulled
 
         const blurBox = UIKit.blurBox(
             {
@@ -457,6 +444,10 @@ class Keyboard extends Clips {
     }
 
     getView() {
+        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
+            // 这是一个属性，应该尽早设置。
+            $keyboard.barHidden = true
+        }
         return {
             type: "view",
             props: {
@@ -490,7 +481,12 @@ class Keyboard extends Clips {
                 this.getBottomBarView(),
                 this.getActionView()
             ],
-            layout: $layout.fill
+            layout: $layout.fill,
+            events: {
+                appeared: () => {
+                    this.keyboardSetting()
+                }
+            }
         }
     }
 }

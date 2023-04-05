@@ -89,7 +89,7 @@ class ClipsData {
     /**
      *
      * @param {string} table
-     * @returns
+     * @returns {Clip[]}
      */
     #initData(table) {
         try {
@@ -152,6 +152,7 @@ class ClipsData {
     }
 
     getClipCopy(src, assign = {}) {
+        if (!src.uuid) return src
         const clip = new Clip(src)
         clip.fileStorage = src.fileStorage
         Object.assign(clip, assign)
@@ -293,6 +294,8 @@ class ClipsData {
             this.clips[to] = {
                 uuid: null,
                 text: "",
+                hasTag: false,
+                image: null,
                 next: null,
                 prev: this.clips[to - 1].uuid
             }

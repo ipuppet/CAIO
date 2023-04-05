@@ -30,7 +30,7 @@ class Clip {
         return false
     }
 
-    constructor({ uuid, section, text = "", md5, tag = "", prev = null, next = null } = {}) {
+    constructor({ uuid, section, text = "", md5, tag = null, prev = null, next = null } = {}) {
         if (!uuid || !section) {
             throw new Error("Clip create faild: uuid or section undefined")
         }
@@ -51,6 +51,10 @@ class Clip {
         if (Clip.isImage(text)) {
             this.#setFsPath(Clip.keyToPath(text))
         }
+    }
+
+    get hasTag() {
+        return this.tag !== null
     }
 
     /**
@@ -331,9 +335,9 @@ class Storage {
                 uuid: result.get("uuid"),
                 section: result.get("section"),
                 md5: result.get("md5"),
-                tag: result.get("tag") ?? "",
-                prev: result.get("prev") ?? null,
-                next: result.get("next") ?? null
+                tag: result.get("tag"),
+                prev: result.get("prev"),
+                next: result.get("next")
             })
             if (Clip.isImage(text)) {
                 clip.fileStorage = this.kernel.fileStorage
@@ -396,10 +400,10 @@ class Storage {
     }
     search(kw) {
         const result = this.sqlite.query({
-            sql: `SELECT * from
-                (SELECT clips.*, 'clips' AS section FROM clips WHERE text like ?
+            sql: `SELECT a.* from
+                (SELECT *, 'clips' AS section FROM clips WHERE text like ?
                 UNION
-                SELECT favorite.*, 'favorite' AS section FROM favorite WHERE text like ?) a
+                SELECT *, 'favorite' AS section FROM favorite WHERE text like ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid
             `,
             args: [`%${kw}%`, `%${kw}%`]
