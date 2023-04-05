@@ -186,6 +186,21 @@ class Widget {
         }
     }
 
+    static kernel() {
+        const kernel = {
+            setting: new Setting(),
+            fileStorage,
+            error: msg => console.error(msg),
+            print: msg => console.log(msg)
+        }
+        kernel.setting.loadConfig().setReadonly()
+
+        const storage = new Storage(kernel)
+        kernel.storage = storage
+
+        return kernel
+    }
+
     static renderError() {
         $widget.setTimeline({
             render: () => ({
@@ -201,7 +216,7 @@ class Widget {
         const setting = new Setting()
         setting.loadConfig().setReadonly()
 
-        const widget = Widget.widgetInstance("Clipboard", setting, new Storage({ fileStorage }))
+        const widget = Widget.widgetInstance("Clipboard", Widget.kernel())
 
         widget.render()
     }

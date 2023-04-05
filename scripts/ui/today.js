@@ -40,7 +40,7 @@ class Today extends Clips {
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
-        this.listPageNow = [0, 0] // 剪切板当前页
+        this.listPageNow = [0, 0] // 剪切板当前页，索引为 Section
         this.listSection = Math.min(this.tabIndex, 1) // 当前选中列表，只取 0 或 1，默认 1
 
         this.setSingleLine()
@@ -289,7 +289,8 @@ class Today extends Clips {
                     events: {
                         ready: () => this.listReady(),
                         rowHeight: (sender, indexPath) => {
-                            const clip = this.getByIndex(indexPath)
+                            const before = this.listPageSize * this.listPageNow[this.listSection]
+                            const clip = this.getByIndex(indexPath.row + before)
                             const tagHeight = clip.hasTag ? this.tagHeight : this.verticalMargin
                             const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                             return this.verticalMargin + itemHeight + tagHeight
