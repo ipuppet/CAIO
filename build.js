@@ -157,9 +157,9 @@ async function build() {
         buildTextActions()
     } catch (error) {
         if (error.stdout) {
-            console.log(error.stdout.toString())
+            console.error(error.stdout.toString())
         } else {
-            console.log(error)
+            console.error(error)
         }
     } finally {
         // 恢复文件内容
