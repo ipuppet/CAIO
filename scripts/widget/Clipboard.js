@@ -1,14 +1,14 @@
 /**
- * @typedef {import("../storage")} Storage
+ * @typedef {import("../dao/storage")} Storage
  * @typedef {import("../libs/easy-jsbox").Setting} Setting
  */
 class ClipboardWidget {
     /**
-     * 
-     * @param {Setting} setting 
-     * @param {Storage} storage 
+     *
+     * @param {Setting} setting
+     * @param {Storage} storage
      */
-    constructor(setting, storage) {
+    constructor({ setting, storage } = {}) {
         this.setting = setting
         this.storage = storage
         this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}&widget=${this.widget}`

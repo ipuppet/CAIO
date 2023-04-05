@@ -20,7 +20,8 @@ class Today extends Clips {
     verticalMargin = 5 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     fontSize = 14 // 字体大小
-    tagFontSize = 12
+    tagHeight = 14
+    tagColor = $color("gray", "lightGray")
     navHeight = 34
     taptic = 1
 
@@ -39,7 +40,7 @@ class Today extends Clips {
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
-        this.listPageNow = [0, 0] // 剪切板当前页
+        this.listPageNow = [0, 0] // 剪切板当前页，索引为 Section
         this.listSection = Math.min(this.tabIndex, 1) // 当前选中列表，只取 0 或 1，默认 1
 
         this.setSingleLine()
@@ -86,7 +87,9 @@ class Today extends Clips {
         } else {
             const viewHeight = $app.env === $env.app ? UIKit.windowSize.height : $widget.height
             const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
-            const f_line = height / (this.singleLineContentHeight + this.verticalMargin + this.tagHeight)
+            const f_line =
+                height /
+                (this.singleLineContentHeight + this.verticalMargin + Math.max(this.tagHeight, this.verticalMargin))
             const floor = Math.floor(f_line)
             this.listPageSize = floor
             if (f_line - floor >= 0.6) {
@@ -285,7 +288,13 @@ class Today extends Clips {
                     },
                     events: {
                         ready: () => this.listReady(),
-                        rowHeight: () => this.verticalMargin + this.singleLineContentHeight + this.tagHeight,
+                        rowHeight: (sender, indexPath) => {
+                            const before = this.listPageSize * this.listPageNow[this.listSection]
+                            const clip = this.getByIndex(indexPath.row + before)
+                            const tagHeight = clip.hasTag ? this.tagHeight : this.verticalMargin
+                            const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
+                            return this.verticalMargin + itemHeight + tagHeight
+                        },
                         didSelect: this.buttonTapped((sender, indexPath) => {
                             const clip = this.clips[indexPath.row]
                             if (clip.image) {
