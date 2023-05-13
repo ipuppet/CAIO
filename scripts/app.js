@@ -3,6 +3,7 @@ const {
     ViewController,
     TabBarController,
     Kernel,
+    Logger,
     FileStorage,
     Setting,
     FileManager
@@ -25,6 +26,8 @@ class AppKernel extends Kernel {
         this.query = $context.query
         // FileStorage
         this.fileStorage = fileStorage
+        this.logger = new Logger()
+        this.logger.printToFile(fileStorage, "logs/caio.log")
         // Setting
         let structure
         try {
