@@ -62,12 +62,14 @@ class Today extends Clips {
         // 监听展开状态
         $widget.modeChanged = mode => {
             this.setClipboarPageSize(mode)
-            this.updateList()
+            if (!this.isActionPage) {
+                this.updateList()
+            }
         }
 
         this.setClipboarPageSize($widget.mode)
 
-        if (this.tabIndex < 2) {
+        if (!this.isActionPage) {
             this.updateList()
         }
         this.appListen()
@@ -109,7 +111,7 @@ class Today extends Clips {
 
     switchTab(index) {
         this.tabIndex = index
-        if (index === 2) {
+        if (this.isActionPage) {
             $(this.listContainerId).hidden = true
             $(this.actionsId).hidden = false
             $(this.readClipboardButtonId).hidden = true
@@ -328,7 +330,7 @@ class Today extends Clips {
 
         return {
             type: "view",
-            props: { id: this.actionsId, hidden: this.tabIndex !== 2 },
+            props: { id: this.actionsId, hidden: !this.isActionPage },
             views: [
                 this.kernel.actionManager.getActionMiniView(info => {
                     return new ActionData({

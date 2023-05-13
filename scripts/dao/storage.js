@@ -133,7 +133,7 @@ class Storage {
             })
             await this.webdavSync.init()
         } catch (error) {
-            this.kernel.error(error)
+            this.kernel.error(`${error}\n${error.stack}`)
             throw error
         }
     }
@@ -195,7 +195,7 @@ class Storage {
                     rebuildData.unshift(data)
                 } catch (error) {
                     storage.rollback()
-                    this.kernel.error(error)
+                    this.kernel.error(`${error}\n${error.stack}`)
                     throw error
                 }
             })
@@ -222,7 +222,7 @@ class Storage {
                 storage.commit()
             } catch (error) {
                 storage.rollback()
-                this.kernel.error(error)
+                this.kernel.error(`${error}\n${error.stack}`)
                 throw error
             }
         })
@@ -492,8 +492,11 @@ class Storage {
         this.needUpload()
     }
     isEmpty() {
-        const result = this.sqlite.query(`SELECT * FROM clips favorite limit 1`)
-        return this.parse(result).length === 0
+        const clipsResult = this.sqlite.query(`SELECT * FROM clips limit 1`).result
+        const favoriteResult = this.sqlite.query(`SELECT * FROM favorite limit 1`).result
+        clipsResult.next()
+        favoriteResult.next()
+        return clipsResult.isNull(0) && favoriteResult.isNull(0)
     }
     allImageFromDb(sortByImage = true) {
         const result = this.sqlite.query(`SELECT * FROM clips favorite WHERE text like "@image=%"`)

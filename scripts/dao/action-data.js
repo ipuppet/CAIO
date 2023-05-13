@@ -256,8 +256,7 @@ class ActionManagerData {
             })
             await this.webdavSync.init()
         } catch (error) {
-            this.kernel.error(error)
-            throw error
+            this.kernel.error(`${error}\n${error.stack}`)
         }
     }
 

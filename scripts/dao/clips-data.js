@@ -387,8 +387,8 @@ class ClipsData {
 
             this.setNeedReload()
         } catch (error) {
-            this.kernel.error(error)
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         }
     }

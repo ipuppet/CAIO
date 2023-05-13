@@ -50,7 +50,7 @@ function clips() {
                                         })
                                         .catch(error => {
                                             $ui.error(error)
-                                            kernel.print(error)
+                                            kernel.error(error)
                                             animate.cancel()
                                         })
                                 } else {

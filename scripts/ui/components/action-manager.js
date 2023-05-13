@@ -44,7 +44,7 @@ class ActionManager extends ActionManagerData {
                     try {
                         this.matrix.data = this.actionList
                     } catch (error) {
-                        this.kernel.error(error)
+                        this.kernel.error(`${error}\n${error.stack}`)
                         this.updateSyncLabel(error)
                         $ui.error(error)
                     } finally {
