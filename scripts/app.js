@@ -26,6 +26,7 @@ class AppKernel extends Kernel {
         this.query = $context.query
         // FileStorage
         this.fileStorage = fileStorage
+        // Logger
         this.logger = new Logger()
         this.logger.printToFile(fileStorage, "logs/caio.log")
         // Setting
@@ -43,6 +44,12 @@ class AppKernel extends Kernel {
         this.initComponents()
 
         settingMethods(this)
+    }
+
+    error(msg) {
+        if (!this.debugMode) return
+        super.error(msg)
+        this.logger.error(msg)
     }
 
     addOpenInJsboxButton() {
@@ -190,11 +197,15 @@ class Widget {
     }
 
     static kernel() {
+        const logger = new Logger()
+        logger.printToFile(fileStorage, "logs/widget.log")
         const kernel = {
             setting: new Setting(),
             fileStorage,
-            error: msg => console.error(msg),
-            print: msg => console.log(msg)
+            print: () => {},
+            error: msg => {
+                logger.error(msg)
+            }
         }
         kernel.setting.loadConfig().setReadonly()
 

@@ -175,7 +175,7 @@ class Clips extends ClipsData {
                     listView.cell($indexPath(0, this.getIndexByUUID(copied.uuid))).get("copied").hidden = false
                 }
             } catch (error) {
-                this.kernel.error(`setCopied: ${error}`)
+                this.kernel.error(`setCopied: ${error}\n${error.stack}`)
             }
         })
 
@@ -565,7 +565,7 @@ class Clips extends ClipsData {
         return {
             copied: { hidden: !indicator },
             image,
-            tag: { text: clip.tag, hidden: !clip.hasTag },
+            tag: { text: clip.tag, hidden: !clip?.hasTag },
             content
         }
     }
@@ -668,7 +668,7 @@ class Clips extends ClipsData {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
                     const clip = this.getByIndex(indexPath)
-                    const tagHeight = clip.hasTag ? this.tagHeight : this.verticalMargin
+                    const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
                     const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                     return this.verticalMargin + itemHeight + tagHeight
                 },
