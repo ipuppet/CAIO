@@ -1,5 +1,5 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
+const { View, Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -28,6 +28,8 @@ class Keyboard extends Clips {
     fontSize = 14 // 字体大小
     tagHeight = this.verticalMargin + 3
     navHeight = 50
+
+    matrixBoxMargin = 15
 
     menuItemActionMaxCount = 3
 
@@ -379,17 +381,62 @@ class Keyboard extends Clips {
         return [items[0], items[2]]
     }
 
-    getListView() {
-        const superListView = super.getListView()
-        superListView.setProp("id", this.listId + "-container")
-        superListView.layout = (make, view) => {
-            make.top.equalTo(this.navHeight)
-            make.width.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+    matrixTemplate() {
+        return {
+            props: {
+                smoothCorners: true,
+                cornerRadius: this.containerMargin * 2
+            },
+            views: [
+                UIKit.blurBox(
+                    { style: $blurStyle.ultraThinMaterial },
+                    [
+                        {
+                            type: "label",
+                            props: {
+                                id: "content",
+                                lines: 0,
+                                font: $font(24)
+                            },
+                            layout: (make, view) => {
+                                make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
+                                make.height
+                                    .lessThanOrEqualTo(view.super)
+                                    .offset(-this.matrixBoxMargin * 2 - this.tagHeight)
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "tag",
+                                lines: 1,
+                                color: this.tagColor,
+                                autoFontSize: true,
+                                align: $align.leading
+                            },
+                            layout: (make, view) => {
+                                make.left.right.equalTo(view.prev)
+                                make.height.equalTo(this.tagHeight)
+                                make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
+                            }
+                        }
+                    ],
+                    $layout.fill
+                ),
+                {
+                    type: "image",
+                    props: {
+                        id: "image",
+                        hidden: true
+                    },
+                    layout: $layout.fill
+                }
+            ]
         }
+    }
 
-        const listView = superListView.views[0]
-        listView.events.didSelect = (sender, indexPath) => {
+    get itemSelect() {
+        return (sender, indexPath) => {
             const clip = this.clips[indexPath.row]
             if (clip.image) {
                 Kernel.quickLookImage(clip.imageOriginal)
@@ -400,6 +447,54 @@ class Keyboard extends Clips {
                 }
             }
         }
+    }
+
+    getMatrixView() {
+        const matrix = {
+            type: "matrix",
+            props: {
+                id: this.listId,
+                bgcolor: $color("clear"),
+                direction: $scrollDirection.horizontal,
+                square: true,
+                menu: { items: this.menuItems() },
+                alwaysBounceVertical: false,
+                showsHorizontalIndicator: false,
+                columns: 1,
+                spacing: this.matrixBoxMargin,
+                template: this.matrixTemplate()
+            },
+            layout: $layout.fill,
+            events: {
+                ready: () => this.listReady(),
+                didSelect: this.itemSelect,
+                itemSize: (sender, indexPath) => {
+                    const size = sender.size.height
+                    return $size(size, size)
+                }
+            }
+        }
+        const view = View.createFromViews([matrix, this.getEmptyBackground(this.listId)])
+        view.setProp("id", this.listId + "-container")
+        view.layout = (make, view) => {
+            make.top.equalTo(this.navHeight)
+            make.width.equalTo(view.super)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        }
+        return view
+    }
+
+    getListView() {
+        const superListView = super.getListView()
+        superListView.setProp("id", this.listId + "-container")
+        superListView.layout = (make, view) => {
+            make.top.equalTo(this.navHeight)
+            make.width.equalTo(view.super)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        }
+
+        const listView = superListView.views[0]
+        listView.events.didSelect = this.itemSelect
         listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
         delete listView.events.pulled
@@ -418,6 +513,13 @@ class Keyboard extends Clips {
         )
         superListView.views[0] = blurBox
         return superListView
+    }
+
+    getDataView() {
+        if (this.kernel.setting.get("keyboardUIDisplayMode") === 0) {
+            return this.getListView()
+        }
+        return this.getMatrixView()
     }
 
     getActionView() {
@@ -477,7 +579,7 @@ class Keyboard extends Clips {
                     layout: $layout.fill
                 },
                 this.getTopBarView(),
-                this.getListView(),
+                this.getDataView(),
                 this.getBottomBarView(),
                 this.getActionView()
             ],
