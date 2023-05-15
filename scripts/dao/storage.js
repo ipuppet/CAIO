@@ -280,7 +280,7 @@ class Storage {
             // image
             this.kernel.fileStorage.move(this.tempImagePath, this.imagePath.base)
         }
-        this.webdavSync.updateLocalTimestamp()
+        if (this.webdavSync) this.webdavSync.updateLocalTimestamp()
     }
 
     /**
