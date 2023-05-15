@@ -186,7 +186,7 @@
                                 "icon": ["rectangle.topthird.inset.filled", "#A569BD"],
                                 "title": "DISPLAY_MODE",
                                 "type": "tab",
-                                "key": "keyboardUIDisplayMode",
+                                "key": "keyboard.displayMode",
                                 "items": ["list", "matrix"],
                                 "value": 0
                             }

@@ -8,6 +8,8 @@ const KeyboardScripts = require("./components/keyboard-scripts")
  */
 
 class Keyboard extends Clips {
+    static jsboxToolBarHeight = 48
+    static jsboxToolBarSpace = 5
     #readClipboardTimer
 
     listId = "keyboard-clips-list"
@@ -39,6 +41,9 @@ class Keyboard extends Clips {
     constructor(kernel) {
         super(kernel)
 
+        this.jsboxToolBar = this.kernel.setting.get("keyboard.showJSBoxToolbar")
+        this.keyboardDisplayMode = this.kernel.setting.get("keyboard.displayMode")
+
         this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
         this.backgroundColor = this.kernel.setting.get("keyboard.background.color")
         this.backgroundColorDark = this.kernel.setting.get("keyboard.background.color.dark")
@@ -48,13 +53,22 @@ class Keyboard extends Clips {
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
         }
+
+        if (!this.jsboxToolBar) {
+            // 这是一个属性，应该尽早设置。
+            $keyboard.barHidden = true
+        }
     }
 
     get keyboardHeight() {
         return this.kernel.setting.get("keyboard.previewAndHeight")
     }
 
-    set keyboardHeight(height) {
+    get fixedKeyboardHeight() {
+        return this.keyboardHeight + Keyboard.jsboxToolBarHeight
+    }
+
+    setKeyboardHeight(height) {
         this.kernel.setting.set("keyboard.previewAndHeight", height)
     }
 
@@ -96,7 +110,7 @@ class Keyboard extends Clips {
     keyboardSetting() {
         if ($app.env !== $env.keyboard) return
 
-        $keyboard.height = this.keyboardHeight
+        $keyboard.height = this.fixedKeyboardHeight
     }
 
     keyboardTapped(tapped, tapticEngine = true, level = 1) {
@@ -225,7 +239,7 @@ class Keyboard extends Clips {
      * @param {*} align
      * @returns
      */
-    getButtonView(button, align) {
+    getBottomButtonView(button, align) {
         const size = $size(38, 38)
         const edges = this.containerMargin
 
@@ -366,8 +380,8 @@ class Keyboard extends Clips {
         return {
             type: "view",
             views: [
-                ...leftButtons.map(btn => this.getButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.getButtonView(btn, UIKit.align.right))
+                ...leftButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.left)),
+                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right))
             ],
             layout: (make, view) => {
                 make.bottom.left.right.equalTo(view.super.safeArea)
@@ -381,7 +395,7 @@ class Keyboard extends Clips {
         return [items[0], items[2]]
     }
 
-    matrixTemplate() {
+    get matrixTemplate() {
         return {
             props: {
                 smoothCorners: true,
@@ -392,11 +406,25 @@ class Keyboard extends Clips {
                     { style: $blurStyle.ultraThinMaterial },
                     [
                         {
+                            type: "view",
+                            props: {
+                                id: "copied",
+                                circular: this.copiedIndicatorSize,
+                                hidden: true,
+                                bgcolor: $color("green")
+                            },
+                            layout: (make, view) => {
+                                make.size.equalTo(this.copiedIndicatorSize)
+                                // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                                make.left.top.inset(this.matrixBoxMargin / 2)
+                            }
+                        },
+                        {
                             type: "label",
                             props: {
                                 id: "content",
                                 lines: 0,
-                                font: $font(24)
+                                font: $font(20)
                             },
                             layout: (make, view) => {
                                 make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
@@ -455,21 +483,25 @@ class Keyboard extends Clips {
             props: {
                 id: this.listId,
                 bgcolor: $color("clear"),
+                menu: { items: this.menuItems() },
                 direction: $scrollDirection.horizontal,
                 square: true,
-                menu: { items: this.menuItems() },
                 alwaysBounceVertical: false,
                 showsHorizontalIndicator: false,
                 columns: 1,
                 spacing: this.matrixBoxMargin,
-                template: this.matrixTemplate()
+                template: this.matrixTemplate
             },
             layout: $layout.fill,
             events: {
                 ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
-                    const size = sender.size.height
+                    // 在键盘刚启动时从 sender.size.height 取值是错误的
+                    let size = this.fixedKeyboardHeight - this.navHeight * 2
+                    if (this.jsboxToolBar) {
+                        size -= Keyboard.jsboxToolBarHeight + Keyboard.jsboxToolBarSpace
+                    }
                     return $size(size, size)
                 }
             }
@@ -516,7 +548,7 @@ class Keyboard extends Clips {
     }
 
     getDataView() {
-        if (this.kernel.setting.get("keyboardUIDisplayMode") === 0) {
+        if (this.keyboardDisplayMode === 0) {
             return this.getListView()
         }
         return this.getMatrixView()
@@ -546,10 +578,6 @@ class Keyboard extends Clips {
     }
 
     getView() {
-        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
-            // 这是一个属性，应该尽早设置。
-            $keyboard.barHidden = true
-        }
         return {
             type: "view",
             props: {

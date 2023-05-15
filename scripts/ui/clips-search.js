@@ -125,11 +125,7 @@ class ClipsSearch {
     }
 
     dismiss() {
-        $(this.searchBarId).blur()
-        $(this.searchBarId).text = ""
-
-        this.searchHistoryView.hide()
-        this.onDismiss()
+        this.searchBar.cancel()
     }
 
     searchAction(text) {
@@ -178,8 +174,12 @@ class ClipsSearch {
         this.searchBar.controller.setEvent("onChange", text => {
             if (text === "") this.searchHistoryView.show()
         })
-        this.searchBar.setEvent("didBeginEditing", sender => {
-            if (sender.text === "") this.begin()
+        this.searchBar.controller.setEvent("onBeginEditing", text => {
+            if (text === "") this.begin()
+        })
+        this.searchBar.controller.setEvent("onCancel", () => {
+            this.searchHistoryView.hide()
+            this.onDismiss()
         })
 
         this.searchBar.setAccessoryView(this.getAccessoryView())

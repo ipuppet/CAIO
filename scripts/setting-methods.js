@@ -229,10 +229,13 @@ function keyboard() {
 
         const keyboardId = $text.uuid
         const updateHeight = height => {
+            keyboard.setKeyboardHeight(height)
             $(keyboardId).updateLayout(make => {
-                make.height.equalTo(height)
+                make.height.equalTo(keyboard.fixedKeyboardHeight)
             })
-            keyboard.keyboardHeight = height
+            if (keyboard.keyboardDisplayMode === 1) {
+                $(keyboardId).get(keyboard.listId).reload()
+            }
         }
         const getPercentage = v => (v - keyboardMinHeight) / (keyboardMaxHeight - keyboardMinHeight)
         return {
@@ -294,8 +297,8 @@ function keyboard() {
                     views: [keyboard.getView()],
                     layout: (make, view) => {
                         make.width.equalTo(view.super)
-                        make.height.equalTo(keyboard.keyboardHeight)
-                        make.bottom.inset(0)
+                        make.height.equalTo(keyboard.fixedKeyboardHeight)
+                        make.bottom.equalTo(view.super.safeArea)
                     }
                 }
             ],
