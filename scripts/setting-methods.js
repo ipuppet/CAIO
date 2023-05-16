@@ -296,13 +296,15 @@ function keyboard() {
                     props: { id: keyboardId },
                     views: [keyboard.getView()],
                     layout: (make, view) => {
-                        make.width.equalTo(view.super)
+                        make.width.bottom.equalTo(view.super)
                         make.height.equalTo(keyboard.fixedKeyboardHeight)
-                        make.bottom.equalTo(view.super.safeArea)
                     }
                 }
             ],
-            layout: $layout.fill
+            layout: (make, view) => {
+                make.left.right.bottom.equalTo(view.super.safeArea)
+                make.top.equalTo(view.super.safeArea).inset(UIKit.NavigationBarNormalHeight)
+            }
         }
     }
 
