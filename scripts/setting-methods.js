@@ -303,7 +303,11 @@ function keyboard() {
             ],
             layout: (make, view) => {
                 make.left.right.bottom.equalTo(view.super.safeArea)
-                make.top.equalTo(view.super.safeArea).inset(UIKit.NavigationBarNormalHeight)
+                let inset = 0
+                if (kernel.setting.get("mainUIDisplayMode") === 1) {
+                    inset = UIKit.NavigationBarNormalHeight
+                }
+                make.top.equalTo(view.super.safeArea).inset(inset)
             }
         }
     }
