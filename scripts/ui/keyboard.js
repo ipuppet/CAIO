@@ -1,5 +1,5 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
+const { View, Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -8,6 +8,8 @@ const KeyboardScripts = require("./components/keyboard-scripts")
  */
 
 class Keyboard extends Clips {
+    static jsboxToolBarHeight = 48
+    static jsboxToolBarSpace = 5
     #readClipboardTimer
 
     listId = "keyboard-clips-list"
@@ -29,6 +31,8 @@ class Keyboard extends Clips {
     tagHeight = this.verticalMargin + 3
     navHeight = 50
 
+    matrixBoxMargin = 15
+
     menuItemActionMaxCount = 3
 
     /**
@@ -36,6 +40,9 @@ class Keyboard extends Clips {
      */
     constructor(kernel) {
         super(kernel)
+
+        this.jsboxToolBar = this.kernel.setting.get("keyboard.showJSBoxToolbar")
+        this.keyboardDisplayMode = this.kernel.setting.get("keyboard.displayMode")
 
         this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
         this.backgroundColor = this.kernel.setting.get("keyboard.background.color")
@@ -46,13 +53,22 @@ class Keyboard extends Clips {
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
         }
+
+        if (!this.jsboxToolBar) {
+            // 这是一个属性，应该尽早设置。
+            $keyboard.barHidden = true
+        }
     }
 
     get keyboardHeight() {
         return this.kernel.setting.get("keyboard.previewAndHeight")
     }
 
-    set keyboardHeight(height) {
+    get fixedKeyboardHeight() {
+        return this.keyboardHeight + Keyboard.jsboxToolBarHeight
+    }
+
+    setKeyboardHeight(height) {
         this.kernel.setting.set("keyboard.previewAndHeight", height)
     }
 
@@ -94,7 +110,7 @@ class Keyboard extends Clips {
     keyboardSetting() {
         if ($app.env !== $env.keyboard) return
 
-        $keyboard.height = this.keyboardHeight
+        $keyboard.height = this.fixedKeyboardHeight
     }
 
     keyboardTapped(tapped, tapticEngine = true, level = 1) {
@@ -223,7 +239,7 @@ class Keyboard extends Clips {
      * @param {*} align
      * @returns
      */
-    getButtonView(button, align) {
+    getBottomButtonView(button, align) {
         const size = $size(38, 38)
         const edges = this.containerMargin
 
@@ -364,8 +380,8 @@ class Keyboard extends Clips {
         return {
             type: "view",
             views: [
-                ...leftButtons.map(btn => this.getButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.getButtonView(btn, UIKit.align.right))
+                ...leftButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.left)),
+                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right))
             ],
             layout: (make, view) => {
                 make.bottom.left.right.equalTo(view.super.safeArea)
@@ -379,17 +395,76 @@ class Keyboard extends Clips {
         return [items[0], items[2]]
     }
 
-    getListView() {
-        const superListView = super.getListView()
-        superListView.setProp("id", this.listId + "-container")
-        superListView.layout = (make, view) => {
-            make.top.equalTo(this.navHeight)
-            make.width.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+    get matrixTemplate() {
+        return {
+            props: {
+                smoothCorners: true,
+                cornerRadius: this.containerMargin * 2
+            },
+            views: [
+                UIKit.blurBox(
+                    { style: $blurStyle.ultraThinMaterial },
+                    [
+                        {
+                            type: "view",
+                            props: {
+                                id: "copied",
+                                circular: this.copiedIndicatorSize,
+                                hidden: true,
+                                bgcolor: $color("green")
+                            },
+                            layout: (make, view) => {
+                                make.size.equalTo(this.copiedIndicatorSize)
+                                // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                                make.left.top.inset(this.matrixBoxMargin / 2)
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "content",
+                                lines: 0,
+                                font: $font(20)
+                            },
+                            layout: (make, view) => {
+                                make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
+                                make.height
+                                    .lessThanOrEqualTo(view.super)
+                                    .offset(-this.matrixBoxMargin * 2 - this.tagHeight)
+                            }
+                        },
+                        {
+                            type: "label",
+                            props: {
+                                id: "tag",
+                                lines: 1,
+                                color: this.tagColor,
+                                autoFontSize: true,
+                                align: $align.leading
+                            },
+                            layout: (make, view) => {
+                                make.left.right.equalTo(view.prev)
+                                make.height.equalTo(this.tagHeight)
+                                make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
+                            }
+                        }
+                    ],
+                    $layout.fill
+                ),
+                {
+                    type: "image",
+                    props: {
+                        id: "image",
+                        hidden: true
+                    },
+                    layout: $layout.fill
+                }
+            ]
         }
+    }
 
-        const listView = superListView.views[0]
-        listView.events.didSelect = (sender, indexPath) => {
+    get itemSelect() {
+        return (sender, indexPath) => {
             const clip = this.clips[indexPath.row]
             if (clip.image) {
                 Kernel.quickLookImage(clip.imageOriginal)
@@ -400,6 +475,58 @@ class Keyboard extends Clips {
                 }
             }
         }
+    }
+
+    getMatrixView() {
+        const matrix = {
+            type: "matrix",
+            props: {
+                id: this.listId,
+                bgcolor: $color("clear"),
+                menu: { items: this.menuItems() },
+                direction: $scrollDirection.horizontal,
+                square: true,
+                alwaysBounceVertical: false,
+                showsHorizontalIndicator: false,
+                columns: 1,
+                spacing: this.matrixBoxMargin,
+                template: this.matrixTemplate
+            },
+            layout: $layout.fill,
+            events: {
+                ready: () => this.listReady(),
+                didSelect: this.itemSelect,
+                itemSize: (sender, indexPath) => {
+                    // 在键盘刚启动时从 sender.size.height 取值是错误的
+                    let size = this.fixedKeyboardHeight - this.navHeight * 2
+                    if (this.jsboxToolBar) {
+                        size -= Keyboard.jsboxToolBarHeight + Keyboard.jsboxToolBarSpace
+                    }
+                    return $size(size, size)
+                }
+            }
+        }
+        const view = View.createFromViews([matrix, this.getEmptyBackground(this.listId)])
+        view.setProp("id", this.listId + "-container")
+        view.layout = (make, view) => {
+            make.top.equalTo(this.navHeight)
+            make.width.equalTo(view.super)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        }
+        return view
+    }
+
+    getListView() {
+        const superListView = super.getListView()
+        superListView.setProp("id", this.listId + "-container")
+        superListView.layout = (make, view) => {
+            make.top.equalTo(this.navHeight)
+            make.width.equalTo(view.super)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        }
+
+        const listView = superListView.views[0]
+        listView.events.didSelect = this.itemSelect
         listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
         delete listView.events.pulled
@@ -418,6 +545,13 @@ class Keyboard extends Clips {
         )
         superListView.views[0] = blurBox
         return superListView
+    }
+
+    getDataView() {
+        if (this.keyboardDisplayMode === 0) {
+            return this.getListView()
+        }
+        return this.getMatrixView()
     }
 
     getActionView() {
@@ -444,10 +578,6 @@ class Keyboard extends Clips {
     }
 
     getView() {
-        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar")) {
-            // 这是一个属性，应该尽早设置。
-            $keyboard.barHidden = true
-        }
         return {
             type: "view",
             props: {
@@ -477,7 +607,7 @@ class Keyboard extends Clips {
                     layout: $layout.fill
                 },
                 this.getTopBarView(),
-                this.getListView(),
+                this.getDataView(),
                 this.getBottomBarView(),
                 this.getActionView()
             ],

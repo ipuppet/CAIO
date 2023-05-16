@@ -183,6 +183,18 @@
                     {
                         "items": [
                             {
+                                "icon": ["rectangle.topthird.inset.filled", "#A569BD"],
+                                "title": "DISPLAY_MODE",
+                                "type": "tab",
+                                "key": "keyboard.displayMode",
+                                "items": ["list", "matrix"],
+                                "value": 0
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
                                 "icon": ["sun.min", "#A569BD"],
                                 "title": "BACKGROUND_COLOR",
                                 "type": "color",

@@ -229,10 +229,13 @@ function keyboard() {
 
         const keyboardId = $text.uuid
         const updateHeight = height => {
+            keyboard.setKeyboardHeight(height)
             $(keyboardId).updateLayout(make => {
-                make.height.equalTo(height)
+                make.height.equalTo(keyboard.fixedKeyboardHeight)
             })
-            keyboard.keyboardHeight = height
+            if (keyboard.keyboardDisplayMode === 1) {
+                $(keyboardId).get(keyboard.listId).reload()
+            }
         }
         const getPercentage = v => (v - keyboardMinHeight) / (keyboardMaxHeight - keyboardMinHeight)
         return {
@@ -293,13 +296,19 @@ function keyboard() {
                     props: { id: keyboardId },
                     views: [keyboard.getView()],
                     layout: (make, view) => {
-                        make.width.equalTo(view.super)
-                        make.height.equalTo(keyboard.keyboardHeight)
-                        make.bottom.inset(0)
+                        make.width.bottom.equalTo(view.super)
+                        make.height.equalTo(keyboard.fixedKeyboardHeight)
                     }
                 }
             ],
-            layout: $layout.fill
+            layout: (make, view) => {
+                make.left.right.bottom.equalTo(view.super.safeArea)
+                let inset = 0
+                if (kernel.setting.get("mainUIDisplayMode") === 1) {
+                    inset = UIKit.NavigationBarNormalHeight
+                }
+                make.top.equalTo(view.super.safeArea).inset(inset)
+            }
         }
     }
 

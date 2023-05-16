@@ -156,7 +156,7 @@ class Clips extends ClipsData {
     }
 
     updateListBackground() {
-        const bg = $(this.listId + "-empty-list-background")
+        const bg = $(this.listId + "-empty-background")
         if (bg) {
             bg.hidden = this.clips.length > 0
         }
@@ -636,6 +636,20 @@ class Clips extends ClipsData {
         }
     }
 
+    getEmptyBackground(id = this.listId) {
+        return {
+            type: "label",
+            props: {
+                id: id + "-empty-background",
+                color: $color("secondaryText"),
+                hidden: this.clips.length > 0,
+                text: $l10n("NONE"),
+                align: $align.center
+            },
+            layout: $layout.center
+        }
+    }
+
     getListView(id = this.listId, data = []) {
         const listView = {
             // 剪切板列表
@@ -692,19 +706,7 @@ class Clips extends ClipsData {
             }
         }
 
-        const emptyListBackground = {
-            type: "label",
-            props: {
-                id: id + "-empty-list-background",
-                color: $color("secondaryText"),
-                hidden: this.clips.length > 0,
-                text: $l10n("NONE"),
-                align: $align.center
-            },
-            layout: $layout.center
-        }
-
-        return View.createFromViews([listView, emptyListBackground])
+        return View.createFromViews([listView, this.getEmptyBackground(id)])
     }
 
     getNavigationView() {
