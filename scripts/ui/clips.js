@@ -222,6 +222,11 @@ class Clips extends ClipsData {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
             this.kernel.print("read clipboard")
 
+            // 剪切板没有变化则直接退出
+            if (!manual && !this.isChanged) {
+                return
+            }
+
             // 仅手动模式下保存图片
             if ($clipboard.images?.length > 0) {
                 if (manual) {
@@ -231,10 +236,6 @@ class Clips extends ClipsData {
                     })
                     return
                 }
-                return
-            }
-            // 剪切板没有变化则直接退出
-            if (!manual && !this.isChanged) {
                 return
             }
 
@@ -472,6 +473,8 @@ class Clips extends ClipsData {
                             this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
                                 sender.delete(indexPath)
                                 this.delete(this.getByIndex(indexPath).uuid)
+                                // 重新计算列表项高度
+                                $delay(0.25, () => sender.reload())
                             })
                         }
                     }
