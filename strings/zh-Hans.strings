@@ -88,8 +88,7 @@
 
 "KEYBOARD" = "键盘";
 "KEYBOARD_HEIGHT" = "键盘高度";
-"BACKGROUND_COLOR" = "背景色";
-"BACKGROUND_COLOR_DARK" = "深色模式背景色";
+"USE_BLUR" = "使用模糊效果";
 "BACKGROUND_IMAGE" = "背景图片";
 "DELETE_DELAY" = "删除延时";
 "SWITCH_AFTER_INSERT" = "输入后切换";

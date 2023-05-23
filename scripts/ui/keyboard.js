@@ -35,6 +35,8 @@ class Keyboard extends Clips {
 
     menuItemActionMaxCount = 3
 
+    itemBackground = $color($rgba(255, 255, 255, 0.3), "#6E6E6E")
+
     /**
      * @param {AppKernel} kernel
      */
@@ -44,9 +46,8 @@ class Keyboard extends Clips {
         this.jsboxToolBar = this.kernel.setting.get("keyboard.showJSBoxToolbar")
         this.keyboardDisplayMode = this.kernel.setting.get("keyboard.displayMode")
 
+        this.useBlur = this.kernel.setting.get("keyboard.blur")
         this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
-        this.backgroundColor = this.kernel.setting.get("keyboard.background.color")
-        this.backgroundColorDark = this.kernel.setting.get("keyboard.background.color.dark")
 
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
 
@@ -105,12 +106,6 @@ class Keyboard extends Clips {
                 }
             })
         }
-    }
-
-    keyboardSetting() {
-        if ($app.env !== $env.keyboard) return
-
-        $keyboard.height = this.fixedKeyboardHeight
     }
 
     keyboardTapped(tapped, tapticEngine = true, level = 1) {
@@ -242,58 +237,66 @@ class Keyboard extends Clips {
     getBottomButtonView(button, align) {
         const size = $size(38, 38)
         const edges = this.containerMargin
-
-        const blurBox = UIKit.blurBox(
-            {
-                info: { align },
-                smoothCorners: true,
-                cornerRadius: 5
-            },
-            [
-                {
-                    type: "button",
-                    props: Object.assign(
-                        {
-                            symbol: button.symbol,
-                            title: button.title,
-                            id: button.id ?? $text.uuid,
-                            font: $font(16),
-                            bgcolor: this.backgroundImage
-                                ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
-                                : $color("#ACB0B8", "#474749"),
-                            tintColor: UIKit.textColor,
-                            titleColor: UIKit.textColor,
-                            info: { align }
-                        },
-                        button.menu ? { menu: button.menu } : {}
-                    ),
-                    events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
-                    layout: $layout.fill
-                }
-            ],
-            (make, view) => {
-                if (button.title) {
-                    const fontSize = $text.sizeThatFits({
-                        text: button.title,
-                        width: UIKit.windowSize.width,
-                        font: $font(16)
-                    })
-                    const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
-                    make.size.equalTo($size(width, size.height))
-                } else {
-                    make.size.equalTo(size)
-                }
-                make.centerY.equalTo(view.super)
-                if (view.prev && view.prev.info.align === align) {
-                    if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
-                    else make.left.equalTo(view.prev.right).offset(edges)
-                } else {
-                    if (align === UIKit.align.right) make.right.inset(edges)
-                    else make.left.inset(edges)
-                }
+        const layout = (make, view) => {
+            if (button.title) {
+                const fontSize = $text.sizeThatFits({
+                    text: button.title,
+                    width: UIKit.windowSize.width,
+                    font: $font(16)
+                })
+                const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
+                make.size.equalTo($size(width, size.height))
+            } else {
+                make.size.equalTo(size)
             }
-        )
-        return blurBox
+            make.centerY.equalTo(view.super)
+            if (view.prev && view.prev.info.align === align) {
+                if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
+                else make.left.equalTo(view.prev.right).offset(edges)
+            } else {
+                if (align === UIKit.align.right) make.right.inset(edges)
+                else make.left.inset(edges)
+            }
+        }
+        const buttonView = {
+            type: "button",
+            props: Object.assign(
+                {
+                    symbol: button.symbol,
+                    title: button.title,
+                    id: button.id ?? $text.uuid,
+                    font: $font(16),
+                    bgcolor: this.useBlur
+                        ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
+                        : $color("#ACB0B8", "#474749"), // 系统键盘按钮配色
+                    tintColor: UIKit.textColor,
+                    titleColor: UIKit.textColor,
+                    info: { align }
+                },
+                button.menu ? { menu: button.menu } : {}
+            ),
+            events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
+            layout: $layout.fill
+        }
+
+        if (this.useBlur) {
+            return UIKit.blurBox(
+                {
+                    info: { align },
+                    smoothCorners: true,
+                    cornerRadius: 5
+                },
+                [buttonView],
+                layout
+            )
+        } else {
+            return {
+                type: "view",
+                props: { info: { align } },
+                views: [buttonView],
+                layout
+            }
+        }
     }
 
     getBottomBarView() {
@@ -385,7 +388,7 @@ class Keyboard extends Clips {
             ],
             layout: (make, view) => {
                 make.bottom.left.right.equalTo(view.super.safeArea)
-                make.top.equalTo(view.prev.bottom)
+                make.height.equalTo(this.navHeight)
             }
         }
     }
@@ -396,61 +399,67 @@ class Keyboard extends Clips {
     }
 
     get matrixTemplate() {
+        const itemContainer = views => {
+            if (this.useBlur) {
+                return UIKit.blurBox({ style: $blurStyle.ultraThinMaterial }, views, $layout.fill)
+            } else {
+                return {
+                    type: "view",
+                    props: { bgcolor: this.itemBackground },
+                    views,
+                    layout: $layout.fill
+                }
+            }
+        }
         return {
             props: {
                 smoothCorners: true,
                 cornerRadius: this.containerMargin * 2
             },
             views: [
-                UIKit.blurBox(
-                    { style: $blurStyle.ultraThinMaterial },
-                    [
-                        {
-                            type: "view",
-                            props: {
-                                id: "copied",
-                                circular: this.copiedIndicatorSize,
-                                hidden: true,
-                                bgcolor: $color("green")
-                            },
-                            layout: (make, view) => {
-                                make.size.equalTo(this.copiedIndicatorSize)
-                                // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                                make.left.top.inset(this.matrixBoxMargin / 2)
-                            }
+                itemContainer([
+                    {
+                        type: "view",
+                        props: {
+                            id: "copied",
+                            circular: this.copiedIndicatorSize,
+                            hidden: true,
+                            bgcolor: $color("green")
                         },
-                        {
-                            type: "label",
-                            props: {
-                                id: "content",
-                                lines: 0,
-                                font: $font(20)
-                            },
-                            layout: (make, view) => {
-                                make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
-                                make.height
-                                    .lessThanOrEqualTo(view.super)
-                                    .offset(-this.matrixBoxMargin * 2 - this.tagHeight)
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "tag",
-                                lines: 1,
-                                color: this.tagColor,
-                                autoFontSize: true,
-                                align: $align.leading
-                            },
-                            layout: (make, view) => {
-                                make.left.right.equalTo(view.prev)
-                                make.height.equalTo(this.tagHeight)
-                                make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
-                            }
+                        layout: (make, view) => {
+                            make.size.equalTo(this.copiedIndicatorSize)
+                            // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                            make.left.top.inset(this.matrixBoxMargin / 2)
                         }
-                    ],
-                    $layout.fill
-                ),
+                    },
+                    {
+                        type: "label",
+                        props: {
+                            id: "content",
+                            lines: 0,
+                            font: $font(20)
+                        },
+                        layout: (make, view) => {
+                            make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
+                            make.height.lessThanOrEqualTo(view.super).offset(-this.matrixBoxMargin * 2 - this.tagHeight)
+                        }
+                    },
+                    {
+                        type: "label",
+                        props: {
+                            id: "tag",
+                            lines: 1,
+                            color: this.tagColor,
+                            autoFontSize: true,
+                            align: $align.leading
+                        },
+                        layout: (make, view) => {
+                            make.left.right.equalTo(view.prev)
+                            make.height.equalTo(this.tagHeight)
+                            make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
+                        }
+                    }
+                ]),
                 {
                     type: "image",
                     props: {
@@ -488,11 +497,16 @@ class Keyboard extends Clips {
                 square: true,
                 alwaysBounceVertical: false,
                 showsHorizontalIndicator: false,
+                alwaysBounceHorizontal: true,
                 columns: 1,
                 spacing: this.matrixBoxMargin,
                 template: this.matrixTemplate
             },
-            layout: $layout.fill,
+            layout: (make, view) => {
+                make.top.inset(0)
+                make.width.equalTo(view.super)
+                make.bottom.equalTo(view.super.safeAreaBottom)
+            },
             events: {
                 ready: () => this.listReady(),
                 didSelect: this.itemSelect,
@@ -508,11 +522,11 @@ class Keyboard extends Clips {
         }
         const view = View.createFromViews([matrix, this.getEmptyBackground(this.listId)])
         view.setProp("id", this.listId + "-container")
-        view.layout = (make, view) => {
-            make.top.equalTo(this.navHeight)
-            make.width.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
-        }
+        // view.layout = (make, view) => {
+        //     make.top.equalTo(this.navHeight)
+        //     make.width.equalTo(view.super)
+        //     make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+        // }
         return view
     }
 
@@ -531,19 +545,27 @@ class Keyboard extends Clips {
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
         delete listView.events.pulled
 
-        const blurBox = UIKit.blurBox(
-            {
-                style: $blurStyle.ultraThinMaterial,
-                smoothCorners: true,
-                cornerRadius: this.containerMargin * 2
-            },
-            [listView],
-            (make, view) => {
-                make.bottom.top.equalTo(view.super)
-                make.left.right.inset(this.containerMargin)
-            }
-        )
-        superListView.views[0] = blurBox
+        if (this.useBlur) {
+            const blurBox = UIKit.blurBox(
+                {
+                    style: $blurStyle.ultraThinMaterial,
+                    smoothCorners: true,
+                    cornerRadius: this.containerMargin * 2
+                },
+                [listView]
+            )
+            superListView.views[0] = blurBox
+        } else {
+            listView.props.bgcolor = this.itemBackground
+            listView.props.smoothCorners = true
+            listView.props.cornerRadius = this.containerMargin * 2
+        }
+        // superListView.views[0] 启用 this.useBlur 时是 UIKit.blurBox
+        superListView.views[0].layout = (make, view) => {
+            make.bottom.top.equalTo(view.super)
+            make.left.right.inset(this.containerMargin)
+        }
+
         return superListView
     }
 
@@ -578,44 +600,36 @@ class Keyboard extends Clips {
     }
 
     getView() {
-        return {
+        const bgView = {
             type: "view",
-            props: {
-                id: "keyboard.main",
-                bgcolor: $color(this.backgroundColor, this.backgroundColorDark)
-            },
             views: [
                 {
-                    type: "view",
-                    props: { hidden: this.backgroundImage === null },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                image: this.backgroundImage,
-                                hidden: this.backgroundImage === null
-                            },
-                            layout: $layout.fill
-                        },
-                        {
-                            // 深色模式降低亮度
-                            type: "view",
-                            props: { bgcolor: $color("clear", $rgba(0, 0, 0, 0.3)) },
-                            layout: $layout.fill
-                        }
-                    ],
+                    type: "image",
+                    props: { image: this.backgroundImage },
                     layout: $layout.fill
                 },
-                this.getTopBarView(),
+                {
+                    // 深色模式降低亮度
+                    type: "view",
+                    props: { bgcolor: $color("clear", $rgba(0, 0, 0, 0.3)) },
+                    layout: $layout.fill
+                }
+            ],
+            layout: $layout.fill
+        }
+        return {
+            type: "view",
+            props: { id: "keyboard.main" },
+            views: [
+                this.backgroundImage ? bgView : {},
                 this.getDataView(),
+                this.getTopBarView(),
                 this.getBottomBarView(),
                 this.getActionView()
             ],
-            layout: $layout.fill,
-            events: {
-                appeared: () => {
-                    this.keyboardSetting()
-                }
+            layout: (make, view) => {
+                make.width.equalTo(view.super)
+                make.height.equalTo(this.fixedKeyboardHeight)
             }
         }
     }

@@ -189,24 +189,13 @@
                                 "key": "keyboard.displayMode",
                                 "items": ["list", "matrix"],
                                 "value": 0
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
-                                "icon": ["sun.min", "#A569BD"],
-                                "title": "BACKGROUND_COLOR",
-                                "type": "color",
-                                "key": "keyboard.background.color",
-                                "value": "#D1D3D9"
                             },
                             {
-                                "icon": ["sun.min", "#A569BD"],
-                                "title": "BACKGROUND_COLOR_DARK",
-                                "type": "color",
-                                "key": "keyboard.background.color.dark",
-                                "value": "#313131"
+                                "icon": ["checkerboard.rectangle", "#1899c4"],
+                                "title": "USE_BLUR",
+                                "type": "switch",
+                                "key": "keyboard.blur",
+                                "value": false
                             },
                             {
                                 "icon": ["photo", "#FFCC66"],
