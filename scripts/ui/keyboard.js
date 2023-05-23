@@ -637,6 +637,7 @@ class Keyboard extends Clips {
             layout: (make, view) => {
                 make.width.equalTo(view.super)
                 make.height.equalTo(this.fixedKeyboardHeight)
+                make.bottom.equalTo(view.super)
             }
         }
     }
