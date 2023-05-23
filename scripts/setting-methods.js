@@ -227,14 +227,13 @@ function keyboard() {
     kernel.setting.method.previewKeyboard = () => {
         const keyboard = new Keyboard(kernel)
 
-        const keyboardId = $text.uuid
         const updateHeight = height => {
             keyboard.setKeyboardHeight(height)
-            $(keyboardId).updateLayout(make => {
+            $(keyboard.keyboardId).updateLayout(make => {
                 make.height.equalTo(keyboard.fixedKeyboardHeight)
             })
             if (keyboard.keyboardDisplayMode === 1) {
-                $(keyboardId).get(keyboard.listId).reload()
+                $(keyboard.keyboardId).get(keyboard.listId).reload()
             }
         }
         const getPercentage = v => (v - keyboardMinHeight) / (keyboardMaxHeight - keyboardMinHeight)
@@ -291,15 +290,7 @@ function keyboard() {
                         }
                     }
                 },
-                {
-                    type: "view",
-                    props: { id: keyboardId },
-                    views: [keyboard.getView()],
-                    layout: (make, view) => {
-                        make.width.bottom.equalTo(view.super)
-                        make.height.equalTo(keyboard.fixedKeyboardHeight)
-                    }
-                }
+                keyboard.getView()
             ],
             layout: (make, view) => {
                 make.left.right.bottom.equalTo(view.super.safeArea)
