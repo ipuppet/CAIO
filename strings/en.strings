@@ -88,8 +88,7 @@
 
 "KEYBOARD" = "Keyboard";
 "KEYBOARD_HEIGHT" = "Keyboard Height";
-"BACKGROUND_COLOR" = "Background Color";
-"BACKGROUND_COLOR_DARK" = "Dark Background Color";
+"USE_BLUR" = "Use Blur";
 "BACKGROUND_IMAGE" = "Background Image";
 "DELETE_DELAY" = "Delete Delay";
 "SWITCH_AFTER_INSERT" = "Switch After Insert";
