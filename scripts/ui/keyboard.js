@@ -404,26 +404,27 @@ class Keyboard extends Clips {
         return [items[0], items[2]]
     }
 
-    get matrixTemplate() {
-        const itemContainer = views => {
-            if (this.useBlur) {
-                return UIKit.blurBox({ style: $blurStyle.ultraThinMaterial }, views, $layout.fill)
-            } else {
-                return {
-                    type: "view",
-                    props: { bgcolor: this.itemBackground },
-                    views,
-                    layout: $layout.fill
-                }
+    itemContainer(views) {
+        if (this.useBlur) {
+            return UIKit.blurBox({ style: $blurStyle.ultraThinMaterial }, views, $layout.fill)
+        } else {
+            return {
+                type: "view",
+                props: { bgcolor: this.itemBackground },
+                views,
+                layout: $layout.fill
             }
         }
+    }
+
+    get matrixTemplate() {
         return {
             props: {
                 smoothCorners: true,
                 cornerRadius: this.containerMargin * 2
             },
             views: [
-                itemContainer([
+                this.itemContainer([
                     {
                         type: "view",
                         props: {
@@ -541,7 +542,7 @@ class Keyboard extends Clips {
         const superListView = super.getListView()
         superListView.setProp("id", this.listId + "-container")
         superListView.layout = (make, view) => {
-            make.top.equalTo(this.navHeight)
+            make.top.equalTo(this.navHeight - 1) // list height 高度为 1
             make.width.equalTo(view.super)
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.bottomBarHeight - this.containerMargin)
         }
@@ -551,27 +552,11 @@ class Keyboard extends Clips {
         listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
         delete listView.events.pulled
+        listView.props.header = { props: { height: 1 } }
+        listView.props.style = 2
 
-        if (this.useBlur) {
-            const blurBox = UIKit.blurBox(
-                {
-                    style: $blurStyle.ultraThinMaterial,
-                    smoothCorners: true,
-                    cornerRadius: this.containerMargin * 2
-                },
-                [listView]
-            )
-            superListView.views[0] = blurBox
-        } else {
-            listView.props.bgcolor = this.itemBackground
-            listView.props.smoothCorners = true
-            listView.props.cornerRadius = this.containerMargin * 2
-        }
-        // superListView.views[0] 启用 this.useBlur 时是 UIKit.blurBox
-        superListView.views[0].layout = (make, view) => {
-            make.bottom.top.equalTo(view.super)
-            make.left.right.inset(this.containerMargin)
-        }
+        const itemView = listView.props.template.views[0].views
+        listView.props.template.views[0] = this.itemContainer(itemView)
 
         return superListView
     }
