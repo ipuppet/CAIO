@@ -26,16 +26,18 @@ class Keyboard extends Clips {
     horizontalMargin = 15 // 列表边距
     verticalMargin = 12 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
-    containerMargin = 5 // 容器边距
+    containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
     fontSize = 14 // 字体大小
     tagHeight = this.verticalMargin + 3
+    matrixBoxMargin = 10
     navHeight = 50
-
-    matrixBoxMargin = 15
+    bottomBarHeight = 50
+    bottomButtonSize = $size(46, 46)
 
     menuItemActionMaxCount = 3
 
-    itemBackground = $color($rgba(255, 255, 255, 0.3), "#6E6E6E")
+    itemBackground = $color("#FFFFFF", $rgba(0x97, 0x97, 0x97, 0.4))
+    buttonBackground = $color($rgba(0, 0, 0, 0.15), $rgba(0x75, 0x75, 0x75, 0.4)) // 系统键盘按钮配色
 
     /**
      * @param {AppKernel} kernel
@@ -46,8 +48,9 @@ class Keyboard extends Clips {
         this.jsboxToolBar = this.kernel.setting.get("keyboard.showJSBoxToolbar")
         this.keyboardDisplayMode = this.kernel.setting.get("keyboard.displayMode")
 
-        this.useBlur = this.kernel.setting.get("keyboard.blur")
         this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
+        // 仅在有背景图时使用
+        this.useBlur = this.backgroundImage && this.kernel.setting.get("keyboard.blur")
 
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
 
@@ -235,7 +238,7 @@ class Keyboard extends Clips {
      * @returns
      */
     getBottomButtonView(button, align) {
-        const size = $size(38, 38)
+        const size = this.bottomButtonSize
         const edges = this.containerMargin
         const layout = (make, view) => {
             if (button.title) {
@@ -251,8 +254,9 @@ class Keyboard extends Clips {
             }
             make.centerY.equalTo(view.super)
             if (view.prev && view.prev.info.align === align) {
-                if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
-                else make.left.equalTo(view.prev.right).offset(edges)
+                // edges * 1.5 对齐系统键盘按钮
+                if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges * 1.5)
+                else make.left.equalTo(view.prev.right).offset(edges * 1.5)
             } else {
                 if (align === UIKit.align.right) make.right.inset(edges)
                 else make.left.inset(edges)
@@ -262,13 +266,13 @@ class Keyboard extends Clips {
             type: "button",
             props: Object.assign(
                 {
+                    smoothCorners: false,
+                    cornerRadius: 5,
                     symbol: button.symbol,
                     title: button.title,
                     id: button.id ?? $text.uuid,
                     font: $font(16),
-                    bgcolor: this.useBlur
-                        ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
-                        : $color("#ACB0B8", "#474749"), // 系统键盘按钮配色
+                    bgcolor: this.useBlur ? $color("clear") : this.buttonBackground,
                     tintColor: UIKit.textColor,
                     titleColor: UIKit.textColor,
                     info: { align }
@@ -283,7 +287,8 @@ class Keyboard extends Clips {
             return UIKit.blurBox(
                 {
                     info: { align },
-                    smoothCorners: true,
+                    style: $blurStyle.ultraThinMaterial,
+                    smoothCorners: false,
                     cornerRadius: 5
                 },
                 [buttonView],
@@ -387,8 +392,9 @@ class Keyboard extends Clips {
                 ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right))
             ],
             layout: (make, view) => {
-                make.bottom.left.right.equalTo(view.super.safeArea)
-                make.height.equalTo(this.navHeight)
+                make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
+                make.left.right.equalTo(view.super.safeArea)
+                make.height.equalTo(this.bottomBarHeight)
             }
         }
     }
@@ -505,17 +511,18 @@ class Keyboard extends Clips {
             layout: (make, view) => {
                 make.top.inset(0)
                 make.width.equalTo(view.super)
-                make.bottom.equalTo(view.super.safeAreaBottom)
+                make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
                 ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的
-                    let size = this.fixedKeyboardHeight - this.navHeight * 2
+                    let size = this.fixedKeyboardHeight - this.navHeight - this.bottomBarHeight
                     if (this.jsboxToolBar) {
                         size -= Keyboard.jsboxToolBarHeight + Keyboard.jsboxToolBarSpace
                     }
+                    size -= this.matrixBoxMargin * 2
                     return $size(size, size)
                 }
             }
@@ -536,7 +543,7 @@ class Keyboard extends Clips {
         superListView.layout = (make, view) => {
             make.top.equalTo(this.navHeight)
             make.width.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.bottomBarHeight - this.containerMargin)
         }
 
         const listView = superListView.views[0]
@@ -594,7 +601,7 @@ class Keyboard extends Clips {
                 make.top.equalTo(this.navHeight)
                 make.left.equalTo(this.containerMargin)
                 make.right.equalTo(-this.containerMargin)
-                make.bottom.equalTo(-this.navHeight)
+                make.bottom.equalTo(-this.bottomBarHeight)
             }
         }
     }
