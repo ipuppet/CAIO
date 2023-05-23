@@ -12,6 +12,7 @@ class Keyboard extends Clips {
     static jsboxToolBarSpace = 5
     #readClipboardTimer
 
+    keyboardId = "keyboard.main"
     listId = "keyboard-clips-list"
     actionsId = "keyboard-list-actions"
     keyboardSwitchLockId = "keyboard-switch-lock"
@@ -32,7 +33,7 @@ class Keyboard extends Clips {
     matrixBoxMargin = 10
     navHeight = 50
     bottomBarHeight = 50
-    bottomButtonSize = $size(46, 46)
+    bottomButtonSize = $size(46, 40)
 
     menuItemActionMaxCount = 3
 
@@ -247,7 +248,7 @@ class Keyboard extends Clips {
                     width: UIKit.windowSize.width,
                     font: $font(16)
                 })
-                const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
+                const width = Math.ceil(fontSize.width) + (edges + 12) * 2 // 文本按钮增加内边距
                 make.size.equalTo($size(width, size.height))
             } else {
                 make.size.equalTo(size)
@@ -530,11 +531,6 @@ class Keyboard extends Clips {
         }
         const view = View.createFromViews([matrix, this.getEmptyBackground(this.listId)])
         view.setProp("id", this.listId + "-container")
-        // view.layout = (make, view) => {
-        //     make.top.equalTo(this.navHeight)
-        //     make.width.equalTo(view.super)
-        //     make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
-        // }
         return view
     }
 
@@ -611,7 +607,7 @@ class Keyboard extends Clips {
         }
         return {
             type: "view",
-            props: { id: "keyboard.main" },
+            props: { id: this.keyboardId },
             views: [
                 this.backgroundImage ? bgView : {},
                 this.getDataView(),
@@ -620,9 +616,8 @@ class Keyboard extends Clips {
                 this.getActionView()
             ],
             layout: (make, view) => {
-                make.width.equalTo(view.super)
+                make.width.bottom.equalTo(view.super)
                 make.height.equalTo(this.fixedKeyboardHeight)
-                make.bottom.equalTo(view.super)
             }
         }
     }
