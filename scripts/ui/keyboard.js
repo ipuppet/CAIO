@@ -100,10 +100,10 @@ class Keyboard extends Clips {
         }
     }
 
-    keyboardTapped(tapped, tapticEngine = true, level = 1) {
+    keyboardTapped(tapped, tapticEngine = true) {
         return async (...args) => {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
-                $device.taptic(level)
+                $device.taptic(this.kernel.setting.get("keyboard.tapticEngineLevel"))
             }
             if (typeof tapped === "function") {
                 try {
