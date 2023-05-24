@@ -99,6 +99,7 @@
 "OPEN_IN_JSBOX" = "Open in JSBox";
 "SWITCH_KEYBOARD" = "Switch Keyboard";
 "TAPTIC_ENGINE" = "Taptic Engine";
+"TAPTIC_ENGINE_LEVEL" = "Taptic Engine Level";
 "TAPTIC_ENGINE_FOR_DELETE" = "Taptic Engine For Delete";
 "SPACE" = "Space";
 

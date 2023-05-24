@@ -385,9 +385,9 @@ class Keyboard extends Clips {
                 titleColor: UIKit.textColor
             },
             events: {
-                tapped: () => {
+                tapped: this.keyboardTapped(() => {
                     $keyboard.insert(" ")
-                }
+                })
             },
             layout: (make, view) => {
                 let lastLeft = view.prev

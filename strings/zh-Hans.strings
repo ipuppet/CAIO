@@ -99,6 +99,7 @@
 "OPEN_IN_JSBOX" = "在 JSBox 中打开";
 "SWITCH_KEYBOARD" = "切换键盘";
 "TAPTIC_ENGINE" = "触感反馈";
+"TAPTIC_ENGINE_LEVEL" = "触感反馈强度";
 "TAPTIC_ENGINE_FOR_DELETE" = "删除按钮触感反馈";
 "SPACE" = "空格";
 
