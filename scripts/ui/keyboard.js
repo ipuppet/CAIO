@@ -8,8 +8,6 @@ const KeyboardScripts = require("./components/keyboard-scripts")
  */
 
 class Keyboard extends Clips {
-    static jsboxToolBarHeight = 48
-    static jsboxToolBarSpace = 5
     #readClipboardTimer
 
     keyboardId = "keyboard.main"
@@ -46,7 +44,6 @@ class Keyboard extends Clips {
     constructor(kernel) {
         super(kernel)
 
-        this.jsboxToolBar = this.kernel.setting.get("keyboard.showJSBoxToolbar")
         this.keyboardDisplayMode = this.kernel.setting.get("keyboard.displayMode")
 
         this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
@@ -58,19 +55,10 @@ class Keyboard extends Clips {
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
         }
-
-        if (!this.jsboxToolBar) {
-            // 这是一个属性，应该尽早设置。
-            $keyboard.barHidden = true
-        }
     }
 
     get keyboardHeight() {
         return this.kernel.setting.get("keyboard.previewAndHeight")
-    }
-
-    get fixedKeyboardHeight() {
-        return this.keyboardHeight + Keyboard.jsboxToolBarHeight
     }
 
     setKeyboardHeight(height) {
@@ -310,7 +298,7 @@ class Keyboard extends Clips {
         const rightButtons = []
 
         // 切换键盘
-        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar") && (!$device.hasFaceID || $device.isIpadPro)) {
+        if (!$device.hasFaceID || $device.isIpadPro) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
@@ -348,10 +336,7 @@ class Keyboard extends Clips {
                     .map(addin => {
                         return {
                             title: addin,
-                            handler: this.keyboardTapped(() => {
-                                $(this.keyboardId).remove() // 运行其他脚本前主动删除自己，防止重复
-                                $addin.run(addin)
-                            })
+                            handler: this.keyboardTapped(() => $addin.run(addin))
                         }
                     })
             }
@@ -523,10 +508,7 @@ class Keyboard extends Clips {
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的
-                    let size = this.fixedKeyboardHeight - this.navHeight - this.bottomBarHeight
-                    if (this.jsboxToolBar) {
-                        size -= Keyboard.jsboxToolBarHeight + Keyboard.jsboxToolBarSpace
-                    }
+                    let size = this.keyboardHeight - this.navHeight - this.bottomBarHeight
                     size -= this.matrixBoxMargin * 2
                     return $size(size, size)
                 }
@@ -620,7 +602,7 @@ class Keyboard extends Clips {
             ],
             layout: (make, view) => {
                 make.width.bottom.equalTo(view.super)
-                make.height.equalTo(this.fixedKeyboardHeight)
+                make.height.equalTo(this.keyboardHeight)
             }
         }
     }

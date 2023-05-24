@@ -222,13 +222,6 @@
                                 "value": true
                             },
                             {
-                                "icon": ["option", "#157EFB"],
-                                "title": "JSBOX_TOOLBAR",
-                                "type": "switch",
-                                "key": "keyboard.showJSBoxToolbar",
-                                "value": false
-                            },
-                            {
                                 "icon": "paperplane",
                                 "title": "QUICK_START_SCRIPTS",
                                 "type": "script",

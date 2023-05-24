@@ -230,7 +230,7 @@ function keyboard() {
         const updateHeight = height => {
             keyboard.setKeyboardHeight(height)
             $(keyboard.keyboardId).updateLayout(make => {
-                make.height.equalTo(keyboard.fixedKeyboardHeight)
+                make.height.equalTo(keyboard.keyboardHeight)
             })
             if (keyboard.keyboardDisplayMode === 1) {
                 $(keyboard.keyboardId).get(keyboard.listId).reload()
