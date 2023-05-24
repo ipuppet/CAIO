@@ -348,7 +348,10 @@ class Keyboard extends Clips {
                     .map(addin => {
                         return {
                             title: addin,
-                            handler: this.keyboardTapped(() => $addin.run(addin))
+                            handler: this.keyboardTapped(() => {
+                                $(this.keyboardId).remove() // 运行其他脚本前主动删除自己，防止重复
+                                $addin.run(addin)
+                            })
                         }
                     })
             }
