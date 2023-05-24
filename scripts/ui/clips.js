@@ -469,14 +469,18 @@ class Clips extends ClipsData {
                         title: $l10n("DELETE"),
                         symbol: "trash",
                         destructive: true,
-                        handler: (sender, indexPath) => {
-                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                sender.delete(indexPath)
-                                this.delete(this.getByIndex(indexPath).uuid)
-                                // 重新计算列表项高度
-                                $delay(0.25, () => sender.reload())
-                            })
-                        }
+                        items: [
+                            {
+                                title: $l10n("CONFIRM"),
+                                destructive: true,
+                                handler: (sender, indexPath) => {
+                                    sender.delete(indexPath)
+                                    this.delete(this.getByIndex(indexPath).uuid)
+                                    // 重新计算列表项高度
+                                    $delay(0.25, () => sender.reload())
+                                }
+                            }
+                        ]
                     }
                 ]
             }
