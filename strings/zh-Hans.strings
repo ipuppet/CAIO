@@ -100,6 +100,7 @@
 "SWITCH_KEYBOARD" = "切换键盘";
 "TAPTIC_ENGINE" = "触感反馈";
 "TAPTIC_ENGINE_FOR_DELETE" = "删除按钮触感反馈";
+"SPACE" = "空格";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";

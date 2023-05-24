@@ -100,6 +100,7 @@
 "SWITCH_KEYBOARD" = "Switch Keyboard";
 "TAPTIC_ENGINE" = "Taptic Engine";
 "TAPTIC_ENGINE_FOR_DELETE" = "Taptic Engine For Delete";
+"SPACE" = "Space";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

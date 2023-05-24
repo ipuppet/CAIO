@@ -374,11 +374,38 @@ class Keyboard extends Clips {
             }
         )
 
+        const spaceButton = {
+            type: "button",
+            props: {
+                smoothCorners: false,
+                cornerRadius: 5,
+                title: $l10n("SPACE"),
+                font: $font(16),
+                bgcolor: this.itemBackground,
+                titleColor: UIKit.textColor
+            },
+            events: {
+                tapped: () => {
+                    $keyboard.insert(" ")
+                }
+            },
+            layout: (make, view) => {
+                let lastLeft = view.prev
+                for (let i = 0; i < rightButtons.length; i++) {
+                    lastLeft = lastLeft.prev
+                }
+                make.height.top.equalTo(view.prev)
+                make.left.equalTo(lastLeft.right).offset(this.containerMargin * 1.5)
+                make.right.equalTo(view.prev.left).offset(-this.containerMargin * 1.5) // 右侧按钮是倒序的
+            }
+        }
+
         return {
             type: "view",
             views: [
                 ...leftButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right))
+                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right)),
+                spaceButton
             ],
             layout: (make, view) => {
                 make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
