@@ -325,6 +325,14 @@ class Storage {
         return sorted
     }
 
+    replaceString(string) {
+        const str = [`\\`, `"`, `'`, `%`, `-`, `_`, `;`]
+        str.forEach(s => {
+            string = string.replaceAll(s, `\\${s}`)
+        })
+        return string
+    }
+
     parse(execRes) {
         const result = execRes.result
         const error = execRes.error
@@ -383,37 +391,34 @@ class Storage {
     }
 
     getByUUID(uuid = "") {
-        uuid = uuid.replaceAll("'", "")
-        // TODO: 占位符导致大概率查询无结果
         const result = this.sqlite.query({
             sql: `
                 SELECT a.*, tag from
-                (SELECT *, 'clips' AS section FROM clips WHERE uuid = '${uuid}'
+                (SELECT *, 'clips' AS section FROM clips WHERE uuid = ?
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = '${uuid}') a
+                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid
-            `
-            // args: [uuid, uuid]
+            `,
+            args: [uuid, uuid]
         })
         return this.parse(result)[0]
     }
     getByMD5(md5 = "") {
-        md5 = md5.replaceAll("'", "")
         const result = this.sqlite.query({
             sql: `
                 SELECT a.*, tag from
-                (SELECT *, 'clips' AS section FROM clips WHERE md5 = '${md5}'
+                (SELECT *, 'clips' AS section FROM clips WHERE md5 = ?
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = '${md5}') a
+                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid
-            `
-            // args: [md5, md5]
+            `,
+            args: [md5, md5]
         })
         return this.parse(result)[0]
     }
     async search(kw) {
-        const kwArr = await $text.tokenize({ text: kw })
-        const searchStr = `%${kwArr.join("%")}%`.replaceAll(`\\`, `\\\\`).replaceAll(`"`, `\"`)
+        const kwArr = (await $text.tokenize({ text: kw })).map(t => this.replaceString(t))
+        const searchStr = `%${kwArr.join("%")}%`
         // TODO: 占位符导致大概率查询无结果
         const result = this.sqlite.query({
             sql: `
@@ -431,8 +436,8 @@ class Storage {
     searchByTag(tag) {
         if (tag.startsWith("#")) tag = tag.substring(1)
         const tagResult = this.sqlite.query({
-            sql: `SELECT * FROM tag WHERE tag like ?`,
-            args: [`%${tag}%`]
+            sql: `SELECT * FROM tag WHERE tag like "%${this.replaceString(tag)}%"`
+            //args: [`%${tag}%`]
         })
         const tags = this.parseTag(tagResult)
         const result = []
