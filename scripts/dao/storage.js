@@ -414,7 +414,6 @@ class Storage {
             `,
             args: [searchStr, searchStr]
         })
-        console.log(searchStr)
         return { result: this.parse(result), keyword: kwArr }
     }
 
