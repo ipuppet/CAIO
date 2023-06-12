@@ -109,6 +109,7 @@ class WebDavSyncClip extends WebDavSync {
     }
 
     async pull() {
+        this.webdav.clearNSURLCache()
         let resp = await this.webdav.get(this.webdavDbPath)
         this.localDb = resp.rawData
         await this.downloadSyncData()
