@@ -328,27 +328,32 @@ class Storage {
     parse(execRes) {
         const result = execRes.result
         const error = execRes.error
-        if (error !== null) {
-            throw new Error(`Code [${error.code}] ${error.domain} ${error.localizedDescription}`)
-        }
         const data = []
-        while (result.next()) {
-            const text = result.get("text")
-            const clip = new Clip({
-                uuid: result.get("uuid"),
-                section: result.get("section"),
-                md5: result.get("md5"),
-                tag: result.get("tag"),
-                prev: result.get("prev"),
-                next: result.get("next")
-            })
-            if (Clip.isImage(text)) {
-                clip.fileStorage = this.kernel.fileStorage
+        try {
+            if (error !== null) {
+                throw new Error(`Code [${error.code}] ${error.domain} ${error.localizedDescription}`)
             }
-            clip.text = text
-            data.push(clip)
+            while (result.next()) {
+                const text = result.get("text")
+                const clip = new Clip({
+                    uuid: result.get("uuid"),
+                    section: result.get("section"),
+                    md5: result.get("md5"),
+                    tag: result.get("tag"),
+                    prev: result.get("prev"),
+                    next: result.get("next")
+                })
+                if (Clip.isImage(text)) {
+                    clip.fileStorage = this.kernel.fileStorage
+                }
+                clip.text = text
+                data.push(clip)
+            }
+        } catch (error) {
+            throw error
+        } finally {
+            result.close()
         }
-        result.close()
         return data
     }
 
@@ -403,18 +408,20 @@ class Storage {
     }
     async search(kw) {
         const kwArr = await $text.tokenize({ text: kw })
-        const searchStr = `%${kwArr.join("%")}%`
+        const searchStr = `%${kwArr.join("%")}%`.replaceAll(`\\`, `\\\\`).replaceAll(`"`, `\"`)
+        // TODO: 占位符导致大概率查询无结果
         const result = this.sqlite.query({
             sql: `
                 SELECT a.* from
-                (SELECT *, 'clips' AS section FROM clips WHERE text like ?
+                (SELECT *, 'clips' AS section FROM clips WHERE text like "${searchStr}"
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE text like ?) a
+                SELECT *, 'favorite' AS section FROM favorite WHERE text like "${searchStr}") a
                 LEFT JOIN tag ON a.uuid = tag.uuid
-            `,
-            args: [searchStr, searchStr]
+            `
+            // args: [searchStr, searchStr]
         })
-        return { result: this.parse(result), keyword: kwArr }
+        const res = { result: this.parse(result), keyword: kwArr }
+        return res
     }
 
     deleteTable(table) {
