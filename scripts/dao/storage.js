@@ -440,7 +440,7 @@ class Storage {
             result.push(this.getByUUID(tag.uuid))
         })
 
-        return result
+        return { result, keyword: [tag] }
     }
 
     deleteTable(table) {

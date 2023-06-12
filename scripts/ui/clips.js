@@ -561,22 +561,28 @@ class Clips extends ClipsData {
     lineData(clip, indicator = false) {
         const image = { hidden: true }
         const content = { text: "" }
+        const tag = { hidden: !clip?.hasTag }
 
         if (clip.image) {
             image.src = clip.imagePath.preview
             image.hidden = false
         } else {
-            if (clip.styledText) {
-                content.styledText = clip.styledText
+            if (clip.textStyledText) {
+                content.styledText = clip.textStyledText
             } else {
                 content.text = clip.text
+            }
+            if (clip.tagStyledText) {
+                tag.styledText = clip.tagStyledText
+            } else {
+                tag.text = clip.tag
             }
         }
 
         return {
             copied: { hidden: !indicator },
             image,
-            tag: { text: clip.tag, hidden: !clip?.hasTag },
+            tag,
             content
         }
     }
@@ -723,24 +729,34 @@ class Clips extends ClipsData {
     getNavigationView() {
         const sheet = new Sheet()
         const getView = obj => {
-            const { keyword, result } = obj
+            const { keyword, result, isTagKeyword } = obj
             const view = this.getListView(
                 this.listId + "-search-result",
                 result.map(clip => {
+                    const targetText = isTagKeyword ? clip.tag : clip.text
                     let styles = []
                     keyword.forEach(kw => {
-                        let pos = clip.text.indexOf(kw)
+                        let pos = targetText.indexOf(kw)
                         while (pos > -1) {
                             styles.push({
                                 range: $range(pos, kw.length),
                                 color: $color("red")
                             })
-                            pos = clip.text.indexOf(kw, pos + 1)
+                            pos = targetText.indexOf(kw, pos + 1)
                         }
                     })
-                    clip.styledText = {
-                        text: clip.text,
-                        styles
+                    clip.styledText = {}
+                    if (isTagKeyword) {
+                        clip.tagStyledText = {
+                            color: this.tagColor,
+                            text: targetText,
+                            styles
+                        }
+                    } else {
+                        clip.textStyledText = {
+                            text: targetText,
+                            styles
+                        }
                     }
                     return this.lineData(clip, false)
                 })
