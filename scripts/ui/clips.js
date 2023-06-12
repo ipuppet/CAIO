@@ -724,8 +724,14 @@ class Clips extends ClipsData {
                 res.map(data => this.lineData(data))
             )
             delete view.views[0].events.pulled
+            view.views[0].events.rowHeight = (sender, indexPath) => {
+                const clip = res[indexPath.row]
+                const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
+                const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
+                return this.verticalMargin + itemHeight + tagHeight
+            }
             view.views[0].events.didSelect = (sender, indexPath) => {
-                const clip = this.getByIndex(indexPath)
+                const clip = res[indexPath.row]
                 if (clip.image) {
                     Kernel.quickLookImage(clip.imageOriginal)
                 } else {
