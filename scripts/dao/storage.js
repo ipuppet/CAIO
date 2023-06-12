@@ -31,8 +31,11 @@ class Clip {
     }
 
     constructor({ uuid, section, text = "", md5, tag = null, prev = null, next = null } = {}) {
-        if (!uuid || !section) {
-            throw new Error("Clip create faild: uuid or section undefined")
+        if (!uuid) {
+            throw new Error("Clip create faild: uuid undefined")
+        }
+        if (!section) {
+            throw new Error("Clip create faild: section undefined")
         }
         this.uuid = uuid
         this.section = section
@@ -400,7 +403,8 @@ class Storage {
     }
     search(kw) {
         const result = this.sqlite.query({
-            sql: `SELECT a.* from
+            sql: `
+                SELECT a.* from
                 (SELECT *, 'clips' AS section FROM clips WHERE text like ?
                 UNION
                 SELECT *, 'favorite' AS section FROM favorite WHERE text like ?) a
@@ -499,7 +503,13 @@ class Storage {
         return clipsResult.isNull(0) && favoriteResult.isNull(0)
     }
     allImageFromDb(sortByImage = true) {
-        const result = this.sqlite.query(`SELECT * FROM clips favorite WHERE text like "@image=%"`)
+        const result = this.sqlite.query(`
+            SELECT a.* from
+            (SELECT *, 'clips' AS section FROM clips WHERE text like "@image=%"
+            UNION
+            SELECT *, 'favorite' AS section FROM favorite WHERE text like "@image=%") a
+            LEFT JOIN tag ON a.uuid = tag.uuid
+        `)
         const images = this.parse(result)?.map(clip => {
             if (clip.image) {
                 const path = clip.fsPath
