@@ -8,10 +8,9 @@ const KeyboardScripts = require("./components/keyboard-scripts")
  */
 
 class Keyboard extends Clips {
-    static jsboxToolBarHeight = 48
-    static jsboxToolBarSpace = 5
     #readClipboardTimer
 
+    keyboardId = "keyboard.main"
     listId = "keyboard-clips-list"
     actionsId = "keyboard-list-actions"
     keyboardSwitchLockId = "keyboard-switch-lock"
@@ -26,16 +25,18 @@ class Keyboard extends Clips {
     horizontalMargin = 15 // 列表边距
     verticalMargin = 12 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
-    containerMargin = 5 // 容器边距
+    containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
     fontSize = 14 // 字体大小
     tagHeight = this.verticalMargin + 3
+    matrixBoxMargin = 10
     navHeight = 50
-
-    matrixBoxMargin = 15
+    bottomBarHeight = 50
+    bottomButtonSize = $size(46, 40)
 
     menuItemActionMaxCount = 3
 
-    itemBackground = $color($rgba(255, 255, 255, 0.3), "#6E6E6E")
+    itemBackground = $color("#FFFFFF", $rgba(0x97, 0x97, 0x97, 0.4))
+    buttonBackground = $color($rgba(0, 0, 0, 0.15), $rgba(0x75, 0x75, 0x75, 0.4)) // 系统键盘按钮配色
 
     /**
      * @param {AppKernel} kernel
@@ -43,30 +44,21 @@ class Keyboard extends Clips {
     constructor(kernel) {
         super(kernel)
 
-        this.jsboxToolBar = this.kernel.setting.get("keyboard.showJSBoxToolbar")
         this.keyboardDisplayMode = this.kernel.setting.get("keyboard.displayMode")
 
-        this.useBlur = this.kernel.setting.get("keyboard.blur")
         this.backgroundImage = this.kernel.setting.get("keyboard.background.image")?.image
+        // 仅在有背景图时使用
+        this.useBlur = this.backgroundImage && this.kernel.setting.get("keyboard.blur")
 
         this.deleteDelay = this.kernel.setting.get("keyboard.deleteDelay")
 
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
         }
-
-        if (!this.jsboxToolBar) {
-            // 这是一个属性，应该尽早设置。
-            $keyboard.barHidden = true
-        }
     }
 
     get keyboardHeight() {
         return this.kernel.setting.get("keyboard.previewAndHeight")
-    }
-
-    get fixedKeyboardHeight() {
-        return this.keyboardHeight + Keyboard.jsboxToolBarHeight
     }
 
     setKeyboardHeight(height) {
@@ -108,10 +100,10 @@ class Keyboard extends Clips {
         }
     }
 
-    keyboardTapped(tapped, tapticEngine = true, level = 1) {
+    keyboardTapped(tapped, tapticEngine = true) {
         return async (...args) => {
             if (tapticEngine && this.kernel.setting.get("keyboard.tapticEngine")) {
-                $device.taptic(level)
+                $device.taptic(this.kernel.setting.get("keyboard.tapticEngineLevel"))
             }
             if (typeof tapped === "function") {
                 try {
@@ -235,7 +227,7 @@ class Keyboard extends Clips {
      * @returns
      */
     getBottomButtonView(button, align) {
-        const size = $size(38, 38)
+        const size = this.bottomButtonSize
         const edges = this.containerMargin
         const layout = (make, view) => {
             if (button.title) {
@@ -244,15 +236,16 @@ class Keyboard extends Clips {
                     width: UIKit.windowSize.width,
                     font: $font(16)
                 })
-                const width = Math.ceil(fontSize.width) + edges * 2 // 文本按钮增加内边距
+                const width = Math.ceil(fontSize.width) + (edges + 12) * 2 // 文本按钮增加内边距
                 make.size.equalTo($size(width, size.height))
             } else {
                 make.size.equalTo(size)
             }
             make.centerY.equalTo(view.super)
             if (view.prev && view.prev.info.align === align) {
-                if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges)
-                else make.left.equalTo(view.prev.right).offset(edges)
+                // edges * 1.5 对齐系统键盘按钮
+                if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges * 1.5)
+                else make.left.equalTo(view.prev.right).offset(edges * 1.5)
             } else {
                 if (align === UIKit.align.right) make.right.inset(edges)
                 else make.left.inset(edges)
@@ -262,13 +255,13 @@ class Keyboard extends Clips {
             type: "button",
             props: Object.assign(
                 {
+                    smoothCorners: false,
+                    cornerRadius: 5,
                     symbol: button.symbol,
                     title: button.title,
                     id: button.id ?? $text.uuid,
                     font: $font(16),
-                    bgcolor: this.useBlur
-                        ? $color($rgba(172, 176, 184, 0.3), $rgba(71, 71, 73, 0.3))
-                        : $color("#ACB0B8", "#474749"), // 系统键盘按钮配色
+                    bgcolor: this.useBlur ? $color("clear") : this.buttonBackground,
                     tintColor: UIKit.textColor,
                     titleColor: UIKit.textColor,
                     info: { align }
@@ -283,7 +276,8 @@ class Keyboard extends Clips {
             return UIKit.blurBox(
                 {
                     info: { align },
-                    smoothCorners: true,
+                    style: $blurStyle.ultraThinMaterial,
+                    smoothCorners: false,
                     cornerRadius: 5
                 },
                 [buttonView],
@@ -304,7 +298,7 @@ class Keyboard extends Clips {
         const rightButtons = []
 
         // 切换键盘
-        if (!this.kernel.setting.get("keyboard.showJSBoxToolbar") && (!$device.hasFaceID || $device.isIpadPro)) {
+        if (!$device.hasFaceID || $device.isIpadPro) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
@@ -380,15 +374,43 @@ class Keyboard extends Clips {
             }
         )
 
+        const spaceButton = {
+            type: "button",
+            props: {
+                smoothCorners: false,
+                cornerRadius: 5,
+                title: $l10n("SPACE"),
+                font: $font(16),
+                bgcolor: this.itemBackground,
+                titleColor: UIKit.textColor
+            },
+            events: {
+                tapped: this.keyboardTapped(() => {
+                    $keyboard.insert(" ")
+                })
+            },
+            layout: (make, view) => {
+                let lastLeft = view.prev
+                for (let i = 0; i < rightButtons.length; i++) {
+                    lastLeft = lastLeft.prev
+                }
+                make.height.top.equalTo(view.prev)
+                make.left.equalTo(lastLeft.right).offset(this.containerMargin * 1.5)
+                make.right.equalTo(view.prev.left).offset(-this.containerMargin * 1.5) // 右侧按钮是倒序的
+            }
+        }
+
         return {
             type: "view",
             views: [
                 ...leftButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right))
+                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right)),
+                spaceButton
             ],
             layout: (make, view) => {
-                make.bottom.left.right.equalTo(view.super.safeArea)
-                make.height.equalTo(this.navHeight)
+                make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
+                make.left.right.equalTo(view.super.safeArea)
+                make.height.equalTo(this.bottomBarHeight)
             }
         }
     }
@@ -398,26 +420,27 @@ class Keyboard extends Clips {
         return [items[0], items[2]]
     }
 
-    get matrixTemplate() {
-        const itemContainer = views => {
-            if (this.useBlur) {
-                return UIKit.blurBox({ style: $blurStyle.ultraThinMaterial }, views, $layout.fill)
-            } else {
-                return {
-                    type: "view",
-                    props: { bgcolor: this.itemBackground },
-                    views,
-                    layout: $layout.fill
-                }
+    itemContainer(views) {
+        if (this.useBlur) {
+            return UIKit.blurBox({ style: $blurStyle.ultraThinMaterial }, views, $layout.fill)
+        } else {
+            return {
+                type: "view",
+                props: { bgcolor: this.itemBackground },
+                views,
+                layout: $layout.fill
             }
         }
+    }
+
+    get matrixTemplate() {
         return {
             props: {
                 smoothCorners: true,
                 cornerRadius: this.containerMargin * 2
             },
             views: [
-                itemContainer([
+                this.itemContainer([
                     {
                         type: "view",
                         props: {
@@ -505,28 +528,21 @@ class Keyboard extends Clips {
             layout: (make, view) => {
                 make.top.inset(0)
                 make.width.equalTo(view.super)
-                make.bottom.equalTo(view.super.safeAreaBottom)
+                make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
                 ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的
-                    let size = this.fixedKeyboardHeight - this.navHeight * 2
-                    if (this.jsboxToolBar) {
-                        size -= Keyboard.jsboxToolBarHeight + Keyboard.jsboxToolBarSpace
-                    }
+                    let size = this.keyboardHeight - this.navHeight - this.bottomBarHeight
+                    size -= this.matrixBoxMargin * 2
                     return $size(size, size)
                 }
             }
         }
         const view = View.createFromViews([matrix, this.getEmptyBackground(this.listId)])
         view.setProp("id", this.listId + "-container")
-        // view.layout = (make, view) => {
-        //     make.top.equalTo(this.navHeight)
-        //     make.width.equalTo(view.super)
-        //     make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
-        // }
         return view
     }
 
@@ -534,9 +550,9 @@ class Keyboard extends Clips {
         const superListView = super.getListView()
         superListView.setProp("id", this.listId + "-container")
         superListView.layout = (make, view) => {
-            make.top.equalTo(this.navHeight)
+            make.top.equalTo(this.navHeight - 1) // list height 高度为 1
             make.width.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.navHeight)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.bottomBarHeight - this.containerMargin)
         }
 
         const listView = superListView.views[0]
@@ -544,27 +560,11 @@ class Keyboard extends Clips {
         listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
         delete listView.events.pulled
+        listView.props.header = { props: { height: 1 } }
+        listView.props.style = 2
 
-        if (this.useBlur) {
-            const blurBox = UIKit.blurBox(
-                {
-                    style: $blurStyle.ultraThinMaterial,
-                    smoothCorners: true,
-                    cornerRadius: this.containerMargin * 2
-                },
-                [listView]
-            )
-            superListView.views[0] = blurBox
-        } else {
-            listView.props.bgcolor = this.itemBackground
-            listView.props.smoothCorners = true
-            listView.props.cornerRadius = this.containerMargin * 2
-        }
-        // superListView.views[0] 启用 this.useBlur 时是 UIKit.blurBox
-        superListView.views[0].layout = (make, view) => {
-            make.bottom.top.equalTo(view.super)
-            make.left.right.inset(this.containerMargin)
-        }
+        const itemView = listView.props.template.views[0].views
+        listView.props.template.views[0] = this.itemContainer(itemView)
 
         return superListView
     }
@@ -594,7 +594,7 @@ class Keyboard extends Clips {
                 make.top.equalTo(this.navHeight)
                 make.left.equalTo(this.containerMargin)
                 make.right.equalTo(-this.containerMargin)
-                make.bottom.equalTo(-this.navHeight)
+                make.bottom.equalTo(-this.bottomBarHeight)
             }
         }
     }
@@ -619,7 +619,7 @@ class Keyboard extends Clips {
         }
         return {
             type: "view",
-            props: { id: "keyboard.main" },
+            props: { id: this.keyboardId },
             views: [
                 this.backgroundImage ? bgView : {},
                 this.getDataView(),
@@ -628,8 +628,8 @@ class Keyboard extends Clips {
                 this.getActionView()
             ],
             layout: (make, view) => {
-                make.width.equalTo(view.super)
-                make.height.equalTo(this.fixedKeyboardHeight)
+                make.width.bottom.equalTo(view.super)
+                make.height.equalTo(this.keyboardHeight)
             }
         }
     }

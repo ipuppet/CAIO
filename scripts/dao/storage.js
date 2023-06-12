@@ -31,8 +31,11 @@ class Clip {
     }
 
     constructor({ uuid, section, text = "", md5, tag = null, prev = null, next = null } = {}) {
-        if (!uuid || !section) {
-            throw new Error("Clip create faild: uuid or section undefined")
+        if (!uuid) {
+            throw new Error("Clip create faild: uuid undefined")
+        }
+        if (!section) {
+            throw new Error("Clip create faild: section undefined")
         }
         this.uuid = uuid
         this.section = section
@@ -322,30 +325,43 @@ class Storage {
         return sorted
     }
 
+    replaceString(string) {
+        const str = [`\\`, `"`, `'`, `%`, `-`, `_`, `;`]
+        str.forEach(s => {
+            string = string.replaceAll(s, `\\${s}`)
+        })
+        return string
+    }
+
     parse(execRes) {
         const result = execRes.result
         const error = execRes.error
-        if (error !== null) {
-            throw new Error(`Code [${error.code}] ${error.domain} ${error.localizedDescription}`)
-        }
         const data = []
-        while (result.next()) {
-            const text = result.get("text")
-            const clip = new Clip({
-                uuid: result.get("uuid"),
-                section: result.get("section"),
-                md5: result.get("md5"),
-                tag: result.get("tag"),
-                prev: result.get("prev"),
-                next: result.get("next")
-            })
-            if (Clip.isImage(text)) {
-                clip.fileStorage = this.kernel.fileStorage
+        try {
+            if (error !== null) {
+                throw new Error(`Code [${error.code}] ${error.domain} ${error.localizedDescription}`)
             }
-            clip.text = text
-            data.push(clip)
+            while (result.next()) {
+                const text = result.get("text")
+                const clip = new Clip({
+                    uuid: result.get("uuid"),
+                    section: result.get("section"),
+                    md5: result.get("md5"),
+                    tag: result.get("tag"),
+                    prev: result.get("prev"),
+                    next: result.get("next")
+                })
+                if (Clip.isImage(text)) {
+                    clip.fileStorage = this.kernel.fileStorage
+                }
+                clip.text = text
+                data.push(clip)
+            }
+        } catch (error) {
+            throw error
+        } finally {
+            result.close()
         }
-        result.close()
         return data
     }
 
@@ -375,40 +391,61 @@ class Storage {
     }
 
     getByUUID(uuid = "") {
-        uuid = uuid.replace("'", "")
         const result = this.sqlite.query({
             sql: `
-                SELECT *, 'clips' AS section FROM clips WHERE uuid = '${uuid}'
+                SELECT a.*, tag from
+                (SELECT *, 'clips' AS section FROM clips WHERE uuid = ?
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = '${uuid}'
-            `
-            // args: [uuid, uuid]
-        })
-        return this.parse(result)[0]
-    }
-    getByMD5(md5) {
-        md5 = md5.replace("'", "")
-        const result = this.sqlite.query({
-            sql: `
-                SELECT *, 'clips' AS section FROM clips WHERE md5 = '${md5}'
-                UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = '${md5}'
-            `
-            // args: [md5, md5]
-        })
-        return this.parse(result)[0]
-    }
-    search(kw) {
-        const result = this.sqlite.query({
-            sql: `SELECT a.* from
-                (SELECT *, 'clips' AS section FROM clips WHERE text like ?
-                UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE text like ?) a
+                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid
             `,
-            args: [`%${kw}%`, `%${kw}%`]
+            args: [uuid, uuid]
         })
-        return this.parse(result)
+        return this.parse(result)[0]
+    }
+    getByMD5(md5 = "") {
+        const result = this.sqlite.query({
+            sql: `
+                SELECT a.*, tag from
+                (SELECT *, 'clips' AS section FROM clips WHERE md5 = ?
+                UNION
+                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = ?) a
+                LEFT JOIN tag ON a.uuid = tag.uuid
+            `,
+            args: [md5, md5]
+        })
+        return this.parse(result)[0]
+    }
+    async search(kw) {
+        const kwArr = (await $text.tokenize({ text: kw })).map(t => this.replaceString(t))
+        const searchStr = `%${kwArr.join("%")}%`
+        // TODO: 占位符导致大概率查询无结果
+        const result = this.sqlite.query({
+            sql: `
+                SELECT a.*, tag from
+                (SELECT *, 'clips' AS section FROM clips WHERE text like "${searchStr}"
+                UNION
+                SELECT *, 'favorite' AS section FROM favorite WHERE text like "${searchStr}") a
+                LEFT JOIN tag ON a.uuid = tag.uuid
+            `
+            // args: [searchStr, searchStr]
+        })
+        const res = { result: this.parse(result), keyword: kwArr }
+        return res
+    }
+    searchByTag(tag) {
+        if (tag.startsWith("#")) tag = tag.substring(1)
+        const tagResult = this.sqlite.query({
+            sql: `SELECT * FROM tag WHERE tag like "%${this.replaceString(tag)}%"`
+            //args: [`%${tag}%`]
+        })
+        const tags = this.parseTag(tagResult)
+        const result = []
+        tags.forEach(tag => {
+            result.push(this.getByUUID(tag.uuid))
+        })
+
+        return { result, keyword: [tag] }
     }
 
     deleteTable(table) {
@@ -499,7 +536,13 @@ class Storage {
         return clipsResult.isNull(0) && favoriteResult.isNull(0)
     }
     allImageFromDb(sortByImage = true) {
-        const result = this.sqlite.query(`SELECT * FROM clips favorite WHERE text like "@image=%"`)
+        const result = this.sqlite.query(`
+            SELECT a.* from
+            (SELECT *, 'clips' AS section FROM clips WHERE text like "@image=%"
+            UNION
+            SELECT *, 'favorite' AS section FROM favorite WHERE text like "@image=%") a
+            LEFT JOIN tag ON a.uuid = tag.uuid
+        `)
         const images = this.parse(result)?.map(clip => {
             if (clip.image) {
                 const path = clip.fsPath
@@ -532,6 +575,11 @@ class Storage {
         return { original, preview }
     }
 
+    /**
+     *
+     * @param {string} uuid Clip.uuid
+     * @param {string} tag
+     */
     setTag(uuid, tag) {
         const result = this.sqlite.update({
             sql: `INSERT OR REPLACE INTO tag (uuid, tag) values (?, ?)`,

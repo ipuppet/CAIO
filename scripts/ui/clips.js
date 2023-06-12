@@ -431,16 +431,16 @@ class Clips extends ClipsData {
                         title: $l10n("TAG"),
                         symbol: "tag",
                         handler: (sender, indexPath) => {
-                            const uuid = this.getByIndex(indexPath).uuid
+                            const clip = this.getByIndex(indexPath)
                             $input.text({
                                 placeholder: $l10n("ADD_TAG"),
-                                text: sender.text,
+                                text: clip.tag,
                                 handler: text => {
                                     text = text.trim()
                                     if (text.length > 0) {
-                                        this.kernel.storage.setTag(uuid, text)
+                                        this.kernel.storage.setTag(clip.uuid, text)
                                     } else {
-                                        this.kernel.storage.deleteTag(uuid)
+                                        this.kernel.storage.deleteTag(clip.uuid)
                                     }
                                     this.updateList(true)
                                 }
@@ -469,14 +469,18 @@ class Clips extends ClipsData {
                         title: $l10n("DELETE"),
                         symbol: "trash",
                         destructive: true,
-                        handler: (sender, indexPath) => {
-                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
-                                sender.delete(indexPath)
-                                this.delete(this.getByIndex(indexPath).uuid)
-                                // 重新计算列表项高度
-                                $delay(0.25, () => sender.reload())
-                            })
-                        }
+                        items: [
+                            {
+                                title: $l10n("CONFIRM"),
+                                destructive: true,
+                                handler: (sender, indexPath) => {
+                                    sender.delete(indexPath)
+                                    this.delete(this.getByIndex(indexPath).uuid)
+                                    // 重新计算列表项高度
+                                    $delay(0.25, () => sender.reload())
+                                }
+                            }
+                        ]
                     }
                 ]
             }
@@ -557,18 +561,28 @@ class Clips extends ClipsData {
     lineData(clip, indicator = false) {
         const image = { hidden: true }
         const content = { text: "" }
+        const tag = { hidden: !clip?.hasTag }
 
         if (clip.image) {
             image.src = clip.imagePath.preview
             image.hidden = false
         } else {
-            content.text = clip.text
+            if (clip.textStyledText) {
+                content.styledText = clip.textStyledText
+            } else {
+                content.text = clip.text
+            }
+            if (clip.tagStyledText) {
+                tag.styledText = clip.tagStyledText
+            } else {
+                tag.text = clip.tag
+            }
         }
 
         return {
             copied: { hidden: !indicator },
             image,
-            tag: { text: clip.tag, hidden: !clip?.hasTag },
+            tag,
             content
         }
     }
@@ -714,14 +728,48 @@ class Clips extends ClipsData {
 
     getNavigationView() {
         const sheet = new Sheet()
-        const getView = res => {
+        const getView = obj => {
+            const { keyword, result, isTagKeyword } = obj
             const view = this.getListView(
                 this.listId + "-search-result",
-                res.map(data => this.lineData(data))
+                result.map(clip => {
+                    const targetText = isTagKeyword ? clip.tag : clip.text
+                    let styles = []
+                    keyword.forEach(kw => {
+                        let pos = targetText.indexOf(kw)
+                        while (pos > -1) {
+                            styles.push({
+                                range: $range(pos, kw.length),
+                                color: $color("red")
+                            })
+                            pos = targetText.indexOf(kw, pos + 1)
+                        }
+                    })
+                    clip.styledText = {}
+                    if (isTagKeyword) {
+                        clip.tagStyledText = {
+                            color: this.tagColor,
+                            text: targetText,
+                            styles
+                        }
+                    } else {
+                        clip.textStyledText = {
+                            text: targetText,
+                            styles
+                        }
+                    }
+                    return this.lineData(clip, false)
+                })
             )
             delete view.views[0].events.pulled
+            view.views[0].events.rowHeight = (sender, indexPath) => {
+                const clip = result[indexPath.row]
+                const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
+                const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
+                return this.verticalMargin + itemHeight + tagHeight
+            }
             view.views[0].events.didSelect = (sender, indexPath) => {
-                const clip = this.getByIndex(indexPath)
+                const clip = result[indexPath.row]
                 if (clip.image) {
                     Kernel.quickLookImage(clip.imageOriginal)
                 } else {
@@ -734,9 +782,9 @@ class Clips extends ClipsData {
             return view
         }
         const search = new ClipsSearch(this.kernel)
-        search.setCallback(res => {
+        search.setCallback(obj => {
             sheet
-                .setView(getView(res))
+                .setView(getView(obj))
                 .addNavBar({
                     title: $l10n("SEARCH_RESULT"),
                     popButton: { title: $l10n("DONE"), tapped: () => search.dismiss() }

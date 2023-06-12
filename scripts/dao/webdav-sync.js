@@ -122,6 +122,7 @@ class WebDavSync {
     }
 
     async webdavSyncData() {
+        this.webdav.clearNSURLCache()
         let resp = await this.webdav.get(this.mustWebdavSyncDataPath)
         let syncData = resp.data
         if (typeof syncData === "string") {

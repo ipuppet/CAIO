@@ -70,6 +70,7 @@
 "SAVE_SUCCESS" = "Save success";
 "SAVE_ERROR" = "Save failed";
 "DELETE" = "Delete";
+"CONFIRM" = "Confirm";
 "CONFIRM_DELETE_TITLE" = "Delete Confirmation";
 "CONFIRM_DELETE_MSG" = "Are you sure you want to delete?";
 "DELETE_SUCCESS" = "Delete success";
@@ -98,7 +99,9 @@
 "OPEN_IN_JSBOX" = "Open in JSBox";
 "SWITCH_KEYBOARD" = "Switch Keyboard";
 "TAPTIC_ENGINE" = "Taptic Engine";
+"TAPTIC_ENGINE_LEVEL" = "Taptic Engine Level";
 "TAPTIC_ENGINE_FOR_DELETE" = "Taptic Engine For Delete";
+"SPACE" = "Space";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

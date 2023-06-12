@@ -128,13 +128,20 @@ class ClipsSearch {
         this.searchBar.cancel()
     }
 
-    searchAction(text) {
+    async searchAction(text) {
         try {
             if (text !== "") {
-                const res = this.kernel.storage.search(text)
-                if (res && res.length > 0) {
+                let searchReturn,
+                    isTagKeyword = text.startsWith("#")
+                if (isTagKeyword) {
+                    searchReturn = this.kernel.storage.searchByTag(text.substring(1))
+                } else {
+                    searchReturn = await this.kernel.storage.search(text)
+                }
+                const { result, keyword } = searchReturn
+                if (result && result.length > 0) {
                     $(this.searchBarId).blur()
-                    this.callback(res)
+                    this.callback({ keyword, result, isTagKeyword })
                 } else {
                     $ui.toast($l10n("NO_SEARCH_RESULT"))
                 }

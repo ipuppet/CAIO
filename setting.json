@@ -222,11 +222,13 @@
                                 "value": true
                             },
                             {
-                                "icon": ["option", "#157EFB"],
-                                "title": "JSBOX_TOOLBAR",
-                                "type": "switch",
-                                "key": "keyboard.showJSBoxToolbar",
-                                "value": false
+                                "icon": ["cursor.rays", "#FF8C00"],
+                                "title": "TAPTIC_ENGINE_LEVEL",
+                                "type": "stepper",
+                                "min": 0,
+                                "max": 2,
+                                "key": "keyboard.tapticEngineLevel",
+                                "value": 1
                             },
                             {
                                 "icon": "paperplane",
