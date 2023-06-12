@@ -401,7 +401,9 @@ class Storage {
         })
         return this.parse(result)[0]
     }
-    search(kw) {
+    async search(kw) {
+        const kwArr = await $text.tokenize({ text: kw })
+        const searchStr = `%${kwArr.join("%")}%`
         const result = this.sqlite.query({
             sql: `
                 SELECT a.* from
@@ -410,9 +412,10 @@ class Storage {
                 SELECT *, 'favorite' AS section FROM favorite WHERE text like ?) a
                 LEFT JOIN tag ON a.uuid = tag.uuid
             `,
-            args: [`%${kw}%`, `%${kw}%`]
+            args: [searchStr, searchStr]
         })
-        return this.parse(result)
+        console.log(searchStr)
+        return { result: this.parse(result), keyword: kwArr }
     }
 
     deleteTable(table) {

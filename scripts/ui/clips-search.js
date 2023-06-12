@@ -128,13 +128,13 @@ class ClipsSearch {
         this.searchBar.cancel()
     }
 
-    searchAction(text) {
+    async searchAction(text) {
         try {
             if (text !== "") {
-                const res = this.kernel.storage.search(text)
-                if (res && res.length > 0) {
+                const { keyword, result } = await this.kernel.storage.search(text)
+                if (result && result.length > 0) {
                     $(this.searchBarId).blur()
-                    this.callback(res)
+                    this.callback({ keyword, result })
                 } else {
                     $ui.toast($l10n("NO_SEARCH_RESULT"))
                 }

@@ -566,7 +566,11 @@ class Clips extends ClipsData {
             image.src = clip.imagePath.preview
             image.hidden = false
         } else {
-            content.text = clip.text
+            if (clip.styledText) {
+                content.styledText = clip.styledText
+            } else {
+                content.text = clip.text
+            }
         }
 
         return {
@@ -718,20 +722,38 @@ class Clips extends ClipsData {
 
     getNavigationView() {
         const sheet = new Sheet()
-        const getView = res => {
+        const getView = obj => {
+            const { keyword, result } = obj
             const view = this.getListView(
                 this.listId + "-search-result",
-                res.map(data => this.lineData(data))
+                result.map(data => {
+                    let styles = []
+                    keyword.forEach(kw => {
+                        let pos = data.text.indexOf(kw)
+                        while (pos > -1) {
+                            styles.push({
+                                range: $range(pos, kw.length),
+                                color: $color("red")
+                            })
+                            pos = data.text.indexOf(kw, pos + 1)
+                        }
+                    })
+                    data.styledText = {
+                        text: data.text,
+                        styles
+                    }
+                    return this.lineData(data, false)
+                })
             )
             delete view.views[0].events.pulled
             view.views[0].events.rowHeight = (sender, indexPath) => {
-                const clip = res[indexPath.row]
+                const clip = result[indexPath.row]
                 const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
                 const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                 return this.verticalMargin + itemHeight + tagHeight
             }
             view.views[0].events.didSelect = (sender, indexPath) => {
-                const clip = res[indexPath.row]
+                const clip = result[indexPath.row]
                 if (clip.image) {
                     Kernel.quickLookImage(clip.imageOriginal)
                 } else {
@@ -744,9 +766,9 @@ class Clips extends ClipsData {
             return view
         }
         const search = new ClipsSearch(this.kernel)
-        search.setCallback(res => {
+        search.setCallback(obj => {
             sheet
-                .setView(getView(res))
+                .setView(getView(obj))
                 .addNavBar({
                     title: $l10n("SEARCH_RESULT"),
                     popButton: { title: $l10n("DONE"), tapped: () => search.dismiss() }
