@@ -383,24 +383,29 @@ class Storage {
     }
 
     getByUUID(uuid = "") {
-        uuid = uuid.replace("'", "")
+        uuid = uuid.replaceAll("'", "")
+        // TODO: 占位符导致大概率查询无结果
         const result = this.sqlite.query({
             sql: `
-                SELECT *, 'clips' AS section FROM clips WHERE uuid = '${uuid}'
+                SELECT a.*, tag from
+                (SELECT *, 'clips' AS section FROM clips WHERE uuid = '${uuid}'
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = '${uuid}'
+                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = '${uuid}') a
+                LEFT JOIN tag ON a.uuid = tag.uuid
             `
             // args: [uuid, uuid]
         })
         return this.parse(result)[0]
     }
-    getByMD5(md5) {
-        md5 = md5.replace("'", "")
+    getByMD5(md5 = "") {
+        md5 = md5.replaceAll("'", "")
         const result = this.sqlite.query({
             sql: `
-                SELECT *, 'clips' AS section FROM clips WHERE md5 = '${md5}'
+                SELECT a.*, tag from
+                (SELECT *, 'clips' AS section FROM clips WHERE md5 = '${md5}'
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = '${md5}'
+                SELECT *, 'favorite' AS section FROM favorite WHERE md5 = '${md5}') a
+                LEFT JOIN tag ON a.uuid = tag.uuid
             `
             // args: [md5, md5]
         })
@@ -412,7 +417,7 @@ class Storage {
         // TODO: 占位符导致大概率查询无结果
         const result = this.sqlite.query({
             sql: `
-                SELECT a.* from
+                SELECT a.*, tag from
                 (SELECT *, 'clips' AS section FROM clips WHERE text like "${searchStr}"
                 UNION
                 SELECT *, 'favorite' AS section FROM favorite WHERE text like "${searchStr}") a
@@ -422,6 +427,20 @@ class Storage {
         })
         const res = { result: this.parse(result), keyword: kwArr }
         return res
+    }
+    searchByTag(tag) {
+        if (tag.startsWith("#")) tag = tag.substring(1)
+        const tagResult = this.sqlite.query({
+            sql: `SELECT * FROM tag WHERE tag like ?`,
+            args: [`%${tag}%`]
+        })
+        const tags = this.parseTag(tagResult)
+        const result = []
+        tags.forEach(tag => {
+            result.push(this.getByUUID(tag.uuid))
+        })
+
+        return result
     }
 
     deleteTable(table) {
@@ -551,6 +570,11 @@ class Storage {
         return { original, preview }
     }
 
+    /**
+     *
+     * @param {string} uuid Clip.uuid
+     * @param {string} tag
+     */
     setTag(uuid, tag) {
         const result = this.sqlite.update({
             sql: `INSERT OR REPLACE INTO tag (uuid, tag) values (?, ?)`,

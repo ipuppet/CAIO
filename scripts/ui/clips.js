@@ -431,16 +431,16 @@ class Clips extends ClipsData {
                         title: $l10n("TAG"),
                         symbol: "tag",
                         handler: (sender, indexPath) => {
-                            const uuid = this.getByIndex(indexPath).uuid
+                            const clip = this.getByIndex(indexPath)
                             $input.text({
                                 placeholder: $l10n("ADD_TAG"),
-                                text: sender.text,
+                                text: clip.tag,
                                 handler: text => {
                                     text = text.trim()
                                     if (text.length > 0) {
-                                        this.kernel.storage.setTag(uuid, text)
+                                        this.kernel.storage.setTag(clip.uuid, text)
                                     } else {
-                                        this.kernel.storage.deleteTag(uuid)
+                                        this.kernel.storage.deleteTag(clip.uuid)
                                     }
                                     this.updateList(true)
                                 }
@@ -726,23 +726,23 @@ class Clips extends ClipsData {
             const { keyword, result } = obj
             const view = this.getListView(
                 this.listId + "-search-result",
-                result.map(data => {
+                result.map(clip => {
                     let styles = []
                     keyword.forEach(kw => {
-                        let pos = data.text.indexOf(kw)
+                        let pos = clip.text.indexOf(kw)
                         while (pos > -1) {
                             styles.push({
                                 range: $range(pos, kw.length),
                                 color: $color("red")
                             })
-                            pos = data.text.indexOf(kw, pos + 1)
+                            pos = clip.text.indexOf(kw, pos + 1)
                         }
                     })
-                    data.styledText = {
-                        text: data.text,
+                    clip.styledText = {
+                        text: clip.text,
                         styles
                     }
-                    return this.lineData(data, false)
+                    return this.lineData(clip, false)
                 })
             )
             delete view.views[0].events.pulled
