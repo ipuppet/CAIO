@@ -619,7 +619,7 @@ class Keyboard extends Clips {
         }
         return {
             type: "view",
-            props: { id: this.keyboardId },
+            props: { id: this.keyboardId, bgcolor: $rgba(0, 0, 0, 0.01) },
             views: [
                 this.backgroundImage ? bgView : {},
                 this.getDataView(),
