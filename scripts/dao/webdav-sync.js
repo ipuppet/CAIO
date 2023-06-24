@@ -31,6 +31,7 @@ class WebDavSync {
         webdav: 1,
         cancel: 2
     }
+    static initLocalTimestamp = 0
 
     /**
      * @type {WebDAV}
@@ -40,8 +41,6 @@ class WebDavSync {
      * @type {AppKernel}
      */
     kernel
-
-    initLocalTimestamp = 0
 
     localSyncDataPath
     webdavSyncDataPath
@@ -67,7 +66,7 @@ class WebDavSync {
 
     get localSyncData() {
         if (!this.kernel.fileStorage.exists(this.mustLocalSyncDataPath)) {
-            this.localSyncData = { timestamp: this.initLocalTimestamp }
+            this.localSyncData = { timestamp: WebDavSync.initLocalTimestamp }
         }
         return this.kernel.fileStorage.readSync(this.mustLocalSyncDataPath)
     }
@@ -143,14 +142,14 @@ class WebDavSync {
     }
 
     updateLocalTimestamp() {
-        if (this.localTimestamp === this.initLocalTimestamp) {
+        if (this.localTimestamp === WebDavSync.initLocalTimestamp) {
             return
         }
         this.localTimestamp = Date.now()
     }
 
     async uploadSyncData() {
-        if (this.localTimestamp === this.initLocalTimestamp) {
+        if (this.localTimestamp === WebDavSync.initLocalTimestamp) {
             this.localTimestamp = Date.now()
         }
         await this.webdav.put(this.mustWebdavSyncDataPath, this.localSyncData)
@@ -166,7 +165,7 @@ class WebDavSync {
             return WebDavSync.step.init
         }
 
-        if (webdavTimestamp === this.initLocalTimestamp) {
+        if (webdavTimestamp === WebDavSync.initLocalTimestamp) {
             // 重置 webdav 数据
             this.localTimestamp = Date.now()
             await this.push()
@@ -181,7 +180,7 @@ class WebDavSync {
         }
         if (localTimestamp < webdavTimestamp) {
             // WebDAV 有数据，本地 sync 时间戳为 0，发生数据冲突
-            if (!this.isNew() && localTimestamp === this.initLocalTimestamp) {
+            if (!this.isNew() && localTimestamp === WebDavSync.initLocalTimestamp) {
                 return WebDavSync.step.conflict
             }
             return WebDavSync.step.needPull

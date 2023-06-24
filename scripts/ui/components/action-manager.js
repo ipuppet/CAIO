@@ -487,7 +487,7 @@ class ActionManager extends ActionManagerData {
 
     updateSyncLabel(message) {
         if (!message) {
-            message = $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
+            message = $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
         }
         if ($(this.syncLabelId)) {
             $(this.syncLabelId).text = message
@@ -782,7 +782,7 @@ class ActionManager extends ActionManagerData {
                                 id: this.syncLabelId,
                                 color: $color("secondaryText"),
                                 font: $font(12),
-                                text: $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
+                                text: $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
                             },
                             layout: (make, view) => {
                                 make.size.equalTo(view.super)
