@@ -772,8 +772,8 @@ class ActionManager extends ActionManagerData {
                 footer: {
                     type: "view",
                     props: {
-                        hidden: !this.kernel.setting.get("experimental.syncAction"),
-                        height: this.kernel.setting.get("experimental.syncAction") ? 50 : 0
+                        hidden: !this.kernel.setting.get("webdav.status"),
+                        height: this.kernel.setting.get("webdav.status") ? 50 : 0
                     },
                     views: [
                         {
@@ -833,7 +833,7 @@ class ActionManager extends ActionManagerData {
     present() {
         const actionSheet = new Sheet()
         const rightButtons = this.getNavButtons()
-        if (this.kernel.setting.get("experimental.syncAction")) {
+        if (this.kernel.setting.get("webdav.status")) {
             rightButtons.push({
                 // 同步
                 id: this.syncButtonId,

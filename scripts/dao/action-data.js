@@ -49,7 +49,7 @@ class ActionManagerData {
     }
 
     get isEnableWebDavSync() {
-        return this.kernel.setting.get("webdav.status") && this.kernel.setting.get("experimental.syncAction")
+        return this.kernel.setting.get("webdav.status")
     }
 
     setNeedReload() {
@@ -108,14 +108,13 @@ class ActionManagerData {
     }
 
     async sync() {
-        if (!this.kernel.setting.get("experimental.syncAction")) {
+        if (!this.kernel.setting.get("webdav.status")) {
             return
         }
-        if (this.kernel.setting.get("webdav.status")) {
-            if (!this.webdavSync) {
-                await this.initSyncWithWebDav()
-            }
-            return
+        if (!this.webdavSync) {
+            await this.initSyncWithWebDav()
+        } else {
+            await this.webdavSync.init()
         }
     }
 
