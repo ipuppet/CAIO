@@ -12,7 +12,7 @@
 "CLIPS" = "剪切板";
 "CLIPBOARD" = "剪切板";
 "UNIVERSAL_CLIPBOARD" = "通用剪贴板";
-"UNIVERSAL_CLIPBOARD_TIPS" = "用剪贴板允许您在iPhone上复制某些内容，然后使用iCloud将其粘贴到Mac上(反之亦然)。";
+"UNIVERSAL_CLIPBOARD_TIPS" = "用剪贴板允许您在 iPhone 上复制某些内容，然后使用 iCloud 将其粘贴到 Mac 上(反之亦然)。";
 "CLIPS_STRUCTURE_ERROR" = "剪切板数据结构异常";
 "CLIPBOARD_NO_CHANGE" = "剪切板无变化";
 "ADD" = "添加";
@@ -36,8 +36,6 @@
 "AUTO_SYNC" = "自动同步";
 "SYNC_NOW" = "立即同步";
 "UNZIP_FAILED" = "解压文件失败";
-"SYNC_ALERT_INFO" = "若未在本机进行过同步则会直接拉取 iCloud 数据。\n是否继续？";
-"DELETE_ICLOUD_DATA" = "删除 iCloud 数据";
 "REBUILD" = "重建";
 "REBUILD_DATABASE" = "重建数据库";
 "REBUILD_DATABASE_ALERT" = "重建数据库将会丢失顺序信息，是否确认重建？";
@@ -79,7 +77,7 @@
 "IMPORT_EXAMPLE_ACTIONS" = "导入示例动作";
 "REBUILD_ACTION_DATABASE" = "重建动作库";
 "REBUILD_ACTION_DATABASE_ALERT_TITLE" = "您确认要重建？";
-"REBUILD_ACTION_DATABASE_ALERT_MESSAGE" = "重建会同时删除保存在 iCloud 云盘中的数据！";
+"REBUILD_ACTION_DATABASE_ALERT_MESSAGE" = "重建会同时删除保存在 WebDAV 中的数据！(如果开启的话)";
 "EXPORT" = "导出";
 "IMPORT" = "导入";
 "FILE_TYPE_ERROR" = "文件类型不符";

@@ -208,7 +208,7 @@ function action() {
                     style: $alertActionType.destructive,
                     handler: () => {
                         $file.delete(kernel.actionManager.userActionPath)
-                        $file.delete(kernel.actionManager.iCloudPath)
+                        kernel.actionManager.setNeedReload()
                         animate.done()
                         $delay(0.8, () => $addin.restart())
                     }

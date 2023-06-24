@@ -339,17 +339,6 @@
                     {
                         "items": [
                             {
-                                "icon": "bolt.circle",
-                                "title": "SYNC_ACTIONS",
-                                "type": "switch",
-                                "key": "experimental.syncAction",
-                                "value": false
-                            }
-                        ]
-                    },
-                    {
-                        "items": [
-                            {
                                 "icon": ["cloud", "#FF9900"],
                                 "type": "child",
                                 "title": "WebDAV",

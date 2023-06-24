@@ -487,7 +487,7 @@ class ActionManager extends ActionManagerData {
 
     updateSyncLabel(message) {
         if (!message) {
-            message = $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
+            message = $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
         }
         if ($(this.syncLabelId)) {
             $(this.syncLabelId).text = message
@@ -772,8 +772,8 @@ class ActionManager extends ActionManagerData {
                 footer: {
                     type: "view",
                     props: {
-                        hidden: !this.kernel.setting.get("experimental.syncAction"),
-                        height: this.kernel.setting.get("experimental.syncAction") ? 50 : 0
+                        hidden: !this.kernel.setting.get("webdav.status"),
+                        height: this.kernel.setting.get("webdav.status") ? 50 : 0
                     },
                     views: [
                         {
@@ -782,7 +782,7 @@ class ActionManager extends ActionManagerData {
                                 id: this.syncLabelId,
                                 color: $color("secondaryText"),
                                 font: $font(12),
-                                text: $l10n("MODIFIED") + this.getSyncDate().toLocaleString()
+                                text: $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
                             },
                             layout: (make, view) => {
                                 make.size.equalTo(view.super)
@@ -833,7 +833,7 @@ class ActionManager extends ActionManagerData {
     present() {
         const actionSheet = new Sheet()
         const rightButtons = this.getNavButtons()
-        if (this.kernel.setting.get("experimental.syncAction")) {
+        if (this.kernel.setting.get("webdav.status")) {
             rightButtons.push({
                 // 同步
                 id: this.syncButtonId,
