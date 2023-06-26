@@ -691,6 +691,14 @@ class Clips extends ClipsData {
                         title: $l10n("FAVORITE"),
                         color: $color("orange"),
                         handler: (sender, indexPath) => this.favorite(indexPath.row)
+                    },
+                    {
+                        title: "delete",
+                        handler: (sender, indexPath) => {
+                            this.delete(this.getByIndex(indexPath).uuid)
+                            // 重新计算列表项高度
+                            $delay(0.25, () => sender.reload())
+                        }
                     }
                 ]
             },

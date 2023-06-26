@@ -124,6 +124,40 @@ function clips() {
             ]
         })
     }
+
+    kernel.setting.method.recycleBin = () => {
+        const listView = {
+            type: "list",
+            props: {
+                data: kernel.clips.getRecycleBin().map(i => i?.text ?? "None"),
+                actions: [
+                    {
+                        title: $l10n("DELETE"),
+                        handler: (sender, indexPath) => {
+                            kernel.clips.removeFromRecycleBin(indexPath.row)
+                        }
+                    }
+                ]
+            },
+            events: {
+                didSelect: (sender, indexPath) => {
+                    const recycleBin = kernel.clips.getRecycleBin()
+                    const item = recycleBin[indexPath.row] ?? {}
+                    if (item.text) {
+                        const clip = kernel.clips.addItem(item.text)
+                        if (item.tag) {
+                            kernel.storage.setTag(clip.uuid, item.tag)
+                        }
+                        kernel.clips.removeFromRecycleBin(indexPath.row)
+                        kernel.clips.updateList(true)
+                        sender.delete(indexPath)
+                    }
+                }
+            },
+            layout: $layout.fill
+        }
+        return listView
+    }
 }
 
 function action() {

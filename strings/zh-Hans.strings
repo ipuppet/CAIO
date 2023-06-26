@@ -15,6 +15,7 @@
 "UNIVERSAL_CLIPBOARD_TIPS" = "用剪贴板允许您在 iPhone 上复制某些内容，然后使用 iCloud 将其粘贴到 Mac 上(反之亦然)。";
 "CLIPS_STRUCTURE_ERROR" = "剪切板数据结构异常";
 "CLIPBOARD_NO_CHANGE" = "剪切板无变化";
+"RECYCLE_BIN" = "回收站";
 "ADD" = "添加";
 "TAG" = "标签";
 "ADD_TAG" = "添加标签";

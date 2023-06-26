@@ -508,7 +508,7 @@ class Storage {
         }
         this.needUpload()
     }
-    delete(table, uuid, deleteOther = true) {
+    delete(table, uuid) {
         const clip = this.getByUUID(uuid)
         const result = this.sqlite.update({
             sql: `DELETE FROM ${table} WHERE uuid = ?`,
@@ -518,14 +518,6 @@ class Storage {
             throw result.error
         }
 
-        if (deleteOther) {
-            this.deleteTag(uuid)
-            if (clip?.image) {
-                // delete image file
-                this.kernel.fileStorage.delete(clip.fsPath.original)
-                this.kernel.fileStorage.delete(clip.fsPath.preview)
-            }
-        }
         this.needUpload()
     }
     isEmpty() {
