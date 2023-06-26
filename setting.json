@@ -26,6 +26,17 @@
                     {
                         "items": [
                             {
+                                "icon": ["trash", "red"],
+                                "title": "RECYCLE_BIN",
+                                "type": "push",
+                                "key": "clipboard.recycleBin",
+                                "view": "this.method.recycleBin"
+                            }
+                        ]
+                    },
+                    {
+                        "items": [
+                            {
                                 "icon": ["text.alignleft", "#FFCC66"],
                                 "title": "MAX_ITEM_LENGTH",
                                 "type": "number",

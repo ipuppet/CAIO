@@ -390,6 +390,23 @@ class Storage {
         this.sqlite.rollback()
     }
 
+    getRecycleBin() {
+        return $cache.get("caio.recycleBin") ?? []
+    }
+    moveToRecycleBin(clip) {
+        const recycleBin = this.getRecycleBin()
+        recycleBin.push({
+            text: clip.text,
+            tag: clip.tag
+        })
+        $cache.set("caio.recycleBin", recycleBin)
+    }
+    removeFromRecycleBin(index) {
+        const recycleBin = this.getRecycleBin()
+        recycleBin.splice(index, 1)
+        $cache.set("caio.recycleBin", recycleBin)
+    }
+
     getByUUID(uuid = "") {
         const result = this.sqlite.query({
             sql: `
@@ -526,6 +543,7 @@ class Storage {
                 this.kernel.fileStorage.delete(clip.fsPath.preview)
             }
         }
+        this.moveToRecycleBin(clip)
         this.needUpload()
     }
     isEmpty() {
