@@ -693,7 +693,7 @@ class Clips extends ClipsData {
                         handler: (sender, indexPath) => this.favorite(indexPath.row)
                     },
                     {
-                        title: $l10n("DELETE"),
+                        title: "delete",
                         handler: (sender, indexPath) => {
                             this.delete(this.getByIndex(indexPath).uuid)
                             // 重新计算列表项高度
