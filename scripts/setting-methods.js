@@ -129,26 +129,26 @@ function clips() {
         const listView = {
             type: "list",
             props: {
-                data: kernel.storage.getRecycleBin().map(i => i?.text ?? "None"),
+                data: kernel.clips.getRecycleBin().map(i => i?.text ?? "None"),
                 actions: [
                     {
                         title: $l10n("DELETE"),
                         handler: (sender, indexPath) => {
-                            kernel.storage.removeFromRecycleBin(indexPath.row)
+                            kernel.clips.removeFromRecycleBin(indexPath.row)
                         }
                     }
                 ]
             },
             events: {
                 didSelect: (sender, indexPath) => {
-                    const recycleBin = kernel.storage.getRecycleBin()
+                    const recycleBin = kernel.clips.getRecycleBin()
                     const item = recycleBin[indexPath.row] ?? {}
                     if (item.text) {
                         const clip = kernel.clips.addItem(item.text)
                         if (item.tag) {
                             kernel.storage.setTag(clip.uuid, item.tag)
                         }
-                        kernel.storage.removeFromRecycleBin(indexPath.row)
+                        kernel.clips.removeFromRecycleBin(indexPath.row)
                         kernel.clips.updateList(true)
                         sender.delete(indexPath)
                     }

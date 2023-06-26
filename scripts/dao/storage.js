@@ -390,23 +390,6 @@ class Storage {
         this.sqlite.rollback()
     }
 
-    getRecycleBin() {
-        return $cache.get("caio.recycleBin") ?? []
-    }
-    moveToRecycleBin(clip) {
-        const recycleBin = this.getRecycleBin()
-        recycleBin.push({
-            text: clip.text,
-            tag: clip.tag
-        })
-        $cache.set("caio.recycleBin", recycleBin)
-    }
-    removeFromRecycleBin(index) {
-        const recycleBin = this.getRecycleBin()
-        recycleBin.splice(index, 1)
-        $cache.set("caio.recycleBin", recycleBin)
-    }
-
     getByUUID(uuid = "") {
         const result = this.sqlite.query({
             sql: `
@@ -525,7 +508,7 @@ class Storage {
         }
         this.needUpload()
     }
-    delete(table, uuid, deleteOther = true) {
+    delete(table, uuid) {
         const clip = this.getByUUID(uuid)
         const result = this.sqlite.update({
             sql: `DELETE FROM ${table} WHERE uuid = ?`,
@@ -535,15 +518,6 @@ class Storage {
             throw result.error
         }
 
-        if (deleteOther) {
-            this.deleteTag(uuid)
-            if (clip?.image) {
-                // delete image file
-                this.kernel.fileStorage.delete(clip.fsPath.original)
-                this.kernel.fileStorage.delete(clip.fsPath.preview)
-            }
-        }
-        this.moveToRecycleBin(clip)
         this.needUpload()
     }
     isEmpty() {

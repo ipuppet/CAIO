@@ -230,7 +230,24 @@ class ClipsData {
         }
     }
 
-    deleteItem(uuid, deleteOther = true) {
+    getRecycleBin() {
+        return $cache.get("caio.recycleBin") ?? []
+    }
+    moveToRecycleBin(clip) {
+        const recycleBin = this.getRecycleBin()
+        recycleBin.push({
+            text: clip.text,
+            tag: clip.tag
+        })
+        $cache.set("caio.recycleBin", recycleBin)
+    }
+    removeFromRecycleBin(index) {
+        const recycleBin = this.getRecycleBin()
+        recycleBin.splice(index, 1)
+        $cache.set("caio.recycleBin", recycleBin)
+    }
+
+    deleteItem(uuid, trueDelete = true) {
         const index = this.getIndexByUUID(uuid)
         const clip = this.clips[index]
         const prev = this.clips[index - 1]
@@ -239,7 +256,7 @@ class ClipsData {
         try {
             // 删除数据库中的值
             this.kernel.storage.beginTransaction()
-            this.kernel.storage.delete(this.table, uuid, deleteOther)
+            this.kernel.storage.delete(this.table, uuid)
             // 更改指针
             if (prev) {
                 // prev 的 next 指向被删除元素的 next
@@ -252,6 +269,17 @@ class ClipsData {
                 this.kernel.storage.update(next)
             }
             this.kernel.storage.commit()
+
+            if (trueDelete) {
+                this.kernel.storage.deleteTag(uuid)
+                if (clip?.image) {
+                    // delete image file
+                    this.kernel.fileStorage.delete(clip.fsPath.original)
+                    this.kernel.fileStorage.delete(clip.fsPath.preview)
+                }
+                // RecycleBin
+                this.moveToRecycleBin(clip)
+            }
 
             this.setNeedReload(this.table)
         } catch (error) {
