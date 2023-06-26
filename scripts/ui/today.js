@@ -20,7 +20,7 @@ class Today extends Clips {
     verticalMargin = 5 // 列表边距
     copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
     fontSize = 14 // 字体大小
-    tagHeight = 14
+    tagHeight = 12
     tagColor = $color("gray", "lightGray")
     navHeight = 34
     taptic = 1
