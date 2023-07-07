@@ -29,6 +29,9 @@ class MyAction extends Action {
             if (resp.data.status) {
                 $ui.success("success")
                 $clipboard.text = resp.data.data
+                if ($app.env === $env.keyboard) {
+                    $keyboard.insert(resp.data.data)
+                }
             }
         } catch (error) {
             $ui.clearToast()
