@@ -329,25 +329,25 @@ class Clips extends ClipsData {
             super.moveItem(from, to)
 
             if (!updateUI) return
-            this.updateList()
-            // // 操作 UI
-            // const listView = $(this.listId)
-            // // 移动列表
-            // if (from < to) {
-            //     // 从上往下移动
-            //     listView.insert({
-            //         indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
-            //         value: this.lineData(this.clips[to])
-            //     })
-            //     listView.delete($indexPath(0, from))
-            // } else {
-            //     // 从下往上移动
-            //     listView.delete($indexPath(0, from))
-            //     listView.insert({
-            //         indexPath: $indexPath(0, to),
-            //         value: this.lineData(this.clips[to])
-            //     })
-            // }
+            //this.updateList()
+            // 操作 UI
+            const listView = $(this.listId)
+            // 移动列表
+            if (from < to) {
+                // 从上往下移动
+                listView.insert({
+                    indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
+                    value: this.lineData(this.clips[to])
+                })
+                listView.delete($indexPath(0, from))
+            } else {
+                // 从下往上移动
+                listView.delete($indexPath(0, from))
+                listView.insert({
+                    indexPath: $indexPath(0, to),
+                    value: this.lineData(this.clips[to])
+                })
+            }
         } catch (error) {
             $ui.alert(error)
             this.kernel.error(error)
@@ -497,6 +497,7 @@ class Clips extends ClipsData {
                 const actionData = new ActionData({
                     env: ActionEnv.clipboard,
                     text: item.text,
+                    section: item.section,
                     uuid: item.uuid
                 })
                 handler(actionData)

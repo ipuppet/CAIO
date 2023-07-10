@@ -20,6 +20,7 @@ class ActionData {
     args // 其他动作传递的参数
     text
     originalContent
+    section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
     selectedRange
     textBeforeInput
@@ -30,6 +31,7 @@ class ActionData {
         env,
         args,
         text,
+        section = null,
         uuid = null,
         selectedRange = null,
         textBeforeInput = null,
@@ -40,6 +42,7 @@ class ActionData {
         this.args = args
         this.text = text
         this.originalContent = text
+        this.section = section
         this.uuid = uuid
         this.selectedRange = selectedRange
         this.textBeforeInput = textBeforeInput
@@ -158,6 +161,9 @@ class Action {
         this.text = text
         if (this.env === ActionEnv.editor) {
             this.editor.setContent(text)
+        } else if (this.env === ActionEnv.clipboard) {
+            this.#kernel.storage.updateText(this.section, this.uuid, text)
+            this.#kernel.clips.updateList(true)
         }
     }
 
