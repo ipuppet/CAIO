@@ -55,7 +55,7 @@ class WebDavSyncClip extends WebDavSync {
             /**
              * @type {string}
              */
-            const href = item.firstChild({ tag: "href" })?.string?.replace(baseUrl, "")
+            const href = item.firstChild({ tag: "href" })?.string?.replaceAll(baseUrl, "")
             if (href.endsWith("/")) return
             if (href.startsWith("original")) {
                 original.push(href.substring(9))

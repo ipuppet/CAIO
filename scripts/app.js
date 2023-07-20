@@ -50,17 +50,20 @@ class AppKernel extends Kernel {
         settingMethods(this)
     }
 
-    error(msg) {
-        const logFileSize = this.fileStorage.readSync(this.logFilePath)?.info?.size ?? 0
-        if (logFileSize > 1024 * 10) {
-            const dist = FileStorage.join(this.logPath, `caio.${Date.now()}.log`)
-            this.fileStorage.move(this.logFilePath, dist)
+    error(message) {
+        if (this.fileStorage.exists(this.logFilePath)) {
+            const logFileSize = this.fileStorage.readSync(this.logFilePath)?.info?.size ?? 0
+            if (logFileSize > 1024 * 10) {
+                const dist = FileStorage.join(this.logPath, `caio.${Date.now()}.log`)
+                this.fileStorage.move(this.logFilePath, dist)
+            }
         }
-        if (msg instanceof Error) {
-            msg = `${msg}\n${msg.stack}`
+
+        if (message instanceof Error) {
+            message = `${message}\n${message.stack}`
         }
-        super.error(msg)
-        this.logger.error(msg)
+        super.error(message)
+        this.logger.error(message)
     }
 
     addOpenInJsboxButton() {

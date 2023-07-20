@@ -1,5 +1,6 @@
 const { FileStorage } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
+const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
@@ -199,11 +200,15 @@ class ActionManagerData {
     }
 
     getAction(type, dir, data) {
+        if (!$file.exists(this.getActionPath(type, dir))) {
+            dir = $text.MD5(dir)
+        }
         const basePath = this.getActionPath(type, dir)
         const config = this.getActionConfig(type, dir)
         try {
             const script = $file.read(`${basePath}/main.js`).string
-            const MyAction = new Function("Action", "ActionEnv", "ActionData", `${script}\n return MyAction`)(
+            const ss = new SecureScript(script)
+            const MyAction = new Function("Action", "ActionEnv", "ActionData", `${ss.secure()}\n return MyAction`)(
                 Action,
                 ActionEnv,
                 ActionData

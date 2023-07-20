@@ -157,7 +157,7 @@ class ActionManager extends ActionManagerData {
                 if (this.exists(this.editingActionInfo)) {
                     const resp = await $ui.alert({
                         title: $l10n("UNABLE_CREATE_ACTION"),
-                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replace("${name}", this.editingActionInfo.name)
+                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replaceAll("${name}", this.editingActionInfo.name)
                     })
                     if (resp.index === 1) return
                 }

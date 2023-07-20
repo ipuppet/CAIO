@@ -538,12 +538,12 @@ class Storage {
         const images = this.parse(result)?.map(clip => {
             if (clip.image) {
                 const path = clip.fsPath
-                path.preview = path.preview.replace(this.imagePath.preview, "")
+                path.preview = path.preview.replaceAll(this.imagePath.preview, "")
                 if (path.preview.startsWith("/")) {
                     path.preview = path.preview.substring(1)
                 }
 
-                path.original = path.original.replace(this.imagePath.original, "")
+                path.original = path.original.replaceAll(this.imagePath.original, "")
                 if (path.original.startsWith("/")) {
                     path.original = path.original.substring(1)
                 }

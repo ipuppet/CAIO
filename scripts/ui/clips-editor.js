@@ -313,7 +313,7 @@ class ClipsEditor {
                         tapped: async () => {
                             const res = await $ui.alert({
                                 title: $l10n("DELETE_DATA"),
-                                message: $l10n("DELETE_TABLE").replace("${table}", this.clipsInstance.tableL10n),
+                                message: $l10n("DELETE_TABLE").replaceAll("${table}", this.clipsInstance.tableL10n),
                                 actions: [
                                     { title: $l10n("DELETE"), style: $alertActionType.destructive },
                                     { title: $l10n("CANCEL") }

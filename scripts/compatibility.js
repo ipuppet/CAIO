@@ -123,7 +123,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 6
+    version = 7
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -218,6 +218,12 @@ class VersionActions {
     ver6() {
         this.compatibility.rebuildUserActions({
             clipboard: ["GetFromWin"]
+        })
+    }
+
+    ver7() {
+        this.compatibility.rebuildUserActions({
+            uncategorized: ["Replace"]
         })
     }
 }
