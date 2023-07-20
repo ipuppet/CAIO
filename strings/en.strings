@@ -101,6 +101,8 @@
 "TAPTIC_ENGINE_LEVEL" = "Taptic Engine Level";
 "TAPTIC_ENGINE_FOR_DELETE" = "Taptic Engine For Delete";
 "SPACE" = "Space";
+"ALL_SCRIPTS" = "All Scripts";
+"SELECT_SCRIPTS" = "Select Scripts";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

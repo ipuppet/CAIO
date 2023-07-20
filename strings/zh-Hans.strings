@@ -101,6 +101,8 @@
 "TAPTIC_ENGINE_LEVEL" = "触感反馈强度";
 "TAPTIC_ENGINE_FOR_DELETE" = "删除按钮触感反馈";
 "SPACE" = "空格";
+"ALL_SCRIPTS" = "所有脚本";
+"SELECT_SCRIPTS" = "选择脚本";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";
