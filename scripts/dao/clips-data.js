@@ -226,6 +226,7 @@ class ClipsData {
             return clip
         } catch (error) {
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         }
     }
@@ -274,16 +275,19 @@ class ClipsData {
                 this.kernel.storage.deleteTag(uuid)
                 if (clip?.image) {
                     // delete image file
+                    // 图片不送入回收站
                     this.kernel.fileStorage.delete(clip.fsPath.original)
                     this.kernel.fileStorage.delete(clip.fsPath.preview)
+                } else {
+                    // RecycleBin
+                    this.moveToRecycleBin(clip)
                 }
-                // RecycleBin
-                this.moveToRecycleBin(clip)
             }
 
             this.setNeedReload(this.table)
         } catch (error) {
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         }
     }
@@ -304,6 +308,7 @@ class ClipsData {
             this.kernel.storage.updateText(this.table, clip.uuid, text)
             this.kernel.print(`data changed at index [${this.getIndexByUUID(uuid)}]\n${oldData}\n↓\n${text}`)
         } catch (error) {
+            this.kernel.error(error)
             throw error
         }
     }
@@ -385,6 +390,7 @@ class ClipsData {
             this.kernel.storage.commit()
         } catch (error) {
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         } finally {
             this.setNeedReload(this.table)

@@ -131,6 +131,7 @@ class ActionManagerData {
             await this.webdavSync.init()
         } catch (error) {
             this.kernel.error(`${error}\n${error.stack}`)
+            throw error
         }
     }
 
@@ -210,8 +211,8 @@ class ActionManagerData {
             const action = new MyAction(this.kernel, config, data)
             return action
         } catch (error) {
-            $ui.error(error)
             this.kernel.error(error)
+            throw error
         }
     }
 
@@ -221,8 +222,8 @@ class ActionManagerData {
                 const action = this.getAction(type, dir, data)
                 return await action.do()
             } catch (error) {
-                $ui.error(error)
                 this.kernel.error(error)
+                throw error
             }
         }
     }

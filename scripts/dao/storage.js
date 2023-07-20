@@ -136,7 +136,7 @@ class Storage {
             })
             await this.webdavSync.init()
         } catch (error) {
-            this.kernel.error(`${error}\n${error.stack}`)
+            this.kernel.error(error)
             throw error
         }
     }
@@ -198,7 +198,7 @@ class Storage {
                     rebuildData.unshift(data)
                 } catch (error) {
                     storage.rollback()
-                    this.kernel.error(`${error}\n${error.stack}`)
+                    this.kernel.error(error)
                     throw error
                 }
             })
@@ -225,7 +225,7 @@ class Storage {
                 storage.commit()
             } catch (error) {
                 storage.rollback()
-                this.kernel.error(`${error}\n${error.stack}`)
+                this.kernel.error(error)
                 throw error
             }
         })

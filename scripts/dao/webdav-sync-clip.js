@@ -156,7 +156,8 @@ class WebDavSyncClip extends WebDavSync {
                 status: WebDavSync.status.fail,
                 error
             })
-            this.kernel.error(`clip sync error: ${error}\n${error.stack}`)
+            this.kernel.error("clip sync error")
+            this.kernel.error(error)
             throw error
         } finally {
             this.notify({

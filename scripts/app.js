@@ -21,6 +21,10 @@ const fileStorage = new FileStorage()
  * @typedef {AppKernel} AppKernel
  */
 class AppKernel extends Kernel {
+    logPath = "logs"
+    logFile = "caio.log"
+    logFilePath = FileStorage.join(this.logPath, this.logFile)
+
     constructor() {
         super()
         this.query = $context.query
@@ -28,7 +32,7 @@ class AppKernel extends Kernel {
         this.fileStorage = fileStorage
         // Logger
         this.logger = new Logger()
-        this.logger.printToFile(fileStorage, "logs/caio.log")
+        this.logger.printToFile(fileStorage, this.logFilePath)
         // Setting
         let structure
         try {
@@ -47,7 +51,14 @@ class AppKernel extends Kernel {
     }
 
     error(msg) {
-        if (!this.debugMode) return
+        const logFileSize = this.fileStorage.readSync(this.logFilePath)?.info?.size ?? 0
+        if (logFileSize > 1024 * 10) {
+            const dist = FileStorage.join(this.logPath, `caio.${Date.now()}.log`)
+            this.fileStorage.move(this.logFilePath, dist)
+        }
+        if (msg instanceof Error) {
+            msg = `${msg}\n${msg.stack}`
+        }
         super.error(msg)
         this.logger.error(msg)
     }

@@ -175,7 +175,8 @@ class Clips extends ClipsData {
                     listView.cell($indexPath(0, this.getIndexByUUID(copied.uuid))).get("copied").hidden = false
                 }
             } catch (error) {
-                this.kernel.error(`setCopied: ${error}\n${error.stack}`)
+                this.kernel.error("set copied error")
+                this.kernel.error(error)
             }
         })
 
@@ -279,7 +280,6 @@ class Clips extends ClipsData {
             return data
         } catch (error) {
             $ui.alert(error)
-            this.kernel.error(error)
         }
     }
 
@@ -295,7 +295,6 @@ class Clips extends ClipsData {
             this.updateListBackground()
         } catch (error) {
             $ui.alert(error)
-            this.kernel.error(error)
         }
     }
 
@@ -310,7 +309,6 @@ class Clips extends ClipsData {
 
             return true
         } catch (error) {
-            this.kernel.error(error)
             $ui.alert(error)
             return false
         }
@@ -350,7 +348,6 @@ class Clips extends ClipsData {
             }
         } catch (error) {
             $ui.alert(error)
-            this.kernel.error(error)
         }
     }
 
