@@ -153,7 +153,7 @@ class ActionManagerData {
         return type.concat(
             $file.list(this.userActionPath).filter(dir => {
                 // 获取 type.indexOf(dir) < 0 的文件夹名
-                if ($file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0) return dir
+                return $file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0
             })
         )
     }
