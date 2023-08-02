@@ -89,7 +89,6 @@ class ActionManager extends ActionManagerData {
                 else return _default
             }
         })
-        SettingUI.loadConfig()
         const nameInput = SettingUI.loader({
             type: "input",
             key: "name",

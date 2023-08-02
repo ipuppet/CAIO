@@ -58,15 +58,6 @@ function injectContent() {
         return `__README__ = ${JSON.stringify(files)}`
     })()
 
-    const settingStructure = (() => {
-        try {
-            const setting = fs.readFileSync(path.join(__dirname, "setting.json"), "utf-8")
-            return `__SETTING__ = ${setting}`
-        } catch {
-            return ""
-        }
-    })()
-
     const actions = (() => {
         const baseActionPath = path.join(__dirname, "scripts/action")
         try {
@@ -102,7 +93,7 @@ function injectContent() {
         }
     })()
 
-    const contents = [stringsText, configSettings, configInfo, readmeText, settingStructure, actions, entryFileContent]
+    const contents = [stringsText, configSettings, configInfo, readmeText, actions, entryFileContent]
 
     fs.writeFileSync(entryFilePath, contents.join("\n\n"))
 }

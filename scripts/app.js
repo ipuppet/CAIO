@@ -9,6 +9,7 @@ const {
     FileManager
 } = require("./libs/easy-jsbox")
 const { Storage } = require("./dao/storage")
+const SettingStructure = require("./setting/setting")
 const Clips = require("./ui/clips")
 const ActionManager = require("./ui/components/action-manager")
 
@@ -34,15 +35,10 @@ class AppKernel extends Kernel {
         this.logger = new Logger()
         this.logger.printToFile(fileStorage, this.logFilePath)
         // Setting
-        let structure
-        try {
-            structure = __SETTING__
-        } catch {}
         this.setting = new Setting({
             fileStorage: this.fileStorage,
-            structure
+            structure: SettingStructure
         })
-        this.setting.loadConfig()
         // Storage
         this.storage = new Storage(this)
         this.initComponents()
@@ -204,7 +200,7 @@ class Widget {
                 logger.error(msg)
             }
         }
-        kernel.setting.loadConfig().setReadonly()
+        kernel.setting.setReadonly()
 
         const storage = new Storage(kernel)
         kernel.storage = storage
@@ -225,7 +221,7 @@ class Widget {
 
     static renderClipboard() {
         const setting = new Setting()
-        setting.loadConfig().setReadonly()
+        setting.setReadonly()
 
         const widget = Widget.widgetInstance("Clipboard", Widget.kernel())
 
