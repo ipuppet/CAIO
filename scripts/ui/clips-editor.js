@@ -104,7 +104,7 @@ class ClipsEditor {
     }
 
     deleteSelected() {
-        this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+        UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
             const keys = Object.keys(this.editorSelected)
             const selectedCount = keys.filter(k => this.editorSelected[k]).length
             if (selectedCount === this.clipsInstance.clips.length) {

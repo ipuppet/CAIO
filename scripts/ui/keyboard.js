@@ -1,5 +1,5 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { View, Kernel, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
+const { View, UIKit, Sheet, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
@@ -500,7 +500,7 @@ class Keyboard extends Clips {
         return (sender, indexPath) => {
             const clip = this.clips[indexPath.row]
             if (clip.image) {
-                Kernel.quickLookImage(clip.imageOriginal)
+                Sheet.quickLookImage(clip.imageOriginal)
             } else {
                 $keyboard.insert(clip.text)
                 if (this.kernel.setting.get("keyboard.switchAfterInsert") && !this.getKeyboardSwitchLock()) {

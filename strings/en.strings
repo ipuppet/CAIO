@@ -70,8 +70,7 @@
 "SAVE_ERROR" = "Save failed";
 "DELETE" = "Delete";
 "CONFIRM" = "Confirm";
-"CONFIRM_DELETE_TITLE" = "Delete Confirmation";
-"CONFIRM_DELETE_MSG" = "Are you sure you want to delete?";
+"DELETE_CONFIRM_MSG" = "Are you sure you want to delete?";
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";
 

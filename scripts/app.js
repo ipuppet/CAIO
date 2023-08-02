@@ -84,23 +84,6 @@ class AppKernel extends Kernel {
         // FileManager
         this.fileManager = new FileManager()
     }
-
-    deleteConfirm(message, conformAction) {
-        $ui.alert({
-            title: $l10n("CONFIRM_DELETE_TITLE"),
-            message,
-            actions: [
-                {
-                    title: $l10n("DELETE"),
-                    style: $alertActionType.destructive,
-                    handler: () => {
-                        conformAction()
-                    }
-                },
-                { title: $l10n("CANCEL") }
-            ]
-        })
-    }
 }
 
 class AppUI {

@@ -1,4 +1,4 @@
-const { Kernel, Sheet } = require("../libs/easy-jsbox")
+const { L10n, Sheet } = require("../libs/easy-jsbox")
 const { SecureFunction } = require("./secure")
 
 /**
@@ -80,7 +80,7 @@ class Action {
 
         const l10n = this.l10n()
         Object.keys(l10n).forEach(language => {
-            Kernel.l10n(language, l10n[language])
+            L10n.add(language, l10n[language])
         })
     }
 
@@ -126,7 +126,7 @@ class Action {
     }
 
     quickLookImage(image) {
-        Kernel.quickLookImage(image)
+        Sheet.quickLookImage(image)
     }
 
     /**

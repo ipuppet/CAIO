@@ -70,8 +70,7 @@
 "SAVE_ERROR" = "保存失败";
 "DELETE" = "删除";
 "CONFIRM" = "确认";
-"CONFIRM_DELETE_TITLE" = "删除前确认";
-"CONFIRM_DELETE_MSG" = "确认要删除吗？";
+"DELETE_CONFIRM_MSG" = "确认要删除吗？";
 "DELETE_SUCCESS" = "删除成功";
 "DELETE_ERROR" = "删除失败";
 

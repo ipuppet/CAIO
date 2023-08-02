@@ -1,4 +1,4 @@
-const { Kernel } = require("../libs/easy-jsbox")
+const { UIKit } = require("../libs/easy-jsbox")
 const WebDavSyncClip = require("./webdav-sync-clip")
 
 /**
@@ -471,7 +471,7 @@ class Storage {
                 preview: `${this.imagePath.preview}/${fileName}.jpg`
             }
             this.kernel.fileStorage.write(path.original, image.png)
-            this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
+            this.kernel.fileStorage.write(path.preview, UIKit.compressImage(image).jpg(0.8))
             return Clip.pathToKey(path)
         }
         throw new Error("saveImageError: image not an object")

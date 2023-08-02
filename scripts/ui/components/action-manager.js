@@ -362,7 +362,7 @@ class ActionManager extends ActionManagerData {
                         symbol: "trash",
                         destructive: true,
                         handler: (sender, indexPath, data) => {
-                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+                            UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
                                 this.delete(data.info.info)
                                 sender.delete(indexPath)
                             })
