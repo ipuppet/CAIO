@@ -92,7 +92,13 @@ function injectContent() {
         }
     })()
 
-    const contents = [stringsText, configSettings, configInfo, readmeText, actions, entryFileContent]
+    const actionReadme = (() => {
+        const file = path.join(__dirname, "scripts/action/README.md")
+        const content = fs.readFileSync(file, "utf-8")
+        return `__ACTION_README__ = ${JSON.stringify({ content })}`
+    })()
+
+    const contents = [stringsText, configSettings, configInfo, readmeText, actions, actionReadme, entryFileContent]
 
     fs.writeFileSync(entryFilePath, contents.join("\n\n"))
 }

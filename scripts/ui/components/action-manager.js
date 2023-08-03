@@ -211,7 +211,12 @@ class ActionManager extends ActionManagerData {
                 {
                     symbol: "book.circle",
                     tapped: () => {
-                        const content = $file.read("scripts/action/README.md").string
+                        let content = $file.read("scripts/action/README.md")?.string
+                        if (!content) {
+                            try {
+                                content = __ACTION_README__.content
+                            } catch {}
+                        }
                         const sheet = new Sheet()
                         sheet
                             .setView({
