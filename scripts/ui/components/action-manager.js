@@ -221,6 +221,7 @@ class ActionManager extends ActionManagerData {
                                     make.size.equalTo(view.super)
                                 }
                             })
+                            .addNavBar({ title: "Document", popButton: { symbol: "x.circle" } })
                             .init()
                             .present()
                     }
