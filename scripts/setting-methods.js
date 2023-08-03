@@ -419,7 +419,7 @@ function settingMethods(appKernel) {
     }
 
     kernel.setting.method.previewWidget = animate => {
-        const { Widget } = require("./app")
+        const { Widget } = require("./widget")
         const widgets = {}
         try {
             JSON.parse($file.read("widget-options.json").string).forEach(item => {

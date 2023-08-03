@@ -4,7 +4,7 @@ const Clips = require("./clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-lite").AppKernel} AppKernel
  */
 
 class Keyboard extends Clips {

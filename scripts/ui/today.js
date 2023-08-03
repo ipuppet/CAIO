@@ -4,7 +4,7 @@ const Clips = require("./clips")
 const TodayActions = require("./components/today-actions")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-lite").AppKernel} AppKernel
  */
 
 class Today extends Clips {

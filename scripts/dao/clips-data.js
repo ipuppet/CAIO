@@ -3,6 +3,7 @@ const { Clip } = require("./storage")
 
 /**
  * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-lite").AppKernel} AppKernelLite
  * @typedef {import("./storage").Clip} Clip
  */
 
@@ -16,7 +17,7 @@ function array2object(array) {
 
 class ClipsData {
     /**
-     * @type {AppKernel}
+     * @type {AppKernel|AppKernelLite}
      */
     kernel
 
