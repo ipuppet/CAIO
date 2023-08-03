@@ -91,7 +91,7 @@ class Clips extends ClipsData {
     }
 
     appListen() {
-        if (Kernel.isTaio) return
+        if (UIKit.isTaio) return
         $app.listen({
             resume: () => {
                 // 在应用恢复响应后调用
@@ -120,7 +120,7 @@ class Clips extends ClipsData {
     listReady() {
         this.updateList()
 
-        if (Kernel.isTaio) return
+        if (UIKit.isTaio) return
 
         // check url scheme
         $delay(0.5, () => {
@@ -802,8 +802,13 @@ class Clips extends ClipsData {
         const menuView = this.tabView()
         menuView.type = "menu"
         menuView.layout = (make, view) => {
-            make.top.left.right.equalTo(view.super)
+            make.left.right.equalTo(view.super)
             make.height.equalTo(this.tabHeight)
+            if (this.kernel.isUseJsboxNav && UIKit.isTaio) {
+                make.top.equalTo(view.super).offset(UIKit.PageSheetNavigationBarNormalHeight)
+            } else {
+                make.top.equalTo(view.super)
+            }
         }
 
         const view = this.getListView()

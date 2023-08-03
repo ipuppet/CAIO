@@ -82,7 +82,13 @@ class Compatibility {
         const changeList = []
         for (let type of Object.keys(this.actions)) {
             this.actions[type].forEach(action => {
-                const config = JSON.parse($file.read(`${actionPath}/${type}/${action}/config.json`).string)
+                let config
+                const configPath = `${actionPath}/${type}/${action}/config.json`
+                if ($file.exists(configPath)) {
+                    config = JSON.parse($file.read(`${actionPath}/${type}/${action}/config.json`).string)
+                } else {
+                    config = __INFO__
+                }
                 changeList.push(config.name)
             })
         }

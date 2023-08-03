@@ -28,7 +28,6 @@ class AppKernelBase extends Kernel {
             fileStorage: this.fileStorage,
             structure: SettingStructure
         })
-        this.setting.setReadonly()
         this.initComponents()
     }
 

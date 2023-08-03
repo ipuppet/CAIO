@@ -28,7 +28,7 @@ class AppUI {
         }
         this.kernel.setting.setEvent("onSet", key => {
             if (key === "mainUIDisplayMode") {
-                $delay(0.3, () => $addin.restart())
+                $delay(0.3, () => (UIKit.isTaio ? $actions.restart() : $addin.restart()))
             }
         })
         if (this.kernel.setting.get("mainUIDisplayMode") === 0) {
