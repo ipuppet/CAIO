@@ -1,4 +1,4 @@
-const { SettingInfo, SettingScript, SettingTab } = require("../libs/easy-jsbox")
+const { SettingInfo, SettingScript, SettingTab, UIKit } = require("../libs/easy-jsbox")
 
 const clip = require("./general/clip")
 const action = require("./general/action")
@@ -10,7 +10,7 @@ const today = require("./general/today")
 const experimental = require("./experimental/experimental")
 
 const generalSection = {
-    items: [clip, action, editor, keyboard, widget, today]
+    items: [clip, action, editor].concat(UIKit.isTaio ? [] : [keyboard, widget, today])
 }
 
 const displaySection = {
