@@ -248,6 +248,9 @@ class ClipsData {
         recycleBin.splice(index, 1)
         $cache.set("caio.recycleBin", recycleBin)
     }
+    clearRecycleBin() {
+        $cache.set("caio.recycleBin", [])
+    }
 
     deleteItem(uuid, trueDelete = true) {
         const index = this.getIndexByUUID(uuid)

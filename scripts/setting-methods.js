@@ -125,14 +125,19 @@ function clips() {
         })
     }
 
+    const recycleBinId = $text.uuid
+    const getRecycleBinData = () => {
+        return kernel.clips.getRecycleBin().map(i => i?.text ?? "None")
+    }
     kernel.setting.method.recycleBin = () => {
         const listView = {
             type: "list",
             props: {
-                data: kernel.clips.getRecycleBin().map(i => i?.text ?? "None"),
+                id: recycleBinId,
+                data: getRecycleBinData(),
                 actions: [
                     {
-                        title: $l10n("DELETE"),
+                        title: "delete",
                         handler: (sender, indexPath) => {
                             kernel.clips.removeFromRecycleBin(indexPath.row)
                         }
@@ -157,6 +162,19 @@ function clips() {
             layout: $layout.fill
         }
         return listView
+    }
+    kernel.setting.method.recycleBinNavButtons = () => {
+        return [
+            {
+                symbol: "trash",
+                tapped: () => {
+                    UIKit.deleteConfirm($l10n("DELETE_TABLE").replace("${table}", $l10n("RECYCLE_BIN")), () => {
+                        kernel.clips.clearRecycleBin()
+                        $(recycleBinId).data = getRecycleBinData()
+                    })
+                }
+            }
+        ]
     }
 }
 

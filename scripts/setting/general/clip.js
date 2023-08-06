@@ -27,7 +27,7 @@ module.exports = new SettingChild({
                     icon: ["trash", "red"],
                     title: "RECYCLE_BIN",
                     key: "clipboard.recycleBin"
-                }).with({ view: "this.method.recycleBin" })
+                }).with({ view: "this.method.recycleBin", navButtons: "this.method.recycleBinNavButtons" })
             ]
         },
         {
