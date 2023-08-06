@@ -141,13 +141,14 @@ class VersionActions {
     }
 
     do() {
-        if (this.userVersion < this.version) {
+        // this.userVersion === 0 视为新用户
+        if (this.userVersion > 0 && this.userVersion < this.version) {
             this.kernel.print(`compatibility: userVersion [${this.userVersion}] lower than [${this.version}]`)
+            for (let i = this.userVersion + 1; i <= this.version; i++) {
+                this.call(i)
+            }
+            this.compatibility.do().catch(e => this.kernel.error(e))
         }
-        for (let i = this.userVersion + 1; i <= this.version; i++) {
-            this.call(i)
-        }
-        this.compatibility.do().catch(e => this.kernel.error(e))
 
         // 修改版本
         $cache.set("compatibility.version", this.version)
