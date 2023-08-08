@@ -657,7 +657,8 @@ class Clips extends ClipsData {
         const listView = $(this.listId)
         const listViewOC = $(this.listId).ocValue()
         let status = mode !== undefined ? mode : !listViewOC.$isEditing()
-        if (mode === undefined && status === listViewOC.$isEditing()) {
+
+        if (status === listViewOC.$isEditing()) {
             return
         }
 
@@ -669,14 +670,13 @@ class Clips extends ClipsData {
                 status ? button.hide() : button.show()
             }
         })
-
         if (!status) {
             // 非强制关闭编辑模式
             $(this.editModeToolBarId).remove()
-        } else if (status) {
-            // 进入编辑模式
+        } else {
             const toolBar = $ui.create(this.getListEditModeToolBarView())
             $ui.window.add(toolBar)
+            // 进入编辑模式
             $(this.editModeToolBarId).layout((make, view) => {
                 make.left.right.bottom.equalTo(view.super)
                 make.top.equalTo(view.super.safeAreaBottom).offset(-this.editModeToolBarHeight)
@@ -891,6 +891,7 @@ class Clips extends ClipsData {
             type: "UITableViewDelegate",
             events: {
                 "tableView:shouldBeginMultipleSelectionInteractionAtIndexPath:": () => {
+                    this.switchEditMode(true)
                     return true
                 },
                 "tableView:didBeginMultipleSelectionInteractionAtIndexPath:": (sender, indexPath) => {
@@ -992,6 +993,14 @@ class Clips extends ClipsData {
                             }
                         })
                     ])
+                },
+                "tableView:heightForRowAtIndexPath:": (sender, indexPath) => {
+                    sender = sender.jsValue()
+                    indexPath = indexPath.jsValue()
+                    const clip = this.getByIndex(indexPath)
+                    const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
+                    const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
+                    return this.verticalMargin + itemHeight + tagHeight
                 }
             }
         }
@@ -1022,12 +1031,6 @@ class Clips extends ClipsData {
             },
             events: {
                 ready: () => this.listReady(),
-                rowHeight: (sender, indexPath) => {
-                    const clip = this.getByIndex(indexPath)
-                    const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
-                    const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
-                    return this.verticalMargin + itemHeight + tagHeight
-                },
                 pulled: sender => {
                     this.updateList(true)
                     this.kernel.storage.sync()
