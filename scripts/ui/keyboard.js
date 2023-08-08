@@ -61,6 +61,11 @@ class Keyboard extends Clips {
         return this.kernel.setting.get("keyboard.previewAndHeight")
     }
 
+    get menu() {
+        const items = super.menu.items
+        return { items: [items[0], items[2]] }
+    }
+
     setKeyboardHeight(height) {
         this.kernel.setting.set("keyboard.previewAndHeight", height)
     }
@@ -142,7 +147,7 @@ class Keyboard extends Clips {
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped(() => {
                     let flag = $(this.actionsId).hidden === true
-                    $(this.listId + "-container").hidden = flag
+                    $(this.listId).hidden = flag
                     $(this.actionsId).hidden = !flag
                 })
             }
@@ -416,11 +421,6 @@ class Keyboard extends Clips {
         }
     }
 
-    menuItems() {
-        const items = super.menuItems()
-        return [items[0], items[2]]
-    }
-
     itemContainer(views) {
         if (this.useBlur) {
             return UIKit.blurBox({ style: $blurStyle.ultraThinMaterial }, views, $layout.fill)
@@ -516,7 +516,7 @@ class Keyboard extends Clips {
             props: {
                 id: this.listId,
                 bgcolor: $color("clear"),
-                menu: { items: this.menuItems() },
+                menu: this.menu,
                 direction: $scrollDirection.horizontal,
                 square: true,
                 alwaysBounceVertical: false,
@@ -524,7 +524,8 @@ class Keyboard extends Clips {
                 alwaysBounceHorizontal: true,
                 columns: 1,
                 spacing: this.matrixBoxMargin,
-                template: this.matrixTemplate
+                template: this.matrixTemplate,
+                backgroundView: $ui.create(this.getEmptyBackground())
             },
             layout: (make, view) => {
                 make.top.inset(0)
@@ -542,21 +543,17 @@ class Keyboard extends Clips {
                 }
             }
         }
-        const view = View.createFromViews([matrix, this.getEmptyBackground(this.listId)])
-        view.setProp("id", this.listId + "-container")
-        return view
+        return matrix
     }
 
     getListView() {
-        const superListView = super.getListView()
-        superListView.setProp("id", this.listId + "-container")
-        superListView.layout = (make, view) => {
+        const listView = super.getListView()
+        listView.layout = (make, view) => {
             make.top.equalTo(this.navHeight - 1) // list height 高度为 1
             make.width.equalTo(view.super)
             make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.bottomBarHeight - this.containerMargin)
         }
 
-        const listView = superListView.views[0]
         listView.events.didSelect = this.itemSelect
         listView.props.separatorColor = $color("lightGray")
         listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
@@ -567,7 +564,7 @@ class Keyboard extends Clips {
         const itemView = listView.props.template.views[0].views
         listView.props.template.views[0] = this.itemContainer(itemView)
 
-        return superListView
+        return listView
     }
 
     getDataView() {

@@ -1,13 +1,4 @@
-const {
-    View,
-    Kernel,
-    UIKit,
-    Sheet,
-    ViewController,
-    NavigationView,
-    NavigationBar,
-    Toast
-} = require("../libs/easy-jsbox")
+const { View, UIKit, Sheet, ViewController, NavigationView, NavigationBar, Toast } = require("../libs/easy-jsbox")
 const Editor = require("./components/editor")
 const ClipsData = require("../dao/clips-data")
 const ClipsSearch = require("./clips-search")
@@ -22,6 +13,8 @@ const WebDavSync = require("../dao/webdav-sync")
 
 class Clips extends ClipsData {
     listId = "clips-list"
+
+    editModeToolBarId = this.listId + "-edit-mode-tool-bar"
 
     // 剪贴板列个性化设置
     #singleLine = false
@@ -38,10 +31,15 @@ class Clips extends ClipsData {
     menuItemActionMaxCount = 5
 
     tabHeight = 44
+    editModeToolBarHeight = 44
 
     copied = $cache.get("clips.copied") ?? {}
     #textHeightCache = {}
 
+    /**
+     * @type {NavigationView}
+     */
+    navigationView
     viewController
 
     /**
@@ -58,6 +56,109 @@ class Clips extends ClipsData {
             this.#singleLineContentHeight = this.getTextHeight($font(this.fontSize))
         }
         return this.#singleLineContentHeight
+    }
+
+    get listSelected() {
+        const selected = $(this.listId)?.ocValue()?.$indexPathsForSelectedRows()?.jsValue()
+        return Array.isArray(selected) ? selected : []
+    }
+
+    get defaultMenuItems() {
+        return [
+            {
+                inline: true,
+                items: [
+                    {
+                        title: $l10n("TAG"),
+                        symbol: "tag",
+                        handler: (sender, indexPath) => {
+                            const clip = this.getByIndex(indexPath)
+                            $input.text({
+                                placeholder: $l10n("ADD_TAG"),
+                                text: clip.tag,
+                                handler: text => {
+                                    text = text.trim()
+                                    if (text.length > 0) {
+                                        this.kernel.storage.setTag(clip.uuid, text)
+                                    } else {
+                                        this.kernel.storage.deleteTag(clip.uuid)
+                                    }
+                                    this.updateList(true)
+                                }
+                            })
+                        }
+                    }
+                ]
+            },
+            {
+                inline: true,
+                items: [
+                    {
+                        title: $l10n("SHARE"),
+                        symbol: "square.and.arrow.up",
+                        handler: (sender, indexPath) => {
+                            const clip = this.getByIndex(indexPath)
+                            $share.sheet(clip.image ? clip.imageOriginal : clip.text)
+                        }
+                    },
+                    {
+                        title: $l10n("COPY"),
+                        symbol: "square.on.square",
+                        handler: (sender, indexPath) => this.copy(this.getByIndex(indexPath).uuid)
+                    },
+                    {
+                        title: $l10n("DELETE"),
+                        symbol: "trash",
+                        destructive: true,
+                        items: [
+                            {
+                                title: $l10n("CONFIRM"),
+                                destructive: true,
+                                handler: (sender, indexPath) => {
+                                    sender.delete(indexPath)
+                                    this.delete(this.getByIndex(indexPath).uuid)
+                                    // 重新计算列表项高度
+                                    $delay(0.25, () => sender.reload())
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+    get menu() {
+        const action = action => {
+            const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
+            action.handler = (sender, indexPath) => {
+                const item = this.getByIndex(indexPath)
+                const actionData = new ActionData({
+                    env: ActionEnv.clipboard,
+                    text: item.text,
+                    section: item.section,
+                    uuid: item.uuid
+                })
+                handler(actionData)
+            }
+            action.title = action.name
+            action.symbol = action.icon
+            return action
+        }
+        const actions = this.kernel.actionManager.getActions("clipboard")
+        const actionButtons = {
+            inline: true,
+            items: actions.slice(0, this.menuItemActionMaxCount).map(action)
+        }
+        if (actions.length > this.menuItemActionMaxCount) {
+            actionButtons.items.push({
+                title: $l10n("MORE_ACTIONS"),
+                symbol: "square.grid.2x2",
+                items: actions.slice(this.menuItemActionMaxCount).map(action)
+            })
+        }
+
+        return { items: [actionButtons, ...this.defaultMenuItems] }
     }
 
     getByIndex(index) {
@@ -145,6 +246,9 @@ class Clips extends ClipsData {
         })
 
         this.appListen()
+
+        const view = $(this.listId).ocValue()
+        view.$setDelegate(this.listViewDelegate())
     }
 
     updateList(reload = false) {
@@ -156,9 +260,10 @@ class Clips extends ClipsData {
     }
 
     updateListBackground() {
-        const bg = $(this.listId + "-empty-background")
-        if (bg) {
-            bg.hidden = this.clips.length > 0
+        if (this.clips.length > 0) {
+            $(this.listId).ocValue().$setBackgroundView(undefined)
+        } else {
+            $(this.listId).ocValue().$setBackgroundView($ui.create(this.getEmptyBackground()))
         }
     }
 
@@ -419,112 +524,163 @@ class Clips extends ClipsData {
         })
     }
 
-    menuItems(defaultOnly = false) {
-        const defaultButtons = [
-            {
-                inline: true,
-                items: [
-                    {
-                        title: $l10n("TAG"),
-                        symbol: "tag",
-                        handler: (sender, indexPath) => {
-                            const clip = this.getByIndex(indexPath)
-                            $input.text({
-                                placeholder: $l10n("ADD_TAG"),
-                                text: clip.tag,
-                                handler: text => {
-                                    text = text.trim()
-                                    if (text.length > 0) {
-                                        this.kernel.storage.setTag(clip.uuid, text)
-                                    } else {
-                                        this.kernel.storage.deleteTag(clip.uuid)
-                                    }
-                                    this.updateList(true)
-                                }
-                            })
-                        }
-                    }
-                ]
-            },
-            {
-                inline: true,
-                items: [
-                    {
-                        title: $l10n("SHARE"),
-                        symbol: "square.and.arrow.up",
-                        handler: (sender, indexPath) => {
-                            const clip = this.getByIndex(indexPath)
-                            $share.sheet(clip.image ? clip.imageOriginal : clip.text)
-                        }
-                    },
-                    {
-                        title: $l10n("COPY"),
-                        symbol: "square.on.square",
-                        handler: (sender, indexPath) => this.copy(this.getByIndex(indexPath).uuid)
-                    },
-                    {
-                        title: $l10n("DELETE"),
-                        symbol: "trash",
-                        destructive: true,
-                        items: [
-                            {
-                                title: $l10n("CONFIRM"),
-                                destructive: true,
-                                handler: (sender, indexPath) => {
-                                    sender.delete(indexPath)
-                                    this.delete(this.getByIndex(indexPath).uuid)
-                                    // 重新计算列表项高度
-                                    $delay(0.25, () => sender.reload())
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-
-        if (defaultOnly) {
-            return defaultButtons
-        }
-
-        const action = action => {
-            const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
-            action.handler = (sender, indexPath) => {
-                const item = this.getByIndex(indexPath)
-                const actionData = new ActionData({
-                    env: ActionEnv.clipboard,
-                    text: item.text,
-                    section: item.section,
-                    uuid: item.uuid
-                })
-                handler(actionData)
-            }
-            action.title = action.name
-            action.symbol = action.icon
-            return action
-        }
-        const actions = this.kernel.actionManager.getActions("clipboard")
-        const actionButtons = {
-            inline: true,
-            items: actions.slice(0, this.menuItemActionMaxCount).map(action)
-        }
-        if (actions.length > this.menuItemActionMaxCount) {
-            actionButtons.items.push({
-                title: $l10n("MORE_ACTIONS"),
-                symbol: "square.grid.2x2",
-                items: actions.slice(this.menuItemActionMaxCount).map(action)
-            })
-        }
-
-        return [actionButtons, ...defaultButtons]
-    }
-
     switchTab(index, manual = false) {
         this.tabIndex = index
         this.updateList()
 
         if (manual) {
             $(this.listId + "-tab").index = this.tabIndex
+        }
+
+        this.switchEditMode(false)
+    }
+
+    updateEditModeToolBar() {
+        const isEmpty = this.listSelected.length === 0
+
+        const editButton = $(this.editModeToolBarId + "-select-button")
+        const deleteButton = $(this.editModeToolBarId + "-delete-button")
+        const reorderButton = $(this.editModeToolBarId + "-reorder-button")
+
+        editButton.title = isEmpty ? $l10n("SELECT_ALL") : $l10n("DESELECT_ALL")
+        deleteButton.hidden = isEmpty
+        reorderButton.hidden = !isEmpty
+    }
+
+    toggleAllSelected(deselecteAll = false, updateEditModeToolBar = true) {
+        const length = this.clips.length
+        const listViewOC = $(this.listId).ocValue()
+        if (deselecteAll || this.listSelected.length !== 0) {
+            for (let i = 0; i < length; i++) {
+                const indexPath = $indexPath(0, i).ocValue()
+                listViewOC.$deselectRowAtIndexPath_animated(indexPath, false)
+            }
+        } else if (this.listSelected.length === 0) {
+            for (let i = 0; i < length; i++) {
+                const indexPath = $indexPath(0, i).ocValue()
+                listViewOC.$selectRowAtIndexPath_animated_scrollPosition(indexPath, false, 0)
+            }
+        }
+
+        if (updateEditModeToolBar && listViewOC.$isEditing()) {
+            this.updateEditModeToolBar()
+        }
+    }
+
+    toggleReorder() {
+        this.switchEditMode(false)
+        new ClipsEditor(this).presentSheet()
+    }
+
+    deleteSelected() {
+        UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
+            const selected = this.listSelected.sort((a, b) => {
+                return a.row < b.row
+            }) // 倒序排序
+            const uuids = selected.map(indexPath => {
+                return this.getByIndex(indexPath).uuid
+            })
+            // 关闭编辑模式
+            this.switchEditMode(false)
+            uuids.forEach(uuid => this.delete(uuid))
+            selected.forEach(item => {
+                $(this.listId).delete(item)
+            })
+        })
+    }
+
+    getListEditModeToolBarView() {
+        const blurBox = UIKit.blurBox({ id: this.editModeToolBarId }, [
+            UIKit.separatorLine(),
+            {
+                type: "view",
+                views: [
+                    {
+                        type: "button",
+                        props: {
+                            id: this.editModeToolBarId + "-select-button",
+                            title: $l10n("SELECT_ALL"),
+                            titleColor: $color("tint"),
+                            bgcolor: $color("clear")
+                        },
+                        layout: (make, view) => {
+                            make.left.inset(this.horizontalMargin)
+                            make.centerY.equalTo(view.super)
+                        },
+                        events: { tapped: () => this.toggleAllSelected() }
+                    },
+                    {
+                        type: "button",
+                        props: {
+                            id: this.editModeToolBarId + "-reorder-button",
+                            title: $l10n("SORT"),
+                            titleColor: $color("tint"),
+                            bgcolor: $color("clear")
+                        },
+                        layout: (make, view) => {
+                            make.right.inset(this.horizontalMargin)
+                            make.centerY.equalTo(view.super)
+                        },
+                        events: { tapped: () => this.toggleReorder() }
+                    },
+                    {
+                        type: "button",
+                        props: {
+                            id: this.editModeToolBarId + "-delete-button",
+                            symbol: "trash",
+                            hidden: true,
+                            tintColor: $color("red"),
+                            bgcolor: $color("clear")
+                        },
+                        layout: (make, view) => {
+                            make.height.equalTo(view.super)
+                            make.width.equalTo(this.horizontalMargin * 2)
+                            make.right.inset(this.horizontalMargin / 2)
+                            make.centerY.equalTo(view.super)
+                        },
+                        events: { tapped: () => this.deleteSelected() }
+                    }
+                ],
+                layout: (make, view) => {
+                    make.left.right.top.equalTo(view.super)
+                    make.bottom.equalTo(view.super.safeAreaBottom)
+                }
+            }
+        ])
+        return blurBox
+    }
+
+    /**
+     * @param {boolean} mode
+     */
+    switchEditMode(mode) {
+        const listView = $(this.listId)
+        const listViewOC = $(this.listId).ocValue()
+        let status = mode !== undefined ? mode : !listViewOC.$isEditing()
+        if (mode === undefined && status === listViewOC.$isEditing()) {
+            return
+        }
+
+        listView.setEditing(status)
+        this.navigationView.navigationBarItems.getButtons().forEach(button => {
+            if (button.id === this.listId + "-navbtn-edit") {
+                button.setTitle(status ? $l10n("DONE") : $l10n("EDIT"))
+            } else {
+                status ? button.hide() : button.show()
+            }
+        })
+
+        if (!status) {
+            // 非强制关闭编辑模式
+            $(this.editModeToolBarId).remove()
+        } else if (status) {
+            // 进入编辑模式
+            const toolBar = $ui.create(this.getListEditModeToolBarView())
+            $ui.window.add(toolBar)
+            $(this.editModeToolBarId).layout((make, view) => {
+                make.left.right.bottom.equalTo(view.super)
+                make.top.equalTo(view.super.safeAreaBottom).offset(-this.editModeToolBarHeight)
+            })
         }
     }
 
@@ -651,18 +807,195 @@ class Clips extends ClipsData {
         }
     }
 
-    getEmptyBackground(id = this.listId) {
+    getEmptyBackground() {
         return {
             type: "label",
             props: {
-                id: id + "-empty-background",
                 color: $color("secondaryText"),
                 hidden: this.clips.length > 0,
                 text: $l10n("NONE"),
                 align: $align.center
             },
-            layout: $layout.center
+            events: {
+                ready: sender => {
+                    sender.layout((make, view) => {
+                        make.top.equalTo(this.tabHeight)
+                        make.left.right.bottom.equalTo(view.super)
+                    })
+                }
+            }
         }
+    }
+
+    listViewDelegate() {
+        const createUIMenu = ({ title, image, actions, inline = false, destructive = false } = {}) => {
+            let options
+            if (inline) {
+                options = options | (1 << 0)
+            }
+            if (destructive) {
+                options = options | (1 << 1)
+            }
+            return $objc("UIMenu").$menuWithTitle_image_identifier_options_children(
+                title ?? "",
+                image,
+                null,
+                options ?? 0,
+                actions
+            )
+        }
+        const createUIAction = ({ title, image, handler, destructive = false } = {}) => {
+            const action = $objc("UIAction").$actionWithTitle_image_identifier_handler(
+                title,
+                image,
+                null,
+                $block("void, UIAction *", action => {
+                    handler(action)
+                })
+            )
+
+            if (destructive) {
+                action.$setAttributes(1 << 1)
+            }
+
+            return action
+        }
+        const createUIContextualAction = ({
+            title,
+            handler,
+            color,
+            image,
+            destructive = false,
+            autoCloseEditing = true
+        } = {}) => {
+            const action = $objc("UIContextualAction").$contextualActionWithStyle_title_handler(
+                destructive ? 1 : 0,
+                title,
+                $block("void, UIContextualAction *, UIView *, void", (action, sourceView, completionHandler) => {
+                    handler(action, sourceView, completionHandler)
+                    if (autoCloseEditing) {
+                        $(this.listId).setEditing(false)
+                    }
+                })
+            )
+            if (color) {
+                action.$setBackgroundColor(color)
+            }
+            if (image) {
+                action.$setImage(image)
+            }
+
+            return action
+        }
+        const delegate = {
+            type: "UITableViewDelegate",
+            events: {
+                "tableView:shouldBeginMultipleSelectionInteractionAtIndexPath:": () => {
+                    return true
+                },
+                "tableView:didBeginMultipleSelectionInteractionAtIndexPath:": (sender, indexPath) => {
+                    this.switchEditMode(true)
+                },
+                "tableView:didSelectRowAtIndexPath:": (sender, indexPath) => {
+                    if (sender.$isEditing()) {
+                        this.updateEditModeToolBar()
+                    } else {
+                        const clip = this.getByIndex(indexPath.jsValue())
+                        if (clip.image) {
+                            Sheet.quickLookImage(clip.imageOriginal)
+                        } else {
+                            this.edit(clip.text, text => {
+                                if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
+                            })
+                        }
+                    }
+                },
+                "tableView:didDeselectRowAtIndexPath:": (sender, indexPath) => {
+                    if (sender.$isEditing()) {
+                        this.updateEditModeToolBar()
+                    }
+                },
+                "tableView:contextMenuConfigurationForRowAtIndexPath:point:": (sender, indexPath) => {
+                    // 编辑模式不显示菜单
+                    if (sender.$isEditing()) return
+
+                    const generateUIMenu = menu => {
+                        const actions = []
+                        menu.items.forEach(item => {
+                            if (item.items) {
+                                actions.push(generateUIMenu(item))
+                            } else {
+                                actions.push(
+                                    createUIAction({
+                                        title: item.title,
+                                        image: item.symbol,
+                                        handler: () => {
+                                            item.handler(sender.jsValue(), indexPath.jsValue())
+                                        },
+                                        destructive: item.destructive
+                                    })
+                                )
+                            }
+                        })
+
+                        return createUIMenu({
+                            title: menu.title,
+                            image: menu.symbol,
+                            actions: actions,
+                            inline: menu.inline,
+                            destructive: menu.destructive
+                        })
+                    }
+
+                    return $objc(
+                        "UIContextMenuConfiguration"
+                    ).$configurationWithIdentifier_previewProvider_actionProvider(
+                        null,
+                        null,
+                        $block("UIMenu *, NSArray *", () => generateUIMenu(this.menu))
+                    )
+                },
+                "tableView:leadingSwipeActionsConfigurationForRowAtIndexPath:": (sender, indexPath) => {
+                    sender = sender.jsValue()
+                    indexPath = indexPath.jsValue()
+                    return $objc("UISwipeActionsConfiguration").$configurationWithActions([
+                        createUIContextualAction({
+                            title: $l10n("COPY"),
+                            color: $color("systemLink"),
+                            handler: (action, sourceView, completionHandler) => {
+                                this.copy(this.getByIndex(indexPath).uuid)
+                            }
+                        })
+                    ])
+                },
+                "tableView:trailingSwipeActionsConfigurationForRowAtIndexPath:": (sender, indexPath) => {
+                    sender = sender.jsValue()
+                    indexPath = indexPath.jsValue()
+                    return $objc("UISwipeActionsConfiguration").$configurationWithActions([
+                        createUIContextualAction({
+                            destructive: true,
+                            autoCloseEditing: false,
+                            title: $l10n("DELETE"),
+                            handler: (action, sourceView, completionHandler) => {
+                                this.delete(this.getByIndex(indexPath).uuid)
+                                sender.delete(indexPath)
+                                // 重新计算列表项高度
+                                $delay(0.25, () => sender.reload())
+                            }
+                        }),
+                        createUIContextualAction({
+                            title: $l10n("FAVORITE"),
+                            color: $color("orange"),
+                            autoCloseEditing: false,
+                            handler: (action, sourceView, completionHandler) => {
+                                this.favorite(indexPath.row)
+                            }
+                        })
+                    ])
+                }
+            }
+        }
+        return $delegate(delegate)
     }
 
     getListView(id = this.listId, data = []) {
@@ -674,33 +1007,19 @@ class Clips extends ClipsData {
                 associateWithNavigationBar: false,
                 bgcolor: $color("clear"),
                 separatorInset: $insets(0, this.horizontalMargin, 0, 0),
-                menu: { items: this.menuItems() },
                 data,
+                allowsMultipleSelectionDuringEditing: true,
                 template: this.listTemplate(),
-                actions: [
-                    {
-                        // 复制
-                        title: $l10n("COPY"),
-                        color: $color("systemLink"),
-                        handler: (sender, indexPath) => this.copy(this.getByIndex(indexPath).uuid)
-                    },
-                    {
-                        // 收藏
-                        title: $l10n("FAVORITE"),
-                        color: $color("orange"),
-                        handler: (sender, indexPath) => this.favorite(indexPath.row)
-                    },
-                    {
-                        title: "delete",
-                        handler: (sender, indexPath) => {
-                            this.delete(this.getByIndex(indexPath).uuid)
-                            // 重新计算列表项高度
-                            $delay(0.25, () => sender.reload())
-                        }
-                    }
-                ]
+                backgroundView: $ui.create(this.getEmptyBackground())
             },
-            layout: $layout.fill,
+            layout: (make, view) => {
+                if (view.prev) {
+                    make.top.equalTo(view.prev.bottom)
+                } else {
+                    make.top.equalTo(view.super)
+                }
+                make.left.right.bottom.equalTo(view.super)
+            },
             events: {
                 ready: () => this.listReady(),
                 rowHeight: (sender, indexPath) => {
@@ -708,16 +1027,6 @@ class Clips extends ClipsData {
                     const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
                     const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                     return this.verticalMargin + itemHeight + tagHeight
-                },
-                didSelect: (sender, indexPath) => {
-                    const clip = this.getByIndex(indexPath)
-                    if (clip.image) {
-                        Sheet.quickLookImage(clip.imageOriginal)
-                    } else {
-                        this.edit(clip.text, text => {
-                            if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
-                        })
-                    }
                 },
                 pulled: sender => {
                     this.updateList(true)
@@ -729,66 +1038,66 @@ class Clips extends ClipsData {
             }
         }
 
-        return View.createFromViews([listView, this.getEmptyBackground(id)])
+        return listView
     }
 
     getNavigationView() {
-        const sheet = new Sheet()
-        const getView = obj => {
-            const { keyword, result, isTagKeyword } = obj
-            const view = this.getListView(
-                this.listId + "-search-result",
-                result.map(clip => {
-                    const targetText = isTagKeyword ? clip.tag : clip.text
-                    let styles = []
-                    keyword.forEach(kw => {
-                        let pos = targetText.indexOf(kw)
-                        while (pos > -1) {
-                            styles.push({
-                                range: $range(pos, kw.length),
-                                color: $color("red")
-                            })
-                            pos = targetText.indexOf(kw, pos + 1)
-                        }
-                    })
-                    clip.styledText = {}
-                    if (isTagKeyword) {
-                        clip.tagStyledText = {
-                            color: this.tagColor,
-                            text: targetText,
-                            styles
-                        }
-                    } else {
-                        clip.textStyledText = {
-                            text: targetText,
-                            styles
-                        }
-                    }
-                    return this.lineData(clip, false)
-                })
-            )
-            delete view.views[0].events.pulled
-            view.views[0].events.rowHeight = (sender, indexPath) => {
-                const clip = result[indexPath.row]
-                const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
-                const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
-                return this.verticalMargin + itemHeight + tagHeight
-            }
-            view.views[0].events.didSelect = (sender, indexPath) => {
-                const clip = result[indexPath.row]
-                if (clip.image) {
-                    Sheet.quickLookImage(clip.imageOriginal)
-                } else {
-                    sheet.dismiss()
-                    this.edit(clip.text, text => {
-                        if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
-                    })
-                }
-            }
-            return view
-        }
         const search = new ClipsSearch(this.kernel)
         search.setCallback(obj => {
+            const sheet = new Sheet()
+            const getView = obj => {
+                const { keyword, result, isTagKeyword } = obj
+                const view = this.getListView(
+                    this.listId + "-search-result",
+                    result.map(clip => {
+                        const targetText = isTagKeyword ? clip.tag : clip.text
+                        let styles = []
+                        keyword.forEach(kw => {
+                            let pos = targetText.indexOf(kw)
+                            while (pos > -1) {
+                                styles.push({
+                                    range: $range(pos, kw.length),
+                                    color: $color("red")
+                                })
+                                pos = targetText.indexOf(kw, pos + 1)
+                            }
+                        })
+                        clip.styledText = {}
+                        if (isTagKeyword) {
+                            clip.tagStyledText = {
+                                color: this.tagColor,
+                                text: targetText,
+                                styles
+                            }
+                        } else {
+                            clip.textStyledText = {
+                                text: targetText,
+                                styles
+                            }
+                        }
+                        return this.lineData(clip, false)
+                    })
+                )
+                delete view.events.pulled
+                view.events.rowHeight = (sender, indexPath) => {
+                    const clip = result[indexPath.row]
+                    const tagHeight = clip?.hasTag ? this.tagHeight : this.verticalMargin
+                    const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
+                    return this.verticalMargin + itemHeight + tagHeight
+                }
+                view.events.didSelect = (sender, indexPath) => {
+                    const clip = result[indexPath.row]
+                    if (clip.image) {
+                        Sheet.quickLookImage(clip.imageOriginal)
+                    } else {
+                        sheet.dismiss()
+                        this.edit(clip.text, text => {
+                            if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
+                        })
+                    }
+                }
+                return view
+            }
             sheet
                 .setView(getView(obj))
                 .addNavBar({
@@ -811,16 +1120,10 @@ class Clips extends ClipsData {
             }
         }
 
-        const view = this.getListView()
-        view.views.unshift(menuView)
-        view.views[1].layout = (make, view) => {
-            make.bottom.left.right.equalTo(view.super)
-            make.top.equalTo(view.prev.bottom)
-        }
-        view.views.push(search.getSearchHistoryView())
+        const view = View.createFromViews([menuView, this.getListView(), search.getSearchHistoryView()])
 
-        const navigationView = new NavigationView().navigationBarTitle($l10n("CLIPS")).setView(view)
-        navigationView.navigationBarItems
+        this.navigationView = new NavigationView().navigationBarTitle($l10n("CLIPS")).setView(view)
+        this.navigationView.navigationBarItems
             .setTitleView(search.getSearchBarView())
             .pinTitleView()
             .setRightButtons([
@@ -831,10 +1134,9 @@ class Clips extends ClipsData {
             ])
             .setLeftButtons([
                 {
+                    id: this.listId + "-navbtn-edit",
                     title: $l10n("EDIT"),
-                    tapped: () => {
-                        new ClipsEditor(this).presentSheet()
-                    }
+                    tapped: () => this.switchEditMode()
                 },
                 {
                     symbol: "square.and.arrow.down.on.square",
@@ -851,14 +1153,14 @@ class Clips extends ClipsData {
                 }
             ])
 
-        navigationView.navigationBar
+        this.navigationView.navigationBar
             .setBackgroundColor(UIKit.primaryViewBackgroundColor)
             .setLargeTitleDisplayMode(NavigationBar.largeTitleDisplayModeNever)
         if (this.kernel.isUseJsboxNav) {
-            navigationView.navigationBar.removeTopSafeArea()
+            this.navigationView.navigationBar.removeTopSafeArea()
         }
 
-        return navigationView
+        return this.navigationView
     }
 }
 

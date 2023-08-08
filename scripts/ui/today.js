@@ -58,6 +58,12 @@ class Today extends Clips {
         return $cache.get("caio.today.tab.index") ?? 0
     }
 
+    get menu() {
+        const items = super.defaultMenuItems.reverse()
+        items[0].items = items[0].items.reverse()
+        return { items: items }
+    }
+
     listReady() {
         // 监听展开状态
         $widget.modeChanged = mode => {
@@ -262,12 +268,6 @@ class Today extends Clips {
         }
     }
 
-    menuItems() {
-        const items = super.menuItems(true).reverse()
-        items[0].items = items[0].items.reverse()
-        return items
-    }
-
     getListView() {
         return {
             type: "view",
@@ -283,7 +283,7 @@ class Today extends Clips {
                         id: this.listId,
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
-                        menu: { items: this.menuItems() },
+                        menu: this.menu,
                         separatorInset: $insets(0, this.horizontalMargin, 0, this.horizontalMargin),
                         data: [],
                         template: this.listTemplate()
