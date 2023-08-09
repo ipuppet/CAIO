@@ -3,7 +3,7 @@ let AppInstance
 switch ($app.env) {
     case $env.app:
     case $env.action:
-        AppInstance = require("./scripts/app")
+        AppInstance = require("./scripts/app-main")
         break
     case $env.today:
     case $env.keyboard:

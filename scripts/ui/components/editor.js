@@ -2,7 +2,7 @@ const { UIKit, NavigationBar, NavigationView, Sheet } = require("../../libs/easy
 const { ActionEnv, ActionData } = require("../../action/action")
 
 /**
- * @typedef {import("../../app").AppKernel} AppKernel
+ * @typedef {import("../../app-main").AppKernel} AppKernel
  */
 
 class Editor {

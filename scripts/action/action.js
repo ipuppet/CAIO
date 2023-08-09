@@ -2,7 +2,7 @@ const { L10n, Sheet } = require("../libs/easy-jsbox")
 const { SecureFunction } = require("./secure")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  * @typedef {Action} Action
  * @typedef {ActionEnv} ActionEnv
  * @typedef {ActionData} ActionData

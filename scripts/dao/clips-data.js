@@ -2,7 +2,7 @@ const { UIKit } = require("../libs/easy-jsbox")
 const { Clip } = require("./storage")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  * @typedef {import("../app-lite").AppKernel} AppKernelLite
  * @typedef {import("./storage").Clip} Clip
  */
@@ -74,7 +74,7 @@ class ClipsData {
         return this.#allClips[this.tabIndex]
     }
 
-    get isChanged() {
+    get isPasteboardChanged() {
         const changeCount = this.pasteboard.$changeCount()
 
         const cache = $cache.get("clipboard.changeCount")
@@ -85,6 +85,13 @@ class ClipsData {
         }
 
         return true
+    }
+
+    get needReload() {
+        return $cache.get("caio.needReload") ?? false
+    }
+    set needReload(needReload) {
+        $cache.get("caio.needReload", needReload)
     }
 
     /**
@@ -149,6 +156,7 @@ class ClipsData {
         } else {
             this.#allClips = []
         }
+        this.needReload = true
         this.kernel.print(`set need reload: ${table ?? "all"}`)
     }
 

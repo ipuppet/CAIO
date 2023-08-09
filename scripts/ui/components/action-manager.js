@@ -5,7 +5,7 @@ const { ActionEnv, ActionData } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
 
 /**
- * @typedef {import("../../app").AppKernel} AppKernel
+ * @typedef {import("../../app-main").AppKernel} AppKernel
  */
 
 class ActionManager extends ActionManagerData {

@@ -2,7 +2,7 @@ const { UIKit } = require("../libs/easy-jsbox")
 const WebDavSyncClip = require("./webdav-sync-clip")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  * @typedef {import("../libs/easy-jsbox").FileStorage} FileStorage
  */
 

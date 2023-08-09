@@ -1,11 +1,11 @@
-const { UIKit, SearchBar } = require("../libs/easy-jsbox")
+const { UIKit, SearchBar } = require("../../libs/easy-jsbox")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../../app-main").AppKernel} AppKernel
  */
 
 class ClipsSearch {
-    listId = "clips-list-search"
+    listId = $text.uuid
 
     /**
      * @type {AppKernel}

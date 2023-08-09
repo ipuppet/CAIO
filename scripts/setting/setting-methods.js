@@ -1,10 +1,10 @@
-const { Kernel, UIKit } = require("./libs/easy-jsbox")
+const { Kernel, UIKit } = require("../libs/easy-jsbox")
 
-const KeyboardScripts = require("./ui/components/keyboard-scripts")
-const TodayActions = require("./ui/components/today-actions")
+const KeyboardScripts = require("../ui/components/keyboard-scripts")
+const TodayActions = require("../ui/components/today-actions")
 
 /**
- * @typedef {import("./app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 /**
@@ -272,7 +272,7 @@ function action() {
 }
 
 function keyboard() {
-    const Keyboard = require("./ui/keyboard")
+    const Keyboard = require("../ui/keyboard")
     const keyboardMaxHeight = 400
     const keyboardMinHeight = 200
 
@@ -361,7 +361,7 @@ function keyboard() {
 function todayWidget() {
     kernel.setting.method.previewTodayWidget = animate => {
         animate.touchHighlightStart()
-        const Today = require("./ui/today")
+        const Today = require("../ui/today")
         const today = new Today(kernel).getView()
         UIKit.push({
             views: [today],
@@ -437,7 +437,7 @@ function settingMethods(appKernel) {
     }
 
     kernel.setting.method.previewWidget = animate => {
-        const { Widget } = require("./widget")
+        const { Widget } = require("../widget")
         const widgets = {}
         try {
             JSON.parse($file.read("widget-options.json").string).forEach(item => {

@@ -2,7 +2,7 @@ const { FileStorage } = require("../libs/easy-jsbox")
 const WebDavSync = require("./webdav-sync")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 class WebDavSyncClip extends WebDavSync {

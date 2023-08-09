@@ -1,6 +1,6 @@
 const { ActionData, ActionEnv } = require("../action/action")
-const { View, UIKit, Sheet, BarButtonItem } = require("../libs/easy-jsbox")
-const Clips = require("./clips")
+const { UIKit, Sheet, BarButtonItem } = require("../libs/easy-jsbox")
+const Clips = require("./clips/clips")
 const KeyboardScripts = require("./components/keyboard-scripts")
 
 /**
@@ -11,7 +11,6 @@ class Keyboard extends Clips {
     #readClipboardTimer
 
     keyboardId = "keyboard.main"
-    listId = "keyboard-clips-list"
     actionsId = "keyboard-list-actions"
     keyboardSwitchLockId = "keyboard-switch-lock"
     keyboardSwitchLockKey = "caio.keyboard.switch.lock"
@@ -22,18 +21,11 @@ class Keyboard extends Clips {
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
-    horizontalMargin = 15 // 列表边距
-    verticalMargin = 12 // 列表边距
-    copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
-    containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
-    fontSize = 14 // 字体大小
-    tagHeight = this.verticalMargin + 3
+
     matrixBoxMargin = 10
     navHeight = 50
     bottomBarHeight = 50
     bottomButtonSize = $size(46, 40)
-
-    menuItemActionMaxCount = 3
 
     itemBackground = $color("#FFFFFF", $rgba(0x97, 0x97, 0x97, 0.4))
     buttonBackground = $color($rgba(0, 0, 0, 0.15), $rgba(0x75, 0x75, 0x75, 0.4)) // 系统键盘按钮配色
@@ -55,6 +47,15 @@ class Keyboard extends Clips {
         if (typeof $cache.get(this.keyboardSwitchLockKey) !== "boolean") {
             $cache.set(this.keyboardSwitchLockKey, false)
         }
+
+        this.views.horizontalMargin = 15 // 列表边距
+        this.views.verticalMargin = 12 // 列表边距
+        this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
+        this.views.containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
+        this.views.fontSize = 14 // 字体大小
+        this.views.tagHeight = this.views.verticalMargin + 3
+
+        this.delegates.menuItemActionMaxCount = 3
     }
 
     get keyboardHeight() {
@@ -62,7 +63,7 @@ class Keyboard extends Clips {
     }
 
     get menu() {
-        const items = super.menu.items
+        const items = this.delegates.menu.items
         return { items: [items[0], items[2]] }
     }
 
@@ -88,7 +89,8 @@ class Keyboard extends Clips {
         $(this.keyboardSwitchLockId).symbol = !lock ? "lock" : "lock.open"
     }
 
-    listReady() {
+    listReady(delegate = true) {
+        if (delegate) this.setDelegate()
         this.updateList()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
@@ -147,7 +149,7 @@ class Keyboard extends Clips {
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped(() => {
                     let flag = $(this.actionsId).hidden === true
-                    $(this.listId).hidden = flag
+                    $(this.views.listId).hidden = flag
                     $(this.actionsId).hidden = !flag
                 })
             }
@@ -166,7 +168,7 @@ class Keyboard extends Clips {
             layout: (make, view) => {
                 const barButtonItem = new BarButtonItem()
                 make.height.equalTo(view.super)
-                make.right.inset(this.containerMargin - barButtonItem.edges)
+                make.right.inset(this.views.containerMargin - barButtonItem.edges)
                 make.width.equalTo(barButtonItem.width * buttons.length + barButtonItem.edges)
             }
         }
@@ -213,10 +215,10 @@ class Keyboard extends Clips {
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.super).offset(this.containerMargin)
+                                make.left.equalTo(view.super).offset(this.views.containerMargin)
                             }
                         }
-                    ].concat(this.tabView(), this.getTopButtons())
+                    ].concat(super.getTabView(), this.getTopButtons())
                 }
             ],
             layout: (make, view) => {
@@ -234,7 +236,7 @@ class Keyboard extends Clips {
      */
     getBottomButtonView(button, align) {
         const size = this.bottomButtonSize
-        const edges = this.containerMargin
+        const edges = this.views.containerMargin
         const layout = (make, view) => {
             if (button.title) {
                 const fontSize = $text.sizeThatFits({
@@ -401,8 +403,8 @@ class Keyboard extends Clips {
                     lastLeft = lastLeft.prev
                 }
                 make.height.top.equalTo(view.prev)
-                make.left.equalTo(lastLeft.right).offset(this.containerMargin * 1.5)
-                make.right.equalTo(view.prev.left).offset(-this.containerMargin * 1.5) // 右侧按钮是倒序的
+                make.left.equalTo(lastLeft.right).offset(this.views.containerMargin * 1.5)
+                make.right.equalTo(view.prev.left).offset(-this.views.containerMargin * 1.5) // 右侧按钮是倒序的
             }
         }
 
@@ -438,7 +440,7 @@ class Keyboard extends Clips {
         return {
             props: {
                 smoothCorners: true,
-                cornerRadius: this.containerMargin * 2
+                cornerRadius: this.views.containerMargin * 2
             },
             views: [
                 this.itemContainer([
@@ -446,12 +448,12 @@ class Keyboard extends Clips {
                         type: "view",
                         props: {
                             id: "copied",
-                            circular: this.copiedIndicatorSize,
+                            circular: this.views.copiedIndicatorSize,
                             hidden: true,
                             bgcolor: $color("green")
                         },
                         layout: (make, view) => {
-                            make.size.equalTo(this.copiedIndicatorSize)
+                            make.size.equalTo(this.views.copiedIndicatorSize)
                             // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
                             make.left.top.inset(this.matrixBoxMargin / 2)
                         }
@@ -465,7 +467,9 @@ class Keyboard extends Clips {
                         },
                         layout: (make, view) => {
                             make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
-                            make.height.lessThanOrEqualTo(view.super).offset(-this.matrixBoxMargin * 2 - this.tagHeight)
+                            make.height
+                                .lessThanOrEqualTo(view.super)
+                                .offset(-this.matrixBoxMargin * 2 - this.views.tagHeight)
                         }
                     },
                     {
@@ -479,7 +483,7 @@ class Keyboard extends Clips {
                         },
                         layout: (make, view) => {
                             make.left.right.equalTo(view.prev)
-                            make.height.equalTo(this.tagHeight)
+                            make.height.equalTo(this.views.tagHeight)
                             make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
                         }
                     }
@@ -514,9 +518,9 @@ class Keyboard extends Clips {
         const matrix = {
             type: "matrix",
             props: {
-                id: this.listId,
+                id: this.views.listId,
                 bgcolor: $color("clear"),
-                menu: this.menu,
+                menu: this.delegates.menu,
                 direction: $scrollDirection.horizontal,
                 square: true,
                 alwaysBounceVertical: false,
@@ -525,7 +529,7 @@ class Keyboard extends Clips {
                 columns: 1,
                 spacing: this.matrixBoxMargin,
                 template: this.matrixTemplate,
-                backgroundView: $ui.create(this.getEmptyBackground())
+                backgroundView: $ui.create(this.views.getEmptyBackground())
             },
             layout: (make, view) => {
                 make.top.inset(0)
@@ -533,7 +537,7 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
-                ready: () => this.listReady(),
+                ready: () => this.listReady(false),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的
@@ -551,12 +555,19 @@ class Keyboard extends Clips {
         listView.layout = (make, view) => {
             make.top.equalTo(this.navHeight - 1) // list height 高度为 1
             make.width.equalTo(view.super)
-            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.bottomBarHeight - this.containerMargin)
+            make.bottom.equalTo(view.super.safeAreaBottom).offset(-this.bottomBarHeight - this.views.containerMargin)
         }
 
-        listView.events.didSelect = this.itemSelect
+        this.delegates.didSelectRowAtIndexPath = (sender, indexPath) => {
+            sender = sender.jsValue()
+            indexPath = indexPath.jsValue()
+            this.itemSelect(sender, indexPath)
+        }
+        this.delegates.shouldBeginMultipleSelectionInteractionAtIndexPath = () => {
+            return false
+        }
         listView.props.separatorColor = $color("lightGray")
-        listView.props.separatorInset = $insets(0, this.horizontalMargin, 0, this.horizontalMargin)
+        listView.props.separatorInset = $insets(0, this.views.horizontalMargin, 0, this.views.horizontalMargin)
         delete listView.events.pulled
         listView.props.header = { props: { height: 1 } }
         listView.props.style = 2
@@ -590,8 +601,8 @@ class Keyboard extends Clips {
             ],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
-                make.left.equalTo(this.containerMargin)
-                make.right.equalTo(-this.containerMargin)
+                make.left.equalTo(this.views.containerMargin)
+                make.right.equalTo(-this.views.containerMargin)
                 make.bottom.equalTo(-this.bottomBarHeight)
             }
         }

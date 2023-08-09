@@ -1,5 +1,5 @@
 /**
- * @typedef {import("./app").AppKernel} AppKernel
+ * @typedef {import("./app-main").AppKernel} AppKernel
  */
 
 class Compatibility {

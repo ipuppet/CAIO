@@ -1,4 +1,4 @@
-const { AppKernelBase } = require("./app-base")
+const { AppKernelBase } = require("./app")
 
 /**
  * @typedef {AppKernel} AppKernel

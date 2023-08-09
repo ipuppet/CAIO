@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  * @typedef {SecureFunction} SecureFunction
  * @typedef {SecureScript} SecureScript
  */

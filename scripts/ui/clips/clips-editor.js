@@ -1,12 +1,11 @@
-const { Sheet } = require("../libs/easy-jsbox")
+const { Sheet } = require("../../libs/easy-jsbox")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../../app-main").AppKernel} AppKernel
  * @typedef {import("./clips")} Clips
  */
 
 class ClipsEditor {
-    listId = "clips-list-editor"
     reorder = {}
     toolBarHeight = 44
 
@@ -22,7 +21,6 @@ class ClipsEditor {
         return {
             type: "list",
             props: {
-                id: this.listId,
                 data: this.clipsInstance.clips.map(data => this.clipsInstance.lineData(data)),
                 template: this.clipsInstance.listTemplate(),
                 reorder: true,

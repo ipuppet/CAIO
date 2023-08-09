@@ -4,7 +4,7 @@ const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 class ActionManagerData {

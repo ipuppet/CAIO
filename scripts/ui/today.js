@@ -1,6 +1,6 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
-const Clips = require("./clips")
+const Clips = require("./clips/clips")
 const TodayActions = require("./components/today-actions")
 
 /**
@@ -11,17 +11,9 @@ class Today extends Clips {
     actionsId = "today-list-actions"
     listContainerId = "today-list-container"
     readClipboardButtonId = "today-nav-readClipboard"
-    listId = "today-list"
     pageIndexId = "today-list-page-index"
 
     // 剪贴板列个性化设置
-    tabLeftMargin = 8
-    horizontalMargin = 15 // 列表边距
-    verticalMargin = 5 // 列表边距
-    copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
-    fontSize = 14 // 字体大小
-    tagHeight = 12
-    tagColor = $color("gray", "lightGray")
     navHeight = 34
     taptic = 1
 
@@ -43,7 +35,13 @@ class Today extends Clips {
         this.listPageNow = [0, 0] // 剪切板当前页，索引为 Section
         this.listSection = Math.min(this.tabIndex, 1) // 当前选中列表，只取 0 或 1，默认 1
 
-        this.setSingleLine()
+        this.views.horizontalMargin = 15 // 列表边距
+        this.views.verticalMargin = 12 // 列表边距
+        this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
+        this.views.containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
+        this.views.fontSize = 14 // 字体大小
+        this.views.tagHeight = this.views.verticalMargin + 3
+        this.views.setSingleLine()
     }
 
     get isActionPage() {
@@ -59,7 +57,7 @@ class Today extends Clips {
     }
 
     get menu() {
-        const items = super.defaultMenuItems.reverse()
+        const items = this.delegates.defaultMenuItems.reverse()
         items[0].items = items[0].items.reverse()
         return { items: items }
     }
@@ -106,7 +104,9 @@ class Today extends Clips {
             const height = viewHeight - this.navHeight * 2 - (this.inLauncher ? this.launcherNavHeight : 0)
             const f_line =
                 height /
-                (this.singleLineContentHeight + this.verticalMargin + Math.max(this.tagHeight, this.verticalMargin))
+                (this.views.singleLineContentHeight +
+                    this.views.verticalMargin +
+                    Math.max(this.views.tagHeight, this.views.verticalMargin))
             const floor = Math.floor(f_line)
             this.listPageSize = floor
             if (f_line - floor >= 0.6) {
@@ -176,7 +176,7 @@ class Today extends Clips {
                 {
                     type: "view",
                     layout: $layout.fill,
-                    views: [this.tabView(), ...buttons]
+                    views: [this.getTabView(), ...buttons]
                 }
             ],
             layout: (make, view) => {
@@ -198,9 +198,9 @@ class Today extends Clips {
                 },
                 layout: make => {
                     if (align === UIKit.align.left) {
-                        make.left.inset(this.horizontalMargin)
+                        make.left.inset(this.views.horizontalMargin)
                     } else {
-                        make.right.inset(this.horizontalMargin)
+                        make.right.inset(this.views.horizontalMargin)
                     }
                     make.centerY.equalTo(view.super)
                 },
@@ -255,7 +255,9 @@ class Today extends Clips {
         const start = this.listPageNow[this.listSection] * this.listPageSize
         const end = start + this.listPageSize
         const all = this.clips
-        $(this.listId).data = all.slice(start, end).map(data => this.lineData(data, this.copied.uuid === data.uuid))
+        $(this.views.listId).data = all
+            .slice(start, end)
+            .map(data => this.views.lineData(data, this.copied.uuid === data.uuid))
         // page index
         const pageNow = this.listPageNow[this.listSection] + 1
         const pageCount = Math.ceil(all.length / this.listPageSize)
@@ -289,21 +291,23 @@ class Today extends Clips {
                     // 剪切板列表
                     type: "list",
                     props: {
-                        id: this.listId,
+                        id: this.views.listId,
                         scrollEnabled: false,
                         bgcolor: $color("clear"),
                         menu: this.menu,
-                        separatorInset: $insets(0, this.horizontalMargin, 0, this.horizontalMargin),
+                        separatorInset: $insets(0, this.views.horizontalMargin, 0, this.views.horizontalMargin),
                         data: [],
-                        template: this.listTemplate()
+                        template: this.views.listTemplate()
                     },
                     events: {
                         ready: () => this.listReady(),
                         rowHeight: (sender, indexPath) => {
                             const clip = this.getByIndex(indexPath)
-                            const tagHeight = clip.hasTag ? this.tagHeight : this.verticalMargin
-                            const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
-                            return this.verticalMargin + itemHeight + tagHeight
+                            const tagHeight = clip.hasTag ? this.views.tagHeight : this.views.verticalMargin
+                            const itemHeight = clip.image
+                                ? this.views.imageContentHeight
+                                : this.views.getContentHeight(clip.text)
+                            return this.views.verticalMargin + itemHeight + tagHeight
                         },
                         didSelect: this.buttonTapped((sender, indexPath) => {
                             const clip = this.getByIndex(indexPath)

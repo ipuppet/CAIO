@@ -1,89 +1,70 @@
-const { UIKit, ViewController, TabBarController } = require("./libs/easy-jsbox")
-const { AppKernelBase } = require("./app-base")
-
-const compatibility = require("./compatibility")
-const settingMethods = require("./setting-methods")
+const { Kernel, Logger, FileStorage, Setting, FileManager } = require("./libs/easy-jsbox")
+const SettingStructure = require("./setting/setting")
+const { Storage } = require("./dao/storage")
+const Clips = require("./ui/clips/clips")
+const ActionManager = require("./ui/components/action-manager")
 
 /**
- * @typedef {AppKernel} AppKernel
+ * @typedef {AppKernelBase} AppKernelBase
  */
-class AppKernel extends AppKernelBase {
+class AppKernelBase extends Kernel {
+    static fileStorage = new FileStorage()
+
+    logPath = "logs"
+    logFile = "caio.log"
+    logFilePath = FileStorage.join(this.logPath, this.logFile)
+
+    #storage
+
     constructor() {
         super()
-        this.query = $context.query
-
-        settingMethods(this)
-    }
-}
-
-class AppUI {
-    // 小组件模式下不初始化 AppKernel
-    static kernel = $app.env !== $env.widget ? new AppKernel() : undefined
-
-    static renderMainUI() {
-        const buttons = {
-            clips: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
-            actions: { icon: "command", title: $l10n("ACTIONS") },
-            setting: { icon: "gear", title: $l10n("SETTING") }
-        }
-        this.kernel.setting.setEvent("onSet", key => {
-            if (key === "mainUIDisplayMode") {
-                $delay(0.3, () => (UIKit.isTaio ? $actions.restart() : $addin.restart()))
-            }
+        // FileStorage
+        this.fileStorage = AppKernelBase.fileStorage
+        // Logger
+        this.logger = new Logger()
+        this.logger.printToFile(this.fileStorage, this.logFilePath)
+        // Setting
+        this.setting = new Setting({
+            fileStorage: this.fileStorage,
+            structure: SettingStructure
         })
-        if (this.kernel.setting.get("mainUIDisplayMode") === 0) {
-            this.kernel.useJsboxNav()
-            this.kernel.setting.useJsboxNav()
-            this.kernel.setNavButtons([
-                {
-                    symbol: buttons.setting.icon,
-                    title: buttons.setting.title,
-                    handler: () => {
-                        UIKit.push({
-                            title: buttons.setting.title,
-                            views: [this.kernel.setting.getListView()]
-                        })
-                    }
-                },
-                {
-                    symbol: buttons.actions.icon,
-                    title: buttons.actions.title,
-                    handler: () => {
-                        this.kernel.actionManager.present()
-                    }
-                }
-            ])
+        this.initComponents()
+    }
 
-            this.kernel.UIRender(this.kernel.clips.getNavigationView().getPage())
-        } else {
-            this.kernel.fileManager.setViewController(new ViewController())
-
-            this.kernel.tabBarController = new TabBarController()
-
-            const clipsdNavigationView = this.kernel.clips.getNavigationView()
-
-            this.kernel.tabBarController
-                .setPages({
-                    clips: clipsdNavigationView.getPage(),
-                    actions: this.kernel.actionManager.getPage(),
-                    setting: this.kernel.setting.getPage()
-                })
-                .setCells({
-                    clips: buttons.clips,
-                    actions: buttons.actions,
-                    setting: buttons.setting
-                })
-
-            this.kernel.UIRender(this.kernel.tabBarController.generateView().definition)
+    get storage() {
+        if (!this.#storage) {
+            this.print("init storage")
+            this.#storage = new Storage(this)
         }
+        return this.#storage
+    }
+
+    error(message) {
+        if (this.fileStorage.exists(this.logFilePath)) {
+            const logFileSize = this.fileStorage.readSync(this.logFilePath)?.info?.size ?? 0
+            if (logFileSize > 1024 * 10) {
+                const dist = FileStorage.join(this.logPath, `caio.${Date.now()}.log`)
+                this.fileStorage.move(this.logFilePath, dist)
+            }
+        }
+
+        if (message instanceof Error) {
+            message = `${message}\n${message.stack}`
+        }
+        super.error(message)
+        this.logger.error(message)
+    }
+
+    initComponents() {
+        // Clips
+        this.clips = new Clips(this)
+        // ActionManager
+        this.actionManager = new ActionManager(this)
+        // FileManager
+        this.fileManager = new FileManager()
     }
 }
 
 module.exports = {
-    run: () => {
-        // 兼容性操作
-        compatibility(AppUI.kernel)
-
-        AppUI.renderMainUI()
-    }
+    AppKernelBase
 }
