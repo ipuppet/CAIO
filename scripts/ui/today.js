@@ -64,6 +64,15 @@ class Today extends Clips {
         return { items: items }
     }
 
+    getByIndex(index) {
+        if (typeof index === "object") {
+            index = index.row
+        }
+        const before = this.listPageSize * this.listPageNow[this.listSection]
+        index += before
+        return this.clips[index]
+    }
+
     listReady() {
         // 监听展开状态
         $widget.modeChanged = mode => {
@@ -291,14 +300,13 @@ class Today extends Clips {
                     events: {
                         ready: () => this.listReady(),
                         rowHeight: (sender, indexPath) => {
-                            const before = this.listPageSize * this.listPageNow[this.listSection]
-                            const clip = this.getByIndex(indexPath.row + before)
+                            const clip = this.getByIndex(indexPath)
                             const tagHeight = clip.hasTag ? this.tagHeight : this.verticalMargin
                             const itemHeight = clip.image ? this.imageContentHeight : this.getContentHeight(clip.text)
                             return this.verticalMargin + itemHeight + tagHeight
                         },
                         didSelect: this.buttonTapped((sender, indexPath) => {
-                            const clip = this.clips[indexPath.row]
+                            const clip = this.getByIndex(indexPath)
                             if (clip.image) {
                                 $clipboard.image = clip.imageOriginal
                             } else {
