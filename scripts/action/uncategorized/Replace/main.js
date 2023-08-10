@@ -31,8 +31,8 @@ class MyAction extends Action {
                     pattern = new RegExp(patternText, "g")
                 }
 
-                const matchResultPreview = this.text.replace(pattern, `<font color=red>${replaceString}</font>`)
-                const matchResult = this.text.replace(pattern, replaceString)
+                const matchResultPreview = this.text.replaceAll(pattern, `<font color=red>${replaceString}</font>`)
+                const matchResult = this.text.replaceAll(pattern, replaceString)
                 this.pageSheet({
                     title: "替换预览",
                     doneText: "替换",

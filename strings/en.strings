@@ -43,7 +43,7 @@
 "DELETE_ALL_DATA" = "Delete All Data";
 "DELETE_ALL_DATA_ALERT" = "Are you sure you want to delete all your data?";
 "DELETE_DATA" = "Delete Data";
-"DELETE_TABLE" = "Delete all data from ${table}?";
+"DELETE_TABLE" = "Delete all data from `${table}`?";
 "SELECT_ALL" = "Select All";
 "DESELECT_ALL" = "Deselect All";
 
@@ -70,8 +70,7 @@
 "SAVE_ERROR" = "Save failed";
 "DELETE" = "Delete";
 "CONFIRM" = "Confirm";
-"CONFIRM_DELETE_TITLE" = "Delete Confirmation";
-"CONFIRM_DELETE_MSG" = "Are you sure you want to delete?";
+"DELETE_CONFIRM_MSG" = "Are you sure you want to delete?";
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";
 
@@ -84,7 +83,7 @@
 "FILE_TYPE_ERROR" = "File type does not match";
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 "UNABLE_CREATE_ACTION" = "Unable to create action";
-"ACTION_NAME_ALREADY_EXISTS" = "Action ${name} already exists";
+"ACTION_NAME_ALREADY_EXISTS" = "Action `${name}` already exists";
 
 "KEYBOARD" = "Keyboard";
 "KEYBOARD_HEIGHT" = "Keyboard Height";
@@ -101,6 +100,8 @@
 "TAPTIC_ENGINE_LEVEL" = "Taptic Engine Level";
 "TAPTIC_ENGINE_FOR_DELETE" = "Taptic Engine For Delete";
 "SPACE" = "Space";
+"ALL_SCRIPTS" = "All Scripts";
+"SELECT_SCRIPTS" = "Select Scripts";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
@@ -137,3 +138,9 @@
 "DATA_CONFLICT_MESSAGE" = "Select the data you want to keep";
 "WEBDAV_DATA" = "WebDAV data";
 "LOCAL_DATA" = "Local data";
+
+"ACTION_SAFETY_WARNING" = "Action safety warning";
+"ACTION_PERMISSION_REQUEST" = "Action permission request";
+
+"ACTION_RESET_NAME_WARNING" = "Action `${name}` is attempting to change its name to `${to_name}`, which may result in it gaining all permissions associated with `${to_name}`.";
+"ACTION_NETWORK_PERMISSION_MESSAGE" = "Would you like to grant Action `${name}` network permissions?";

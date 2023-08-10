@@ -2,7 +2,8 @@ const { UIKit } = require("../libs/easy-jsbox")
 const { Clip } = require("./storage")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
+ * @typedef {import("../app-lite").AppKernel} AppKernelLite
  * @typedef {import("./storage").Clip} Clip
  */
 
@@ -16,7 +17,7 @@ function array2object(array) {
 
 class ClipsData {
     /**
-     * @type {AppKernel}
+     * @type {AppKernel|AppKernelLite}
      */
     kernel
 
@@ -73,7 +74,7 @@ class ClipsData {
         return this.#allClips[this.tabIndex]
     }
 
-    get isChanged() {
+    get isPasteboardChanged() {
         const changeCount = this.pasteboard.$changeCount()
 
         const cache = $cache.get("clipboard.changeCount")
@@ -84,6 +85,13 @@ class ClipsData {
         }
 
         return true
+    }
+
+    get needReload() {
+        return $cache.get("caio.needReload") ?? false
+    }
+    set needReload(needReload) {
+        $cache.get("caio.needReload", needReload)
     }
 
     /**
@@ -148,6 +156,7 @@ class ClipsData {
         } else {
             this.#allClips = []
         }
+        this.needReload = true
         this.kernel.print(`set need reload: ${table ?? "all"}`)
     }
 
@@ -226,6 +235,7 @@ class ClipsData {
             return clip
         } catch (error) {
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         }
     }
@@ -245,6 +255,9 @@ class ClipsData {
         const recycleBin = this.getRecycleBin()
         recycleBin.splice(index, 1)
         $cache.set("caio.recycleBin", recycleBin)
+    }
+    clearRecycleBin() {
+        $cache.set("caio.recycleBin", [])
     }
 
     deleteItem(uuid, trueDelete = true) {
@@ -274,16 +287,19 @@ class ClipsData {
                 this.kernel.storage.deleteTag(uuid)
                 if (clip?.image) {
                     // delete image file
+                    // 图片不送入回收站
                     this.kernel.fileStorage.delete(clip.fsPath.original)
                     this.kernel.fileStorage.delete(clip.fsPath.preview)
+                } else {
+                    // RecycleBin
+                    this.moveToRecycleBin(clip)
                 }
-                // RecycleBin
-                this.moveToRecycleBin(clip)
             }
 
             this.setNeedReload(this.table)
         } catch (error) {
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         }
     }
@@ -304,6 +320,7 @@ class ClipsData {
             this.kernel.storage.updateText(this.table, clip.uuid, text)
             this.kernel.print(`data changed at index [${this.getIndexByUUID(uuid)}]\n${oldData}\n↓\n${text}`)
         } catch (error) {
+            this.kernel.error(error)
             throw error
         }
     }
@@ -315,6 +332,7 @@ class ClipsData {
      */
     moveItem(from, to) {
         if (from === to) return
+        if (this.clips.length === 1) return
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
 
         if (!this.clips[to]) {
@@ -385,6 +403,7 @@ class ClipsData {
             this.kernel.storage.commit()
         } catch (error) {
             this.kernel.storage.rollback()
+            this.kernel.error(error)
             throw error
         } finally {
             this.setNeedReload(this.table)

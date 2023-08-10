@@ -1,10 +1,10 @@
-const { Kernel, UIKit } = require("./libs/easy-jsbox")
+const { Kernel, UIKit } = require("../libs/easy-jsbox")
 
-const KeyboardScripts = require("./ui/components/keyboard-scripts")
-const TodayActions = require("./ui/components/today-actions")
+const KeyboardScripts = require("../ui/components/keyboard-scripts")
+const TodayActions = require("../ui/components/today-actions")
 
 /**
- * @typedef {import("./app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 /**
@@ -125,14 +125,19 @@ function clips() {
         })
     }
 
+    const recycleBinId = $text.uuid
+    const getRecycleBinData = () => {
+        return kernel.clips.getRecycleBin().map(i => i?.text ?? "None")
+    }
     kernel.setting.method.recycleBin = () => {
         const listView = {
             type: "list",
             props: {
-                data: kernel.clips.getRecycleBin().map(i => i?.text ?? "None"),
+                id: recycleBinId,
+                data: getRecycleBinData(),
                 actions: [
                     {
-                        title: $l10n("DELETE"),
+                        title: "delete",
                         handler: (sender, indexPath) => {
                             kernel.clips.removeFromRecycleBin(indexPath.row)
                         }
@@ -157,6 +162,19 @@ function clips() {
             layout: $layout.fill
         }
         return listView
+    }
+    kernel.setting.method.recycleBinNavButtons = () => {
+        return [
+            {
+                symbol: "trash",
+                tapped: () => {
+                    UIKit.deleteConfirm($l10n("DELETE_TABLE").replace("${table}", $l10n("RECYCLE_BIN")), () => {
+                        kernel.clips.clearRecycleBin()
+                        $(recycleBinId).data = getRecycleBinData()
+                    })
+                }
+            }
+        ]
     }
 }
 
@@ -254,7 +272,7 @@ function action() {
 }
 
 function keyboard() {
-    const Keyboard = require("./ui/keyboard")
+    const Keyboard = require("../ui/keyboard")
     const keyboardMaxHeight = 400
     const keyboardMinHeight = 200
 
@@ -343,7 +361,7 @@ function keyboard() {
 function todayWidget() {
     kernel.setting.method.previewTodayWidget = animate => {
         animate.touchHighlightStart()
-        const Today = require("./ui/today")
+        const Today = require("../ui/today")
         const today = new Today(kernel).getView()
         UIKit.push({
             views: [today],
@@ -419,7 +437,7 @@ function settingMethods(appKernel) {
     }
 
     kernel.setting.method.previewWidget = animate => {
-        const { Widget } = require("./app")
+        const { Widget } = require("../widget")
         const widgets = {}
         try {
             JSON.parse($file.read("widget-options.json").string).forEach(item => {

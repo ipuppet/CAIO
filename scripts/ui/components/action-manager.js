@@ -5,7 +5,7 @@ const { ActionEnv, ActionData } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
 
 /**
- * @typedef {import("../../app").AppKernel} AppKernel
+ * @typedef {import("../../app-main").AppKernel} AppKernel
  */
 
 class ActionManager extends ActionManagerData {
@@ -44,9 +44,8 @@ class ActionManager extends ActionManagerData {
                     try {
                         this.matrix.data = this.actionList
                     } catch (error) {
-                        this.kernel.error(`${error}\n${error.stack}`)
+                        this.kernel.error(error)
                         this.updateSyncLabel(error)
-                        $ui.error(error)
                     } finally {
                         this.updateSyncLabel()
                         this.updateNavButton(false)
@@ -90,7 +89,6 @@ class ActionManager extends ActionManagerData {
                 else return _default
             }
         })
-        SettingUI.loadConfig()
         const nameInput = SettingUI.loader({
             type: "input",
             key: "name",
@@ -158,7 +156,7 @@ class ActionManager extends ActionManagerData {
                 if (this.exists(this.editingActionInfo)) {
                     const resp = await $ui.alert({
                         title: $l10n("UNABLE_CREATE_ACTION"),
-                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replace("${name}", this.editingActionInfo.name)
+                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replaceAll("${name}", this.editingActionInfo.name)
                     })
                     if (resp.index === 1) return
                 }
@@ -213,7 +211,12 @@ class ActionManager extends ActionManagerData {
                 {
                     symbol: "book.circle",
                     tapped: () => {
-                        const content = $file.read("scripts/action/README.md").string
+                        let content = $file.read("scripts/action/README.md")?.string
+                        if (!content) {
+                            try {
+                                content = __ACTION_README__.content
+                            } catch {}
+                        }
                         const sheet = new Sheet()
                         sheet
                             .setView({
@@ -223,6 +226,7 @@ class ActionManager extends ActionManagerData {
                                     make.size.equalTo(view.super)
                                 }
                             })
+                            .addNavBar({ title: "Document", popButton: { symbol: "x.circle" } })
                             .init()
                             .present()
                     }
@@ -363,7 +367,7 @@ class ActionManager extends ActionManagerData {
                         symbol: "trash",
                         destructive: true,
                         handler: (sender, indexPath, data) => {
-                            this.kernel.deleteConfirm($l10n("CONFIRM_DELETE_MSG"), () => {
+                            UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
                                 this.delete(data.info.info)
                                 sender.delete(indexPath)
                             })

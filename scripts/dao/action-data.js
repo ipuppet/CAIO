@@ -1,9 +1,10 @@
 const { FileStorage } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
+const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 class ActionManagerData {
@@ -131,6 +132,7 @@ class ActionManagerData {
             await this.webdavSync.init()
         } catch (error) {
             this.kernel.error(`${error}\n${error.stack}`)
+            throw error
         }
     }
 
@@ -152,7 +154,7 @@ class ActionManagerData {
         return type.concat(
             $file.list(this.userActionPath).filter(dir => {
                 // 获取 type.indexOf(dir) < 0 的文件夹名
-                if ($file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0) return dir
+                return $file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0
             })
         )
     }
@@ -198,11 +200,15 @@ class ActionManagerData {
     }
 
     getAction(type, dir, data) {
+        if (!$file.exists(this.getActionPath(type, dir))) {
+            dir = $text.MD5(dir)
+        }
         const basePath = this.getActionPath(type, dir)
         const config = this.getActionConfig(type, dir)
         try {
             const script = $file.read(`${basePath}/main.js`).string
-            const MyAction = new Function("Action", "ActionEnv", "ActionData", `${script}\n return MyAction`)(
+            const ss = new SecureScript(script)
+            const MyAction = new Function("Action", "ActionEnv", "ActionData", `${ss.secure()}\n return MyAction`)(
                 Action,
                 ActionEnv,
                 ActionData
@@ -210,8 +216,8 @@ class ActionManagerData {
             const action = new MyAction(this.kernel, config, data)
             return action
         } catch (error) {
-            $ui.error(error)
             this.kernel.error(error)
+            throw error
         }
     }
 
@@ -221,8 +227,8 @@ class ActionManagerData {
                 const action = this.getAction(type, dir, data)
                 return await action.do()
             } catch (error) {
-                $ui.error(error)
                 this.kernel.error(error)
+                throw error
             }
         }
     }

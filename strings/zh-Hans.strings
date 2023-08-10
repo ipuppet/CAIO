@@ -43,7 +43,7 @@
 "DELETE_ALL_DATA" = "删除所有数据";
 "DELETE_ALL_DATA_ALERT" = "确定要删除所有数据吗？";
 "DELETE_DATA" = "删除数据";
-"DELETE_TABLE" = "删除${table}的所有数据？";
+"DELETE_TABLE" = "删除 `${table}` 的所有数据？";
 "SELECT_ALL" = "全选";
 "DESELECT_ALL" = "取消全选";
 
@@ -70,8 +70,7 @@
 "SAVE_ERROR" = "保存失败";
 "DELETE" = "删除";
 "CONFIRM" = "确认";
-"CONFIRM_DELETE_TITLE" = "删除前确认";
-"CONFIRM_DELETE_MSG" = "确认要删除吗？";
+"DELETE_CONFIRM_MSG" = "确认要删除吗？";
 "DELETE_SUCCESS" = "删除成功";
 "DELETE_ERROR" = "删除失败";
 
@@ -84,7 +83,7 @@
 "FILE_TYPE_ERROR" = "文件类型不符";
 "OVERWRITE_ALERT" = "该操作将会覆盖当前数据，是否继续？";
 "UNABLE_CREATE_ACTION" = "无法创建动作";
-"ACTION_NAME_ALREADY_EXISTS" = "动作 ${name} 已存在";
+"ACTION_NAME_ALREADY_EXISTS" = "动作 `${name}` 已存在";
 
 "KEYBOARD" = "键盘";
 "KEYBOARD_HEIGHT" = "键盘高度";
@@ -101,6 +100,8 @@
 "TAPTIC_ENGINE_LEVEL" = "触感反馈强度";
 "TAPTIC_ENGINE_FOR_DELETE" = "删除按钮触感反馈";
 "SPACE" = "空格";
+"ALL_SCRIPTS" = "所有脚本";
+"SELECT_SCRIPTS" = "选择脚本";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";
@@ -137,3 +138,9 @@
 "DATA_CONFLICT_MESSAGE" = "请选择想要保留的数据";
 "WEBDAV_DATA" = "WebDAV 数据";
 "LOCAL_DATA" = "本地数据";
+
+"ACTION_SAFETY_WARNING" = "动作安全警告";
+"ACTION_PERMISSION_REQUEST" = "动作权限申请";
+
+"ACTION_RESET_NAME_WARNING" = "动作 `${name}` 正在尝试将名称改为 `${to_name}`，这可能导致其获取 `${to_name}` 的所有权限";
+"ACTION_NETWORK_PERMISSION_MESSAGE" = "是否允许动作 `${name}` 获取网络权限？";

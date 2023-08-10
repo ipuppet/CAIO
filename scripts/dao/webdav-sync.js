@@ -1,7 +1,7 @@
 const { WebDAV } = require("../libs/easy-jsbox")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 class WebDavSync {

@@ -1,8 +1,8 @@
-const { Kernel } = require("../libs/easy-jsbox")
+const { UIKit } = require("../libs/easy-jsbox")
 const WebDavSyncClip = require("./webdav-sync-clip")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  * @typedef {import("../libs/easy-jsbox").FileStorage} FileStorage
  */
 
@@ -136,7 +136,7 @@ class Storage {
             })
             await this.webdavSync.init()
         } catch (error) {
-            this.kernel.error(`${error}\n${error.stack}`)
+            this.kernel.error(error)
             throw error
         }
     }
@@ -198,7 +198,7 @@ class Storage {
                     rebuildData.unshift(data)
                 } catch (error) {
                     storage.rollback()
-                    this.kernel.error(`${error}\n${error.stack}`)
+                    this.kernel.error(error)
                     throw error
                 }
             })
@@ -225,7 +225,7 @@ class Storage {
                 storage.commit()
             } catch (error) {
                 storage.rollback()
-                this.kernel.error(`${error}\n${error.stack}`)
+                this.kernel.error(error)
                 throw error
             }
         })
@@ -471,7 +471,7 @@ class Storage {
                 preview: `${this.imagePath.preview}/${fileName}.jpg`
             }
             this.kernel.fileStorage.write(path.original, image.png)
-            this.kernel.fileStorage.write(path.preview, Kernel.compressImage(image).jpg(0.8))
+            this.kernel.fileStorage.write(path.preview, UIKit.compressImage(image).jpg(0.8))
             return Clip.pathToKey(path)
         }
         throw new Error("saveImageError: image not an object")
@@ -538,12 +538,12 @@ class Storage {
         const images = this.parse(result)?.map(clip => {
             if (clip.image) {
                 const path = clip.fsPath
-                path.preview = path.preview.replace(this.imagePath.preview, "")
+                path.preview = path.preview.replaceAll(this.imagePath.preview, "")
                 if (path.preview.startsWith("/")) {
                     path.preview = path.preview.substring(1)
                 }
 
-                path.original = path.original.replace(this.imagePath.original, "")
+                path.original = path.original.replaceAll(this.imagePath.original, "")
                 if (path.original.startsWith("/")) {
                     path.original = path.original.substring(1)
                 }

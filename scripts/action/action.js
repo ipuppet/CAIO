@@ -1,7 +1,8 @@
-const { Kernel, Sheet } = require("../libs/easy-jsbox")
+const { L10n, Sheet } = require("../libs/easy-jsbox")
+const { SecureFunction } = require("./secure")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  * @typedef {Action} Action
  * @typedef {ActionEnv} ActionEnv
  * @typedef {ActionData} ActionData
@@ -20,6 +21,7 @@ class ActionData {
     args // 其他动作传递的参数
     text
     originalContent
+    section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
     selectedRange
     textBeforeInput
@@ -30,6 +32,7 @@ class ActionData {
         env,
         args,
         text,
+        section = null,
         uuid = null,
         selectedRange = null,
         textBeforeInput = null,
@@ -40,6 +43,7 @@ class ActionData {
         this.args = args
         this.text = text
         this.originalContent = text
+        this.section = section
         this.uuid = uuid
         this.selectedRange = selectedRange
         this.textBeforeInput = textBeforeInput
@@ -53,6 +57,7 @@ class Action {
      * @type {AppKernel}
      */
     #kernel
+    secureFunction
 
     /**
      *
@@ -63,6 +68,7 @@ class Action {
     constructor(kernel, config, data) {
         this.#kernel = kernel
         this.config = config
+        this.secureFunction = new SecureFunction(this.#kernel, this.config)
 
         if (data.env === ActionEnv.build) {
             data = this.preview()
@@ -70,11 +76,11 @@ class Action {
         }
         Object.assign(this, data)
 
-        this.originalContent = this.text
+        this.originalContent = String(this.text)
 
         const l10n = this.l10n()
         Object.keys(l10n).forEach(language => {
-            Kernel.l10n(language, l10n[language])
+            L10n.add(language, l10n[language])
         })
     }
 
@@ -120,7 +126,7 @@ class Action {
     }
 
     quickLookImage(image) {
-        Kernel.quickLookImage(image)
+        Sheet.quickLookImage(image)
     }
 
     /**
@@ -137,7 +143,7 @@ class Action {
     async clearAllClips() {
         const res = await $ui.alert({
             title: $l10n("DELETE_DATA"),
-            message: $l10n("DELETE_TABLE").replace("${table}", $l10n("CLIPS")),
+            message: $l10n("DELETE_TABLE").replaceAll("${table}", $l10n("CLIPS")),
             actions: [{ title: $l10n("DELETE"), style: $alertActionType.destructive }, { title: $l10n("CANCEL") }]
         })
         if (res.index === 0) {
@@ -158,6 +164,9 @@ class Action {
         this.text = text
         if (this.env === ActionEnv.editor) {
             this.editor.setContent(text)
+        } else if (this.env === ActionEnv.clipboard) {
+            this.#kernel.storage.updateText(this.section, this.uuid, text)
+            this.#kernel.clips.updateList(true)
         }
     }
 
@@ -168,43 +177,17 @@ class Action {
      * @param {ActionData} data
      * @returns
      */
-    getAction(type, dir, data) {
-        return this.#kernel.actionManager.getAction(type, dir, data)
+    getAction(type, name, data) {
+        return this.#kernel.actionManager.getAction(type, name, data)
     }
 
-    async runAction(type, dir) {
-        const action = this.getAction(type, dir)
+    async runAction(type, name) {
+        const action = this.getAction(type, name)
         return await action.do()
     }
 
-    async request(url, method, body = {}, header = {}) {
-        try {
-            this.#kernel.print(`sending request [${method}]: ${url}`)
-            const resp = await $http.request({
-                header,
-                url,
-                method,
-                body,
-                timeout: 5
-            })
-
-            if (resp.error) {
-                throw resp.error
-            } else if (resp?.response?.statusCode >= 400) {
-                let errMsg = resp.data
-                if (typeof errMsg === "object") {
-                    errMsg = JSON.stringify(errMsg)
-                }
-                throw new Error("http error: [" + resp.response.statusCode + "] " + errMsg)
-            }
-
-            return resp
-        } catch (error) {
-            if (error.code) {
-                error = new Error("network error: [" + error.code + "] " + error.localizedDescription)
-            }
-            throw error
-        }
+    async request(url, method, body, header) {
+        return this.secureFunction.http.request({ url, method, body, header, timeout: 3 })
     }
 
     getUrls() {

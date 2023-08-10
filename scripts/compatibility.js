@@ -1,5 +1,5 @@
 /**
- * @typedef {import("./app").AppKernel} AppKernel
+ * @typedef {import("./app-main").AppKernel} AppKernel
  */
 
 class Compatibility {
@@ -82,7 +82,13 @@ class Compatibility {
         const changeList = []
         for (let type of Object.keys(this.actions)) {
             this.actions[type].forEach(action => {
-                const config = JSON.parse($file.read(`${actionPath}/${type}/${action}/config.json`).string)
+                let config
+                const configPath = `${actionPath}/${type}/${action}/config.json`
+                if ($file.exists(configPath)) {
+                    config = JSON.parse($file.read(`${actionPath}/${type}/${action}/config.json`).string)
+                } else {
+                    config = __INFO__
+                }
                 changeList.push(config.name)
             })
         }
@@ -123,7 +129,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 6
+    version = 7
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -135,13 +141,14 @@ class VersionActions {
     }
 
     do() {
-        if (this.userVersion < this.version) {
+        // this.userVersion === 0 视为新用户
+        if (this.userVersion > 0 && this.userVersion < this.version) {
             this.kernel.print(`compatibility: userVersion [${this.userVersion}] lower than [${this.version}]`)
+            for (let i = this.userVersion + 1; i <= this.version; i++) {
+                this.call(i)
+            }
+            this.compatibility.do().catch(e => this.kernel.error(e))
         }
-        for (let i = this.userVersion + 1; i <= this.version; i++) {
-            this.call(i)
-        }
-        this.compatibility.do().catch(e => this.kernel.error(e))
 
         // 修改版本
         $cache.set("compatibility.version", this.version)
@@ -218,6 +225,12 @@ class VersionActions {
     ver6() {
         this.compatibility.rebuildUserActions({
             clipboard: ["GetFromWin"]
+        })
+    }
+
+    ver7() {
+        this.compatibility.rebuildUserActions({
+            uncategorized: ["Replace"]
         })
     }
 }

@@ -6,15 +6,15 @@ const config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "
 
 const outputName = config.info.name
 const distEntryPath = path.join(__dirname, `dist/${outputName}.js`)
-const entryFile = "main.js"
+const entryFileContent = fs.readFileSync(path.join(__dirname, "main.js"), "utf-8")
+
+const entryFile = "main.build.js"
 const entryFilePath = path.join(__dirname, entryFile)
-const entryFileContent = fs.readFileSync(entryFilePath, "utf-8")
 
 function injectContent() {
     const stringsFolder = path.join(__dirname, "strings")
     const stringsFiles = fs.readdirSync(stringsFolder)
     const localizedText = {}
-
     stringsFiles.forEach(fileName => {
         if (path.extname(fileName) !== ".strings") {
             return
@@ -33,7 +33,6 @@ function injectContent() {
             }
         })
     })
-
     const stringsText = `$app.strings = ${JSON.stringify(localizedText)};`
 
     const configSettings = Object.keys(config.settings)
@@ -56,15 +55,6 @@ function injectContent() {
         const fileList = ["README.md", "README_CN.md"]
         fileList.map(name => (files[name] = fs.readFileSync(path.join(__dirname, name), "utf-8")))
         return `__README__ = ${JSON.stringify(files)}`
-    })()
-
-    const settingStructure = (() => {
-        try {
-            const setting = fs.readFileSync(path.join(__dirname, "setting.json"), "utf-8")
-            return `__SETTING__ = ${setting}`
-        } catch {
-            return ""
-        }
     })()
 
     const actions = (() => {
@@ -102,7 +92,13 @@ function injectContent() {
         }
     })()
 
-    const contents = [stringsText, configSettings, configInfo, readmeText, settingStructure, actions, entryFileContent]
+    const actionReadme = (() => {
+        const file = path.join(__dirname, "scripts/action/README.md")
+        const content = fs.readFileSync(file, "utf-8")
+        return `__ACTION_README__ = ${JSON.stringify({ content })}`
+    })()
+
+    const contents = [stringsText, configSettings, configInfo, readmeText, actions, actionReadme, entryFileContent]
 
     fs.writeFileSync(entryFilePath, contents.join("\n\n"))
 }
@@ -163,7 +159,7 @@ async function build() {
         }
     } finally {
         // 恢复文件内容
-        fs.writeFileSync(entryFilePath, entryFileContent)
+        fs.unlinkSync(entryFilePath)
         fs.writeFileSync(packageJsonPath, packageJsonContent)
     }
 }

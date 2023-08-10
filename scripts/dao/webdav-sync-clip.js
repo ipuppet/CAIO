@@ -2,7 +2,7 @@ const { FileStorage } = require("../libs/easy-jsbox")
 const WebDavSync = require("./webdav-sync")
 
 /**
- * @typedef {import("../app").AppKernel} AppKernel
+ * @typedef {import("../app-main").AppKernel} AppKernel
  */
 
 class WebDavSyncClip extends WebDavSync {
@@ -55,7 +55,7 @@ class WebDavSyncClip extends WebDavSync {
             /**
              * @type {string}
              */
-            const href = item.firstChild({ tag: "href" })?.string?.replace(baseUrl, "")
+            const href = item.firstChild({ tag: "href" })?.string?.replaceAll(baseUrl, "")
             if (href.endsWith("/")) return
             if (href.startsWith("original")) {
                 original.push(href.substring(9))
@@ -156,7 +156,8 @@ class WebDavSyncClip extends WebDavSync {
                 status: WebDavSync.status.fail,
                 error
             })
-            this.kernel.error(`clip sync error: ${error}\n${error.stack}`)
+            this.kernel.error("clip sync error")
+            this.kernel.error(error)
             throw error
         } finally {
             this.notify({
