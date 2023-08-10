@@ -84,6 +84,11 @@ class Clips extends ClipsData {
 
         this.updateList()
 
+        // readClipboard
+        $delay(0.5, () => {
+            this.readClipboard()
+        })
+
         if (UIKit.isTaio) return
 
         // check url scheme
@@ -101,11 +106,6 @@ class Clips extends ClipsData {
                     this.kernel.tabBarController.switchPageTo("actions")
                 }
             }
-        })
-
-        // readClipboard
-        $delay(0.5, () => {
-            this.readClipboard()
         })
 
         this.appListen()
