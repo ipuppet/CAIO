@@ -1,6 +1,4 @@
 const { UIKit, Sheet } = require("../../libs/easy-jsbox")
-
-const ClipsEditor = require("./clips-editor")
 const { ActionData, ActionEnv } = require("../../action/action")
 
 /**
@@ -12,6 +10,7 @@ const { ActionData, ActionEnv } = require("../../action/action")
 class ClipsDelegates {
     #setEditingCallback
     menuItemActionMaxCount = 5
+    placeholderReuseIdentifier = "UITableViewPlaceholderReuseIdentifier"
 
     /**
      * @param {AppKernel} kernel
@@ -22,6 +21,14 @@ class ClipsDelegates {
         this.kernel = kernel
         this.data = data
         this.views = views
+    }
+
+    initReuseIdentifier(tableView) {
+        let cell = tableView.$dequeueReusableCellWithIdentifier(this.placeholderReuseIdentifier)
+        if (!cell) {
+            const UITableViewCellClass = $objc("UITableViewCell").$class()
+            tableView.$registerClass_forCellReuseIdentifier(UITableViewCellClass, this.placeholderReuseIdentifier)
+        }
     }
 
     get listSelected() {
@@ -37,7 +44,7 @@ class ClipsDelegates {
                     {
                         title: $l10n("TAG"),
                         symbol: "tag",
-                        handler: (sender, indexPath) => {
+                        handler: (tableView, indexPath) => {
                             const clip = this.data.getByIndex(indexPath)
                             $input.text({
                                 placeholder: $l10n("ADD_TAG"),
@@ -62,7 +69,7 @@ class ClipsDelegates {
                     {
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
-                        handler: (sender, indexPath) => {
+                        handler: (tableView, indexPath) => {
                             const clip = this.data.getByIndex(indexPath)
                             $share.sheet(clip.image ? clip.imageOriginal : clip.text)
                         }
@@ -70,7 +77,7 @@ class ClipsDelegates {
                     {
                         title: $l10n("COPY"),
                         symbol: "square.on.square",
-                        handler: (sender, indexPath) => this.data.copy(this.data.getByIndex(indexPath).uuid)
+                        handler: (tableView, indexPath) => this.data.copy(this.data.getByIndex(indexPath).uuid)
                     },
                     {
                         title: $l10n("DELETE"),
@@ -80,11 +87,11 @@ class ClipsDelegates {
                             {
                                 title: $l10n("CONFIRM"),
                                 destructive: true,
-                                handler: (sender, indexPath) => {
-                                    sender.delete(indexPath)
+                                handler: (tableView, indexPath) => {
+                                    tableView.delete(indexPath)
                                     this.data.delete(this.data.getByIndex(indexPath).uuid)
                                     // 重新计算列表项高度
-                                    $delay(0.25, () => sender.reload())
+                                    $delay(0.25, () => tableView.reload())
                                 }
                             }
                         ]
@@ -97,7 +104,7 @@ class ClipsDelegates {
     get menu() {
         const action = action => {
             const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
-            action.handler = (sender, indexPath) => {
+            action.handler = (tableView, indexPath) => {
                 const item = this.data.getByIndex(indexPath)
                 const actionData = new ActionData({
                     env: ActionEnv.clipboard,
@@ -193,16 +200,26 @@ class ClipsDelegates {
         return action
     }
 
+    createUITableViewDropPlaceholder(destinationIndexPath) {
+        const placeholder = $objc("UITableViewDropPlaceholder").$alloc()
+        const rowHeight = this.views.verticalMargin * 2 + this.views.getContentHeight("A")
+        placeholder.$initWithInsertionIndexPath_reuseIdentifier_rowHeight(
+            destinationIndexPath,
+            this.placeholderReuseIdentifier,
+            rowHeight
+        )
+
+        return placeholder
+    }
+
     updateEditingToolBar() {
         const isEmpty = this.listSelected.length === 0
 
         const editButton = $(this.views.editingToolBarId + "-select-button")
         const deleteButton = $(this.views.editingToolBarId + "-delete-button")
-        const reorderButton = $(this.views.editingToolBarId + "-reorder-button")
 
         editButton.title = isEmpty ? $l10n("SELECT_ALL") : $l10n("DESELECT_ALL")
         deleteButton.hidden = isEmpty
-        reorderButton.hidden = !isEmpty
     }
 
     toggleAllSelected(deselecteAll = false, updateEditModeToolBar = true) {
@@ -223,11 +240,6 @@ class ClipsDelegates {
         if (updateEditModeToolBar && listViewOC.$isEditing()) {
             this.updateEditingToolBar()
         }
-    }
-
-    toggleReorder() {
-        this.setEditing(false)
-        new ClipsEditor(this).presentSheet()
     }
 
     deleteSelected() {
@@ -271,7 +283,6 @@ class ClipsDelegates {
             const toolBar = $ui.create(
                 this.views.getListEditModeToolBarView({
                     selectButtonEvents: { tapped: () => this.toggleAllSelected() },
-                    reorderButtonEvents: { tapped: () => this.toggleReorder() },
                     deleteButtonEvents: { tapped: () => this.deleteSelected() }
                 })
             )
@@ -289,35 +300,35 @@ class ClipsDelegates {
         return true
     }
 
-    didSelectRowAtIndexPath(sender, indexPath) {
-        if (sender.$isEditing()) {
+    didSelectRowAtIndexPath(tableView, indexPath) {
+        if (tableView.$isEditing()) {
             this.updateEditingToolBar()
             return
         }
-        if (sender.$hasActiveDrag()) {
+        if (tableView.$hasActiveDrag()) {
             return
         }
 
         const clip = this.data.getByIndex(indexPath.jsValue())
         if (clip.image) {
             Sheet.quickLookImage(clip.imageOriginal)
-            sender.$deselectRowAtIndexPath_animated(indexPath, true)
+            tableView.$deselectRowAtIndexPath_animated(indexPath, true)
         } else {
             this.views.edit(clip.text, text => {
-                sender.$deselectRowAtIndexPath_animated(indexPath, true)
+                tableView.$deselectRowAtIndexPath_animated(indexPath, true)
                 if (clip.md5 !== $text.MD5(text)) this.data.update(text, clip.uuid)
             })
         }
     }
-    didDeselectRowAtIndexPath(sender, indexPath) {
-        if (sender.$isEditing()) {
+    didDeselectRowAtIndexPath(tableView, indexPath) {
+        if (tableView.$isEditing()) {
             this.updateEditingToolBar()
         }
     }
 
-    contextMenuConfigurationForRowAtIndexPath(sender, indexPath, point) {
+    contextMenuConfigurationForRowAtIndexPath(tableView, indexPath, point) {
         // 编辑模式不显示菜单
-        if (sender.$isEditing()) return
+        if (tableView.$isEditing()) return
 
         const generateUIMenu = menu => {
             const actions = []
@@ -330,7 +341,7 @@ class ClipsDelegates {
                             title: item.title,
                             image: item.symbol,
                             handler: () => {
-                                item.handler(sender.jsValue(), indexPath.jsValue())
+                                item.handler(tableView.jsValue(), indexPath.jsValue())
                             },
                             destructive: item.destructive
                         })
@@ -354,8 +365,8 @@ class ClipsDelegates {
         )
     }
 
-    leadingSwipeActionsConfigurationForRowAtIndexPath(sender, indexPath) {
-        sender = sender.jsValue()
+    leadingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath) {
+        tableView = tableView.jsValue()
         indexPath = indexPath.jsValue()
         return $objc("UISwipeActionsConfiguration").$configurationWithActions([
             this.createUIContextualAction({
@@ -367,8 +378,8 @@ class ClipsDelegates {
             })
         ])
     }
-    trailingSwipeActionsConfigurationForRowAtIndexPath(sender, indexPath) {
-        sender = sender.jsValue()
+    trailingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath) {
+        tableView = tableView.jsValue()
         indexPath = indexPath.jsValue()
         return $objc("UISwipeActionsConfiguration").$configurationWithActions([
             this.createUIContextualAction({
@@ -377,9 +388,9 @@ class ClipsDelegates {
                 title: $l10n("DELETE"),
                 handler: (action, sourceView, completionHandler) => {
                     this.data.delete(this.data.getByIndex(indexPath).uuid)
-                    sender.delete(indexPath)
+                    tableView.delete(indexPath)
                     // 重新计算列表项高度
-                    $delay(0.25, () => sender.reload())
+                    $delay(0.25, () => tableView.reload())
                 }
             }),
             this.createUIContextualAction({
@@ -393,40 +404,40 @@ class ClipsDelegates {
         ])
     }
 
-    heightForRowAtIndexPath(sender, indexPath) {
-        sender = sender.jsValue()
+    heightForRowAtIndexPath(tableView, indexPath) {
+        tableView = tableView.jsValue()
         indexPath = indexPath.jsValue()
         const clip = this.data.getByIndex(indexPath)
         const tagHeight = clip?.hasTag ? this.views.tagHeight : this.views.verticalMargin
-        const itemHeight = clip?.image ? this.views.imageContentHeight : this.views.getContentHeight(clip.text)
+        const itemHeight = clip?.image ? this.views.imageContentHeight : this.views.getContentHeight(clip?.text ?? "a")
         return this.views.verticalMargin + itemHeight + tagHeight
     }
 
-    listViewDelegate() {
+    delegate() {
         const events = {
             "tableView:shouldBeginMultipleSelectionInteractionAtIndexPath:": () => {
                 return this.shouldBeginMultipleSelectionInteractionAtIndexPath()
             },
-            "tableView:didBeginMultipleSelectionInteractionAtIndexPath:": (sender, indexPath) => {
+            "tableView:didBeginMultipleSelectionInteractionAtIndexPath:": (tableView, indexPath) => {
                 this.setEditing(true)
             },
-            "tableView:didSelectRowAtIndexPath:": (sender, indexPath) => {
-                this.didSelectRowAtIndexPath(sender, indexPath)
+            "tableView:didSelectRowAtIndexPath:": (tableView, indexPath) => {
+                this.didSelectRowAtIndexPath(tableView, indexPath)
             },
-            "tableView:didDeselectRowAtIndexPath:": (sender, indexPath) => {
-                this.didDeselectRowAtIndexPath(sender, indexPath)
+            "tableView:didDeselectRowAtIndexPath:": (tableView, indexPath) => {
+                this.didDeselectRowAtIndexPath(tableView, indexPath)
             },
-            "tableView:contextMenuConfigurationForRowAtIndexPath:point:": (sender, indexPath, point) => {
-                return this.contextMenuConfigurationForRowAtIndexPath(sender, indexPath, point)
+            "tableView:contextMenuConfigurationForRowAtIndexPath:point:": (tableView, indexPath, point) => {
+                return this.contextMenuConfigurationForRowAtIndexPath(tableView, indexPath, point)
             },
-            "tableView:leadingSwipeActionsConfigurationForRowAtIndexPath:": (sender, indexPath) => {
-                return this.leadingSwipeActionsConfigurationForRowAtIndexPath(sender, indexPath)
+            "tableView:leadingSwipeActionsConfigurationForRowAtIndexPath:": (tableView, indexPath) => {
+                return this.leadingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath)
             },
-            "tableView:trailingSwipeActionsConfigurationForRowAtIndexPath:": (sender, indexPath) => {
-                return this.trailingSwipeActionsConfigurationForRowAtIndexPath(sender, indexPath)
+            "tableView:trailingSwipeActionsConfigurationForRowAtIndexPath:": (tableView, indexPath) => {
+                return this.trailingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath)
             },
-            "tableView:heightForRowAtIndexPath:": (sender, indexPath) => {
-                return this.heightForRowAtIndexPath(sender, indexPath)
+            "tableView:heightForRowAtIndexPath:": (tableView, indexPath) => {
+                return this.heightForRowAtIndexPath(tableView, indexPath)
             }
         }
 
@@ -438,7 +449,7 @@ class ClipsDelegates {
 
     dragDelegate() {
         const events = {
-            "tableView:itemsForBeginningDragSession:atIndexPath": (sender, session, indexPath) => {
+            "tableView:itemsForBeginningDragSession:atIndexPath:": (tableView, session, indexPath) => {
                 const clip = this.data.getByIndex(indexPath.jsValue())
                 const itemProvider = $objc("NSItemProvider").$alloc()
                 if (clip.image) {
@@ -450,6 +461,15 @@ class ClipsDelegates {
                 }
                 const dragItem = $objc("UIDragItem").$alloc().$initWithItemProvider(itemProvider)
 
+                const context = session.$localContext()
+                if (context) {
+                    context.$addObject(dragItem)
+                } else {
+                    const mutableArray = NSMutableArray.$new()
+                    mutableArray.$addObject(dragItem)
+                    session.$setLocalContext(mutableArray)
+                }
+
                 return [dragItem]
             }
         }
@@ -460,10 +480,111 @@ class ClipsDelegates {
         })
     }
 
+    reorder(coordinator) {
+        // 排序只有一个可以拖拽
+        const item = coordinator.$items().$objectAtIndex(0)
+        const source = item.$sourceIndexPath().jsValue().row
+        const destinationIndexPath = coordinator.$destinationIndexPath()
+        const destination = destinationIndexPath.jsValue().row
+
+        this.data.move(source, destination, false)
+        this.data.updateList()
+
+        coordinator.$dropItem_toRowAtIndexPath(item.$dragItem(), destinationIndexPath)
+    }
+
+    dropItems(coordinator) {
+        const destinationIndexPath = coordinator.$destinationIndexPath()
+        const items = coordinator.$items()
+        const count = items.$count()
+
+        for (let i = 0; i < count; i++) {
+            const item = items.$objectAtIndex(i)
+
+            const placeholder = this.createUITableViewDropPlaceholder(destinationIndexPath)
+            const placeholderContext = coordinator.$dropItem_toPlaceholder(item.$dragItem(), placeholder)
+
+            const itemProvider = placeholderContext.$dragItem().$itemProvider()
+            const typeIdentifiers = itemProvider.$registeredTypeIdentifiers().jsValue()
+
+            const hasText = itemProvider.$hasItemConformingToTypeIdentifier("public.text")
+            const hasImage = itemProvider.$hasItemConformingToTypeIdentifier("public.image")
+            if (!hasText && !hasImage) {
+                return
+            }
+
+            const completionHandler = (data, error) => {
+                if (error) {
+                    $ui.alert(error.jsValue())
+                    this.kernel.error(error.jsValue())
+                }
+
+                placeholderContext.$commitInsertionWithDataSourceUpdates(
+                    $block("void, NSIndexPath *", insertionIndexPath => {
+                        console.log("aaaaaaa")
+                        if (hasText) {
+                            this.data.add(data.jsValue().string, false)
+                        } else if (hasImage) {
+                            this.data.add(data.jsValue().image, false)
+                        }
+                        this.data.move(0, insertionIndexPath.jsValue().row, false)
+                        this.data.updateList()
+                    })
+                )
+            }
+
+            const progress = itemProvider.$loadDataRepresentationForTypeIdentifier_completionHandler(
+                typeIdentifiers[0],
+                $block("void, NSData *, NSError *", (data, error) => {
+                    $delay(0, () => completionHandler(data, error))
+                })
+            )
+        }
+    }
+
+    dropDelegate() {
+        const events = {
+            "tableView:canHandleDropSession:": (tableView, session) => {
+                // 编辑状态只能拖不能放
+                return !tableView.$isEditing()
+            },
+            "tableView:dropSessionDidUpdate:withDestinationIndexPath:": (tableView, session, destinationIndexPath) => {
+                const dropProposal = $objc("UITableViewDropProposal").$alloc()
+                if (session.$localDragSession()) {
+                    // app 内拖拽
+                    dropProposal.$initWithDropOperation_intent(3, 1)
+                } else {
+                    // 来自外部 app
+                    dropProposal.$initWithDropOperation_intent(2, 1)
+                }
+                return dropProposal
+            },
+            "tableView:performDropWithCoordinator:": (tableView, coordinator) => {
+                const session = coordinator.$session()
+
+                if (session.$localDragSession()) {
+                    // 排序
+                    this.reorder(coordinator)
+                } else {
+                    this.dropItems(coordinator)
+                }
+            }
+        }
+
+        return $delegate({
+            type: "UITableViewDropDelegate",
+            events
+        })
+    }
+
     setDelegate() {
         const view = $(this.views.listId).ocValue()
-        view.$setDelegate(this.listViewDelegate())
+
+        this.initReuseIdentifier(view)
+
+        view.$setDelegate(this.delegate())
         view.$setDragDelegate(this.dragDelegate())
+        view.$setDropDelegate(this.dropDelegate())
     }
 }
 

@@ -1,10 +1,8 @@
 const { View, UIKit, Sheet, NavigationView, NavigationBar, Toast } = require("../../libs/easy-jsbox")
 const ClipsData = require("../../dao/clips-data")
-const ClipsSearch = require("./clips-search")
-const ClipsEditor = require("./clips-editor")
+const ClipsSearch = require("./search")
 const ClipsViews = require("./views")
 const ClipsDelegates = require("./delegates")
-const { ActionData, ActionEnv } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
 
 /**
@@ -234,9 +232,11 @@ class Clips extends ClipsData {
         }
     }
 
-    add(item) {
+    add(item, updateUI = true) {
         try {
             const data = super.addItem(item)
+
+            if (!updateUI) return
 
             // 先修改背景，让 list 显示出来
             this.updateListBackground()
@@ -296,7 +296,7 @@ class Clips extends ClipsData {
             super.moveItem(from, to)
 
             if (!updateUI) return
-            //this.updateList()
+
             // 操作 UI
             const listView = $(this.views.listId)
             // 移动列表

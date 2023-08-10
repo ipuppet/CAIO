@@ -235,7 +235,7 @@ class ClipsViews {
         }
     }
 
-    getListEditModeToolBarView({ selectButtonEvents, reorderButtonEvents, deleteButtonEvents } = {}) {
+    getListEditModeToolBarView({ selectButtonEvents, deleteButtonEvents } = {}) {
         const blurBox = UIKit.blurBox({ id: this.editingToolBarId }, [
             UIKit.separatorLine(),
             {
@@ -254,20 +254,6 @@ class ClipsViews {
                             make.centerY.equalTo(view.super)
                         },
                         events: selectButtonEvents
-                    },
-                    {
-                        type: "button",
-                        props: {
-                            id: this.editingToolBarId + "-reorder-button",
-                            title: $l10n("SORT"),
-                            titleColor: $color("tint"),
-                            bgcolor: $color("clear")
-                        },
-                        layout: (make, view) => {
-                            make.right.inset(this.horizontalMargin)
-                            make.centerY.equalTo(view.super)
-                        },
-                        events: reorderButtonEvents
                     },
                     {
                         type: "button",
