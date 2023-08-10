@@ -91,7 +91,6 @@ class Keyboard extends Clips {
     }
 
     listReady() {
-        this.delegates.isCollectionView = true
         this.setDelegate()
         this.updateList()
         // readClipboard
@@ -539,7 +538,10 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
-                ready: () => this.listReady(),
+                ready: () => {
+                    this.delegates.isCollectionView = true
+                    this.listReady()
+                },
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的
