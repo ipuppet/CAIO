@@ -35,6 +35,7 @@ class Today extends Clips {
         this.listPageNow = [0, 0] // 剪切板当前页，索引为 Section
         this.listSection = Math.min(this.tabIndex, 1) // 当前选中列表，只取 0 或 1，默认 1
 
+        this.views.listId += "today"
         this.views.horizontalMargin = 15 // 列表边距
         this.views.verticalMargin = 12 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小

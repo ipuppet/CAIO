@@ -48,6 +48,7 @@ class Keyboard extends Clips {
             $cache.set(this.keyboardSwitchLockKey, false)
         }
 
+        this.views.listId += "keyboard"
         this.views.horizontalMargin = 15 // 列表边距
         this.views.verticalMargin = 12 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
@@ -89,8 +90,9 @@ class Keyboard extends Clips {
         $(this.keyboardSwitchLockId).symbol = !lock ? "lock" : "lock.open"
     }
 
-    listReady(delegate = true) {
-        if (delegate) this.setDelegate()
+    listReady() {
+        this.delegates.isCollectionView = true
+        this.setDelegate()
         this.updateList()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
@@ -537,7 +539,7 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
-                ready: () => this.listReady(false),
+                ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的

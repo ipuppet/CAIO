@@ -332,6 +332,7 @@ class ClipsData {
      */
     moveItem(from, to) {
         if (from === to) return
+        if (this.clips.length === 1) return
         if (from < to) to++ // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
 
         if (!this.clips[to]) {

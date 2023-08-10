@@ -11,6 +11,7 @@ class ClipsDelegates {
     #setEditingCallback
     menuItemActionMaxCount = 5
     placeholderReuseIdentifier = "UITableViewPlaceholderReuseIdentifier"
+    isCollectionView = false
 
     /**
      * @param {AppKernel} kernel
@@ -447,35 +448,52 @@ class ClipsDelegates {
         })
     }
 
+    itemsForBeginningDragSession(session, indexPath) {
+        const clip = this.data.getByIndex(indexPath.jsValue())
+        const itemProvider = $objc("NSItemProvider").$alloc()
+        if (clip.image) {
+            const filePath = $file.absolutePath(clip.imagePath.original)
+            const fileURL = NSURL.$fileURLWithPath(filePath)
+            itemProvider.$initWithContentsOfURL(fileURL)
+        } else {
+            itemProvider.$initWithObject(clip.text)
+        }
+        const dragItem = $objc("UIDragItem").$alloc().$initWithItemProvider(itemProvider)
+
+        const context = session.$localContext()
+        if (context) {
+            context.$addObject(dragItem)
+        } else {
+            const mutableArray = NSMutableArray.$new()
+            mutableArray.$addObject(dragItem)
+            session.$setLocalContext(mutableArray)
+        }
+
+        return [dragItem]
+    }
+
     dragDelegate() {
         const events = {
             "tableView:itemsForBeginningDragSession:atIndexPath:": (tableView, session, indexPath) => {
-                const clip = this.data.getByIndex(indexPath.jsValue())
-                const itemProvider = $objc("NSItemProvider").$alloc()
-                if (clip.image) {
-                    const filePath = $file.absolutePath(clip.imagePath.original)
-                    const fileURL = NSURL.$fileURLWithPath(filePath)
-                    itemProvider.$initWithContentsOfURL(fileURL)
-                } else {
-                    itemProvider.$initWithObject(clip.text)
-                }
-                const dragItem = $objc("UIDragItem").$alloc().$initWithItemProvider(itemProvider)
-
-                const context = session.$localContext()
-                if (context) {
-                    context.$addObject(dragItem)
-                } else {
-                    const mutableArray = NSMutableArray.$new()
-                    mutableArray.$addObject(dragItem)
-                    session.$setLocalContext(mutableArray)
-                }
-
-                return [dragItem]
+                return this.itemsForBeginningDragSession(session, indexPath)
             }
         }
 
         return $delegate({
             type: "UITableViewDragDelegate",
+            events
+        })
+    }
+
+    collectionViewDragDelegate() {
+        const events = {
+            "collectionView:itemsForBeginningDragSession:atIndexPath:": (collectionView, session, indexPath) => {
+                return this.itemsForBeginningDragSession(session, indexPath)
+            }
+        }
+
+        return $delegate({
+            type: "UICollectionViewDragDelegate",
             events
         })
     }
@@ -580,11 +598,15 @@ class ClipsDelegates {
     setDelegate() {
         const view = $(this.views.listId).ocValue()
 
-        this.initReuseIdentifier(view)
+        if (this.isCollectionView) {
+            view.$setDragDelegate(this.collectionViewDragDelegate())
+        } else {
+            this.initReuseIdentifier(view)
 
-        view.$setDelegate(this.delegate())
-        view.$setDragDelegate(this.dragDelegate())
-        view.$setDropDelegate(this.dropDelegate())
+            view.$setDelegate(this.delegate())
+            view.$setDragDelegate(this.dragDelegate())
+            view.$setDropDelegate(this.dropDelegate())
+        }
     }
 }
 
