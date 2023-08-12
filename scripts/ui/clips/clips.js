@@ -235,6 +235,7 @@ class Clips extends ClipsData {
     add(item, updateUI = true) {
         try {
             const data = super.addItem(item)
+            if (!data) return
 
             if (!updateUI) return
 

@@ -31,6 +31,9 @@ class AppKernelBase extends Kernel {
         this.initComponents()
     }
 
+    /**
+     * @type {Storage}
+     */
     get storage() {
         if (!this.#storage) {
             this.print("init storage")
