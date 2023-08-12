@@ -27,9 +27,11 @@ class ClipsData {
     clipsUUIDMap = {}
     clipsMD5Map = {} // 键为 md5，用来去重 boolean
 
+    rememberTabIndex = true
+    #tabIndex = 0 // use when rememberTabIndex = false
     tabItems = [$l10n("FAVORITE"), $l10n("CLIPS")]
-    tabItemsIndex = ["favorite", "clips"]
-    tabItemsMap = array2object(this.tabItemsIndex)
+    tabItemsIndex = ["favorite", "clips"] // 获取索引对应的表名
+    tabItemsMap = array2object(this.tabItemsIndex) // 获取表名对应的索引
 
     /**
      * @param {AppKernel} kernel
@@ -39,10 +41,18 @@ class ClipsData {
     }
 
     get tabIndex() {
-        return $cache.get("caio.main.tab.index") ?? 0
+        if (this.rememberTabIndex) {
+            return $cache.get("caio.main.tab.index") ?? 0
+        } else {
+            return this.#tabIndex
+        }
     }
     set tabIndex(index) {
-        $cache.set("caio.main.tab.index", index)
+        if (this.rememberTabIndex) {
+            $cache.set("caio.main.tab.index", index)
+        } else {
+            this.#tabIndex = index
+        }
     }
 
     get table() {
@@ -188,6 +198,16 @@ class ClipsData {
     }
 
     exists(text) {
+        // 未知原因，在快捷指令中总是返回 false
+        // try {
+        //     const result = this.kernel.storage.getByMD5($text.MD5(text))
+        //     return result !== undefined
+        // } catch {
+        //     return false
+        // }
+        if (Object.keys(this.clipsMD5Map).length === 0) {
+            this.clips // 生成索引
+        }
         return Boolean(this.clipsMD5Map[$text.MD5(text)])
     }
 
