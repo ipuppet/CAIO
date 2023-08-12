@@ -200,7 +200,7 @@ class ClipsData {
     }
 
     addItem(item) {
-        if (this.exists(item)) return
+        if (this.exists(item)) throw new Error("Item already exists")
         // 元数据
         const clip = new Clip({
             uuid: $text.uuid,

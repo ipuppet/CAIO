@@ -151,13 +151,13 @@ class SecureHttp extends SecureFunctionBase {
                 if (typeof errMsg === "object") {
                     errMsg = JSON.stringify(errMsg)
                 }
-                throw new Error("http error: [" + resp.response.statusCode + "] " + errMsg)
+                throw new Error("Http error: [" + resp.response.statusCode + "] " + errMsg)
             }
 
             return resp
         } catch (error) {
             if (error.code) {
-                error = new Error("network error: [" + error.code + "] " + error.localizedDescription)
+                error = new Error("Network error: [" + error.code + "] " + error.localizedDescription)
             }
             this.error(`Action request error: ${this.name}`)
             this.error(error)

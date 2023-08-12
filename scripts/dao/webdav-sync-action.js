@@ -33,7 +33,7 @@ class WebDavSyncAction extends WebDavSync {
         const resp = await this.webdav.get(this.webdavActionsPath)
         const success = await $archiver.unzip({ file: resp.rawData, dest: rawTempPath })
         if (!success) {
-            throw new Error("unzip failed")
+            throw new Error($l10n("UNZIP_FAILED"))
         }
         await this.downloadSyncData()
 
@@ -47,7 +47,7 @@ class WebDavSyncAction extends WebDavSync {
             dest: this.kernel.fileStorage.filePath(actionsZip)
         })
         if (!success) {
-            throw new Error("zip failed")
+            throw new Error($l10n("ZIP_FAILED"))
         }
         await $wait(0.5)
         await this.webdav.put(this.webdavActionsPath, this.kernel.fileStorage.readSync(actionsZip))
