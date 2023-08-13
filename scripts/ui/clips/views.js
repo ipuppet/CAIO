@@ -14,7 +14,7 @@ class ClipsViews {
 
     // 剪贴板列个性化设置
     #singleLine = false
-    #singleLineContentHeight = -1
+    #singleLineContentHeight = 0
     tabLeftMargin = 20 // tab 左边距
     horizontalMargin = 20 // 列表边距
     verticalMargin = 14 // 列表边距
@@ -42,7 +42,7 @@ class ClipsViews {
     }
 
     get singleLineContentHeight() {
-        if (this.#singleLineContentHeight < 0) {
+        if (this.#singleLineContentHeight === 0) {
             this.#singleLineContentHeight = this.getTextHeight($font(this.fontSize))
         }
         return this.#singleLineContentHeight
@@ -52,6 +52,7 @@ class ClipsViews {
         this.#singleLine = true
         // 图片高度与文字一致
         this.imageContentHeight = this.singleLineContentHeight
+        this.#singleLineContentHeight = 0
     }
 
     getTextHeight(font, text = "a") {

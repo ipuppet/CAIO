@@ -360,7 +360,7 @@ class Storage {
         } catch (error) {
             throw error
         } finally {
-            result.close()
+            result?.close()
         }
         return data
     }
