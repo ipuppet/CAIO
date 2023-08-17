@@ -1,5 +1,5 @@
 const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
-const Editor = require("./editor")
+const Editor = require("../components/editor")
 const ActionManagerData = require("../../dao/action-data")
 const { ActionEnv, ActionData } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
