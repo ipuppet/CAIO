@@ -49,6 +49,7 @@ class Keyboard extends Clips {
         }
 
         this.views.listId += "keyboard"
+        this.views.tabLeftMargin = 10
         this.views.horizontalMargin = 15 // 列表边距
         this.views.verticalMargin = 12 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
@@ -146,6 +147,12 @@ class Keyboard extends Clips {
                 })
             },
             {
+                symbol: "doc.on.clipboard",
+                tapped: this.keyboardTapped(() => {
+                    $keyboard.insert($clipboard.text)
+                })
+            },
+            {
                 // Action
                 symbol: "bolt.circle",
                 tapped: this.keyboardTapped(() => {
@@ -185,11 +192,8 @@ class Keyboard extends Clips {
                     layout: $layout.fill,
                     views: [
                         {
-                            type: "label",
-                            props: {
-                                text: $l10n("CAIO"),
-                                font: $font("bold", 20)
-                            },
+                            type: "image",
+                            props: { src: "assets/icon.png" },
                             events: {
                                 tapped: () => this.kernel.openInJsbox(),
                                 ready: sender => {
@@ -217,6 +221,7 @@ class Keyboard extends Clips {
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
                                 make.left.equalTo(view.super).offset(this.views.containerMargin)
+                                make.size.equalTo($size(30, 30))
                             }
                         }
                     ].concat(super.getTabView(), this.getTopButtons())
