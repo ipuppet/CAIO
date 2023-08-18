@@ -185,10 +185,13 @@ class ClipsDelegates {
             destructive ? 1 : 0,
             title,
             $block("void, UIContextualAction *, UIView *, void", (action, sourceView, completionHandler) => {
-                handler(action, sourceView, completionHandler)
                 if (autoCloseEditing) {
                     $(this.views.listId).setEditing(false)
                 }
+                // 等待动画结束
+                $delay(0.3, () => {
+                    handler(action, sourceView, completionHandler)
+                })
             })
         )
         if (color) {

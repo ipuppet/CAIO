@@ -273,11 +273,11 @@ class Storage {
     async import(data) {
         if (data.fileName.slice(-2) === "db") {
             if (!this.kernel.fileStorage.writeSync(this.localDb, data)) {
-                throw new Error("WRITE_DB_FILE_FAILED")
+                throw new Error($l10n("WRITE_DB_FILE_FAILED"))
             }
         } else if (data.fileName.slice(-3) === "zip") {
             if (!(await $archiver.unzip({ file: data, dest: this.kernel.fileStorage.filePath(this.tempPath) }))) {
-                throw new Error("UNZIP_FAILED")
+                throw new Error($l10n("UNZIP_FAILED"))
             }
             this.kernel.fileStorage.move(this.tempDbFile, this.localDb)
             // image
@@ -360,7 +360,7 @@ class Storage {
         } catch (error) {
             throw error
         } finally {
-            result.close()
+            result?.close()
         }
         return data
     }

@@ -1,17 +1,7 @@
-const { SettingInfo, SettingScript, SettingTab, UIKit } = require("../libs/easy-jsbox")
+const { SettingInfo, SettingScript, SettingTab } = require("../libs/easy-jsbox")
 
-const clip = require("./general/clip")
-const action = require("./general/action")
-const editor = require("./general/editor")
-const keyboard = require("./general/keyboard")
-const widget = require("./general/widget")
-const today = require("./general/today")
-
-const experimental = require("./experimental/experimental")
-
-const generalSection = {
-    items: [clip, action, editor].concat(UIKit.isTaio ? [] : [keyboard, widget, today])
-}
+const generalSection = require("./general/general")
+const experimentalSection = require("./experimental/experimental")
 
 const displaySection = {
     items: [
@@ -26,10 +16,6 @@ const displaySection = {
             title: "FILE_MANAGEMENT"
         }).with({ script: "this.method.fileManager" })
     ]
-}
-
-const experimentalSection = {
-    items: [experimental]
 }
 
 const aboutSection = {

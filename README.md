@@ -43,3 +43,21 @@ Host: https://example.com/dav
 User: guest  
 Password: password123  
 Bast Path: /path/to/save/appdata
+
+## Shortcuts
+
+Please add a new action called `Run JSBox script` and set the `Name` parameter to `CAIO`.
+
+Next, set the `Parameter Dictionary` to a `Dictionary`. 
+
+| Parameter | Type   |
+| --------- | ------ |
+| set       | Text   |
+| get       | Number |
+| table     | Text   |
+
+`set`: The content will be saved to CAIO unless there is already an existing item with the same name.
+
+`get`: The item at the specified index (e.g., 0) will be returned.
+
+`table`: It will specify the table to either set or get the item from, with options being `["favorite", "clips"]`. This parameter is optional and has a default value of `clips`.

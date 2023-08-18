@@ -36,12 +36,13 @@ class Today extends Clips {
         this.listSection = Math.min(this.tabIndex, 1) // 当前选中列表，只取 0 或 1，默认 1
 
         this.views.listId += "today"
+        this.views.tabLeftMargin = 8
         this.views.horizontalMargin = 15 // 列表边距
-        this.views.verticalMargin = 12 // 列表边距
+        this.views.verticalMargin = 5 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
-        this.views.containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
         this.views.fontSize = 14 // 字体大小
-        this.views.tagHeight = this.views.verticalMargin + 3
+        this.views.tagHeight = 12
+        this.views.tagColor = $color("gray", "lightGray")
         this.views.setSingleLine()
     }
 

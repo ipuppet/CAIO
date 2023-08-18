@@ -7,6 +7,7 @@ switch ($app.env) {
         break
     case $env.today:
     case $env.keyboard:
+    case $env.siri:
         AppInstance = require("./scripts/app-lite")
         break
     case $env.widget:

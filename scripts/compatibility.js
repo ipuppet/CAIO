@@ -158,7 +158,7 @@ class VersionActions {
         if (typeof this[`ver${version}`] === "function") {
             this[`ver${version}`]()
         } else {
-            throw new ReferenceError(`version ${version} undefined`)
+            throw new ReferenceError(`Version ${version} undefined`)
         }
     }
 
