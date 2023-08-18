@@ -193,7 +193,7 @@ class Keyboard extends Clips {
                     views: [
                         {
                             type: "image",
-                            props: { src: "assets/icon.png" },
+                            props: { image: $image("assets/icon.png", "assets/icon.white.png") },
                             events: {
                                 tapped: () => this.kernel.openInJsbox(),
                                 ready: sender => {
