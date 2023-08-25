@@ -118,7 +118,7 @@ class Keyboard extends Clips {
                 try {
                     await tapped(...args)
                 } catch (error) {
-                    this.kernel.error(error)
+                    this.kernel.logger.error(error)
                     throw error
                 }
             }

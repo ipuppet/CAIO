@@ -142,8 +142,8 @@ class Clips extends ClipsData {
                     listView.cell($indexPath(0, this.getIndexByUUID(copied.uuid))).get("copied").hidden = false
                 }
             } catch (error) {
-                this.kernel.error("set copied error")
-                this.kernel.error(error)
+                this.kernel.logger.error("set copied error")
+                this.kernel.logger.error(error)
             }
         })
 
@@ -152,7 +152,7 @@ class Clips extends ClipsData {
         } else {
             Object.assign(this.copied, copied)
         }
-        this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
+        this.kernel.logger.info(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
 
@@ -188,7 +188,7 @@ class Clips extends ClipsData {
 
     async readClipboard(manual = false) {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
-            this.kernel.print("read clipboard")
+            this.kernel.logger.info("read clipboard")
 
             // 剪切板没有变化则直接退出
             if (!manual && !this.isPasteboardChanged) {
@@ -298,23 +298,10 @@ class Clips extends ClipsData {
             if (!updateUI) return
 
             // 操作 UI
-            const listView = $(this.views.listId)
-            // 移动列表
-            if (from < to) {
-                // 从上往下移动
-                listView.insert({
-                    indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
-                    value: this.views.lineData(this.clips[to])
-                })
-                listView.delete($indexPath(0, from))
-            } else {
-                // 从下往上移动
-                listView.delete($indexPath(0, from))
-                listView.insert({
-                    indexPath: $indexPath(0, to),
-                    value: this.views.lineData(this.clips[to])
-                })
-            }
+            const tableView = $(this.views.listId).ocValue()
+            const fip = $indexPath(0, from).ocValue()
+            const tip = $indexPath(0, to).ocValue()
+            tableView.$moveRowAtIndexPath_toIndexPath(fip, tip)
         } catch (error) {
             $ui.alert(error)
         }
@@ -505,7 +492,7 @@ class Clips extends ClipsData {
                             animate.done()
                         } catch (error) {
                             animate.cancel()
-                            this.kernel.error(error)
+                            this.kernel.logger.error(error)
                         }
                     }
                 }

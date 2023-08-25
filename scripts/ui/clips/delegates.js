@@ -173,25 +173,18 @@ class ClipsDelegates {
         return action
     }
 
-    createUIContextualAction = ({
-        title,
-        handler,
-        color,
-        image,
-        destructive = false,
-        autoCloseEditing = true
-    } = {}) => {
+    createUIContextualAction = ({ title, handler, color, image, destructive = false } = {}) => {
         const action = $objc("UIContextualAction").$contextualActionWithStyle_title_handler(
             destructive ? 1 : 0,
             title,
-            $block("void, UIContextualAction *, UIView *, void", (action, sourceView, completionHandler) => {
-                if (autoCloseEditing) {
-                    $(this.views.listId).setEditing(false)
+            $block("void, UIContextualAction *, UIView *, block", async (action, sourceView, completionHandler) => {
+                // completionHandler 只有第一次触发时生效，原因未知
+                completionHandler = actionPerformed => {
+                    if (actionPerformed) {
+                        $(this.views.listId).ocValue().$setEditing_animated(false, true)
+                    }
                 }
-                // 等待动画结束
-                $delay(0.3, () => {
-                    handler(action, sourceView, completionHandler)
-                })
+                await handler(action, sourceView, completionHandler)
             })
         )
         if (color) {
@@ -268,7 +261,7 @@ class ClipsDelegates {
      */
     setEditing(mode) {
         const listView = $(this.views.listId)
-        const listViewOC = $(this.views.listId).ocValue()
+        const listViewOC = listView.ocValue()
         let status = mode !== undefined ? mode : !listViewOC.$isEditing()
 
         if (status === listViewOC.$isEditing()) {
@@ -370,14 +363,13 @@ class ClipsDelegates {
     }
 
     leadingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath) {
-        tableView = tableView.jsValue()
-        indexPath = indexPath.jsValue()
         return $objc("UISwipeActionsConfiguration").$configurationWithActions([
             this.createUIContextualAction({
                 title: $l10n("COPY"),
                 color: $color("systemLink"),
-                handler: (action, sourceView, completionHandler) => {
-                    this.data.copy(this.data.getByIndex(indexPath).uuid)
+                handler: async (action, sourceView, completionHandler) => {
+                    this.data.copy(this.data.getByIndex(indexPath.jsValue()).uuid)
+                    completionHandler(true)
                 }
             })
         ])
@@ -388,7 +380,6 @@ class ClipsDelegates {
         return $objc("UISwipeActionsConfiguration").$configurationWithActions([
             this.createUIContextualAction({
                 destructive: true,
-                autoCloseEditing: false,
                 title: $l10n("DELETE"),
                 handler: (action, sourceView, completionHandler) => {
                     this.data.delete(this.data.getByIndex(indexPath).uuid)
@@ -400,7 +391,6 @@ class ClipsDelegates {
             this.createUIContextualAction({
                 title: $l10n("FAVORITE"),
                 color: $color("orange"),
-                autoCloseEditing: false,
                 handler: (action, sourceView, completionHandler) => {
                     this.data.favorite(indexPath.row)
                 }
@@ -537,7 +527,7 @@ class ClipsDelegates {
             const completionHandler = (data, error) => {
                 if (error) {
                     $ui.alert(error.jsValue())
-                    this.kernel.error(error.jsValue())
+                    this.kernel.logger.error(error.jsValue())
                 }
 
                 placeholderContext.$commitInsertionWithDataSourceUpdates(

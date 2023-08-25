@@ -136,7 +136,7 @@ class Storage {
             })
             await this.webdavSync.init()
         } catch (error) {
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
@@ -163,7 +163,7 @@ class Storage {
         )
         this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
 
-        this.kernel.print("init database")
+        this.kernel.logger.info("init database")
     }
 
     rebuild() {
@@ -198,7 +198,7 @@ class Storage {
                     rebuildData.unshift(data)
                 } catch (error) {
                     storage.rollback()
-                    this.kernel.error(error)
+                    this.kernel.logger.error(error)
                     throw error
                 }
             })
@@ -225,7 +225,7 @@ class Storage {
                 storage.commit()
             } catch (error) {
                 storage.rollback()
-                this.kernel.error(error)
+                this.kernel.logger.error(error)
                 throw error
             }
         })
@@ -233,14 +233,14 @@ class Storage {
         this.kernel.fileStorage.copy(db, this.localDb)
         this.needUpload()
 
-        this.kernel.print("database rebuild")
+        this.kernel.logger.info("database rebuild")
     }
 
     deleteAllData() {
         this.kernel.fileStorage.delete(this.imagePath.base)
         this.kernel.fileStorage.delete(this.localDb)
         this.needUpload()
-        this.kernel.print("delete all database")
+        this.kernel.logger.info("delete all database")
     }
 
     clearTemp() {
@@ -454,7 +454,7 @@ class Storage {
             throw result.error
         }
         this.needUpload()
-        this.kernel.print(`delete table ${table}`)
+        this.kernel.logger.info(`delete table ${table}`)
     }
 
     all(table) {

@@ -25,7 +25,7 @@ class Compatibility {
     #deleteFiles() {
         this.files.forEach(file => {
             if ($file.exists(file)) {
-                this.kernel.print(`delete file: ${file}`)
+                this.kernel.logger.info(`delete file: ${file}`)
                 $file.delete(file)
             }
         })
@@ -50,9 +50,9 @@ class Compatibility {
             result.result.close()
 
             if (count > 0) {
-                this.kernel.print(`copy data from old table: ${oldTab}`)
+                this.kernel.logger.info(`copy data from old table: ${oldTab}`)
                 this.kernel.storage.sqlite.update(`INSERT INTO ${newTab} SELECT * FROM ${oldTab}`)
-                this.kernel.print(`drop table: ${oldTab}`)
+                this.kernel.logger.info(`drop table: ${oldTab}`)
                 this.kernel.storage.sqlite.update(`DROP TABLE ${oldTab}`)
             }
         }
@@ -110,7 +110,7 @@ class Compatibility {
         for (let type of Object.keys(this.actions)) {
             this.actions[type].forEach(action => {
                 if ($file.exists(`${userActionPath}/${type}/${action}`)) {
-                    this.kernel.print(`rebuild user action: ${type}/${action}`)
+                    this.kernel.logger.info(`rebuild user action: ${type}/${action}`)
                     $file.copy({
                         src: `${actionPath}/${type}/${action}/main.js`,
                         dst: `${userActionPath}/${type}/${action}/main.js`
@@ -143,11 +143,11 @@ class VersionActions {
     do() {
         // this.userVersion === 0 视为新用户
         if (this.userVersion > 0 && this.userVersion < this.version) {
-            this.kernel.print(`compatibility: userVersion [${this.userVersion}] lower than [${this.version}]`)
+            this.kernel.logger.info(`compatibility: userVersion [${this.userVersion}] lower than [${this.version}]`)
             for (let i = this.userVersion + 1; i <= this.version; i++) {
                 this.call(i)
             }
-            this.compatibility.do().catch(e => this.kernel.error(e))
+            this.compatibility.do().catch(e => this.kernel.logger.error(e))
         }
 
         // 修改版本
@@ -245,7 +245,7 @@ async function compatibility(kernel) {
         const versionActions = new VersionActions(kernel)
         versionActions.do()
     } catch (error) {
-        kernel.error(error)
+        kernel.logger.error(error)
         throw error
     }
 }

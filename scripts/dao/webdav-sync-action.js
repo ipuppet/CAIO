@@ -38,7 +38,7 @@ class WebDavSyncAction extends WebDavSync {
         await this.downloadSyncData()
 
         this.kernel.fileStorage.move(tempPath, this.localActionsPath)
-        this.kernel.print(`action webdav sync: pulled`)
+        this.kernel.logger.info(`action webdav sync: pulled`)
     }
     async push() {
         const actionsZip = FileStorage.join(this.tempPath, "actions.zip")
@@ -54,7 +54,7 @@ class WebDavSyncAction extends WebDavSync {
         await this.uploadSyncData()
 
         this.kernel.fileStorage.delete(actionsZip)
-        this.kernel.print(`action webdav sync: pushed`)
+        this.kernel.logger.info(`action webdav sync: pushed`)
     }
 
     notify(option) {
@@ -68,7 +68,7 @@ class WebDavSyncAction extends WebDavSync {
         let isPull = false
         try {
             const syncStep = await this.nextSyncStep()
-            this.kernel.print(`action nextSyncStep: ${WebDavSync.stepName[syncStep]}`)
+            this.kernel.logger.info(`action nextSyncStep: ${WebDavSync.stepName[syncStep]}`)
             if (syncStep === WebDavSync.step.needPush || syncStep === WebDavSync.step.init) {
                 await this.push()
             } else if (syncStep === WebDavSync.step.needPull) {

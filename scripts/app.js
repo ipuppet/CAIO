@@ -22,9 +22,10 @@ class AppKernelBase extends Kernel {
         this.fileStorage = AppKernelBase.fileStorage
         // Logger
         this.logger = new Logger()
-        this.logger.printToFile(this.fileStorage, this.logFilePath)
+        this.logger.setWriter(this.fileStorage, this.logFilePath)
         // Setting
         this.setting = new Setting({
+            logger: this.logger,
             fileStorage: this.fileStorage,
             structure: SettingStructure
         })
@@ -36,26 +37,10 @@ class AppKernelBase extends Kernel {
      */
     get storage() {
         if (!this.#storage) {
-            this.print("init storage")
+            this.logger.info("init storage")
             this.#storage = new Storage(this)
         }
         return this.#storage
-    }
-
-    error(message) {
-        if (this.fileStorage.exists(this.logFilePath)) {
-            const logFileSize = this.fileStorage.readSync(this.logFilePath)?.info?.size ?? 0
-            if (logFileSize > 1024 * 10) {
-                const dist = FileStorage.join(this.logPath, `caio.${Date.now()}.log`)
-                this.fileStorage.move(this.logFilePath, dist)
-            }
-        }
-
-        if (message instanceof Error) {
-            message = `${message}\n${message.stack}`
-        }
-        super.error(message)
-        this.logger.error(message)
     }
 
     initComponents() {

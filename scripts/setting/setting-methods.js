@@ -50,7 +50,7 @@ function clips() {
                                         })
                                         .catch(error => {
                                             $ui.error(error)
-                                            kernel.error(error)
+                                            kernel.logger.error(error)
                                             animate.cancel()
                                         })
                                 } else {
@@ -360,12 +360,10 @@ function keyboard() {
 
 function todayWidget() {
     kernel.setting.method.previewTodayWidget = animate => {
-        animate.touchHighlightStart()
         const Today = require("../ui/today")
         const today = new Today(kernel).getView()
         UIKit.push({
-            views: [today],
-            disappeared: () => animate.touchHighlightEnd()
+            views: [today]
         })
     }
 
@@ -398,42 +396,40 @@ function settingMethods(appKernel) {
             } catch {}
         }
 
-        $http.get({
-            url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json",
-            handler: resp => {
-                const version = resp.data?.info.version
-                let info
-                try {
-                    info = __INFO__
-                } catch {
-                    info = JSON.parse($file.read("config.json").string).info
-                }
-                if (Kernel.versionCompare(version, info.version) > 0) {
-                    $ui.alert({
-                        title: "New Version",
-                        message: `New version found: ${version}\nUpdate via Github or click the button to open Erots.`,
-                        actions: [
-                            { title: $l10n("CANCEL") },
-                            {
-                                title: "Erots",
-                                handler: () => {
-                                    $addin.run({
-                                        name: "Erots",
-                                        query: {
-                                            q: "show",
-                                            objectId: "603e6eaaca0dd64fcef93e2d"
-                                        }
-                                    })
-                                }
-                            }
-                        ]
-                    })
-                } else {
-                    $ui.toast("No need to update")
-                }
-                animate.done()
-            }
+        const resp = await $http.get({
+            url: "https://raw.githubusercontent.com/ipuppet/CAIO/master/config.json"
         })
+        const version = resp.data?.info.version
+        let info
+        try {
+            info = __INFO__
+        } catch {
+            info = JSON.parse($file.read("config.json").string).info
+        }
+        if (Kernel.versionCompare(version, info.version) > 0) {
+            $ui.alert({
+                title: "New Version",
+                message: `New version found: ${version}\nUpdate via Github or click the button to open Erots.`,
+                actions: [
+                    { title: $l10n("CANCEL") },
+                    {
+                        title: "Erots",
+                        handler: () => {
+                            $addin.run({
+                                name: "Erots",
+                                query: {
+                                    q: "show",
+                                    objectId: "603e6eaaca0dd64fcef93e2d"
+                                }
+                            })
+                        }
+                    }
+                ]
+            })
+        } else {
+            $ui.toast("No need to update")
+        }
+        animate.done()
     }
 
     kernel.setting.method.previewWidget = animate => {

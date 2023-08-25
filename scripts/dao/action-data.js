@@ -37,7 +37,7 @@ class ActionManagerData {
                     items: this.getActions(type)
                 }
             })
-            this.kernel.print(`init actions`)
+            this.kernel.logger.info(`init actions`)
         }
         return this.#actions
     }
@@ -131,7 +131,7 @@ class ActionManagerData {
             })
             await this.webdavSync.init()
         } catch (error) {
-            this.kernel.error(`${error}\n${error.stack}`)
+            this.kernel.logger.error(`${error}\n${error.stack}`)
             throw error
         }
     }
@@ -216,7 +216,7 @@ class ActionManagerData {
             const action = new MyAction(this.kernel, config, data)
             return action
         } catch (error) {
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
@@ -227,7 +227,7 @@ class ActionManagerData {
                 const action = this.getAction(type, dir, data)
                 return await action.do()
             } catch (error) {
-                this.kernel.error(error)
+                this.kernel.logger.error(error)
                 throw error
             }
         }

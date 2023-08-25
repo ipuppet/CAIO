@@ -152,7 +152,7 @@ class Action {
                 this.#kernel.storage.deleteTable("clips")
                 return true
             } catch (error) {
-                this.#kernel.error(error)
+                this.#kernel.logger.error(error)
                 throw error
             }
         } else {

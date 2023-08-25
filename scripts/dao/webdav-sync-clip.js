@@ -76,7 +76,7 @@ class WebDavSyncClip extends WebDavSync {
                 if (!dbImages[key].includes(image)) {
                     const localPath = FileStorage.join(this.kernel.storage.imagePath[key], image)
                     this.kernel.fileStorage.delete(localPath)
-                    this.kernel.print(`Local image deleted: ${localPath}`)
+                    this.kernel.logger.info(`Local image deleted: ${localPath}`)
                 }
             })
         })
@@ -88,11 +88,11 @@ class WebDavSyncClip extends WebDavSync {
                 if (webdavImages[key].includes(image) && !this.kernel.fileStorage.exists(localPath)) {
                     const resp = await this.webdav.get(webdavPath)
                     this.kernel.fileStorage.writeSync(localPath, resp.rawData)
-                    this.kernel.print(`WebDAV image downloaded: ${localPath}`)
+                    this.kernel.logger.info(`WebDAV image downloaded: ${localPath}`)
                 } else if (!webdavImages[key].includes(image)) {
                     const file = this.kernel.fileStorage.readSync(localPath)
                     await this.webdav.put(webdavPath, file)
-                    this.kernel.print(`WebDAV image uploaded: ${webdavPath}`)
+                    this.kernel.logger.info(`WebDAV image uploaded: ${webdavPath}`)
                 }
             })
         })
@@ -102,7 +102,7 @@ class WebDavSyncClip extends WebDavSync {
                 if (!dbImages[key].includes(image)) {
                     const webdavPath = FileStorage.join(this.webdavImagePath, key, image)
                     await this.webdav.delete(webdavPath)
-                    this.kernel.print(`WebDAV image deleted: ${webdavPath}`)
+                    this.kernel.logger.info(`WebDAV image deleted: ${webdavPath}`)
                 }
             })
         })
@@ -116,13 +116,13 @@ class WebDavSyncClip extends WebDavSync {
 
         this.kernel.storage.init()
         await this.syncImages()
-        this.kernel.print(`clip webdav sync: pulled`)
+        this.kernel.logger.info(`clip webdav sync: pulled`)
     }
     async push() {
         await this.webdav.put(this.webdavDbPath, this.localDb)
         await this.uploadSyncData()
         await this.syncImages()
-        this.kernel.print(`clip webdav sync: pushed`)
+        this.kernel.logger.info(`clip webdav sync: pushed`)
     }
 
     notify(option) {
@@ -136,7 +136,7 @@ class WebDavSyncClip extends WebDavSync {
         let isPull = false
         try {
             const syncStep = await this.nextSyncStep()
-            this.kernel.print(`clip nextSyncStep: ${WebDavSync.stepName[syncStep]}`)
+            this.kernel.logger.info(`clip nextSyncStep: ${WebDavSync.stepName[syncStep]}`)
             if (syncStep === WebDavSync.step.needPush || syncStep === WebDavSync.step.init) {
                 await this.push()
             } else if (syncStep === WebDavSync.step.needPull) {
@@ -156,8 +156,8 @@ class WebDavSyncClip extends WebDavSync {
                 status: WebDavSync.status.fail,
                 error
             })
-            this.kernel.error("clip sync error")
-            this.kernel.error(error)
+            this.kernel.logger.error("clip sync error")
+            this.kernel.logger.error(error)
             throw error
         } finally {
             this.notify({
