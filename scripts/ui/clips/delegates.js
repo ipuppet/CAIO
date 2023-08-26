@@ -221,29 +221,30 @@ class ClipsDelegates {
 
     toggleAllSelected(deselecteAll = false, updateEditModeToolBar = true) {
         const length = this.data.clips.length
-        const listViewOC = $(this.views.listId).ocValue()
+        const tableView = $(this.views.listId).ocValue()
         if (deselecteAll || this.listSelected.length !== 0) {
             for (let i = 0; i < length; i++) {
                 const indexPath = $indexPath(0, i).ocValue()
-                listViewOC.$deselectRowAtIndexPath_animated(indexPath, false)
+                tableView.$deselectRowAtIndexPath_animated(indexPath, false)
             }
         } else if (this.listSelected.length === 0) {
             for (let i = 0; i < length; i++) {
                 const indexPath = $indexPath(0, i).ocValue()
-                listViewOC.$selectRowAtIndexPath_animated_scrollPosition(indexPath, false, 0)
+                tableView.$selectRowAtIndexPath_animated_scrollPosition(indexPath, false, 0)
             }
         }
 
-        if (updateEditModeToolBar && listViewOC.$isEditing()) {
+        if (updateEditModeToolBar && tableView.$isEditing()) {
             this.updateEditingToolBar()
         }
     }
 
     deleteSelected() {
         UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
+            // 倒序排序
             const selected = this.listSelected.sort((a, b) => {
                 return a.row < b.row
-            }) // 倒序排序
+            })
             const uuids = selected.map(indexPath => {
                 return this.data.getByIndex(indexPath).uuid
             })
@@ -260,15 +261,14 @@ class ClipsDelegates {
      * @param {boolean} mode
      */
     setEditing(mode) {
-        const listView = $(this.views.listId)
-        const listViewOC = listView.ocValue()
-        let status = mode !== undefined ? mode : !listViewOC.$isEditing()
+        const tableView = $(this.views.listId).ocValue()
+        let status = mode !== undefined ? mode : !tableView.$isEditing()
 
-        if (status === listViewOC.$isEditing()) {
+        if (status === tableView.$isEditing()) {
             return
         }
 
-        listView.setEditing(status)
+        tableView.$setEditing(status)
         if (typeof this.#setEditingCallback === "function") {
             this.#setEditingCallback(status)
         }
