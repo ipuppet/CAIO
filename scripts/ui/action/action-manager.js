@@ -1,11 +1,14 @@
-const { Matrix, Setting, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
-const Editor = require("../components/editor")
+const { Matrix, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const ActionManagerData = require("../../dao/action-data")
 const { ActionEnv, ActionData } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
+const ActionEditor = require("./editor")
+const ActionViews = require("./views")
+const ActionDelegates = require("./delegates")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
+ * @typedef {ActionManager} ActionManager
  */
 
 class ActionManager extends ActionManagerData {
@@ -16,11 +19,17 @@ class ActionManager extends ActionManagerData {
     syncButtonId = "action-manager-button-sync"
     syncLabelId = "action-manager-sync-label"
 
+    constructor(...args) {
+        super(...args)
+        this.views = new ActionViews(this.kernel, this)
+        this.delegates = new ActionDelegates(this.kernel, this, this.views)
+    }
+
     get actionList() {
         return super.actions.map(type => {
             const items = []
             type.items.forEach(action => {
-                items.push(this.actionToData(action))
+                items.push(this.views.actionToData(action))
             })
 
             // 返回新对象
@@ -56,216 +65,14 @@ class ActionManager extends ActionManagerData {
         })
     }
 
-    getColor(color, _default = null) {
-        if (!color) return _default
-        return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
-    }
-
     editActionInfoPageSheet(info, done) {
-        const actionTypes = this.getActionTypes()
-        const isNew = !Boolean(info)
-        if (isNew) {
-            this.editingActionInfo = {
-                type: actionTypes[0],
-                name: "MyAction",
-                color: "#CC00CC",
-                icon: "icon_062.png", // 默认星星图标
-                readme: ""
-            }
-        } else {
-            this.editingActionInfo = info
-            this.editingActionInfo.readme = this.getActionReadme(info.type, info.dir)
-        }
-
-        const SettingUI = new Setting({
-            structure: [],
-            set: (key, value) => {
-                this.editingActionInfo[key] = value
-                return true
-            },
-            get: (key, _default = null) => {
-                if (Object.prototype.hasOwnProperty.call(this.editingActionInfo, key))
-                    return this.editingActionInfo[key]
-                else return _default
-            }
-        })
-        const nameInput = SettingUI.loader({
-            type: "input",
-            key: "name",
-            icon: ["pencil.circle", "#FF3366"],
-            title: $l10n("NAME")
-        }).create()
-        const createColor = SettingUI.loader({
-            type: "color",
-            key: "color",
-            icon: ["pencil.tip.crop.circle", "#0066CC"],
-            title: $l10n("COLOR")
-        }).create()
-        const iconInput = SettingUI.loader({
-            type: "icon",
-            key: "icon",
-            icon: ["star.circle", "#FF9933"],
-            title: $l10n("ICON"),
-            bgcolor: this.getColor(this.editingActionInfo.color)
-        }).create()
-        const typeMenu = SettingUI.loader({
-            type: "menu",
-            key: "type",
-            icon: ["tag.circle", "#33CC33"],
-            title: $l10n("TYPE"),
-            items: actionTypes,
-            values: actionTypes,
-            pullDown: true
-        }).create()
-        const readme = {
-            type: "view",
-            views: [
-                {
-                    type: "text",
-                    props: {
-                        id: "action-text",
-                        textColor: $color("#000000", "secondaryText"),
-                        bgcolor: $color("systemBackground"),
-                        text: this.editingActionInfo.readme,
-                        insets: $insets(10, 10, 10, 10)
-                    },
-                    layout: $layout.fill,
-                    events: {
-                        tapped: sender => {
-                            $("actionInfoPageSheetList").scrollToOffset($point(0, isNew ? 280 : 230)) // 新建有分类字段
-                            $delay(0.2, () => sender.focus())
-                        },
-                        didChange: sender => {
-                            this.editingActionInfo.readme = sender.text
-                        }
-                    }
-                }
-            ],
-            layout: $layout.fill
-        }
-        const data = [
-            { title: $l10n("INFORMATION"), rows: [nameInput, createColor, iconInput] },
-            { title: $l10n("DESCRIPTION"), rows: [readme] }
-        ]
-        // 只有新建时才可选择类型
-        if (isNew) data[0].rows = data[0].rows.concat(typeMenu)
-        const sheet = new Sheet()
-        const sheetDone = async () => {
-            if (isNew) {
-                this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
-                if (this.exists(this.editingActionInfo)) {
-                    const resp = await $ui.alert({
-                        title: $l10n("UNABLE_CREATE_ACTION"),
-                        message: $l10n("ACTION_NAME_ALREADY_EXISTS").replaceAll("${name}", this.editingActionInfo.name)
-                    })
-                    if (resp.index === 1) return
-                }
-                // reorder
-                const order = this.getActionOrder(this.editingActionInfo.type, true)
-                order.unshift(this.editingActionInfo.dir)
-                this.saveOrder(this.editingActionInfo.type, order)
-            }
-            sheet.dismiss()
-            this.saveActionInfo(this.editingActionInfo)
-            await $wait(0.3) // 等待 sheet 关闭
-            if (done) done(this.editingActionInfo)
-        }
-        sheet
-            .setView({
-                type: "list",
-                props: {
-                    id: "actionInfoPageSheetList",
-                    bgcolor: $color("insetGroupedBackground"),
-                    style: 2,
-                    separatorInset: $insets(0, 50, 0, 10), // 分割线边距
-                    data: data
-                },
-                layout: $layout.fill,
-                events: {
-                    rowHeight: (sender, indexPath) => (indexPath.section === 1 ? 120 : 50)
-                }
-            })
-            .addNavBar({
-                title: "",
-                popButton: { title: $l10n("CANCEL") },
-                rightButtons: [
-                    {
-                        title: $l10n("DONE"),
-                        tapped: async () => await sheetDone()
-                    }
-                ]
-            })
-            .init()
-            .present()
+        const editor = new ActionEditor(this, info)
+        editor.editActionInfoPageSheet(done)
     }
 
     editActionMainJs(text = "", info) {
-        const editor = new Editor(this.kernel)
-        editor.pageSheet(
-            text,
-            content => {
-                this.saveMainJs(info, content)
-            },
-            info.name,
-            [
-                {
-                    symbol: "book.circle",
-                    tapped: () => {
-                        let content = $file.read("scripts/action/README.md")?.string
-                        if (!content) {
-                            try {
-                                content = __ACTION_README__.content
-                            } catch {}
-                        }
-                        const sheet = new Sheet()
-                        sheet
-                            .setView({
-                                type: "markdown",
-                                props: { content: content },
-                                layout: (make, view) => {
-                                    make.size.equalTo(view.super)
-                                }
-                            })
-                            .addNavBar({ title: "Document", popButton: { symbol: "x.circle" } })
-                            .init()
-                            .present()
-                    }
-                },
-                {
-                    symbol: "play.circle",
-                    tapped: async () => {
-                        this.saveMainJs(info, editor.text)
-                        let actionRest = await this.getActionHandler(
-                            info.type,
-                            info.dir
-                        )(new ActionData({ env: ActionEnv.build }))
-                        if (actionRest !== undefined) {
-                            if (typeof actionRest === "object") {
-                                actionRest = JSON.stringify(actionRest, null, 2)
-                            }
-                            const sheet = new Sheet()
-                            sheet
-                                .setView({
-                                    type: "code",
-                                    props: {
-                                        lineNumbers: true,
-                                        editable: false,
-                                        text: actionRest
-                                    },
-                                    layout: $layout.fill
-                                })
-                                .addNavBar({
-                                    title: "",
-                                    popButton: { title: $l10n("DONE") }
-                                })
-                                .init()
-                                .present()
-                        }
-                    }
-                }
-            ],
-            "code"
-        )
+        const editor = new ActionEditor(this, info)
+        editor.editActionMainJs(text)
     }
 
     move(from, to) {
@@ -276,7 +83,7 @@ class ActionManager extends ActionManagerData {
         // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
         const actionsView = this.matrix
         // 内存数据已经为排序后的数据，故此处去 to 位置的数据
-        const data = this.actionToData(this.actions[to.section].items[to.row])
+        const data = this.views.actionToData(this.actions[to.section].items[to.row])
         if (from.row < to.row) {
             // 先插入时是插入到 to 位置的前面 to.row + 1
             actionsView.insert({
@@ -303,7 +110,7 @@ class ActionManager extends ActionManagerData {
                     this.editActionInfoPageSheet(oldInfo, info => {
                         // 更新视图信息
                         view.get("info").info = info
-                        view.get("color").bgcolor = this.getColor(info.color)
+                        view.get("color").bgcolor = this.views.getColor(info.color)
                         view.get("name").text = info.name
                         if (info.icon.slice(0, 5) === "icon_") {
                             view.get("icon").icon = $icon(info.icon.slice(5, info.icon.indexOf(".")), $color("#ffffff"))
@@ -362,6 +169,15 @@ class ActionManager extends ActionManagerData {
                 inline: true,
                 items: [
                     {
+                        // share
+                        title: $l10n("SHARE"),
+                        symbol: "square.and.arrow.up",
+                        handler: (sender, indexPath, data) => {
+                            const info = data.info.info
+                            this.exportAction(info)
+                        }
+                    },
+                    {
                         // 删除
                         title: $l10n("DELETE"),
                         symbol: "trash",
@@ -394,7 +210,7 @@ class ActionManager extends ActionManagerData {
                                 this.editActionInfoPageSheet(null, async info => {
                                     this.matrix.insert({
                                         indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
-                                        value: this.actionToData(info)
+                                        value: this.views.actionToData(info)
                                     })
                                     const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                                     this.saveMainJs(info, MainJsTemplate)
@@ -475,18 +291,6 @@ class ActionManager extends ActionManagerData {
                 }
             }
         ]
-    }
-
-    actionToData(action) {
-        return {
-            name: { text: action.name },
-            icon:
-                action?.icon?.slice(0, 5) === "icon_"
-                    ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
-                    : { image: $image(action?.icon) },
-            color: { bgcolor: this.getColor(action.color) },
-            info: { info: action } // 此处实际上是 info 模板的 props，所以需要 { info: action }
-        }
     }
 
     updateSyncLabel(message) {
@@ -668,7 +472,7 @@ class ActionManager extends ActionManagerData {
             events: {
                 ready: sender => {
                     sender.data = actions.map(action => {
-                        return this.actionToData(action)
+                        return this.views.actionToData(action)
                     })
                 },
                 didSelect: async (sender, indexPath, data) => {
@@ -680,152 +484,122 @@ class ActionManager extends ActionManagerData {
         }
     }
 
-    getMatrixView({ columns = 2, spacing = 15, itemHeight = 100 } = {}) {
-        this.matrix = Matrix.create({
-            type: "matrix",
-            props: {
-                columns: columns,
-                itemHeight: itemHeight,
-                spacing: spacing,
-                bgcolor: UIKit.scrollViewBackgroundColor,
-                menu: { items: this.menuItems() },
-                data: this.actionList,
-                template: {
-                    props: {
-                        smoothCorners: true,
-                        cornerRadius: 10,
-                        bgcolor: $color("#ffffff", "#242424")
-                    },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                id: "color",
-                                cornerRadius: 8,
-                                smoothCorners: true
-                            },
-                            layout: make => {
-                                make.top.left.inset(10)
-                                make.size.equalTo($size(30, 30))
-                            }
-                        },
-                        {
-                            type: "image",
-                            props: {
-                                id: "icon",
-                                tintColor: $color("#ffffff")
-                            },
-                            layout: make => {
-                                make.top.left.inset(15)
-                                make.size.equalTo($size(20, 20))
-                            }
-                        },
-                        {
-                            // button
-                            type: "button",
-                            props: {
-                                bgcolor: $color("clear"),
-                                tintColor: UIKit.textColor,
-                                titleColor: UIKit.textColor,
-                                contentEdgeInsets: $insets(0, 0, 0, 0),
-                                titleEdgeInsets: $insets(0, 0, 0, 0),
-                                imageEdgeInsets: $insets(0, 0, 0, 0)
-                            },
-                            views: [
-                                {
-                                    type: "image",
-                                    props: { symbol: "ellipsis.circle" },
-                                    layout: (make, view) => {
-                                        make.center.equalTo(view.super)
-                                        make.size.equalTo(BarButtonItem.style.iconSize)
-                                    }
-                                }
-                            ],
-                            events: {
-                                tapped: sender => {
-                                    const info = sender.next.info
-                                    if (!info) return
-                                    const path = `${this.userActionPath}/${info.type}/${info.dir}/main.js`
-                                    const main = $file.read(path).string
-                                    this.editActionMainJs(main, info)
-                                }
-                            },
-                            layout: make => {
-                                make.top.right.inset(0)
-                                make.size.equalTo(BarButtonItem.style.width)
-                            }
-                        },
-                        {
-                            // 用来保存信息
-                            type: "view",
-                            props: { id: "info", hidden: true }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "name",
-                                font: $font(16)
-                            },
-                            layout: (make, view) => {
-                                make.bottom.left.inset(10)
-                                make.width.equalTo(view.super)
-                            }
-                        }
-                    ]
-                },
-                footer: {
-                    type: "view",
-                    props: {
-                        hidden: !this.kernel.setting.get("webdav.status"),
-                        height: this.kernel.setting.get("webdav.status") ? 50 : 0
-                    },
-                    views: [
-                        {
-                            type: "label",
-                            props: {
-                                id: this.syncLabelId,
-                                color: $color("secondaryText"),
-                                font: $font(12),
-                                text: $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
-                            },
-                            layout: (make, view) => {
-                                make.size.equalTo(view.super)
-                                make.top.inset(-30)
-                                make.left.inset(spacing)
-                            }
-                        }
-                    ]
-                }
-            },
-            layout: $layout.fill,
-            events: {
-                didSelect: (sender, indexPath, data) => {
-                    const info = data.info.info
-                    const actionData = new ActionData({
-                        env: ActionEnv.action,
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
-                    })
-                    this.getActionHandler(info.type, info.dir)(actionData)
-                },
-                pulled: async sender => {
-                    if (this.isEnableWebDavSync) {
-                        this.syncWithWebDav()
-                    } else {
-                        this.updateNavButton(true)
-                        await this.sync()
-                        this.matrix.data = this.actionList
-                        this.updateSyncLabel()
-                        this.updateNavButton(false)
-                        sender.endRefreshing()
-                    }
+    initDataSource(collectionView) {
+        const cellProvider = $block(
+            "UICollectionViewCell *, UICollectionView *, NSIndexPath *, id",
+            (collectionView, indexPath, itemIdentifier) => {
+                const cell = collectionView.$dequeueReusableCellWithReuseIdentifier_forIndexPath(
+                    "ActionCollectionViewCellReuseIdentifier",
+                    indexPath
+                )
+                cell.$contentView().$setBackgroundColor($color("blue").ocValue())
+                const { section, item } = indexPath.jsValue()
+                const view = this.views.matrixTemplate(this.actionList[section].items[item])
+                cell.$contentView().$addSubview($ui.create(view))
+                return cell
+            }
+        )
+        const supplementaryViewProvider = $block(
+            "UICollectionReusableView *, UICollectionView *, NSString *, NSIndexPath *",
+            (collectionView, kind, indexPath) => {
+                if (kind.jsValue() === "UICollectionElementKindSectionHeader") {
+                    const headerView =
+                        collectionView.$dequeueReusableSupplementaryViewOfKind_withReuseIdentifier_forIndexPath(
+                            kind,
+                            "ActionViewCustomHeaderReuseIdentifier",
+                            indexPath
+                        )
+                    const { section } = indexPath.jsValue()
+                    headerView.$titleLabel().$setText(this.actionList[section].title)
+                    return headerView
+                } else {
+                    const footerView =
+                        collectionView.$dequeueReusableSupplementaryViewOfKind_withReuseIdentifier_forIndexPath(
+                            kind,
+                            "ActionViewCustomFooterReuseIdentifier",
+                            indexPath
+                        )
+                    return footerView
                 }
             }
-        })
+        )
+        const dataSource = $objc("UICollectionViewDiffableDataSource").$alloc()
+        dataSource.$initWithCollectionView_cellProvider(collectionView, cellProvider)
+        dataSource.$setSupplementaryViewProvider(supplementaryViewProvider)
+    }
+
+    applySnapshot(collectionView) {
+        const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
+        const actions = this.actionList
+        snapshot.$appendSectionsWithIdentifiers([...Array(actions.length ?? 3).keys()])
+        for (const i in actions) {
+            snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
+                [...Array(actions[i].items.length).keys()],
+                Number(i)
+            )
+        }
+
+        collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, true)
+    }
+
+    getMatrixView() {
+        const events = {
+            ready: collectionView => {
+                // collectionView = collectionView.ocValue()
+                // this.delegates.setDelegate(collectionView)
+                // collectionView.$setCollectionViewLayout(this.views.collectionViewFlowLayout())
+            }
+        }
+        if (this.kernel.setting.get("webdav.status")) {
+            events.pulled = () => this.sync()
+        }
+        this.matrix = this.views.getMatrixView({ data: this.actionList, events,menu:this.menuItems() })
 
         this.actionSyncStatus()
 
         return this.matrix.definition
     }
+    // getMatrixView() {
+    //     const events = {
+    //         ready: collectionView => {
+    //             collectionView = collectionView.ocValue()
+    //             $delay(0.3, () => {
+    //                 //this.delegates.setDelegate(collectionView)
+    //                 this.views.registerClass(collectionView)
+    //                 this.initDataSource(collectionView)
+    //                 this.applySnapshot(collectionView)
+    //             })
+    //         },
+    //         pulled: collectionView => {
+    //             this.applySnapshot(collectionView.ocValue())
+    //             collectionView.endRefreshing()
+    //         }
+    //     }
+    //     if (this.kernel.setting.get("webdav.status")) {
+    //         events.pulled = () => this.sync()
+    //     }
+    //     this.actionSyncStatus()
+    //     return this.views.getMatrixView(events)
+    //     // return {
+    //     //     type: "scroll",
+    //     //     props: {
+    //     //         bgcolor: $color("red"),
+    //     //         alwaysBounceHorizontal: false
+    //     //     },
+    //     //     layout: $layout.fill,
+    //     //     events: {
+    //     //         ready: sender => {
+    //     //             const collectionView = this.views.getCollectionView()
+    //     //             this.delegates.setDelegate(collectionView)
+    //     //             this.initDataSource(collectionView)
+    //     //             this.applySnapshot(collectionView)
+    //     //             //sender = sender.ocValue()
+    //     //             sender.ocValue().$addSubview(collectionView)
+    //     //             sender.relayout()
+    //     //         }
+    //     //     }
+    //     // }
+    // }
 
     getPage() {
         this.navigationView = new NavigationView()
@@ -842,17 +616,7 @@ class ActionManager extends ActionManagerData {
                 // 同步
                 id: this.syncButtonId,
                 symbol: "arrow.triangle.2.circlepath.circle",
-                tapped: async (animate, sender) => {
-                    if (this.isEnableWebDavSync) {
-                        this.syncWithWebDav()
-                    } else {
-                        this.updateNavButton(true)
-                        await this.sync()
-                        this.matrix.data = this.actionList
-                        this.updateSyncLabel()
-                        this.updateNavButton(false)
-                    }
-                }
+                tapped: () => this.sync()
             })
         }
         actionSheet

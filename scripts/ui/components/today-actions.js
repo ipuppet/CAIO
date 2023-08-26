@@ -84,7 +84,7 @@ class TodayActions {
                     action.icon.slice(0, 5) === "icon_"
                         ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
                         : { image: $image(action.icon) },
-                color: { bgcolor: this.kernel.actionManager.getColor(action.color) }
+                color: { bgcolor: this.kernel.actionManager.views.getColor(action.color) }
             }
         })
     }

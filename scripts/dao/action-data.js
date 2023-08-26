@@ -1,10 +1,11 @@
-const { FileStorage } = require("../libs/easy-jsbox")
+const { FileStorage, UIKit } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
 const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
+ * @typedef {ActionManagerData} ActionManagerData
  */
 
 class ActionManagerData {
@@ -103,42 +104,112 @@ class ActionManagerData {
         this.setNeedReload()
     }
 
+    actionToString(type, dir) {
+        return JSON.stringify({
+            config: this.getActionConfigString(type, dir),
+            main: this.getActionMainJs(type, dir),
+            readme: this.getActionReadme(type, dir)
+        })
+    }
+
+    exportAction(action) {
+        const { type, dir, name } = action
+
+        const loading = UIKit.loading()
+        loading.start()
+        const content = this.actionToString(type, dir)
+        loading.end()
+        $share.sheet({
+            items: [
+                {
+                    name: name + ".json",
+                    data: $data({ string: content })
+                }
+            ]
+        })
+    }
+
+    // exportAction(action) {
+    //     const { type, dir, name } = action
+    //     const actionPath = this.getActionPath(type, dir)
+    //     const tmpPath = FileStorage.join(this.tempPath, name + ".zip")
+    //     $file.mkdir(this.tempPath)
+
+    //     const loading = UIKit.loading()
+    //     loading.start()
+
+    //     $archiver.zip({
+    //         directory: actionPath,
+    //         dest: tmpPath,
+    //         handler: success => {
+    //             loading.end()
+    //             if (!success) throw new Error("$archiver.zip failed")
+
+    //             $share.sheet({
+    //                 items: [
+    //                     {
+    //                         name: name + ".zip",
+    //                         data: $file.read(tmpPath)
+    //                     }
+    //                 ],
+    //                 handler: () => {
+    //                     $file.delete(tmpPath)
+    //                 }
+    //             })
+    //         }
+    //     })
+    // }
+
+    importAction(data) {
+        const tmpPath = FileStorage.join(this.tempPath, data.fileName)
+        $file.mkdir(this.tempPath)
+
+        const loading = UIKit.loading()
+        loading.start()
+
+        $archiver.unzip({
+            file: data,
+            dest: tmpPath,
+            handler: success => {
+                loading.end()
+                if (!success) throw new Error("$archiver.unzip failed")
+
+                const config = JSON.parse($file.read(FileStorage.join(tmpPath, "config.json")).string)
+                console.log(config)
+                return
+
+                $file.move({
+                    src: tmpPath,
+                    dst: this.getActionPath()
+                })
+            }
+        })
+    }
+
     getLocalSyncData() {
         const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
         return new Date(localSyncData.timestamp)
     }
 
     async sync() {
-        if (!this.kernel.setting.get("webdav.status")) {
-            return
-        }
+        if (!this.isEnableWebDavSync) return
         if (!this.webdavSync) {
-            await this.initSyncWithWebDav()
+            try {
+                this.webdavSync = new WebDavSyncAction({
+                    kernel: this.kernel,
+                    host: this.kernel.setting.get("webdav.host"),
+                    user: this.kernel.setting.get("webdav.user"),
+                    password: this.kernel.setting.get("webdav.password"),
+                    basepath: this.kernel.setting.get("webdav.basepath")
+                })
+                await this.webdavSync.init()
+            } catch (error) {
+                this.kernel.logger.error(`${error}\n${error.stack}`)
+                throw error
+            }
         } else {
-            await this.webdavSync.init()
+            this.webdavSync.sync()
         }
-    }
-
-    async initSyncWithWebDav() {
-        if (!this.isEnableWebDavSync) return
-        try {
-            this.webdavSync = new WebDavSyncAction({
-                kernel: this.kernel,
-                host: this.kernel.setting.get("webdav.host"),
-                user: this.kernel.setting.get("webdav.user"),
-                password: this.kernel.setting.get("webdav.password"),
-                basepath: this.kernel.setting.get("webdav.basepath")
-            })
-            await this.webdavSync.init()
-        } catch (error) {
-            this.kernel.logger.error(`${error}\n${error.stack}`)
-            throw error
-        }
-    }
-
-    syncWithWebDav() {
-        if (!this.isEnableWebDavSync) return
-        this.webdavSync.sync()
     }
 
     checkUserAction() {
@@ -191,8 +262,15 @@ class ActionManagerData {
         return `${this.userActionPath}/${type}/${dir}`
     }
 
+    getActionConfigString(type, dir) {
+        return $file.read(`${this.getActionPath(type, dir)}/config.json`).string
+    }
     getActionConfig(type, dir) {
-        return JSON.parse($file.read(`${this.getActionPath(type, dir)}/config.json`).string)
+        return JSON.parse(this.getActionConfigString(type, dir))
+    }
+
+    getActionMainJs(type, dir) {
+        return $file.read(`${this.getActionPath(type, dir)}/main.js`).string
     }
 
     getActionReadme(type, dir) {
@@ -203,17 +281,15 @@ class ActionManagerData {
         if (!$file.exists(this.getActionPath(type, dir))) {
             dir = $text.MD5(dir)
         }
-        const basePath = this.getActionPath(type, dir)
-        const config = this.getActionConfig(type, dir)
         try {
-            const script = $file.read(`${basePath}/main.js`).string
+            const script = this.getActionMainJs(type, dir)
             const ss = new SecureScript(script)
             const MyAction = new Function("Action", "ActionEnv", "ActionData", `${ss.secure()}\n return MyAction`)(
                 Action,
                 ActionEnv,
                 ActionData
             )
-            const action = new MyAction(this.kernel, config, data)
+            const action = new MyAction(this.kernel, this.getActionConfig(type, dir), data)
             return action
         } catch (error) {
             this.kernel.logger.error(error)
