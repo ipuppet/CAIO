@@ -1,5 +1,5 @@
 const { NavigationView, Sheet } = require("../../libs/easy-jsbox")
-const ActionData = require("../../dao/action-data")
+const ActionsData = require("../../dao/action-data")
 const WebDavSync = require("../../dao/webdav-sync")
 const ActionEditor = require("./editor")
 const ActionViews = require("./views")
@@ -10,7 +10,7 @@ const ActionDelegates = require("./delegates")
  * @typedef {Actions} Actions
  */
 
-class Actions extends ActionData {
+class Actions extends ActionsData {
     matrix
     reorder = {}
     addActionButtonId = "action-manager-button-add"
