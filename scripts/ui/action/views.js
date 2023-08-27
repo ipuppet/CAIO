@@ -525,12 +525,12 @@ class ActionViews {
                 spacing: this.spacing,
                 itemHeight: this.itemHeight,
                 bgcolor: UIKit.scrollViewBackgroundColor,
-                //data,
-                //menu,
+                data,
+                menu,
                 template: this.matrixTemplate(),
                 footer: this.matrixFooter()
             },
-            //layout: $layout.fill,
+            layout: $layout.fill,
             events
         }
         return new Matrix(matrix)

@@ -543,73 +543,49 @@ class Actions extends ActionManagerData {
         collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, true)
     }
 
-    getMatrixView() {
-        const events = {
-            ready: collectionView => {
-                collectionView = collectionView.ocValue()
-                $delay(0.3, () => {
-                    this.views.registerClass(collectionView)
-                    this.initDataSource(collectionView)
-                    this.applySnapshot(collectionView)
-                    this.delegates.setDelegate(collectionView)
-                })
-            }
-        }
-        if (this.kernel.setting.get("webdav.status")) {
-            events.pulled = () => this.sync()
-        }
-        const matrix = this.views.getMatrixView({
-            data: this.actionList,
-            events,
-            menu: this.menuItems()
-        })
-
-        //this.actionSyncStatus()
-
-        return matrix
-    }
-
     // getMatrixView() {
     //     const events = {
     //         ready: collectionView => {
     //             collectionView = collectionView.ocValue()
     //             $delay(0.3, () => {
-    //                 //this.delegates.setDelegate(collectionView)
     //                 this.views.registerClass(collectionView)
     //                 this.initDataSource(collectionView)
     //                 this.applySnapshot(collectionView)
+    //                 this.delegates.setDelegate(collectionView)
     //             })
-    //         },
-    //         pulled: collectionView => {
-    //             this.applySnapshot(collectionView.ocValue())
-    //             collectionView.endRefreshing()
     //         }
     //     }
     //     if (this.kernel.setting.get("webdav.status")) {
     //         events.pulled = () => this.sync()
     //     }
+    //     const matrix = this.views.getMatrixView({
+    //         data: this.actionList,
+    //         events,
+    //         menu: this.menuItems()
+    //     })
+
     //     this.actionSyncStatus()
-    //     return this.views.getMatrixView(events)
-    //     // return {
-    //     //     type: "scroll",
-    //     //     props: {
-    //     //         bgcolor: $color("red"),
-    //     //         alwaysBounceHorizontal: false
-    //     //     },
-    //     //     layout: $layout.fill,
-    //     //     events: {
-    //     //         ready: sender => {
-    //     //             const collectionView = this.views.getCollectionView()
-    //     //             this.delegates.setDelegate(collectionView)
-    //     //             this.initDataSource(collectionView)
-    //     //             this.applySnapshot(collectionView)
-    //     //             //sender = sender.ocValue()
-    //     //             sender.ocValue().$addSubview(collectionView)
-    //     //             sender.relayout()
-    //     //         }
-    //     //     }
-    //     // }
+
+    //     return matrix
     // }
+
+    getMatrixView() {
+        const events = {
+            ready: collectionView => {}
+        }
+        if (this.kernel.setting.get("webdav.status")) {
+            events.pulled = () => this.sync()
+        }
+        this.matrix = this.views.getMatrixView({
+            data: this.actionList,
+            events,
+            menu: this.menuItems()
+        })
+
+        this.actionSyncStatus()
+
+        return this.matrix.definition
+    }
 
     getPage() {
         this.navigationView = new NavigationView()
