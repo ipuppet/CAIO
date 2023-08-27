@@ -31,6 +31,66 @@ class AppUI {
                 $delay(0.3, () => (UIKit.isTaio ? $actions.restart() : $addin.restart()))
             }
         })
+
+        // this.kernel.useJsboxNav()
+        // this.kernel.setting.useJsboxNav()
+        // this.kernel.fileManager.setViewController(new ViewController())
+        // this.kernel.tabBarController = new TabBarController()
+        // const clipsdNavigationView = this.kernel.clips.getNavigationView()
+        // this.kernel.tabBarController
+        //     .setPages({
+        //         clips: clipsdNavigationView.getPage(),
+        //         actions: this.kernel.actionManager.getPage(),
+        //         setting: this.kernel.setting.getPage()
+        //     })
+        //     .setCells({
+        //         clips: buttons.clips,
+        //         actions: buttons.actions,
+        //         setting: buttons.setting
+        //     })
+
+        // $define({
+        //     type: "ViewController: UIViewController",
+        //     events: {
+        //         viewDidLoad: () => {
+        //             console.log("viewDidLoad")
+        //             self.$super().$viewDidLoad()
+
+        //             //const view = this.kernel.tabBarController.generateView().definition
+        //             const view = this.kernel.clips.getListView()
+        //             self.$view().jsValue().add(view)
+
+        //             const navigationItem = self.$navigationItem()
+        //             navigationItem.$setTitle("CAIO")
+        //             navigationItem.$setLargeTitleDisplayMode(0)
+
+        //             const leftButton = $objc("UIBarButtonItem").$alloc()
+        //             leftButton.$initWithTitle_style_target_action("Close", 0, self, "backButtonPressed")
+
+        //             navigationItem.$setLeftBarButtonItem(leftButton)
+        //         },
+        //         backButtonPressed: () => {
+        //             self.$dismissViewControllerAnimated_completion(true, null)
+        //         }
+        //     }
+        // })
+
+        // const render = sender => {
+        //     const myVC = $objc("ViewController").$alloc().$init()
+        //     const navigator = $objc("UINavigationController").$alloc().$initWithRootViewController(myVC)
+        //     navigator.$setModalPresentationStyle(0)
+        //     this.kernel.navigator = navigator
+
+        //     const navigationBar = navigator.$navigationBar()
+        //     navigationBar.$setPrefersLargeTitles(true)
+        //     const image = $objc("UIImage").$imageWithColor($color("clear").ocValue())
+        //     navigationBar.$setBackgroundImage_forBarPosition_barMetrics(image, 0, 0)
+
+        //     $ui.vc.ocValue().invoke("presentViewController:animated:completion:", navigator, true, null)
+        // }
+        // render()
+        // return
+
         if (this.kernel.setting.get("mainUIDisplayMode") === 0) {
             this.kernel.useJsboxNav()
             this.kernel.setting.useJsboxNav()
@@ -53,45 +113,6 @@ class AppUI {
                     }
                 }
             ])
-
-            // $define({
-            //     type: "ViewController: UIViewController",
-            //     events: {
-            //         viewDidLoad: () => {
-            //             console.log("viewDidLoad")
-            //             self.$super().$viewDidLoad()
-
-            //             const view = this.kernel.clips.getNavigationView().getPage()
-            //             self.$view().jsValue().add(view)
-
-            //             const navigationBar = self.$navigationController().$navigationBar()
-            //             navigationBar.$setTranslucent(true)
-            //             navigationBar.$setBarStyle(0)
-            //             navigationBar.$setBarTintColor($color("clear"))
-
-            //             const navigationItem = self.$navigationItem()
-            //             navigationItem.$setTitle("CAIO")
-            //             navigationItem.$setLargeTitleDisplayMode(2)
-
-            //             const leftButton = $objc("UIBarButtonItem").$alloc()
-            //             leftButton.$initWithTitle_style_target_action("Close", 0, self, "backButtonPressed")
-
-            //             navigationItem.$setLeftBarButtonItem(leftButton)
-            //         },
-            //         backButtonPressed: () => {
-            //             self.$dismissViewControllerAnimated_completion(true, null)
-            //             self.$dismissViewControllerAnimated_completion(true, null)
-            //         }
-            //     }
-            // })
-
-            // const render = sender => {
-            //     const myVC = $objc("ViewController").$alloc().$init()
-            //     const navigator = $objc("UINavigationController").$alloc().$initWithRootViewController(myVC)
-            //     navigator.$setModalPresentationStyle(0)
-            //     $ui.controller.ocValue().invoke("presentViewController:animated:completion:", navigator, true, null)
-            // }
-            // render()
 
             this.kernel.UIRender(this.kernel.clips.getNavigationView().getPage())
         } else {

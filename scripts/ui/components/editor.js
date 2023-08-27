@@ -113,6 +113,27 @@ class Editor {
         sheet.present()
     }
 
+    getViewController(type, callback) {
+        $define({
+            type: "EditorViewController: UIViewController",
+            events: {
+                viewDidLoad: () => {
+                    console.log("viewDidLoad")
+                    self.$super().$viewDidLoad()
+
+                    self.$view().jsValue().add(this.getView(type))
+
+                    const navigationItem = self.$navigationItem()
+                    navigationItem.$setLargeTitleDisplayMode(2)
+                },
+                "viewDidDisappear:": animated => {
+                    callback()
+                }
+            }
+        })
+        return $objc("EditorViewController").$new()
+    }
+
     /**
      *
      * @param {*} text
@@ -123,6 +144,12 @@ class Editor {
     uikitPush(text = "", callback, navButtons = [], type = "text") {
         this.text = text
         navButtons.unshift(this.getActionButton())
+
+        // this.kernel.navigator.$pushViewController_animated(
+        //     this.getViewController(type, () => callback(this.text)),
+        //     true
+        // )
+        // return
 
         UIKit.push({
             title: "",
