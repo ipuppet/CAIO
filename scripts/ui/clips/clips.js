@@ -101,7 +101,7 @@ class Clips extends ClipsData {
                 this.getAddTextView()
             } else if ($context.query["actions"]) {
                 if (this.kernel.isUseJsboxNav) {
-                    this.kernel.actionManager.present()
+                    this.kernel.actions.present()
                 } else {
                     this.kernel.tabBarController.switchPageTo("actions")
                 }

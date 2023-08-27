@@ -54,7 +54,7 @@ class Editor {
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
                     views: [
-                        this.kernel.actionManager.getActionListView(action => {
+                        this.kernel.actions.views.getActionListView(action => {
                             popover.dismiss()
                             $delay(0.5, () => action(actionData))
                         })

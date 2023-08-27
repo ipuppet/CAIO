@@ -2,7 +2,7 @@ const { Setting, Sheet } = require("../../libs/easy-jsbox")
 const Editor = require("../components/editor")
 
 /**
- * @typedef {import("../../dao/action-data").ActionManagerData} ActionManagerData
+ * @typedef {import("../../dao/action-data").ActionData} ActionData
  */
 
 class ActionEditor {
@@ -10,7 +10,7 @@ class ActionEditor {
 
     /**
      *
-     * @param {ActionManagerData} data
+     * @param {ActionData} data
      * @param {object} info
      */
     constructor(data, info) {

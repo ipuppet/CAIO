@@ -1,5 +1,5 @@
-const { NavigationView, Sheet, UIKit } = require("../../libs/easy-jsbox")
-const ActionManagerData = require("../../dao/action-data")
+const { NavigationView, Sheet } = require("../../libs/easy-jsbox")
+const ActionData = require("../../dao/action-data")
 const WebDavSync = require("../../dao/webdav-sync")
 const ActionEditor = require("./editor")
 const ActionViews = require("./views")
@@ -10,7 +10,7 @@ const ActionDelegates = require("./delegates")
  * @typedef {Actions} Actions
  */
 
-class Actions extends ActionManagerData {
+class Actions extends ActionData {
     matrix
     reorder = {}
     addActionButtonId = "action-manager-button-add"
@@ -157,7 +157,7 @@ class Actions extends ActionManagerData {
                         directions: $popoverDirection.up,
                         size: $size(200, 300),
                         views: [
-                            this.getActionListView(
+                            this.views.getActionListView(
                                 undefined,
                                 {
                                     reorder: true,
@@ -216,173 +216,6 @@ class Actions extends ActionManagerData {
         const syncButton = this.navigationView?.navigationBarItems?.getButton(this.syncButtonId)
         if (syncButton) {
             syncButton.setLoading(loading)
-        }
-    }
-
-    getActionListView(didSelect, props = {}, events = {}) {
-        if (didSelect) {
-            events.didSelect = (sender, indexPath, data) => {
-                const info = data.info.info
-                const action = this.getActionHandler(info.type, info.dir)
-                didSelect(action)
-            }
-        }
-
-        return {
-            type: "list",
-            layout: (make, view) => {
-                make.top.width.equalTo(view.super.safeArea)
-                make.bottom.inset(0)
-            },
-            events: events,
-            props: Object.assign(
-                {
-                    reorder: false,
-                    bgcolor: $color("clear"),
-                    rowHeight: 60,
-                    sectionTitleHeight: 30,
-                    stickyHeader: true,
-                    data: (() => {
-                        const data = this.actionList
-                        data.map(type => {
-                            type.rows = type.items
-                            return type
-                        })
-                        return data
-                    })(),
-                    template: {
-                        props: { bgcolor: $color("clear") },
-                        views: [
-                            {
-                                type: "image",
-                                props: {
-                                    id: "color",
-                                    cornerRadius: 8,
-                                    smoothCorners: true
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.left.inset(15)
-                                    make.size.equalTo($size(30, 30))
-                                }
-                            },
-                            {
-                                type: "image",
-                                props: {
-                                    id: "icon",
-                                    tintColor: $color("#ffffff")
-                                },
-                                layout: (make, view) => {
-                                    make.centerY.equalTo(view.super)
-                                    make.left.inset(20)
-                                    make.size.equalTo($size(20, 20))
-                                }
-                            },
-                            {
-                                type: "label",
-                                props: {
-                                    id: "name",
-                                    lines: 1,
-                                    font: $font(16)
-                                },
-                                layout: (make, view) => {
-                                    make.height.equalTo(30)
-                                    make.centerY.equalTo(view.super)
-                                    make.left.equalTo(view.prev.right).offset(15)
-                                }
-                            },
-                            { type: "label", props: { id: "info" } }
-                        ]
-                    }
-                },
-                props
-            )
-        }
-    }
-
-    getActionMiniView(getActionData, actions) {
-        if (!actions) {
-            actions = []
-            super.actions.forEach(dir => {
-                actions = actions.concat(dir.items)
-            })
-        }
-
-        const matrixItemHeight = 50
-        return {
-            type: "matrix",
-            props: {
-                bgcolor: $color("clear"),
-                columns: 2,
-                itemHeight: matrixItemHeight,
-                spacing: 8,
-                data: [],
-                template: {
-                    props: {
-                        smoothCorners: true,
-                        cornerRadius: 10,
-                        bgcolor: $color($rgba(255, 255, 255, 0.3), $rgba(0, 0, 0, 0.3))
-                    },
-                    views: [
-                        {
-                            type: "image",
-                            props: {
-                                id: "color",
-                                cornerRadius: 8,
-                                smoothCorners: true
-                            },
-                            layout: make => {
-                                const size = matrixItemHeight - 20
-                                make.top.left.inset((matrixItemHeight - size) / 2)
-                                make.size.equalTo($size(size, size))
-                            }
-                        },
-                        {
-                            type: "image",
-                            props: {
-                                id: "icon",
-                                tintColor: $color("#ffffff")
-                            },
-                            layout: (make, view) => {
-                                make.edges.equalTo(view.prev).insets(5)
-                            }
-                        },
-                        {
-                            type: "label",
-                            props: {
-                                id: "name",
-                                font: $font(14)
-                            },
-                            layout: (make, view) => {
-                                make.bottom.top.inset(10)
-                                make.left.equalTo(view.prev.prev.right).offset(10)
-                                make.right.inset(10)
-                            }
-                        },
-                        {
-                            // 用来保存信息
-                            type: "view",
-                            props: {
-                                id: "info",
-                                hidden: true
-                            }
-                        }
-                    ]
-                }
-            },
-            layout: $layout.fill,
-            events: {
-                ready: sender => {
-                    sender.data = actions.map(action => {
-                        return this.views.actionToData(action)
-                    })
-                },
-                didSelect: async (sender, indexPath, data) => {
-                    const info = data.info.info
-                    const actionData = await getActionData(info)
-                    this.getActionHandler(info.type, info.dir)(actionData)
-                }
-            }
         }
     }
 

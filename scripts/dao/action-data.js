@@ -5,10 +5,10 @@ const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
- * @typedef {ActionManagerData} ActionManagerData
+ * @typedef {ActionData} ActionData
  */
 
-class ActionManagerData {
+class ActionData {
     #actions
 
     /**
@@ -448,4 +448,4 @@ class ActionManagerData {
     }
 }
 
-module.exports = ActionManagerData
+module.exports = ActionData

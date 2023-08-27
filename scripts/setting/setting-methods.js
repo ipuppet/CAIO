@@ -186,7 +186,7 @@ function action() {
         const tempPath = `/${fileName}`
         const jsboxPath = kernel.fileStorage.filePath(tempPath)
         $archiver.zip({
-            directory: kernel.actionManager.userActionPath,
+            directory: kernel.actions.userActionPath,
             dest: jsboxPath,
             handler: () => {
                 $share.sheet({
@@ -227,7 +227,7 @@ function action() {
                                 if ($file.isDirectory(`${path}/${item}`)) {
                                     $file.copy({
                                         src: `${path}/${item}`,
-                                        dst: `${kernel.actionManager.userActionPath}/${item}`
+                                        dst: `${kernel.actions.userActionPath}/${item}`
                                     })
                                 }
                             })
@@ -245,7 +245,7 @@ function action() {
 
     kernel.setting.method.importExampleAction = animate => {
         animate.start()
-        kernel.actionManager.importExampleAction()
+        kernel.actions.importExampleAction()
         animate.done()
     }
 
@@ -259,8 +259,8 @@ function action() {
                     title: $l10n("REBUILD"),
                     style: $alertActionType.destructive,
                     handler: () => {
-                        $file.delete(kernel.actionManager.userActionPath)
-                        kernel.actionManager.setNeedReload()
+                        $file.delete(kernel.actions.userActionPath)
+                        kernel.actions.setNeedReload()
                         animate.done()
                         $delay(0.8, () => $addin.restart())
                     }

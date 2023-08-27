@@ -2,7 +2,7 @@ const { Kernel, Logger, FileStorage, Setting, FileManager } = require("./libs/ea
 const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
 const Clips = require("./ui/clips/clips")
-const ActionManager = require("./ui/action/actions")
+const Actions = require("./ui/action/actions")
 
 /**
  * @typedef {AppKernelBase} AppKernelBase
@@ -47,8 +47,8 @@ class AppKernelBase extends Kernel {
     initComponents() {
         // Clips
         this.clips = new Clips(this)
-        // ActionManager
-        this.actionManager = new ActionManager(this)
+        // Actions
+        this.actions = new Actions(this)
         // FileManager
         this.fileManager = new FileManager()
     }

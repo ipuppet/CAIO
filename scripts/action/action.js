@@ -178,7 +178,7 @@ class Action {
      * @returns
      */
     getAction(type, name, data) {
-        return this.#kernel.actionManager.getAction(type, name, data)
+        return this.#kernel.actions.getAction(type, name, data)
     }
 
     async runAction(type, name) {

@@ -40,7 +40,7 @@ class AppUI {
         // this.kernel.tabBarController
         //     .setPages({
         //         clips: clipsdNavigationView.getPage(),
-        //         actions: this.kernel.actionManager.getPage(),
+        //         actions: this.kernel.actions.getPage(),
         //         setting: this.kernel.setting.getPage()
         //     })
         //     .setCells({
@@ -109,7 +109,7 @@ class AppUI {
                     symbol: buttons.actions.icon,
                     title: buttons.actions.title,
                     handler: () => {
-                        this.kernel.actionManager.present()
+                        this.kernel.actions.present()
                     }
                 }
             ])
@@ -125,7 +125,7 @@ class AppUI {
             this.kernel.tabBarController
                 .setPages({
                     clips: clipsdNavigationView.getPage(),
-                    actions: this.kernel.actionManager.getPage(),
+                    actions: this.kernel.actions.getPage(),
                     setting: this.kernel.setting.getPage()
                 })
                 .setCells({

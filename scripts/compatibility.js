@@ -118,7 +118,7 @@ class Compatibility {
                 }
             })
         }
-        this.kernel.actionManager.setNeedReload()
+        this.kernel.actions.setNeedReload()
     }
 
     async do() {

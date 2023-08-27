@@ -104,7 +104,7 @@ class ClipsDelegates {
 
     get menu() {
         const action = action => {
-            const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
+            const handler = this.kernel.actions.getActionHandler(action.type, action.dir)
             action.handler = (tableView, indexPath) => {
                 const item = this.data.getByIndex(indexPath)
                 const actionData = new ActionData({
@@ -119,7 +119,7 @@ class ClipsDelegates {
             action.symbol = action.icon
             return action
         }
-        const actions = this.kernel.actionManager.getActions("clipboard")
+        const actions = this.kernel.actions.getActions("clipboard")
         const actionButtons = {
             inline: true,
             items: actions.slice(0, this.menuItemActionMaxCount).map(action)

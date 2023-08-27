@@ -597,7 +597,7 @@ class Keyboard extends Clips {
             type: "view",
             props: { id: this.actionsId, hidden: true },
             views: [
-                this.kernel.actionManager.getActionMiniView(async () => {
+                this.kernel.actions.views.getActionMiniView(async () => {
                     return new ActionData({
                         env: ActionEnv.keyboard,
                         textBeforeInput: $keyboard.textBeforeInput,

@@ -24,7 +24,7 @@ class WebDavSyncAction extends WebDavSync {
     }
 
     isNew() {
-        return this.kernel.actionManager.isNew
+        return this.kernel.actions.isNew
     }
 
     async pull() {

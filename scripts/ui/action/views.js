@@ -36,7 +36,7 @@ class ActionViews {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
                 const info = data.info.info
-                const action = this.getActionHandler(info.type, info.dir)
+                const action = this.data.getActionHandler(info.type, info.dir)
                 didSelect(action)
             }
         }
@@ -56,7 +56,7 @@ class ActionViews {
                     sectionTitleHeight: 30,
                     stickyHeader: true,
                     data: (() => {
-                        const data = this.actionList
+                        const data = this.data.actionList
                         data.map(type => {
                             type.rows = type.items
                             return type
@@ -116,7 +116,7 @@ class ActionViews {
     getActionMiniView(getActionData, actions) {
         if (!actions) {
             actions = []
-            super.actions.forEach(dir => {
+            this.data.actions.forEach(dir => {
                 actions = actions.concat(dir.items)
             })
         }
@@ -193,7 +193,7 @@ class ActionViews {
                 didSelect: async (sender, indexPath, data) => {
                     const info = data.info.info
                     const actionData = await getActionData(info)
-                    this.getActionHandler(info.type, info.dir)(actionData)
+                    this.data.getActionHandler(info.type, info.dir)(actionData)
                 }
             }
         }
