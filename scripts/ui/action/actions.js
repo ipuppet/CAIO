@@ -96,103 +96,6 @@ class Actions extends ActionManagerData {
         // }
     }
 
-    menuItems() {
-        // 卡片长按菜单
-        return [
-            {
-                // 编辑信息
-                title: $l10n("EDIT_DETAILS"),
-                symbol: "slider.horizontal.3",
-                handler: (sender, indexPath) => {
-                    const view = sender.cell(indexPath)
-                    const oldInfo = view.get("info").info
-                    this.editActionInfoPageSheet(oldInfo, info => {
-                        // 更新视图信息
-                        view.get("info").info = info
-                        view.get("color").bgcolor = this.views.getColor(info.color)
-                        view.get("name").text = info.name
-                        if (info.icon.slice(0, 5) === "icon_") {
-                            view.get("icon").icon = $icon(info.icon.slice(5, info.icon.indexOf(".")), $color("#ffffff"))
-                        } else {
-                            view.get("icon").image = $image(info.icon)
-                        }
-                    })
-                }
-            },
-            {
-                // 编辑脚本
-                title: $l10n("EDIT_SCRIPT"),
-                symbol: "square.and.pencil",
-                handler: (sender, indexPath, data) => {
-                    const info = data.info.info
-                    if (!info) return
-                    const path = `${this.userActionPath}/${info.type}/${info.dir}/main.js`
-                    const main = $file.read(path).string
-                    this.editActionMainJs(main, info)
-                }
-            },
-            {
-                inline: true,
-                items: [
-                    {
-                        // README
-                        title: "README",
-                        symbol: "book",
-                        handler: (sender, indexPath) => {
-                            const view = sender.cell(indexPath)
-                            const info = view.get("info").info
-
-                            let content
-
-                            try {
-                                content = __ACTIONS__[info.type][info.dir]["README.md"]
-                            } catch {
-                                content = this.getActionReadme(info.type, info.dir)
-                            }
-                            const sheet = new Sheet()
-                            sheet
-                                .setView({
-                                    type: "markdown",
-                                    props: { content: content },
-                                    layout: (make, view) => {
-                                        make.size.equalTo(view.super)
-                                    }
-                                })
-                                .init()
-                                .present()
-                        }
-                    }
-                ]
-            },
-            {
-                inline: true,
-                items: [
-                    {
-                        // share
-                        title: $l10n("SHARE"),
-                        symbol: "square.and.arrow.up",
-                        handler: (sender, indexPath, data) => {
-                            const info = data.info.info
-                            this.exportAction(info)
-                        }
-                    },
-                    {
-                        // 删除
-                        title: $l10n("DELETE"),
-                        symbol: "trash",
-                        destructive: true,
-                        handler: (sender, indexPath, data) => {
-                            UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
-                                this.delete(data.info.info)
-                                sender.delete(indexPath)
-                            })
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-
     getNavButtons() {
         return [
             {
@@ -543,48 +446,26 @@ class Actions extends ActionManagerData {
         collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, true)
     }
 
-    // getMatrixView() {
-    //     const events = {
-    //         ready: collectionView => {
-    //             collectionView = collectionView.ocValue()
-    //             $delay(0.3, () => {
-    //                 this.views.registerClass(collectionView)
-    //                 this.initDataSource(collectionView)
-    //                 this.applySnapshot(collectionView)
-    //                 this.delegates.setDelegate(collectionView)
-    //             })
-    //         }
-    //     }
-    //     if (this.kernel.setting.get("webdav.status")) {
-    //         events.pulled = () => this.sync()
-    //     }
-    //     const matrix = this.views.getMatrixView({
-    //         data: this.actionList,
-    //         events,
-    //         menu: this.menuItems()
-    //     })
-
-    //     this.actionSyncStatus()
-
-    //     return matrix
-    // }
-
     getMatrixView() {
         const events = {
-            ready: collectionView => {}
+            ready: collectionView => {
+                collectionView = collectionView.ocValue()
+                $delay(0.3, () => {
+                    this.views.registerClass(collectionView)
+                    this.initDataSource(collectionView)
+                    this.applySnapshot(collectionView)
+                    this.delegates.setDelegate(collectionView)
+                })
+            }
         }
         if (this.kernel.setting.get("webdav.status")) {
             events.pulled = () => this.sync()
         }
-        this.matrix = this.views.getMatrixView({
-            data: this.actionList,
-            events,
-            menu: this.menuItems()
-        })
+        const matrix = this.views.getMatrixView({ events })
 
         this.actionSyncStatus()
 
-        return this.matrix.definition
+        return matrix
     }
 
     getPage() {

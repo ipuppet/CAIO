@@ -330,34 +330,10 @@ class ActionDelegates {
         )
     }
 
-    collectionViewFlowLayout() {
-        const layout = $objc("UICollectionViewFlowLayout").$alloc().$init()
-        layout.$setScrollDirection($scrollDirection.vertical)
-        layout.$setMinimumLineSpacing(this.views.spacing)
-        layout.$setMinimumInteritemSpacing(this.views.spacing)
-        const concreteValue = $insets(this.views.spacing, this.views.spacing, 0, this.views.spacing).ocValue()
-        layout.$setSectionInset(concreteValue.$UIEdgeInsetsValue())
-        // layout.$setSectionHeadersPinToVisibleBounds(true)
-        return layout
-    }
-
-    collectionViewDelegateFlowLayout() {
-        return {
-            "collectionView:layout:sizeForItemAtIndexPath:": (collectionView, layout, indexPath) => {
-                const space = this.views.spacing * (this.views.columns + 1)
-                const width = (UIKit.windowSize.width - space) / this.views.columns
-
-                return $size(width, this.views.itemHeight)
-            },
-            "collectionView:layout:referenceSizeForHeaderInSection:": (collectionView, layout, section) => {
-                const height = this.data.navigationView.view.scrollableView.props.header.props.height
-                const width = UIKit.windowSize.width - this.views.spacing * 2
-
-                return $size(width, this.views.headerHeight)
-            }
-        }
-    }
-
+    /**
+     * 配合 easy-jsbox 大标题
+     * @returns
+     */
     scrollViewDelegate() {
         const events = this.data.navigationView.view.scrollableView.events
         return {
@@ -376,14 +352,7 @@ class ActionDelegates {
     delegate() {
         const events = {
             ...this.scrollViewDelegate(),
-            ...this.collectionViewDelegateFlowLayout(),
             "collectionView:shouldBeginMultipleSelectionInteractionAtIndexPath:": (collectionView, indexPath) => {
-                return false
-            },
-            "collectionView:shouldHighlightItemAtIndexPath:": (collectionView, indexPath) => {
-                return true
-            },
-            "collectionView:canEditItemAtIndexPath:": (collectionView, indexPath) => {
                 return false
             },
             "collectionView:didSelectItemAtIndexPath:": (collectionView, indexPath) => {
@@ -401,6 +370,15 @@ class ActionDelegates {
             },
             "collectionView:contextMenuConfigurationForItemAtIndexPath:point:": (collectionView, indexPath, point) => {
                 return this.contextMenuConfigurationForItemAtIndexPath(collectionView, indexPath, point)
+            },
+            "collectionView:layout:sizeForItemAtIndexPath:": (collectionView, layout, indexPath) => {
+                const space = this.views.spacing * (this.views.columns + 1)
+                const width = (UIKit.windowSize.width - space) / this.views.columns
+                return $size(width, this.views.itemHeight)
+            },
+            "collectionView:layout:referenceSizeForHeaderInSection:": (collectionView, layout, section) => {
+                const width = UIKit.windowSize.width - this.views.spacing * 2
+                return $size(width, this.views.headerHeight)
             }
         }
 
@@ -548,7 +526,7 @@ class ActionDelegates {
         this.initReuseIdentifier(collectionView)
 
         collectionView.$setDelegate(this.delegate())
-        collectionView.$setCollectionViewLayout(this.collectionViewFlowLayout())
+        collectionView.$setCollectionViewLayout(this.views.collectionViewFlowLayout())
 
         collectionView.$setDragDelegate(this.dragDelegate())
         collectionView.$setDropDelegate(this.dropDelegate())

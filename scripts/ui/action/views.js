@@ -1,4 +1,4 @@
-const { Matrix, BarButtonItem, UIKit } = require("../../libs/easy-jsbox")
+const { BarButtonItem, UIKit } = require("../../libs/easy-jsbox")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
@@ -21,7 +21,7 @@ class ActionViews {
     columns = 2
     spacing = 15
     itemHeight = 100
-    headerHeight = 30
+    headerHeight = 35
 
     /**
      * @param {AppKernel} kernel
@@ -462,6 +462,7 @@ class ActionViews {
                     self = self.$super().$initWithFrame(frame)
                     const labelFrame = self.$bounds()
                     labelFrame.x = this.spacing
+                    labelFrame.y = this.headerHeight - 21
                     const label = $objc("UILabel").$alloc().$initWithFrame(labelFrame)
                     label.$setFont($font("bold", 21).ocValue())
                     label.$setTextAlignment($align.left)
@@ -507,33 +508,27 @@ class ActionViews {
         )
     }
 
-    getCollectionView() {
+    collectionViewFlowLayout() {
         const layout = $objc("UICollectionViewFlowLayout").$alloc().$init()
         layout.$setScrollDirection($scrollDirection.vertical)
-        const collectionView = $objc("UICollectionView").$alloc()
-        const { width, height } = $device.info.screen
-        collectionView.$initWithFrame_collectionViewLayout($rect(0, 0, width, height), layout)
-        this.registerClass(collectionView)
-        return collectionView
+        layout.$setMinimumLineSpacing(this.spacing)
+        layout.$setMinimumInteritemSpacing(this.spacing)
+        const concreteValue = $insets(this.spacing, this.spacing, 0, this.spacing).ocValue()
+        layout.$setSectionInset(concreteValue.$UIEdgeInsetsValue())
+        // layout.$setSectionHeadersPinToVisibleBounds(true)
+        return layout
     }
 
-    getMatrixView({ data, events, menu } = {}) {
+    getMatrixView({ events } = {}) {
         const matrix = {
             type: "matrix",
             props: {
-                columns: this.columns,
-                spacing: this.spacing,
-                itemHeight: this.itemHeight,
                 bgcolor: UIKit.scrollViewBackgroundColor,
-                data,
-                menu,
-                template: this.matrixTemplate(),
                 footer: this.matrixFooter()
             },
             layout: $layout.fill,
             events
         }
-        return new Matrix(matrix)
         return matrix
     }
 }
