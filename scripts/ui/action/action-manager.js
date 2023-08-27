@@ -553,7 +553,7 @@ class ActionManager extends ActionManagerData {
         if (this.kernel.setting.get("webdav.status")) {
             events.pulled = () => this.sync()
         }
-        this.matrix = this.views.getMatrixView({ data: this.actionList, events,menu:this.menuItems() })
+        this.matrix = this.views.getMatrixView({ data: this.actionList, events, menu: this.menuItems() })
 
         this.actionSyncStatus()
 
