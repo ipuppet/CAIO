@@ -34,6 +34,7 @@ class ActionManagerData {
         if (!this.#actions) {
             this.#actions = this.getActionTypes().map(type => {
                 return {
+                    id: $text.uuid,
                     title: this.getTypeName(type),
                     items: this.getActions(type)
                 }

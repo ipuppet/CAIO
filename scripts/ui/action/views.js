@@ -2,7 +2,7 @@ const { Matrix, BarButtonItem, UIKit } = require("../../libs/easy-jsbox")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
- * @typedef {import("./action-manager").ActionManager} ActionManager
+ * @typedef {import("./actions").Actions} Actions
  * @typedef {ActionViews} ActionViews
  */
 
@@ -18,12 +18,14 @@ class ActionViews {
     horizontalMargin = 20
     verticalMargin = 14
     editModeToolBarHeight = 44
+    columns = 2
     spacing = 15
     itemHeight = 100
+    headerHeight = 30
 
     /**
      * @param {AppKernel} kernel
-     * @param {ActionManager} data
+     * @param {Actions} data
      */
     constructor(kernel, data) {
         this.kernel = kernel
@@ -372,6 +374,85 @@ class ActionViews {
         }
     }
 
+    matrixCell(action) {
+        return {
+            props: { bgcolor: $color("#ffffff", "#242424") },
+            views: [
+                {
+                    type: "image",
+                    props: {
+                        bgcolor: this.getColor(action.color),
+                        cornerRadius: 8,
+                        smoothCorners: true
+                    },
+                    layout: make => {
+                        make.top.left.inset(10)
+                        make.size.equalTo($size(30, 30))
+                    }
+                },
+                {
+                    type: "image",
+                    props: Object.assign(
+                        {
+                            tintColor: $color("#ffffff")
+                        },
+                        action?.icon?.slice(0, 5) === "icon_"
+                            ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
+                            : { image: $image(action?.icon) }
+                    ),
+                    layout: make => {
+                        make.top.left.inset(15)
+                        make.size.equalTo($size(20, 20))
+                    }
+                },
+                {
+                    // button
+                    type: "button",
+                    props: {
+                        bgcolor: $color("clear"),
+                        tintColor: UIKit.textColor,
+                        titleColor: UIKit.textColor,
+                        contentEdgeInsets: $insets(0, 0, 0, 0),
+                        titleEdgeInsets: $insets(0, 0, 0, 0),
+                        imageEdgeInsets: $insets(0, 0, 0, 0)
+                    },
+                    views: [
+                        {
+                            type: "image",
+                            props: { symbol: "ellipsis.circle" },
+                            layout: (make, view) => {
+                                make.center.equalTo(view.super)
+                                make.size.equalTo(BarButtonItem.style.iconSize)
+                            }
+                        }
+                    ],
+                    events: {
+                        tapped: sender => {
+                            const main = this.data.getActionMainJs(action.type, action.dir)
+                            this.data.editActionMainJs(main, action)
+                        }
+                    },
+                    layout: make => {
+                        make.top.right.inset(0)
+                        make.size.equalTo(BarButtonItem.style.width)
+                    }
+                },
+                {
+                    type: "label",
+                    props: {
+                        text: action.name,
+                        font: $font(16)
+                    },
+                    layout: (make, view) => {
+                        make.bottom.left.inset(10)
+                        make.width.equalTo(view.super)
+                    }
+                }
+            ],
+            layout: $layout.fill
+        }
+    }
+
     registerClass(collectionView) {
         $define({
             type: "ActionViewCustomHeader: UICollectionReusableView",
@@ -379,11 +460,14 @@ class ActionViews {
             events: {
                 "initWithFrame:": frame => {
                     self = self.$super().$initWithFrame(frame)
-                    if (self) {
-                        self.$setTitleLabel($objc("UILabel").$alloc().$initWithFrame(self.$bounds()))
-                        self.$titleLabel().$setTextAlignment($align.left)
-                        self.$addSubview(self.$titleLabel())
-                    }
+                    const labelFrame = self.$bounds()
+                    labelFrame.x = this.spacing
+                    const label = $objc("UILabel").$alloc().$initWithFrame(labelFrame)
+                    label.$setFont($font("bold", 21).ocValue())
+                    label.$setTextAlignment($align.left)
+                    label.$setNumberOfLines(1)
+                    self.$setTitleLabel(label)
+                    self.$addSubview(self.$titleLabel())
                     return self
                 }
             }
@@ -394,11 +478,13 @@ class ActionViews {
             events: {
                 "initWithFrame:": frame => {
                     self = self.$super().$initWithFrame(frame)
-                    if (self) {
-                        self.$setTitleLabel($objc("UILabel").$alloc().$initWithFrame(self.$bounds()))
-                        self.$titleLabel().$setTextAlignment($align.left)
-                        self.$addSubview(self.$titleLabel())
-                    }
+                    const labelFrame = self.$bounds()
+                    labelFrame.x = this.spacing
+                    const label = $objc("UILabel").$alloc().$initWithFrame(labelFrame)
+                    label.$setFont($font(16).ocValue())
+                    label.$setTextAlignment($align.left)
+                    self.$setTitleLabel(label)
+                    self.$addSubview(self.$titleLabel())
                     return self
                 }
             }
@@ -421,12 +507,6 @@ class ActionViews {
         )
     }
 
-    collectionViewFlowLayout() {
-        const layout = $objc("UICollectionViewFlowLayout").$alloc().$init()
-        layout.$setScrollDirection($scrollDirection.vertical)
-        return layout
-    }
-
     getCollectionView() {
         const layout = $objc("UICollectionViewFlowLayout").$alloc().$init()
         layout.$setScrollDirection($scrollDirection.vertical)
@@ -438,22 +518,22 @@ class ActionViews {
     }
 
     getMatrixView({ data, events, menu } = {}) {
-        const matrix = Matrix.create({
+        const matrix = {
             type: "matrix",
             props: {
-                columns: 2,
-                itemHeight: this.itemHeight,
-                direction: $scrollDirection.vertical,
+                columns: this.columns,
                 spacing: this.spacing,
+                itemHeight: this.itemHeight,
                 bgcolor: UIKit.scrollViewBackgroundColor,
-                data,
-                menu,
+                //data,
+                //menu,
                 template: this.matrixTemplate(),
                 footer: this.matrixFooter()
             },
-            layout: $layout.fill,
+            //layout: $layout.fill,
             events
-        })
+        }
+        return new Matrix(matrix)
         return matrix
     }
 }

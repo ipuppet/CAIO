@@ -1,6 +1,5 @@
-const { Matrix, NavigationView, BarButtonItem, Sheet, UIKit } = require("../../libs/easy-jsbox")
+const { NavigationView, Sheet, UIKit } = require("../../libs/easy-jsbox")
 const ActionManagerData = require("../../dao/action-data")
-const { ActionEnv, ActionData } = require("../../action/action")
 const WebDavSync = require("../../dao/webdav-sync")
 const ActionEditor = require("./editor")
 const ActionViews = require("./views")
@@ -8,10 +7,10 @@ const ActionDelegates = require("./delegates")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
- * @typedef {ActionManager} ActionManager
+ * @typedef {Actions} Actions
  */
 
-class ActionManager extends ActionManagerData {
+class Actions extends ActionManagerData {
     matrix
     reorder = {}
     addActionButtonId = "action-manager-button-add"
@@ -51,7 +50,7 @@ class ActionManager extends ActionManagerData {
                     this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success) {
                     try {
-                        this.matrix.data = this.actionList
+                        // this.matrix.data = this.actionList
                     } catch (error) {
                         this.kernel.logger.error(error)
                         this.updateSyncLabel(error)
@@ -80,21 +79,21 @@ class ActionManager extends ActionManagerData {
 
         super.move(from, to)
 
-        // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
-        const actionsView = this.matrix
-        // 内存数据已经为排序后的数据，故此处去 to 位置的数据
-        const data = this.views.actionToData(this.actions[to.section].items[to.row])
-        if (from.row < to.row) {
-            // 先插入时是插入到 to 位置的前面 to.row + 1
-            actionsView.insert({
-                indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
-                value: data
-            })
-            actionsView.delete(from)
-        } else {
-            actionsView.delete(from)
-            actionsView.insert({ indexPath: to, value: data })
-        }
+        // // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
+        // const actionsView = this.matrix
+        // // 内存数据已经为排序后的数据，故此处去 to 位置的数据
+        // const data = this.views.actionToData(this.actions[to.section].items[to.row])
+        // if (from.row < to.row) {
+        //     // 先插入时是插入到 to 位置的前面 to.row + 1
+        //     actionsView.insert({
+        //         indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
+        //         value: data
+        //     })
+        //     actionsView.delete(from)
+        // } else {
+        //     actionsView.delete(from)
+        //     actionsView.insert({ indexPath: to, value: data })
+        // }
     }
 
     menuItems() {
@@ -492,16 +491,18 @@ class ActionManager extends ActionManagerData {
                     "ActionCollectionViewCellReuseIdentifier",
                     indexPath
                 )
-                cell.$contentView().$setBackgroundColor($color("blue").ocValue())
+                cell.$contentView().$setClipsToBounds(true)
+                cell.$contentView().$layer().$setCornerRadius(10)
                 const { section, item } = indexPath.jsValue()
-                const view = this.views.matrixTemplate(this.actionList[section].items[item])
-                cell.$contentView().$addSubview($ui.create(view))
+                const view = this.views.matrixCell(this.actions[section].items[item])
+                cell.$contentView().jsValue().add(view)
                 return cell
             }
         )
         const supplementaryViewProvider = $block(
             "UICollectionReusableView *, UICollectionView *, NSString *, NSIndexPath *",
             (collectionView, kind, indexPath) => {
+                const { section } = indexPath.jsValue()
                 if (kind.jsValue() === "UICollectionElementKindSectionHeader") {
                     const headerView =
                         collectionView.$dequeueReusableSupplementaryViewOfKind_withReuseIdentifier_forIndexPath(
@@ -509,8 +510,7 @@ class ActionManager extends ActionManagerData {
                             "ActionViewCustomHeaderReuseIdentifier",
                             indexPath
                         )
-                    const { section } = indexPath.jsValue()
-                    headerView.$titleLabel().$setText(this.actionList[section].title)
+                    headerView.$titleLabel().$setText(this.actions[section].title)
                     return headerView
                 } else {
                     const footerView =
@@ -526,16 +526,17 @@ class ActionManager extends ActionManagerData {
         const dataSource = $objc("UICollectionViewDiffableDataSource").$alloc()
         dataSource.$initWithCollectionView_cellProvider(collectionView, cellProvider)
         dataSource.$setSupplementaryViewProvider(supplementaryViewProvider)
+        $objc_retain(dataSource)
     }
 
     applySnapshot(collectionView) {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
-        const actions = this.actionList
-        snapshot.$appendSectionsWithIdentifiers([...Array(actions.length ?? 3).keys()])
+        const actions = this.actions
+        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.id))
         for (const i in actions) {
             snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
-                [...Array(actions[i].items.length).keys()],
-                Number(i)
+                actions[i].items.map(i => i.dir),
+                actions[i].id
             )
         }
 
@@ -545,20 +546,29 @@ class ActionManager extends ActionManagerData {
     getMatrixView() {
         const events = {
             ready: collectionView => {
-                // collectionView = collectionView.ocValue()
-                // this.delegates.setDelegate(collectionView)
-                // collectionView.$setCollectionViewLayout(this.views.collectionViewFlowLayout())
+                collectionView = collectionView.ocValue()
+                $delay(0.3, () => {
+                    this.views.registerClass(collectionView)
+                    this.initDataSource(collectionView)
+                    this.applySnapshot(collectionView)
+                    this.delegates.setDelegate(collectionView)
+                })
             }
         }
         if (this.kernel.setting.get("webdav.status")) {
             events.pulled = () => this.sync()
         }
-        this.matrix = this.views.getMatrixView({ data: this.actionList, events, menu: this.menuItems() })
+        const matrix = this.views.getMatrixView({
+            data: this.actionList,
+            events,
+            menu: this.menuItems()
+        })
 
-        this.actionSyncStatus()
+        //this.actionSyncStatus()
 
-        return this.matrix.definition
+        return matrix
     }
+
     // getMatrixView() {
     //     const events = {
     //         ready: collectionView => {
@@ -633,4 +643,4 @@ class ActionManager extends ActionManagerData {
     }
 }
 
-module.exports = ActionManager
+module.exports = Actions

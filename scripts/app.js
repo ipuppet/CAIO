@@ -2,7 +2,7 @@ const { Kernel, Logger, FileStorage, Setting, FileManager } = require("./libs/ea
 const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
 const Clips = require("./ui/clips/clips")
-const ActionManager = require("./ui/action/action-manager")
+const ActionManager = require("./ui/action/actions")
 
 /**
  * @typedef {AppKernelBase} AppKernelBase
@@ -18,6 +18,7 @@ class AppKernelBase extends Kernel {
 
     constructor() {
         super()
+        $app.listen({ exit: () => $objc_clean() })
         // FileStorage
         this.fileStorage = AppKernelBase.fileStorage
         // Logger

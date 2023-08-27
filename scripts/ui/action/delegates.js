@@ -3,7 +3,7 @@ const { ActionEnv, ActionData } = require("../../action/action")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
- * @typedef {import("./action-manager").ActionManager} ActionManager
+ * @typedef {import("./actions").Actions} Actions
  * @typedef {import("./views").ActionViews} ActionViews
  */
 
@@ -17,7 +17,7 @@ class ActionDelegates {
 
     /**
      * @param {AppKernel} kernel
-     * @param {ActionManager} data
+     * @param {Actions} data
      * @param {ActionViews} views
      */
     constructor(kernel, data, views) {
@@ -28,7 +28,7 @@ class ActionDelegates {
 
     getActionByIndexPath(indexPath) {
         const section = indexPath.$section()
-        const item = indexPath.$item() - 1 // 减去标题
+        const item = indexPath.$item()
         const action = this.data.actions[section].items[item]
         return action
     }
@@ -57,7 +57,6 @@ class ActionDelegates {
                 handler: (collectionView, indexPath, info, cell) => {
                     this.data.editActionInfoPageSheet(info, info => {
                         // 更新视图信息
-                        cell.get("info").info = info
                         cell.get("color").bgcolor = this.views.getColor(info.color)
                         cell.get("name").text = info.name
                         if (info.icon.slice(0, 5) === "icon_") {
@@ -73,7 +72,6 @@ class ActionDelegates {
                 title: $l10n("EDIT_SCRIPT"),
                 symbol: "square.and.pencil",
                 handler: (collectionView, indexPath, info, cell) => {
-                    if (!info) return
                     const main = this.data.getActionMainJs(info.type, info.dir)
                     this.data.editActionMainJs(main, info)
                 }
@@ -332,8 +330,53 @@ class ActionDelegates {
         )
     }
 
+    collectionViewFlowLayout() {
+        const layout = $objc("UICollectionViewFlowLayout").$alloc().$init()
+        layout.$setScrollDirection($scrollDirection.vertical)
+        layout.$setMinimumLineSpacing(this.views.spacing)
+        layout.$setMinimumInteritemSpacing(this.views.spacing)
+        const concreteValue = $insets(this.views.spacing, this.views.spacing, 0, this.views.spacing).ocValue()
+        layout.$setSectionInset(concreteValue.$UIEdgeInsetsValue())
+        // layout.$setSectionHeadersPinToVisibleBounds(true)
+        return layout
+    }
+
+    collectionViewDelegateFlowLayout() {
+        return {
+            "collectionView:layout:sizeForItemAtIndexPath:": (collectionView, layout, indexPath) => {
+                const space = this.views.spacing * (this.views.columns + 1)
+                const width = (UIKit.windowSize.width - space) / this.views.columns
+
+                return $size(width, this.views.itemHeight)
+            },
+            "collectionView:layout:referenceSizeForHeaderInSection:": (collectionView, layout, section) => {
+                const height = this.data.navigationView.view.scrollableView.props.header.props.height
+                const width = UIKit.windowSize.width - this.views.spacing * 2
+
+                return $size(width, this.views.headerHeight)
+            }
+        }
+    }
+
+    scrollViewDelegate() {
+        const events = this.data.navigationView.view.scrollableView.events
+        return {
+            "scrollViewDidScroll:": scrollView => {
+                events.didScroll(scrollView.jsValue())
+            },
+            "scrollViewDidEndDragging:willDecelerate:": (scrollView, decelerate) => {
+                events.didEndDragging(scrollView.jsValue(), decelerate)
+            },
+            "scrollViewDidEndDecelerating:": scrollView => {
+                events.didEndDecelerating(scrollView.jsValue())
+            }
+        }
+    }
+
     delegate() {
         const events = {
+            ...this.scrollViewDelegate(),
+            ...this.collectionViewDelegateFlowLayout(),
             "collectionView:shouldBeginMultipleSelectionInteractionAtIndexPath:": (collectionView, indexPath) => {
                 return false
             },
@@ -362,7 +405,7 @@ class ActionDelegates {
         }
 
         return $delegate({
-            type: "UICollectionViewDelegate",
+            type: "UICollectionViewDelegate, UICollectionViewDelegateFlowLayout",
             events
         })
     }
@@ -505,6 +548,8 @@ class ActionDelegates {
         this.initReuseIdentifier(collectionView)
 
         collectionView.$setDelegate(this.delegate())
+        collectionView.$setCollectionViewLayout(this.collectionViewFlowLayout())
+
         collectionView.$setDragDelegate(this.dragDelegate())
         collectionView.$setDropDelegate(this.dropDelegate())
     }

@@ -54,6 +54,45 @@ class AppUI {
                 }
             ])
 
+            // $define({
+            //     type: "ViewController: UIViewController",
+            //     events: {
+            //         viewDidLoad: () => {
+            //             console.log("viewDidLoad")
+            //             self.$super().$viewDidLoad()
+
+            //             const view = this.kernel.clips.getNavigationView().getPage()
+            //             self.$view().jsValue().add(view)
+
+            //             const navigationBar = self.$navigationController().$navigationBar()
+            //             navigationBar.$setTranslucent(true)
+            //             navigationBar.$setBarStyle(0)
+            //             navigationBar.$setBarTintColor($color("clear"))
+
+            //             const navigationItem = self.$navigationItem()
+            //             navigationItem.$setTitle("CAIO")
+            //             navigationItem.$setLargeTitleDisplayMode(2)
+
+            //             const leftButton = $objc("UIBarButtonItem").$alloc()
+            //             leftButton.$initWithTitle_style_target_action("Close", 0, self, "backButtonPressed")
+
+            //             navigationItem.$setLeftBarButtonItem(leftButton)
+            //         },
+            //         backButtonPressed: () => {
+            //             self.$dismissViewControllerAnimated_completion(true, null)
+            //             self.$dismissViewControllerAnimated_completion(true, null)
+            //         }
+            //     }
+            // })
+
+            // const render = sender => {
+            //     const myVC = $objc("ViewController").$alloc().$init()
+            //     const navigator = $objc("UINavigationController").$alloc().$initWithRootViewController(myVC)
+            //     navigator.$setModalPresentationStyle(0)
+            //     $ui.controller.ocValue().invoke("presentViewController:animated:completion:", navigator, true, null)
+            // }
+            // render()
+
             this.kernel.UIRender(this.kernel.clips.getNavigationView().getPage())
         } else {
             this.kernel.fileManager.setViewController(new ViewController())
