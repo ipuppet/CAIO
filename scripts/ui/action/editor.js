@@ -183,7 +183,7 @@ class ActionEditor {
             .present()
     }
 
-    editorNavButtons() {
+    editorNavButtons(editor) {
         return [
             {
                 symbol: "book.circle",
@@ -211,32 +211,36 @@ class ActionEditor {
             {
                 symbol: "play.circle",
                 tapped: async () => {
-                    this.data.saveMainJs(this.info, editor.text)
-                    let actionRest = await this.data.getActionHandler(
-                        this.info.type,
-                        this.info.dir
-                    )(new ActionData({ env: ActionEnv.build }))
-                    if (actionRest !== undefined) {
-                        if (typeof actionRest === "object") {
-                            actionRest = JSON.stringify(actionRest, null, 2)
+                    try {
+                        this.data.saveMainJs(this.info, editor.text)
+                        let actionRest = await this.data.getActionHandler(
+                            this.info.type,
+                            this.info.dir
+                        )(new ActionData({ env: ActionEnv.build }))
+                        if (actionRest !== undefined) {
+                            if (typeof actionRest === "object") {
+                                actionRest = JSON.stringify(actionRest, null, 2)
+                            }
+                            const sheet = new Sheet()
+                            sheet
+                                .setView({
+                                    type: "code",
+                                    props: {
+                                        lineNumbers: true,
+                                        editable: false,
+                                        text: actionRest
+                                    },
+                                    layout: $layout.fill
+                                })
+                                .addNavBar({
+                                    title: "",
+                                    popButton: { title: $l10n("DONE") }
+                                })
+                                .init()
+                                .present()
                         }
-                        const sheet = new Sheet()
-                        sheet
-                            .setView({
-                                type: "code",
-                                props: {
-                                    lineNumbers: true,
-                                    editable: false,
-                                    text: actionRest
-                                },
-                                layout: $layout.fill
-                            })
-                            .addNavBar({
-                                title: "",
-                                popButton: { title: $l10n("DONE") }
-                            })
-                            .init()
-                            .present()
+                    } catch (error) {
+                        console.error(error)
                     }
                 }
             }
@@ -251,7 +255,7 @@ class ActionEditor {
                 this.data.saveMainJs(this.info, content)
             },
             this.info.name,
-            this.editorNavButtons(),
+            this.editorNavButtons(editor),
             "code"
         )
     }
