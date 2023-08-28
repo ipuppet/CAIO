@@ -409,7 +409,7 @@ class ActionDelegates {
         const destination = destinationIndexPath.jsValue()
 
         this.data.move(source, destination)
-        this.data.applySnapshotAnimatingDifferences(false)
+        this.data.applySnapshotAnimatingDifferences()
 
         coordinator.$dropItem_toItemAtIndexPath(item.$dragItem(), destinationIndexPath)
     }
@@ -441,13 +441,26 @@ class ActionDelegates {
 
                 placeholderContext.$commitInsertionWithDataSourceUpdates(
                     $block("void, NSIndexPath *", insertionIndexPath => {
-                        if (hasText) {
-                            this.data.add(data.jsValue().string, false)
-                        } else if (hasImage) {
-                            this.data.add(data.jsValue().image, false)
+                        insertionIndexPath = insertionIndexPath.jsValue()
+                        const section = insertionIndexPath.section
+                        const types = this.data.getActionTypes()
+                        const dataObj = JSON.parse(data.jsValue().string)
+                        const dir = this.data.importAction(dataObj, types[section])
+                        // 查找动作保存位置
+                        const actions = this.data.actions[section].items
+                        let inserted
+                        for (const i in actions) {
+                            if (actions[i].dir === dir) {
+                                inserted = i
+                                break
+                            }
                         }
-                        this.data.move(0, insertionIndexPath.jsValue())
-                        this.data.updateList()
+                        if (inserted !== undefined) {
+                            // 移动到新位置
+                            this.data.move($indexPath(section, inserted), insertionIndexPath)
+                        }
+
+                        this.data.applySnapshotAnimatingDifferences()
                     })
                 )
             }

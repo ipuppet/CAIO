@@ -170,7 +170,7 @@ class Actions extends ActionsData {
     }
 
     initReuseIdentifier() {
-        this.collectionView.$registerClass_forCellReuseIdentifier(
+        this.collectionView.$registerClass_forCellWithReuseIdentifier(
             $objc("UICollectionViewCell").$class(),
             this.placeholderReuseIdentifier
         )
@@ -243,11 +243,11 @@ class Actions extends ActionsData {
     applySnapshotUsingReloadData() {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
         const actions = this.actions
-        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.id))
+        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.dir))
         for (const i in actions) {
             snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
                 actions[i].items.map(i => i.dir),
-                actions[i].id
+                actions[i].dir
             )
         }
 
@@ -257,11 +257,11 @@ class Actions extends ActionsData {
     applySnapshotAnimatingDifferences(animating = true) {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
         const actions = this.actions
-        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.id))
+        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.dir))
         for (const i in actions) {
             snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
                 actions[i].items.map(i => i.dir),
-                actions[i].id
+                actions[i].dir
             )
         }
 

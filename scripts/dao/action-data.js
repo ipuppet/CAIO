@@ -22,8 +22,6 @@ class ActionsData {
         this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
         this.localSyncFile = this.userActionPath + "/sync.json"
-        // 用来存储被美化的 Action 分类名称
-        this.typeNameMap = {}
         // checkUserAction
         this.checkUserAction()
         // sync
@@ -34,7 +32,7 @@ class ActionsData {
         if (!this.#actions) {
             this.#actions = this.getActionTypes().map(type => {
                 return {
-                    id: $text.uuid,
+                    dir: type,
                     title: this.getTypeName(type),
                     items: this.getActions(type)
                 }
@@ -131,7 +129,7 @@ class ActionsData {
         })
     }
 
-    importAction(data) {
+    importAction(data, type = "uncategorized") {
         const loading = UIKit.loading()
         loading.start()
 
@@ -159,9 +157,11 @@ class ActionsData {
             })
             $file.move({
                 src: tmpPath,
-                dst: this.getActionPath("uncategorized", dirName)
+                dst: this.getActionPath(type, dirName)
             })
             this.setNeedReload()
+
+            return dirName
         } catch (error) {
             throw error
         } finally {
@@ -325,12 +325,7 @@ class ActionsData {
         const typeUpperCase = type.toUpperCase()
         const l10n = $l10n(typeUpperCase)
         const name = l10n === typeUpperCase ? type : l10n
-        this.typeNameMap[name] = type
         return name
-    }
-
-    getTypeDir(name) {
-        return this.typeNameMap[name] ?? name
     }
 
     #saveFile(data, ...args) {
@@ -386,7 +381,7 @@ class ActionsData {
 
         const fromSection = this.actions[from.section]
         let fromItems = fromSection.items
-        const fromType = this.getTypeDir(fromSection.title)
+        const fromType = fromSection.dir
 
         const getOrder = items => {
             return items.map(item => item.dir)
@@ -402,7 +397,7 @@ class ActionsData {
         } else {
             const toSection = this.actions[to.section]
             const toItems = toSection.items
-            const toType = this.getTypeDir(toSection.title)
+            const toType = toSection.dir
 
             toItems.splice(to.item, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from.item) // 删除 from 位置元素
