@@ -363,8 +363,18 @@ class ActionDelegates {
 
     itemsForBeginningDragSession(session, indexPath) {
         const info = this.getActionByIndexPath(indexPath)
-        const itemProvider = $objc("NSItemProvider").$alloc()
-        itemProvider.$initWithObject(this.data.actionToString(info.type, info.dir))
+        const itemProvider = $objc("NSItemProvider").$alloc().$init()
+        itemProvider.$setSuggestedName(info.name + ".json")
+        itemProvider.$registerDataRepresentationForTypeIdentifier_visibility_loadHandler(
+            "public.text",
+            0,
+            $block("NSProgress *, block", completionHandler => {
+                const string = this.data.actionToString(info.type, info.dir)
+                const data = $data({ string }).ocValue()
+                completionHandler(data, null)
+                return null
+            })
+        )
         const dragItem = $objc("UIDragItem").$alloc().$initWithItemProvider(itemProvider)
 
         const context = session.$localContext()
