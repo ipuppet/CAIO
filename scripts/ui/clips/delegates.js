@@ -537,7 +537,6 @@ class ClipsDelegates {
 
                 placeholderContext.$commitInsertionWithDataSourceUpdates(
                     $block("void, NSIndexPath *", insertionIndexPath => {
-                        console.log("aaaaaaa")
                         if (hasText) {
                             this.data.add(data.jsValue().string, false)
                         } else if (hasImage) {

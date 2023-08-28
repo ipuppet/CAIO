@@ -118,7 +118,6 @@ class Editor {
             type: "EditorViewController: UIViewController",
             events: {
                 viewDidLoad: () => {
-                    console.log("viewDidLoad")
                     self.$super().$viewDidLoad()
 
                     self.$view().jsValue().add(this.getView(type))

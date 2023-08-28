@@ -429,7 +429,6 @@ class ActionDelegates {
             const typeIdentifiers = itemProvider.$registeredTypeIdentifiers().jsValue()
 
             const hasText = itemProvider.$hasItemConformingToTypeIdentifier("public.text")
-            const hasImage = itemProvider.$hasItemConformingToTypeIdentifier("public.image")
             if (!hasText && !hasImage) {
                 return
             }
@@ -442,7 +441,6 @@ class ActionDelegates {
 
                 placeholderContext.$commitInsertionWithDataSourceUpdates(
                     $block("void, NSIndexPath *", insertionIndexPath => {
-                        console.log("aaaaaaa")
                         if (hasText) {
                             this.data.add(data.jsValue().string, false)
                         } else if (hasImage) {
