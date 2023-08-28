@@ -41,16 +41,9 @@ class ActionDelegates {
                 // 编辑信息
                 title: $l10n("EDIT_DETAILS"),
                 symbol: "slider.horizontal.3",
-                handler: (collectionView, indexPath, info, cell) => {
+                handler: (collectionView, indexPath, info) => {
                     this.data.editActionInfoPageSheet(info, info => {
-                        // 更新视图信息
-                        cell.get("color").bgcolor = this.views.getColor(info.color)
-                        cell.get("name").text = info.name
-                        if (info.icon.slice(0, 5) === "icon_") {
-                            cell.get("icon").icon = $icon(info.icon.slice(5, info.icon.indexOf(".")), $color("#ffffff"))
-                        } else {
-                            cell.get("icon").image = $image(info.icon)
-                        }
+                        this.data.applySnapshotAnimatingDifferences()
                     })
                 }
             },
@@ -58,7 +51,7 @@ class ActionDelegates {
                 // 编辑脚本
                 title: $l10n("EDIT_SCRIPT"),
                 symbol: "square.and.pencil",
-                handler: (collectionView, indexPath, info, cell) => {
+                handler: (collectionView, indexPath, info) => {
                     const main = this.data.getActionMainJs(info.type, info.dir)
                     this.data.editActionMainJs(main, info)
                 }
@@ -70,7 +63,7 @@ class ActionDelegates {
                         // README
                         title: "README",
                         symbol: "book",
-                        handler: (collectionView, indexPath, info, cell) => {
+                        handler: (collectionView, indexPath, info) => {
                             let content
 
                             try {
@@ -100,7 +93,7 @@ class ActionDelegates {
                         // share
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
-                        handler: (collectionView, indexPath, info, cell) => {
+                        handler: (collectionView, indexPath, info) => {
                             this.exportAction(info)
                         }
                     },
@@ -109,10 +102,10 @@ class ActionDelegates {
                         title: $l10n("DELETE"),
                         symbol: "trash",
                         destructive: true,
-                        handler: (collectionView, indexPath, info, cell) => {
+                        handler: (collectionView, indexPath, info) => {
                             UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
                                 this.data.delete(info)
-                                collectionView.delete(indexPath)
+                                this.data.applySnapshotAnimatingDifferences()
                             })
                         }
                     }
@@ -286,13 +279,7 @@ class ActionDelegates {
                             title: action.title,
                             image: action.symbol,
                             handler: () => {
-                                const collectionViewJs = collectionView.jsValue()
-                                action.handler(
-                                    collectionViewJs,
-                                    indexPath.jsValue(),
-                                    this.getActionByIndexPath(indexPath),
-                                    collectionViewJs.cell(indexPath.jsValue())
-                                )
+                                action.handler(collectionView, indexPath, this.getActionByIndexPath(indexPath))
                             },
                             destructive: action.destructive
                         })
