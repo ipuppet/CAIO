@@ -12,11 +12,12 @@ const ActionDelegates = require("./delegates")
 
 class Actions extends ActionsData {
     matrix
-    reorder = {}
-    addActionButtonId = "action-manager-button-add"
-    sortActionButtonId = "action-manager-button-sort"
-    syncButtonId = "action-manager-button-sync"
-    syncLabelId = "action-manager-sync-label"
+    collectionView
+
+    placeholderReuseIdentifier = "UICollectionViewPlaceholderReuseIdentifier"
+    cellReuseIdentifier = "ActionCollectionViewCellReuseIdentifier"
+    headerReuseIdentifier = "ActionViewCustomHeaderReuseIdentifier"
+    footerReuseIdentifier = "ActionViewCustomFooterReuseIdentifier"
 
     constructor(...args) {
         super(...args)
@@ -74,34 +75,12 @@ class Actions extends ActionsData {
         editor.editActionMainJs(text)
     }
 
-    move(from, to) {
-        if (from.section === to.section && from.row === to.row) return
-
-        super.move(from, to)
-
-        // // 跨 section 时先插入或先删除无影响，type 永远是 to 的 type
-        // const actionsView = this.matrix
-        // // 内存数据已经为排序后的数据，故此处去 to 位置的数据
-        // const data = this.views.actionToData(this.actions[to.section].items[to.row])
-        // if (from.row < to.row) {
-        //     // 先插入时是插入到 to 位置的前面 to.row + 1
-        //     actionsView.insert({
-        //         indexPath: $indexPath(to.section, from.section === to.section ? to.row + 1 : to.row),
-        //         value: data
-        //     })
-        //     actionsView.delete(from)
-        // } else {
-        //     actionsView.delete(from)
-        //     actionsView.insert({ indexPath: to, value: data })
-        // }
-    }
-
     getNavButtons() {
         return [
             {
                 // 添加
                 symbol: "plus.circle",
-                id: this.addActionButtonId,
+                id: this.views.addActionButtonId,
                 menu: {
                     pullDown: true,
                     asPrimary: true,
@@ -110,12 +89,9 @@ class Actions extends ActionsData {
                             title: $l10n("CREATE_NEW_ACTION"),
                             handler: () => {
                                 this.editActionInfoPageSheet(null, async info => {
-                                    this.matrix.insert({
-                                        indexPath: $indexPath(this.getActionTypes().indexOf(info.type), 0),
-                                        value: this.views.actionToData(info)
-                                    })
                                     const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                                     this.saveMainJs(info, MainJsTemplate)
+                                    this.applySnapshotAnimatingDifferences()
                                     await $wait(0.3)
                                     this.editActionMainJs(MainJsTemplate, info)
                                 })
@@ -146,51 +122,6 @@ class Actions extends ActionsData {
                         }
                     ]
                 }
-            },
-            {
-                // 排序
-                symbol: "arrow.up.arrow.down.circle",
-                id: this.sortActionButtonId,
-                tapped: (animate, sender) => {
-                    $ui.popover({
-                        sourceView: sender,
-                        directions: $popoverDirection.up,
-                        size: $size(200, 300),
-                        views: [
-                            this.views.getActionListView(
-                                undefined,
-                                {
-                                    reorder: true,
-                                    actions: [
-                                        {
-                                            // 删除
-                                            title: "delete",
-                                            handler: (sender, indexPath) => {
-                                                const matrixView = this.matrix
-                                                const info = matrixView.object(indexPath, false).info.info
-                                                this.delete(info)
-                                                matrixView.delete(indexPath, false)
-                                            }
-                                        }
-                                    ]
-                                },
-                                {
-                                    reorderBegan: indexPath => {
-                                        this.reorder.from = indexPath
-                                        this.reorder.to = undefined
-                                    },
-                                    reorderMoved: (fromIndexPath, toIndexPath) => {
-                                        this.reorder.to = toIndexPath
-                                    },
-                                    reorderFinished: data => {
-                                        if (this.reorder.to === undefined) return
-                                        this.move(this.reorder.from, this.reorder.to, data)
-                                    }
-                                }
-                            )
-                        ]
-                    })
-                }
             }
         ]
     }
@@ -199,32 +130,57 @@ class Actions extends ActionsData {
         if (!message) {
             message = $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
         }
-        if ($(this.syncLabelId)) {
-            $(this.syncLabelId).text = message
+        if ($(this.views.syncLabelId)) {
+            $(this.views.syncLabelId).text = message
         }
     }
 
     updateNavButton(loading) {
-        const addActionButton = this.navigationView?.navigationBarItems?.getButton(this.addActionButtonId)
+        const addActionButton = this.navigationView?.navigationBarItems?.getButton(this.views.addActionButtonId)
         if (addActionButton) {
             addActionButton.setLoading(loading)
         }
-        const sortActionButton = this.navigationView?.navigationBarItems?.getButton(this.sortActionButtonId)
+        const sortActionButton = this.navigationView?.navigationBarItems?.getButton(this.views.sortActionButtonId)
         if (sortActionButton) {
             sortActionButton.setLoading(loading)
         }
-        const syncButton = this.navigationView?.navigationBarItems?.getButton(this.syncButtonId)
+        const syncButton = this.navigationView?.navigationBarItems?.getButton(this.views.syncButtonId)
         if (syncButton) {
             syncButton.setLoading(loading)
         }
     }
 
-    initDataSource(collectionView) {
+    initReuseIdentifier() {
+        this.collectionView.$registerClass_forCellReuseIdentifier(
+            $objc("UICollectionViewCell").$class(),
+            this.placeholderReuseIdentifier
+        )
+        this.collectionView.$registerClass_forCellWithReuseIdentifier(
+            $objc("UICollectionViewCell").$class(),
+            this.cellReuseIdentifier
+        )
+
+        this.views.actionViewCustomHeader()
+        this.collectionView.$registerClass_forSupplementaryViewOfKind_withReuseIdentifier(
+            $objc("ActionViewCustomHeader").$class(),
+            "UICollectionElementKindSectionHeader",
+            this.headerReuseIdentifier
+        )
+
+        this.views.actionViewCustomFooter()
+        this.collectionView.$registerClass_forSupplementaryViewOfKind_withReuseIdentifier(
+            $objc("ActionViewCustomFooter").$class(),
+            "UICollectionElementKindSectionFooter",
+            this.footerReuseIdentifier
+        )
+    }
+
+    initDataSource() {
         const cellProvider = $block(
             "UICollectionViewCell *, UICollectionView *, NSIndexPath *, id",
             (collectionView, indexPath, itemIdentifier) => {
                 const cell = collectionView.$dequeueReusableCellWithReuseIdentifier_forIndexPath(
-                    "ActionCollectionViewCellReuseIdentifier",
+                    this.cellReuseIdentifier,
                     indexPath
                 )
                 cell.$contentView().$setClipsToBounds(true)
@@ -243,7 +199,7 @@ class Actions extends ActionsData {
                     const headerView =
                         collectionView.$dequeueReusableSupplementaryViewOfKind_withReuseIdentifier_forIndexPath(
                             kind,
-                            "ActionViewCustomHeaderReuseIdentifier",
+                            this.headerReuseIdentifier,
                             indexPath
                         )
                     headerView.$titleLabel().$setText(this.actions[section].title)
@@ -252,7 +208,7 @@ class Actions extends ActionsData {
                     const footerView =
                         collectionView.$dequeueReusableSupplementaryViewOfKind_withReuseIdentifier_forIndexPath(
                             kind,
-                            "ActionViewCustomFooterReuseIdentifier",
+                            this.footerReuseIdentifier,
                             indexPath
                         )
                     return footerView
@@ -260,12 +216,12 @@ class Actions extends ActionsData {
             }
         )
         const dataSource = $objc("UICollectionViewDiffableDataSource").$alloc()
-        dataSource.$initWithCollectionView_cellProvider(collectionView, cellProvider)
+        dataSource.$initWithCollectionView_cellProvider(this.collectionView, cellProvider)
         dataSource.$setSupplementaryViewProvider(supplementaryViewProvider)
         $objc_retain(dataSource)
     }
 
-    applySnapshot(collectionView) {
+    applySnapshotUsingReloadData() {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
         const actions = this.actions
         snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.id))
@@ -276,18 +232,32 @@ class Actions extends ActionsData {
             )
         }
 
-        collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, true)
+        this.collectionView.$dataSource().$applySnapshotUsingReloadData(snapshot)
+    }
+
+    applySnapshotAnimatingDifferences(animating = true) {
+        const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
+        const actions = this.actions
+        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.id))
+        for (const i in actions) {
+            snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
+                actions[i].items.map(i => i.dir),
+                actions[i].id
+            )
+        }
+
+        this.collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, animating)
     }
 
     getMatrixView() {
         const events = {
             ready: collectionView => {
-                collectionView = collectionView.ocValue()
+                this.collectionView = collectionView.ocValue()
                 $delay(0.3, () => {
-                    this.views.registerClass(collectionView)
-                    this.initDataSource(collectionView)
-                    this.applySnapshot(collectionView)
-                    this.delegates.setDelegate(collectionView)
+                    this.initReuseIdentifier()
+                    this.delegates.setDelegate()
+                    this.initDataSource()
+                    this.applySnapshotUsingReloadData()
                 })
             }
         }
@@ -314,7 +284,7 @@ class Actions extends ActionsData {
         if (this.kernel.setting.get("webdav.status")) {
             rightButtons.push({
                 // 同步
-                id: this.syncButtonId,
+                id: this.views.syncButtonId,
                 symbol: "arrow.triangle.2.circlepath.circle",
                 tapped: () => this.sync()
             })

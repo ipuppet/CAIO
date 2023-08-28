@@ -400,7 +400,7 @@ class ActionsData {
     }
 
     move(from, to) {
-        if (from.section === to.section && from.row === to.row) return
+        if (from.section === to.section && from.item === to.item) return
 
         const fromSection = this.actions[from.section]
         let fromItems = fromSection.items
@@ -412,9 +412,9 @@ class ActionsData {
 
         // 判断是否跨 section
         if (from.section === to.section) {
-            const to_i = from.row < to.row ? to.row + 1 : to.row
-            const from_i = from.row > to.row ? from.row + 1 : from.row
-            fromItems.splice(to_i, 0, fromItems[from.row]) // 在 to 位置插入元素
+            const to_i = from.item < to.item ? to.item + 1 : to.item
+            const from_i = from.item > to.item ? from.item + 1 : from.item
+            fromItems.splice(to_i, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from_i)
             this.saveOrder(fromType, getOrder(fromItems))
         } else {
@@ -422,12 +422,12 @@ class ActionsData {
             const toItems = toSection.items
             const toType = this.getTypeDir(toSection.title)
 
-            toItems.splice(to.row, 0, fromItems[from.row]) // 在 to 位置插入元素
-            fromItems = fromItems.filter((_, i) => i !== from.row) // 删除 from 位置元素
+            toItems.splice(to.item, 0, fromItems[from.item]) // 在 to 位置插入元素
+            fromItems = fromItems.filter((_, i) => i !== from.item) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
             $file.move({
-                src: `${this.userActionPath}/${fromType}/${toItems[to.row].dir}`,
-                dst: `${this.userActionPath}/${toType}/${toItems[to.row].dir}`
+                src: `${this.userActionPath}/${fromType}/${toItems[to.item].dir}`,
+                dst: `${this.userActionPath}/${toType}/${toItems[to.item].dir}`
             })
             this.saveOrder(toType, getOrder(toItems))
             this.saveOrder(fromType, getOrder(fromItems))

@@ -11,9 +11,6 @@ class ActionDelegates {
     collectionView
 
     #setEditingCallback
-    menuItemActionMaxCount = 5
-    placeholderReuseIdentifier = "UICollectionViewPlaceholderReuseIdentifier"
-    isCollectionView = false
 
     /**
      * @param {AppKernel} kernel
@@ -33,18 +30,8 @@ class ActionDelegates {
         return action
     }
 
-    initReuseIdentifier(collectionView) {
-        let cell = collectionView.$dequeueReusableCellWithIdentifier(this.placeholderReuseIdentifier)
-        if (!cell) {
-            collectionView.$registerClass_forCellReuseIdentifier(
-                $objc("UICollectionViewCell").$class(),
-                this.placeholderReuseIdentifier
-            )
-        }
-    }
-
     get matrixSelected() {
-        const selected = this.collectionView?.$indexPathsForSelectedRows()?.jsValue()
+        const selected = this.collectionView?.$indexPathsForSelectedItems()?.jsValue()
         return Array.isArray(selected) ? selected : []
     }
 
@@ -176,10 +163,9 @@ class ActionDelegates {
 
     createUICollectionViewDropPlaceholder(destinationIndexPath) {
         const placeholder = $objc("UICollectionViewDropPlaceholder").$alloc()
-        placeholder.$initWithInsertionIndexPath_reuseIdentifier_rowHeight(
+        placeholder.$initWithInsertionIndexPath_reuseIdentifier(
             destinationIndexPath,
-            this.placeholderReuseIdentifier,
-            this.views.itemHeight
+            this.data.placeholderReuseIdentifier
         )
 
         return placeholder
@@ -200,12 +186,12 @@ class ActionDelegates {
         if (deselecteAll || this.matrixSelected.length !== 0) {
             for (let i = 0; i < length; i++) {
                 const indexPath = $indexPath(0, i).ocValue()
-                this.collectionView.$deselectRowAtIndexPath_animated(indexPath, false)
+                this.collectionView.$deselectItemAtIndexPath_animated(indexPath, false)
             }
         } else if (this.matrixSelected.length === 0) {
             for (let i = 0; i < length; i++) {
                 const indexPath = $indexPath(0, i).ocValue()
-                this.collectionView.$selectRowAtIndexPath_animated_scrollPosition(indexPath, false, 0)
+                this.collectionView.$selectItemAtIndexPath_animated_scrollPosition(indexPath, false, 0)
             }
         }
 
@@ -218,7 +204,7 @@ class ActionDelegates {
         UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
             // 倒序排序
             const selected = this.matrixSelected.sort((a, b) => {
-                return a.row < b.row
+                return a.item < b.item
             })
             // 关闭编辑模式
             this.setEditing(false)
@@ -390,7 +376,6 @@ class ActionDelegates {
 
     itemsForBeginningDragSession(session, indexPath) {
         const info = this.getActionByIndexPath(indexPath)
-        this.data.getActionHandler(info.type, info.dir)
         const itemProvider = $objc("NSItemProvider").$alloc()
         itemProvider.$initWithObject(this.data.actionToString(info.type, info.dir))
         const dragItem = $objc("UIDragItem").$alloc().$initWithItemProvider(itemProvider)
@@ -422,14 +407,15 @@ class ActionDelegates {
 
     reorder(coordinator) {
         // 排序只有一个可以拖拽
-        const item = coordinator.$items().$objectAtIndex(0)
-        const source = item.$sourceIndexPath().jsValue().row
+        const item = coordinator.$items().$firstObject()
+        const source = item.$sourceIndexPath().jsValue()
         const destinationIndexPath = coordinator.$destinationIndexPath()
-        const destination = destinationIndexPath.jsValue().row
+        const destination = destinationIndexPath.jsValue()
 
         this.data.move(source, destination)
+        this.data.applySnapshotAnimatingDifferences(false)
 
-        coordinator.$dropItem_toRowAtIndexPath(item.$dragItem(), destinationIndexPath)
+        coordinator.$dropItem_toItemAtIndexPath(item.$dragItem(), destinationIndexPath)
     }
 
     dropItems(coordinator) {
@@ -466,7 +452,7 @@ class ActionDelegates {
                         } else if (hasImage) {
                             this.data.add(data.jsValue().image, false)
                         }
-                        this.data.move(0, insertionIndexPath.jsValue().row, false)
+                        this.data.move(0, insertionIndexPath.jsValue())
                         this.data.updateList()
                     })
                 )
@@ -520,16 +506,14 @@ class ActionDelegates {
         })
     }
 
-    setDelegate(collectionView) {
-        this.collectionView = collectionView
+    setDelegate() {
+        this.collectionView = this.data.collectionView
 
-        this.initReuseIdentifier(collectionView)
+        this.collectionView.$setDelegate(this.delegate())
+        this.collectionView.$setCollectionViewLayout(this.views.collectionViewFlowLayout())
 
-        collectionView.$setDelegate(this.delegate())
-        collectionView.$setCollectionViewLayout(this.views.collectionViewFlowLayout())
-
-        collectionView.$setDragDelegate(this.dragDelegate())
-        collectionView.$setDropDelegate(this.dropDelegate())
+        this.collectionView.$setDragDelegate(this.dragDelegate())
+        this.collectionView.$setDropDelegate(this.dropDelegate())
     }
 }
 

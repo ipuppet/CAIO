@@ -7,7 +7,6 @@ const { BarButtonItem, UIKit } = require("../../libs/easy-jsbox")
  */
 
 class ActionViews {
-    reorder = {}
     addActionButtonId = "action-manager-button-add"
     sortActionButtonId = "action-manager-button-sort"
     syncButtonId = "action-manager-button-sync"
@@ -129,7 +128,7 @@ class ActionViews {
                 columns: 2,
                 itemHeight: matrixItemHeight,
                 spacing: 8,
-                data: [],
+                data: actions.map(action => this.actionToData(action)),
                 template: {
                     props: {
                         smoothCorners: true,
@@ -185,11 +184,6 @@ class ActionViews {
             },
             layout: $layout.fill,
             events: {
-                ready: sender => {
-                    sender.data = actions.map(action => {
-                        return this.actionToData(action)
-                    })
-                },
                 didSelect: async (sender, indexPath, data) => {
                     const info = data.info.info
                     const actionData = await getActionData(info)
@@ -289,91 +283,6 @@ class ActionViews {
         }
     }
 
-    matrixTemplate() {
-        return {
-            props: {
-                smoothCorners: true,
-                cornerRadius: 10,
-                bgcolor: $color("#ffffff", "#242424")
-            },
-            views: [
-                {
-                    type: "image",
-                    props: {
-                        id: "color",
-                        cornerRadius: 8,
-                        smoothCorners: true
-                    },
-                    layout: make => {
-                        make.top.left.inset(10)
-                        make.size.equalTo($size(30, 30))
-                    }
-                },
-                {
-                    type: "image",
-                    props: {
-                        id: "icon",
-                        tintColor: $color("#ffffff")
-                    },
-                    layout: make => {
-                        make.top.left.inset(15)
-                        make.size.equalTo($size(20, 20))
-                    }
-                },
-                {
-                    // button
-                    type: "button",
-                    props: {
-                        bgcolor: $color("clear"),
-                        tintColor: UIKit.textColor,
-                        titleColor: UIKit.textColor,
-                        contentEdgeInsets: $insets(0, 0, 0, 0),
-                        titleEdgeInsets: $insets(0, 0, 0, 0),
-                        imageEdgeInsets: $insets(0, 0, 0, 0)
-                    },
-                    views: [
-                        {
-                            type: "image",
-                            props: { symbol: "ellipsis.circle" },
-                            layout: (make, view) => {
-                                make.center.equalTo(view.super)
-                                make.size.equalTo(BarButtonItem.style.iconSize)
-                            }
-                        }
-                    ],
-                    events: {
-                        tapped: sender => {
-                            const info = sender.next.info
-                            if (!info) return
-                            const main = this.data.getActionMainJs(info.type, info.dir)
-                            this.data.editActionMainJs(main, info)
-                        }
-                    },
-                    layout: make => {
-                        make.top.right.inset(0)
-                        make.size.equalTo(BarButtonItem.style.width)
-                    }
-                },
-                {
-                    // 用来保存信息
-                    type: "view",
-                    props: { id: "info", hidden: true }
-                },
-                {
-                    type: "label",
-                    props: {
-                        id: "name",
-                        font: $font(16)
-                    },
-                    layout: (make, view) => {
-                        make.bottom.left.inset(10)
-                        make.width.equalTo(view.super)
-                    }
-                }
-            ]
-        }
-    }
-
     matrixCell(action) {
         return {
             props: { bgcolor: $color("#ffffff", "#242424") },
@@ -453,7 +362,7 @@ class ActionViews {
         }
     }
 
-    registerClass(collectionView) {
+    actionViewCustomHeader() {
         $define({
             type: "ActionViewCustomHeader: UICollectionReusableView",
             props: ["titleLabel"],
@@ -473,6 +382,8 @@ class ActionViews {
                 }
             }
         })
+    }
+    actionViewCustomFooter() {
         $define({
             type: "ActionViewCustomFooter: UICollectionReusableView",
             props: ["titleLabel"],
@@ -490,22 +401,6 @@ class ActionViews {
                 }
             }
         })
-
-        collectionView.$registerClass_forSupplementaryViewOfKind_withReuseIdentifier(
-            $objc("ActionViewCustomHeader").$class(),
-            "UICollectionElementKindSectionHeader",
-            "ActionViewCustomHeaderReuseIdentifier"
-        )
-        collectionView.$registerClass_forSupplementaryViewOfKind_withReuseIdentifier(
-            $objc("ActionViewCustomFooter").$class(),
-            "UICollectionElementKindSectionFooter",
-            "ActionViewCustomFooterReuseIdentifier"
-        )
-
-        collectionView.$registerClass_forCellWithReuseIdentifier(
-            $objc("UICollectionViewCell").$class(),
-            "ActionCollectionViewCellReuseIdentifier"
-        )
     }
 
     collectionViewFlowLayout() {
