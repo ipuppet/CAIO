@@ -283,35 +283,10 @@ class Clips extends ClipsData {
         }
     }
 
-    /**
-     * 将from位置的元素移动到to位置
-     * @param {number} from
-     * @param {number} to
-     * @param {boolean} updateUI
-     */
-    move(from, to, updateUI = true) {
-        if (from === to) return
-
-        try {
-            super.moveItem(from, to)
-
-            if (!updateUI) return
-
-            // 操作 UI
-            const tableView = $(this.views.listId).ocValue()
-            const fip = $indexPath(0, from).ocValue()
-            const tip = $indexPath(0, to).ocValue()
-            tableView.$moveRowAtIndexPath_toIndexPath(fip, tip)
-        } catch (error) {
-            $ui.alert(error)
-        }
-    }
-
     favorite(index) {
         const clip = this.getByIndex(index)
 
         if (clip?.section === "favorite") {
-            this.move(index, 0)
             return
         }
 
@@ -341,9 +316,21 @@ class Clips extends ClipsData {
         } else {
             this.setCopied(uuid)
         }
-        const isMoveToTop = this.tabIndex !== 0
         // 将被复制的行移动到最前端
-        if (isMoveToTop) this.move(this.getIndexByUUID(uuid), 0)
+        if (this.tabIndex !== 0) {
+            const from = this.getIndexByUUID(uuid)
+            const to = 0
+            try {
+                super.moveItem(from, to)
+                // 操作 UI
+                const tableView = $(this.views.listId).ocValue()
+                const fip = $indexPath(0, from).ocValue()
+                const tip = $indexPath(0, to).ocValue()
+                tableView.$moveRowAtIndexPath_toIndexPath(fip, tip)
+            } catch (error) {
+                $ui.alert(error)
+            }
+        }
     }
 
     getAddTextView() {

@@ -377,7 +377,7 @@ class ClipsDelegates {
     trailingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath) {
         tableView = tableView.jsValue()
         indexPath = indexPath.jsValue()
-        return $objc("UISwipeActionsConfiguration").$configurationWithActions([
+        const actions = [
             this.createUIContextualAction({
                 destructive: true,
                 title: $l10n("DELETE"),
@@ -387,15 +387,20 @@ class ClipsDelegates {
                     // 重新计算列表项高度
                     $delay(0.25, () => tableView.reload())
                 }
-            }),
-            this.createUIContextualAction({
-                title: $l10n("FAVORITE"),
-                color: $color("orange"),
-                handler: (action, sourceView, completionHandler) => {
-                    this.data.favorite(indexPath.row)
-                }
             })
-        ])
+        ]
+        if (this.data.tabIndex === 1) {
+            actions.push(
+                this.createUIContextualAction({
+                    title: $l10n("FAVORITE"),
+                    color: $color("orange"),
+                    handler: (action, sourceView, completionHandler) => {
+                        this.data.favorite(indexPath.row)
+                    }
+                })
+            )
+        }
+        return $objc("UISwipeActionsConfiguration").$configurationWithActions(actions)
     }
 
     heightForRowAtIndexPath(tableView, indexPath) {
@@ -498,7 +503,7 @@ class ClipsDelegates {
         const destinationIndexPath = coordinator.$destinationIndexPath()
         const destination = destinationIndexPath.jsValue().row
 
-        this.data.move(source, destination, false)
+        this.data.move(source, destination)
         this.data.updateList()
 
         coordinator.$dropItem_toRowAtIndexPath(item.$dragItem(), destinationIndexPath)
@@ -538,7 +543,7 @@ class ClipsDelegates {
                         } else if (hasImage) {
                             this.data.add(data.jsValue().image, false)
                         }
-                        this.data.move(0, insertionIndexPath.jsValue().row, false)
+                        this.data.move(0, insertionIndexPath.jsValue().row)
                         this.data.updateList()
                     })
                 )
