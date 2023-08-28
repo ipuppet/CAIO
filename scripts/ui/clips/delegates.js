@@ -493,7 +493,7 @@ class ClipsDelegates {
 
     reorder(coordinator) {
         // 排序只有一个可以拖拽
-        const item = coordinator.$items().$objectAtIndex(0)
+        const item = coordinator.$items().$firstObject()
         const source = item.$sourceIndexPath().jsValue().row
         const destinationIndexPath = coordinator.$destinationIndexPath()
         const destination = destinationIndexPath.jsValue().row
