@@ -199,10 +199,10 @@ class WebDavSync {
         })
         if (resp.index !== WebDavSync.conflictKeep.cancel) {
             if (resp.index === WebDavSync.conflictKeep.local) {
-                this.kernel.print(`conflict resolve: keep local database`)
+                this.kernel.logger.info(`conflict resolve: keep local database`)
                 await this.push()
             } else {
-                this.kernel.print(`conflict resolve: keep WebDAV database`)
+                this.kernel.logger.info(`conflict resolve: keep WebDAV database`)
                 await this.pull()
             }
         }

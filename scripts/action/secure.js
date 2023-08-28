@@ -35,11 +35,11 @@ class SecureFunctionBase {
         throw new Error(message)
     }
 
-    print(parameter) {
-        this.#kernel.print(parameter)
+    info(parameter) {
+        this.#kernel.logger.info(parameter)
     }
     error(parameter) {
-        this.#kernel.error(parameter)
+        this.#kernel.logger.error(parameter)
     }
 }
 
@@ -137,7 +137,7 @@ class SecureHttp extends SecureFunctionBase {
             if (!(await this.#checkPermission())) {
                 throw new Error("No network permission.")
             }
-            this.print(`sending request [${request.method}]: ${request.url}`)
+            this.info(`sending request [${request.method}]: ${request.url}`)
             const resp = await $http.request(Object.assign({ timeout: 3 }, request))
 
             if (typeof request?.handler === "function") {

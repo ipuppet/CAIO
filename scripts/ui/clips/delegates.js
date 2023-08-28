@@ -104,7 +104,7 @@ class ClipsDelegates {
 
     get menu() {
         const action = action => {
-            const handler = this.kernel.actionManager.getActionHandler(action.type, action.dir)
+            const handler = this.kernel.actions.getActionHandler(action.type, action.dir)
             action.handler = (tableView, indexPath) => {
                 const item = this.data.getByIndex(indexPath)
                 const actionData = new ActionData({
@@ -119,7 +119,7 @@ class ClipsDelegates {
             action.symbol = action.icon
             return action
         }
-        const actions = this.kernel.actionManager.getActions("clipboard")
+        const actions = this.kernel.actions.getActions("clipboard")
         const actionButtons = {
             inline: true,
             items: actions.slice(0, this.menuItemActionMaxCount).map(action)
@@ -173,25 +173,18 @@ class ClipsDelegates {
         return action
     }
 
-    createUIContextualAction = ({
-        title,
-        handler,
-        color,
-        image,
-        destructive = false,
-        autoCloseEditing = true
-    } = {}) => {
+    createUIContextualAction = ({ title, handler, color, image, destructive = false } = {}) => {
         const action = $objc("UIContextualAction").$contextualActionWithStyle_title_handler(
             destructive ? 1 : 0,
             title,
-            $block("void, UIContextualAction *, UIView *, void", (action, sourceView, completionHandler) => {
-                if (autoCloseEditing) {
-                    $(this.views.listId).setEditing(false)
+            $block("void, UIContextualAction *, UIView *, block", async (action, sourceView, completionHandler) => {
+                // completionHandler 只有第一次触发时生效，原因未知
+                completionHandler = actionPerformed => {
+                    if (actionPerformed) {
+                        $(this.views.listId).ocValue().$setEditing_animated(false, true)
+                    }
                 }
-                // 等待动画结束
-                $delay(0.3, () => {
-                    handler(action, sourceView, completionHandler)
-                })
+                await handler(action, sourceView, completionHandler)
             })
         )
         if (color) {
@@ -228,29 +221,30 @@ class ClipsDelegates {
 
     toggleAllSelected(deselecteAll = false, updateEditModeToolBar = true) {
         const length = this.data.clips.length
-        const listViewOC = $(this.views.listId).ocValue()
+        const tableView = $(this.views.listId).ocValue()
         if (deselecteAll || this.listSelected.length !== 0) {
             for (let i = 0; i < length; i++) {
                 const indexPath = $indexPath(0, i).ocValue()
-                listViewOC.$deselectRowAtIndexPath_animated(indexPath, false)
+                tableView.$deselectRowAtIndexPath_animated(indexPath, false)
             }
         } else if (this.listSelected.length === 0) {
             for (let i = 0; i < length; i++) {
                 const indexPath = $indexPath(0, i).ocValue()
-                listViewOC.$selectRowAtIndexPath_animated_scrollPosition(indexPath, false, 0)
+                tableView.$selectRowAtIndexPath_animated_scrollPosition(indexPath, false, 0)
             }
         }
 
-        if (updateEditModeToolBar && listViewOC.$isEditing()) {
+        if (updateEditModeToolBar && tableView.$isEditing()) {
             this.updateEditingToolBar()
         }
     }
 
     deleteSelected() {
         UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
+            // 倒序排序
             const selected = this.listSelected.sort((a, b) => {
                 return a.row < b.row
-            }) // 倒序排序
+            })
             const uuids = selected.map(indexPath => {
                 return this.data.getByIndex(indexPath).uuid
             })
@@ -267,15 +261,14 @@ class ClipsDelegates {
      * @param {boolean} mode
      */
     setEditing(mode) {
-        const listView = $(this.views.listId)
-        const listViewOC = $(this.views.listId).ocValue()
-        let status = mode !== undefined ? mode : !listViewOC.$isEditing()
+        const tableView = $(this.views.listId).ocValue()
+        let status = mode !== undefined ? mode : !tableView.$isEditing()
 
-        if (status === listViewOC.$isEditing()) {
+        if (status === tableView.$isEditing()) {
             return
         }
 
-        listView.setEditing(status)
+        tableView.$setEditing(status)
         if (typeof this.#setEditingCallback === "function") {
             this.#setEditingCallback(status)
         }
@@ -370,14 +363,13 @@ class ClipsDelegates {
     }
 
     leadingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath) {
-        tableView = tableView.jsValue()
-        indexPath = indexPath.jsValue()
         return $objc("UISwipeActionsConfiguration").$configurationWithActions([
             this.createUIContextualAction({
                 title: $l10n("COPY"),
                 color: $color("systemLink"),
-                handler: (action, sourceView, completionHandler) => {
-                    this.data.copy(this.data.getByIndex(indexPath).uuid)
+                handler: async (action, sourceView, completionHandler) => {
+                    this.data.copy(this.data.getByIndex(indexPath.jsValue()).uuid)
+                    completionHandler(true)
                 }
             })
         ])
@@ -385,10 +377,9 @@ class ClipsDelegates {
     trailingSwipeActionsConfigurationForRowAtIndexPath(tableView, indexPath) {
         tableView = tableView.jsValue()
         indexPath = indexPath.jsValue()
-        return $objc("UISwipeActionsConfiguration").$configurationWithActions([
+        const actions = [
             this.createUIContextualAction({
                 destructive: true,
-                autoCloseEditing: false,
                 title: $l10n("DELETE"),
                 handler: (action, sourceView, completionHandler) => {
                     this.data.delete(this.data.getByIndex(indexPath).uuid)
@@ -396,16 +387,20 @@ class ClipsDelegates {
                     // 重新计算列表项高度
                     $delay(0.25, () => tableView.reload())
                 }
-            }),
-            this.createUIContextualAction({
-                title: $l10n("FAVORITE"),
-                color: $color("orange"),
-                autoCloseEditing: false,
-                handler: (action, sourceView, completionHandler) => {
-                    this.data.favorite(indexPath.row)
-                }
             })
-        ])
+        ]
+        if (this.data.tabIndex === 1) {
+            actions.push(
+                this.createUIContextualAction({
+                    title: $l10n("FAVORITE"),
+                    color: $color("orange"),
+                    handler: (action, sourceView, completionHandler) => {
+                        this.data.favorite(indexPath.row)
+                    }
+                })
+            )
+        }
+        return $objc("UISwipeActionsConfiguration").$configurationWithActions(actions)
     }
 
     heightForRowAtIndexPath(tableView, indexPath) {
@@ -503,12 +498,12 @@ class ClipsDelegates {
 
     reorder(coordinator) {
         // 排序只有一个可以拖拽
-        const item = coordinator.$items().$objectAtIndex(0)
+        const item = coordinator.$items().$firstObject()
         const source = item.$sourceIndexPath().jsValue().row
         const destinationIndexPath = coordinator.$destinationIndexPath()
         const destination = destinationIndexPath.jsValue().row
 
-        this.data.move(source, destination, false)
+        this.data.move(source, destination)
         this.data.updateList()
 
         coordinator.$dropItem_toRowAtIndexPath(item.$dragItem(), destinationIndexPath)
@@ -537,18 +532,17 @@ class ClipsDelegates {
             const completionHandler = (data, error) => {
                 if (error) {
                     $ui.alert(error.jsValue())
-                    this.kernel.error(error.jsValue())
+                    this.kernel.logger.error(error.jsValue())
                 }
 
                 placeholderContext.$commitInsertionWithDataSourceUpdates(
                     $block("void, NSIndexPath *", insertionIndexPath => {
-                        console.log("aaaaaaa")
                         if (hasText) {
                             this.data.add(data.jsValue().string, false)
                         } else if (hasImage) {
                             this.data.add(data.jsValue().image, false)
                         }
-                        this.data.move(0, insertionIndexPath.jsValue().row, false)
+                        this.data.move(0, insertionIndexPath.jsValue().row)
                         this.data.updateList()
                     })
                 )

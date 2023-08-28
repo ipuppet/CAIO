@@ -118,14 +118,14 @@ class Keyboard extends Clips {
                 try {
                     await tapped(...args)
                 } catch (error) {
-                    this.kernel.error(error)
+                    this.kernel.logger.error(error)
                     throw error
                 }
             }
         }
     }
 
-    getTopButtons() {
+    topButtonsView() {
         const buttons = [
             {
                 // 关闭键盘
@@ -220,11 +220,11 @@ class Keyboard extends Clips {
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.left.equalTo(view.super).offset(this.views.containerMargin)
-                                make.size.equalTo($size(30, 30))
+                                make.left.inset(this.views.containerMargin)
+                                make.size.equalTo($size(28, 28))
                             }
                         }
-                    ].concat(super.getTabView(), this.getTopButtons())
+                    ].concat(super.getTabView(), this.topButtonsView())
                 }
             ],
             layout: (make, view) => {
@@ -240,7 +240,7 @@ class Keyboard extends Clips {
      * @param {*} align
      * @returns
      */
-    getBottomButtonView(button, align) {
+    #bottomBarButtonView(button, align) {
         const size = this.bottomButtonSize
         const edges = this.views.containerMargin
         const layout = (make, view) => {
@@ -357,12 +357,10 @@ class Keyboard extends Clips {
         })
         rightButtons.push(
             {
-                // send
                 title: $l10n("SEND"),
                 tapped: this.keyboardTapped(() => $keyboard.send())
             },
             {
-                // delete
                 symbol: "delete.left",
                 events: {
                     touchesBegan: this.keyboardTapped(async () => {
@@ -417,8 +415,8 @@ class Keyboard extends Clips {
         return {
             type: "view",
             views: [
-                ...leftButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.getBottomButtonView(btn, UIKit.align.right)),
+                ...leftButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.left)),
+                ...rightButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.right)),
                 spaceButton
             ],
             layout: (make, view) => {
@@ -599,7 +597,7 @@ class Keyboard extends Clips {
             type: "view",
             props: { id: this.actionsId, hidden: true },
             views: [
-                this.kernel.actionManager.getActionMiniView(async () => {
+                this.kernel.actions.views.getActionMiniView(async () => {
                     return new ActionData({
                         env: ActionEnv.keyboard,
                         textBeforeInput: $keyboard.textBeforeInput,

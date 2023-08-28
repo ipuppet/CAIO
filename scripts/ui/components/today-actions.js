@@ -20,8 +20,8 @@ class TodayActions {
             this.setActions(cache)
         }
         const actions = {}
-        this.kernel.actionManager.getActionTypes().forEach(type => {
-            this.kernel.actionManager.getActions(type).forEach(action => {
+        this.kernel.actions.getActionTypes().forEach(type => {
+            this.kernel.actions.getActions(type).forEach(action => {
                 actions[action.type + action.dir] = action
             })
         })
@@ -55,8 +55,8 @@ class TodayActions {
 
     getAllActions() {
         let actions = []
-        this.kernel.actionManager.getActionTypes().forEach(type => {
-            actions = actions.concat(this.kernel.actionManager.getActions(type))
+        this.kernel.actions.getActionTypes().forEach(type => {
+            actions = actions.concat(this.kernel.actions.getActions(type))
         })
         return actions
     }
@@ -84,7 +84,7 @@ class TodayActions {
                     action.icon.slice(0, 5) === "icon_"
                         ? { icon: $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff")) }
                         : { image: $image(action.icon) },
-                color: { bgcolor: this.kernel.actionManager.getColor(action.color) }
+                color: { bgcolor: this.kernel.actions.views.getColor(action.color) }
             }
         })
     }

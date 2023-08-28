@@ -152,7 +152,7 @@ class Action {
                 this.#kernel.storage.deleteTable("clips")
                 return true
             } catch (error) {
-                this.#kernel.error(error)
+                this.#kernel.logger.error(error)
                 throw error
             }
         } else {
@@ -178,7 +178,7 @@ class Action {
      * @returns
      */
     getAction(type, name, data) {
-        return this.#kernel.actionManager.getAction(type, name, data)
+        return this.#kernel.actions.getAction(type, name, data)
     }
 
     async runAction(type, name) {

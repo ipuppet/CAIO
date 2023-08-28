@@ -1,13 +1,14 @@
-const { FileStorage } = require("../libs/easy-jsbox")
+const { FileStorage, UIKit } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
 const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
+ * @typedef {ActionsData} ActionsData
  */
 
-class ActionManagerData {
+class ActionsData {
     #actions
 
     /**
@@ -21,8 +22,6 @@ class ActionManagerData {
         this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
         this.localSyncFile = this.userActionPath + "/sync.json"
-        // 用来存储被美化的 Action 分类名称
-        this.typeNameMap = {}
         // checkUserAction
         this.checkUserAction()
         // sync
@@ -33,11 +32,12 @@ class ActionManagerData {
         if (!this.#actions) {
             this.#actions = this.getActionTypes().map(type => {
                 return {
+                    dir: type,
                     title: this.getTypeName(type),
                     items: this.getActions(type)
                 }
             })
-            this.kernel.print(`init actions`)
+            this.kernel.logger.info(`init actions`)
         }
         return this.#actions
     }
@@ -103,42 +103,96 @@ class ActionManagerData {
         this.setNeedReload()
     }
 
+    actionToString(type, dir) {
+        return JSON.stringify({
+            config: this.getActionConfigString(type, dir),
+            main: this.getActionMainJs(type, dir),
+            readme: this.getActionReadme(type, dir)
+        })
+    }
+
+    exportAction(action) {
+        const loading = UIKit.loading()
+        loading.start()
+
+        const { type, dir, name } = action
+
+        const content = this.actionToString(type, dir)
+        loading.end()
+        $share.sheet({
+            items: [
+                {
+                    name: name + ".json",
+                    data: $data({ string: content })
+                }
+            ]
+        })
+    }
+
+    importAction(data, type = "uncategorized") {
+        const loading = UIKit.loading()
+        loading.start()
+
+        try {
+            const dirName = $text.uuid
+            const tmpPath = FileStorage.join(this.tempPath, dirName)
+            $file.mkdir(tmpPath)
+
+            const { config, main, readme } = data
+            if (!config || !main || !readme) {
+                throw new Error("Not an action")
+            }
+
+            $file.write({
+                data: $data({ string: config }),
+                path: FileStorage.join(tmpPath, "config.json")
+            })
+            $file.write({
+                data: $data({ string: main }),
+                path: FileStorage.join(tmpPath, "main.js")
+            })
+            $file.write({
+                data: $data({ string: readme }),
+                path: FileStorage.join(tmpPath, "README.md")
+            })
+            $file.move({
+                src: tmpPath,
+                dst: this.getActionPath(type, dirName)
+            })
+            this.setNeedReload()
+
+            return dirName
+        } catch (error) {
+            throw error
+        } finally {
+            loading.end()
+        }
+    }
+
     getLocalSyncData() {
         const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
         return new Date(localSyncData.timestamp)
     }
 
     async sync() {
-        if (!this.kernel.setting.get("webdav.status")) {
-            return
-        }
+        if (!this.isEnableWebDavSync) return
         if (!this.webdavSync) {
-            await this.initSyncWithWebDav()
+            try {
+                this.webdavSync = new WebDavSyncAction({
+                    kernel: this.kernel,
+                    host: this.kernel.setting.get("webdav.host"),
+                    user: this.kernel.setting.get("webdav.user"),
+                    password: this.kernel.setting.get("webdav.password"),
+                    basepath: this.kernel.setting.get("webdav.basepath")
+                })
+                await this.webdavSync.init()
+            } catch (error) {
+                this.kernel.logger.error(`${error}\n${error.stack}`)
+                throw error
+            }
         } else {
-            await this.webdavSync.init()
+            this.webdavSync.sync()
         }
-    }
-
-    async initSyncWithWebDav() {
-        if (!this.isEnableWebDavSync) return
-        try {
-            this.webdavSync = new WebDavSyncAction({
-                kernel: this.kernel,
-                host: this.kernel.setting.get("webdav.host"),
-                user: this.kernel.setting.get("webdav.user"),
-                password: this.kernel.setting.get("webdav.password"),
-                basepath: this.kernel.setting.get("webdav.basepath")
-            })
-            await this.webdavSync.init()
-        } catch (error) {
-            this.kernel.error(`${error}\n${error.stack}`)
-            throw error
-        }
-    }
-
-    syncWithWebDav() {
-        if (!this.isEnableWebDavSync) return
-        this.webdavSync.sync()
     }
 
     checkUserAction() {
@@ -191,8 +245,15 @@ class ActionManagerData {
         return `${this.userActionPath}/${type}/${dir}`
     }
 
+    getActionConfigString(type, dir) {
+        return $file.read(`${this.getActionPath(type, dir)}/config.json`).string
+    }
     getActionConfig(type, dir) {
-        return JSON.parse($file.read(`${this.getActionPath(type, dir)}/config.json`).string)
+        return JSON.parse(this.getActionConfigString(type, dir))
+    }
+
+    getActionMainJs(type, dir) {
+        return $file.read(`${this.getActionPath(type, dir)}/main.js`).string
     }
 
     getActionReadme(type, dir) {
@@ -203,20 +264,18 @@ class ActionManagerData {
         if (!$file.exists(this.getActionPath(type, dir))) {
             dir = $text.MD5(dir)
         }
-        const basePath = this.getActionPath(type, dir)
-        const config = this.getActionConfig(type, dir)
         try {
-            const script = $file.read(`${basePath}/main.js`).string
+            const script = this.getActionMainJs(type, dir)
             const ss = new SecureScript(script)
             const MyAction = new Function("Action", "ActionEnv", "ActionData", `${ss.secure()}\n return MyAction`)(
                 Action,
                 ActionEnv,
                 ActionData
             )
-            const action = new MyAction(this.kernel, config, data)
+            const action = new MyAction(this.kernel, this.getActionConfig(type, dir), data)
             return action
         } catch (error) {
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
@@ -227,7 +286,7 @@ class ActionManagerData {
                 const action = this.getAction(type, dir, data)
                 return await action.do()
             } catch (error) {
-                this.kernel.error(error)
+                this.kernel.logger.error(error)
                 throw error
             }
         }
@@ -266,12 +325,7 @@ class ActionManagerData {
         const typeUpperCase = type.toUpperCase()
         const l10n = $l10n(typeUpperCase)
         const name = l10n === typeUpperCase ? type : l10n
-        this.typeNameMap[name] = type
         return name
-    }
-
-    getTypeDir(name) {
-        return this.typeNameMap[name] ?? name
     }
 
     #saveFile(data, ...args) {
@@ -323,11 +377,11 @@ class ActionManagerData {
     }
 
     move(from, to) {
-        if (from.section === to.section && from.row === to.row) return
+        if (from.section === to.section && from.item === to.item) return
 
         const fromSection = this.actions[from.section]
         let fromItems = fromSection.items
-        const fromType = this.getTypeDir(fromSection.title)
+        const fromType = fromSection.dir
 
         const getOrder = items => {
             return items.map(item => item.dir)
@@ -335,22 +389,22 @@ class ActionManagerData {
 
         // 判断是否跨 section
         if (from.section === to.section) {
-            const to_i = from.row < to.row ? to.row + 1 : to.row
-            const from_i = from.row > to.row ? from.row + 1 : from.row
-            fromItems.splice(to_i, 0, fromItems[from.row]) // 在 to 位置插入元素
+            const to_i = from.item < to.item ? to.item + 1 : to.item
+            const from_i = from.item > to.item ? from.item + 1 : from.item
+            fromItems.splice(to_i, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from_i)
             this.saveOrder(fromType, getOrder(fromItems))
         } else {
             const toSection = this.actions[to.section]
             const toItems = toSection.items
-            const toType = this.getTypeDir(toSection.title)
+            const toType = toSection.dir
 
-            toItems.splice(to.row, 0, fromItems[from.row]) // 在 to 位置插入元素
-            fromItems = fromItems.filter((_, i) => i !== from.row) // 删除 from 位置元素
+            toItems.splice(to.item, 0, fromItems[from.item]) // 在 to 位置插入元素
+            fromItems = fromItems.filter((_, i) => i !== from.item) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
             $file.move({
-                src: `${this.userActionPath}/${fromType}/${toItems[to.row].dir}`,
-                dst: `${this.userActionPath}/${toType}/${toItems[to.row].dir}`
+                src: `${this.userActionPath}/${fromType}/${toItems[to.item].dir}`,
+                dst: `${this.userActionPath}/${toType}/${toItems[to.item].dir}`
             })
             this.saveOrder(toType, getOrder(toItems))
             this.saveOrder(fromType, getOrder(fromItems))
@@ -371,4 +425,4 @@ class ActionManagerData {
     }
 }
 
-module.exports = ActionManagerData
+module.exports = ActionsData

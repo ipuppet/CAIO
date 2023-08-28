@@ -101,7 +101,7 @@ class Clips extends ClipsData {
                 this.getAddTextView()
             } else if ($context.query["actions"]) {
                 if (this.kernel.isUseJsboxNav) {
-                    this.kernel.actionManager.present()
+                    this.kernel.actions.present()
                 } else {
                     this.kernel.tabBarController.switchPageTo("actions")
                 }
@@ -142,8 +142,8 @@ class Clips extends ClipsData {
                     listView.cell($indexPath(0, this.getIndexByUUID(copied.uuid))).get("copied").hidden = false
                 }
             } catch (error) {
-                this.kernel.error("set copied error")
-                this.kernel.error(error)
+                this.kernel.logger.error("set copied error")
+                this.kernel.logger.error(error)
             }
         })
 
@@ -152,7 +152,7 @@ class Clips extends ClipsData {
         } else {
             Object.assign(this.copied, copied)
         }
-        this.kernel.print(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
+        this.kernel.logger.info(`this.copied: ${JSON.stringify(this.copied, null, 2)}`)
         $cache.set("clips.copied", this.copied)
     }
 
@@ -188,7 +188,7 @@ class Clips extends ClipsData {
 
     async readClipboard(manual = false) {
         if (manual || this.kernel.setting.get("clipboard.autoSave")) {
-            this.kernel.print("read clipboard")
+            this.kernel.logger.info("read clipboard")
 
             // 剪切板没有变化则直接退出
             if (!manual && !this.isPasteboardChanged) {
@@ -283,48 +283,10 @@ class Clips extends ClipsData {
         }
     }
 
-    /**
-     * 将from位置的元素移动到to位置
-     * @param {number} from
-     * @param {number} to
-     * @param {boolean} updateUI
-     */
-    move(from, to, updateUI = true) {
-        if (from === to) return
-
-        try {
-            super.moveItem(from, to)
-
-            if (!updateUI) return
-
-            // 操作 UI
-            const listView = $(this.views.listId)
-            // 移动列表
-            if (from < to) {
-                // 从上往下移动
-                listView.insert({
-                    indexPath: $indexPath(0, to + 1), // 若向下移动则 to 增加 1，因为代码为移动到 to 位置的上面
-                    value: this.views.lineData(this.clips[to])
-                })
-                listView.delete($indexPath(0, from))
-            } else {
-                // 从下往上移动
-                listView.delete($indexPath(0, from))
-                listView.insert({
-                    indexPath: $indexPath(0, to),
-                    value: this.views.lineData(this.clips[to])
-                })
-            }
-        } catch (error) {
-            $ui.alert(error)
-        }
-    }
-
     favorite(index) {
         const clip = this.getByIndex(index)
 
         if (clip?.section === "favorite") {
-            this.move(index, 0)
             return
         }
 
@@ -354,9 +316,21 @@ class Clips extends ClipsData {
         } else {
             this.setCopied(uuid)
         }
-        const isMoveToTop = this.tabIndex !== 0
         // 将被复制的行移动到最前端
-        if (isMoveToTop) this.move(this.getIndexByUUID(uuid), 0)
+        if (this.tabIndex !== 0) {
+            const from = this.getIndexByUUID(uuid)
+            const to = 0
+            try {
+                super.moveItem(from, to)
+                // 操作 UI
+                const tableView = $(this.views.listId).ocValue()
+                const fip = $indexPath(0, from).ocValue()
+                const tip = $indexPath(0, to).ocValue()
+                tableView.$moveRowAtIndexPath_toIndexPath(fip, tip)
+            } catch (error) {
+                $ui.alert(error)
+            }
+        }
     }
 
     getAddTextView() {
@@ -505,7 +479,7 @@ class Clips extends ClipsData {
                             animate.done()
                         } catch (error) {
                             animate.cancel()
-                            this.kernel.error(error)
+                            this.kernel.logger.error(error)
                         }
                     }
                 }

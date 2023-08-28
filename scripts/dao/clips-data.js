@@ -67,7 +67,7 @@ class ClipsData {
         this.tabItemsIndex.forEach((table, tabIndex) => {
             if (!this.#allClips[tabIndex]) {
                 this.#allClips[tabIndex] = this.#initData(table)
-                this.kernel.print(`init clips: ${table}`)
+                this.kernel.logger.info(`init clips: ${table}`)
             }
         })
         return this.#allClips
@@ -79,7 +79,7 @@ class ClipsData {
     get clips() {
         if (!this.#allClips[this.tabIndex]) {
             this.#allClips[this.tabIndex] = this.#initData(this.table)
-            this.kernel.print(`init clips: ${this.table}`)
+            this.kernel.logger.info(`init clips: ${this.table}`)
         }
         return this.#allClips[this.tabIndex]
     }
@@ -119,7 +119,7 @@ class ClipsData {
             })
             return this.#clipProxy(sorted)
         } catch (error) {
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             this.rebuildDatabase()
         }
     }
@@ -167,7 +167,7 @@ class ClipsData {
             this.#allClips = []
         }
         this.needReload = true
-        this.kernel.print(`set need reload: ${table ?? "all"}`)
+        this.kernel.logger.info(`set need reload: ${table ?? "all"}`)
     }
 
     getClipCopy(src, assign = {}) {
@@ -256,7 +256,7 @@ class ClipsData {
             return clip
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
@@ -320,7 +320,7 @@ class ClipsData {
             this.setNeedReload(this.table)
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
@@ -339,9 +339,9 @@ class ClipsData {
 
         try {
             this.kernel.storage.updateText(this.table, clip.uuid, text)
-            this.kernel.print(`data changed at index [${this.getIndexByUUID(uuid)}]\n${oldData}\n↓\n${text}`)
+            this.kernel.logger.info(`data changed at index [${this.getIndexByUUID(uuid)}]\n${oldData}\n↓\n${text}`)
         } catch (error) {
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
@@ -424,7 +424,7 @@ class ClipsData {
             this.kernel.storage.commit()
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         } finally {
             this.setNeedReload(this.table)
@@ -456,7 +456,7 @@ class ClipsData {
             this.setNeedReload()
         } catch (error) {
             this.kernel.storage.rollback()
-            this.kernel.error(error)
+            this.kernel.logger.error(error)
             throw error
         }
     }
