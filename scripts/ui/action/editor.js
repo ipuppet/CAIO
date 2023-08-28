@@ -240,7 +240,7 @@ class ActionEditor {
                                 .present()
                         }
                     } catch (error) {
-                        console.error(error)
+                        this.data.kernel.logger.error(error)
                     }
                 }
             }
