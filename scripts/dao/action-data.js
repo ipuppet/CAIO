@@ -114,10 +114,11 @@ class ActionsData {
     }
 
     exportAction(action) {
-        const { type, dir, name } = action
-
         const loading = UIKit.loading()
         loading.start()
+
+        const { type, dir, name } = action
+
         const content = this.actionToString(type, dir)
         loading.end()
         $share.sheet({
@@ -130,61 +131,42 @@ class ActionsData {
         })
     }
 
-    // exportAction(action) {
-    //     const { type, dir, name } = action
-    //     const actionPath = this.getActionPath(type, dir)
-    //     const tmpPath = FileStorage.join(this.tempPath, name + ".zip")
-    //     $file.mkdir(this.tempPath)
-
-    //     const loading = UIKit.loading()
-    //     loading.start()
-
-    //     $archiver.zip({
-    //         directory: actionPath,
-    //         dest: tmpPath,
-    //         handler: success => {
-    //             loading.end()
-    //             if (!success) throw new Error("$archiver.zip failed")
-
-    //             $share.sheet({
-    //                 items: [
-    //                     {
-    //                         name: name + ".zip",
-    //                         data: $file.read(tmpPath)
-    //                     }
-    //                 ],
-    //                 handler: () => {
-    //                     $file.delete(tmpPath)
-    //                 }
-    //             })
-    //         }
-    //     })
-    // }
-
     importAction(data) {
-        const tmpPath = FileStorage.join(this.tempPath, data.fileName)
-        $file.mkdir(this.tempPath)
-
         const loading = UIKit.loading()
         loading.start()
 
-        $archiver.unzip({
-            file: data,
-            dest: tmpPath,
-            handler: success => {
-                loading.end()
-                if (!success) throw new Error("$archiver.unzip failed")
+        try {
+            const dirName = $text.uuid
+            const tmpPath = FileStorage.join(this.tempPath, dirName)
+            $file.mkdir(tmpPath)
 
-                const config = JSON.parse($file.read(FileStorage.join(tmpPath, "config.json")).string)
-                console.log(config)
-                return
-
-                $file.move({
-                    src: tmpPath,
-                    dst: this.getActionPath()
-                })
+            const { config, main, readme } = data
+            if (!config || !main || !readme) {
+                throw new Error("Not an action")
             }
-        })
+
+            $file.write({
+                data: $data({ string: config }),
+                path: FileStorage.join(tmpPath, "config.json")
+            })
+            $file.write({
+                data: $data({ string: main }),
+                path: FileStorage.join(tmpPath, "main.js")
+            })
+            $file.write({
+                data: $data({ string: readme }),
+                path: FileStorage.join(tmpPath, "README.md")
+            })
+            $file.move({
+                src: tmpPath,
+                dst: this.getActionPath("uncategorized", dirName)
+            })
+            this.setNeedReload()
+        } catch (error) {
+            throw error
+        } finally {
+            loading.end()
+        }
     }
 
     getLocalSyncData() {

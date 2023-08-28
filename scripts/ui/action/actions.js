@@ -76,51 +76,70 @@ class Actions extends ActionsData {
     }
 
     getNavButtons() {
+        const importAction = [
+            {
+                title: $l10n("IMPORT_FROM_FILE"),
+                handler: async () => {
+                    const data = await $drive.open()
+                    try {
+                        this.importAction(JSON.parse(data.string))
+                        this.applySnapshotAnimatingDifferences()
+                    } catch (error) {
+                        this.kernel.logger.error(error)
+                    }
+                }
+            }
+        ]
+        const addItems = [
+            {
+                title: $l10n("CREATE_NEW_ACTION"),
+                handler: () => {
+                    this.editActionInfoPageSheet(null, async info => {
+                        const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
+                        this.saveMainJs(info, MainJsTemplate)
+                        this.applySnapshotAnimatingDifferences()
+                        await $wait(0.3)
+                        this.editActionMainJs(MainJsTemplate, info)
+                    })
+                }
+            },
+            {
+                title: $l10n("CREATE_NEW_TYPE"),
+                handler: () => {
+                    $input.text({
+                        text: "",
+                        placeholder: $l10n("CREATE_NEW_TYPE"),
+                        handler: text => {
+                            text = text.trim()
+                            if (text === "") {
+                                $ui.toast($l10n("INVALID_VALUE"))
+                                return
+                            }
+                            const path = `${this.userActionPath}/${text}`
+                            if ($file.isDirectory(path)) {
+                                $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
+                            } else {
+                                $file.mkdir(path)
+                                $ui.success($l10n("SUCCESS"))
+                            }
+                        }
+                    })
+                }
+            },
+            {
+                inline: true,
+                items: importAction
+            }
+        ]
+
         return [
             {
-                // 添加
                 symbol: "plus.circle",
                 id: this.views.addActionButtonId,
                 menu: {
                     pullDown: true,
                     asPrimary: true,
-                    items: [
-                        {
-                            title: $l10n("CREATE_NEW_ACTION"),
-                            handler: () => {
-                                this.editActionInfoPageSheet(null, async info => {
-                                    const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
-                                    this.saveMainJs(info, MainJsTemplate)
-                                    this.applySnapshotAnimatingDifferences()
-                                    await $wait(0.3)
-                                    this.editActionMainJs(MainJsTemplate, info)
-                                })
-                            }
-                        },
-                        {
-                            title: $l10n("CREATE_NEW_TYPE"),
-                            handler: () => {
-                                $input.text({
-                                    text: "",
-                                    placeholder: $l10n("CREATE_NEW_TYPE"),
-                                    handler: text => {
-                                        text = text.trim()
-                                        if (text === "") {
-                                            $ui.toast($l10n("INVALID_VALUE"))
-                                            return
-                                        }
-                                        const path = `${this.userActionPath}/${text}`
-                                        if ($file.isDirectory(path)) {
-                                            $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
-                                        } else {
-                                            $file.mkdir(path)
-                                            $ui.success($l10n("SUCCESS"))
-                                        }
-                                    }
-                                })
-                            }
-                        }
-                    ]
+                    items: addItems
                 }
             }
         ]
@@ -253,12 +272,10 @@ class Actions extends ActionsData {
         const events = {
             ready: collectionView => {
                 this.collectionView = collectionView.ocValue()
-                $delay(0.3, () => {
-                    this.initReuseIdentifier()
-                    this.delegates.setDelegate()
-                    this.initDataSource()
-                    this.applySnapshotUsingReloadData()
-                })
+                this.initReuseIdentifier()
+                this.delegates.setDelegate()
+                this.initDataSource()
+                this.applySnapshotUsingReloadData()
             }
         }
         if (this.kernel.setting.get("webdav.status")) {

@@ -84,6 +84,7 @@
 "OVERWRITE_ALERT" = "This operation will overwrite the current data. Do you want to continue?";
 "UNABLE_CREATE_ACTION" = "Unable to create action";
 "ACTION_NAME_ALREADY_EXISTS" = "Action `${name}` already exists";
+"IMPORT_FROM_FILE" = "Import from Files";
 
 "KEYBOARD" = "Keyboard";
 "KEYBOARD_HEIGHT" = "Keyboard Height";
