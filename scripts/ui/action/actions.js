@@ -277,23 +277,16 @@ class Actions extends ActionsData {
     }
 
     getMatrixView() {
-        const events = {
+        const matrix = this.views.getMatrixView({
             ready: collectionView => {
                 this.collectionView = collectionView.ocValue()
                 this.initReuseIdentifier()
                 this.delegates.setDelegate()
+                this.delegates.setRefreshControl()
                 this.initDataSource()
                 this.applySnapshotUsingReloadData()
-            },
-            pulled: sender => {
-                this.applySnapshotAnimatingDifferences()
-                sender.endRefreshing()
             }
-        }
-        if (this.kernel.setting.get("webdav.status")) {
-            events.pulled = () => this.sync()
-        }
-        const matrix = this.views.getMatrixView({ events })
+        })
 
         this.actionSyncStatus()
 

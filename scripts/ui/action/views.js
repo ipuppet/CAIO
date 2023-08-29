@@ -240,32 +240,6 @@ class ActionViews {
         return blurBox
     }
 
-    matrixFooter() {
-        return {
-            type: "view",
-            props: {
-                hidden: !this.kernel.setting.get("webdav.status"),
-                height: this.kernel.setting.get("webdav.status") ? 50 : 0
-            },
-            views: [
-                {
-                    type: "label",
-                    props: {
-                        id: this.syncLabelId,
-                        color: $color("secondaryText"),
-                        font: $font(12),
-                        text: $l10n("MODIFIED") + this.data.getLocalSyncDate().toLocaleString()
-                    },
-                    layout: (make, view) => {
-                        make.size.equalTo(view.super)
-                        make.top.inset(-30)
-                        make.left.inset(this.spacing)
-                    }
-                }
-            ]
-        }
-    }
-
     getColor(color, _default = null) {
         if (!color) return _default
         return typeof color === "string" ? $color(color) : $rgba(color.red, color.green, color.blue, color.alpha)
@@ -414,12 +388,11 @@ class ActionViews {
         return layout
     }
 
-    getMatrixView({ events } = {}) {
+    getMatrixView(events) {
         const matrix = {
             type: "matrix",
             props: {
-                bgcolor: UIKit.scrollViewBackgroundColor,
-                footer: this.matrixFooter()
+                bgcolor: UIKit.scrollViewBackgroundColor
             },
             layout: $layout.fill,
             events

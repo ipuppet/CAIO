@@ -317,8 +317,27 @@ class ActionDelegates {
             },
             "scrollViewDidEndDecelerating:": scrollView => {
                 events.didEndDecelerating(scrollView.jsValue())
+            },
+            "handleRefresh:": async refreshControl => {
+                if (this.kernel.setting.get("webdav.status")) {
+                    this.data.sync()
+                } else {
+                    this.data.applySnapshotAnimatingDifferences()
+                    refreshControl.$endRefreshing()
+                }
             }
         }
+    }
+
+    setRefreshControl() {
+        const refreshControl = $objc("UIRefreshControl").$alloc().$init()
+        refreshControl.$addTarget_action_forControlEvents(this.collectionView.$delegate(), "handleRefresh:", 1 << 12)
+        if (this.kernel.setting.get("webdav.status")) {
+            const syncDate = $l10n("MODIFIED") + this.data.getLocalSyncDate().toLocaleString()
+            const attributedString = $objc("NSAttributedString").$alloc().$initWithString(syncDate)
+            refreshControl.$setAttributedTitle(attributedString)
+        }
+        this.collectionView.$setRefreshControl(refreshControl)
     }
 
     delegate() {
