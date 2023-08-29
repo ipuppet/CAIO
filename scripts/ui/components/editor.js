@@ -7,6 +7,7 @@ const { ActionEnv, ActionData } = require("../../action/action")
 
 class Editor {
     #text = ""
+    originalContent // 原始数据
 
     /**
      * @param {AppKernel} kernel
@@ -14,8 +15,6 @@ class Editor {
     constructor(kernel) {
         this.kernel = kernel
         this.id = "editor"
-        // 原始数据
-        this.originalContent = undefined
     }
 
     /**
@@ -44,9 +43,12 @@ class Editor {
                 const actionData = new ActionData({
                     env: ActionEnv.editor,
                     editor: {
+                        originalContent: this.originalContent,
                         setContent: text => this.setContent(text)
                     },
                     text: range.length > 0 ? this.text.slice(range.location, range.location + range.length) : this.text,
+                    allText: this.text,
+                    selectedText: this.text.slice(range.location, range.location + range.length),
                     selectedRange: range
                 })
                 const popover = $ui.popover({

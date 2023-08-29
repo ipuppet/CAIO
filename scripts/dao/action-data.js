@@ -10,6 +10,7 @@ const WebDavSyncAction = require("./webdav-sync-action")
 
 class ActionsData {
     #actions
+    #allActions
 
     /**
      * @param {AppKernel} kernel
@@ -29,17 +30,12 @@ class ActionsData {
     }
 
     get actions() {
-        if (!this.#actions) {
-            this.#actions = this.getActionTypes().map(type => {
-                return {
-                    dir: type,
-                    title: this.getTypeName(type),
-                    items: this.getActions(type)
-                }
-            })
-            this.kernel.logger.info(`init actions`)
-        }
+        if (!this.#actions) this.#initActions()
         return this.#actions
+    }
+    get allActions() {
+        if (!this.#allActions) this.#initActions()
+        return this.#allActions
     }
 
     get isNew() {
@@ -53,8 +49,25 @@ class ActionsData {
         return this.kernel.setting.get("webdav.status")
     }
 
+    #initActions() {
+        this.#allActions = {}
+        this.#actions = this.getActionTypes().map(type => {
+            const items = this.getActions(type)
+            items.forEach(item => {
+                this.#allActions[item.name] = item
+            })
+            return {
+                dir: type,
+                title: this.getTypeTitle(type),
+                items
+            }
+        })
+        this.kernel.logger.info(`init actions`)
+    }
+
     setNeedReload() {
         this.#actions = undefined
+        this.#allActions = undefined
         if (!this.isEnableWebDavSync) return
         this.webdavSync.needUpload()
     }
@@ -134,14 +147,16 @@ class ActionsData {
         loading.start()
 
         try {
-            const dirName = $text.uuid
-            const tmpPath = FileStorage.join(this.tempPath, dirName)
-            $file.mkdir(tmpPath)
-
             const { config, main, readme } = data
             if (!config || !main || !readme) {
                 throw new Error("Not an action")
             }
+            let name = JSON.parse(config)?.name?.trim()
+            if (!name || name === "") throw new Error("Not an action")
+
+            const dirName = this.initActionDirByName(name)
+            const tmpPath = FileStorage.join(this.tempPath, dirName)
+            $file.mkdir(tmpPath)
 
             $file.write({
                 data: $data({ string: config }),
@@ -260,9 +275,17 @@ class ActionsData {
         return $file.read(`${this.getActionPath(type, dir)}/README.md`).string
     }
 
+    initActionDirByName(name) {
+        return $text.MD5(name)
+    }
+
+    getActionDirByName(name) {
+        return this.#allActions[name].dir
+    }
+
     getAction(type, dir, data) {
         if (!$file.exists(this.getActionPath(type, dir))) {
-            dir = $text.MD5(dir)
+            dir = this.initActionDirByName(dir)
         }
         try {
             const script = this.getActionMainJs(type, dir)
@@ -300,15 +323,7 @@ class ActionsData {
             const basePath = `${typePath}/${dir}/`
             if ($file.isDirectory(basePath)) {
                 const config = this.getActionConfig(type, dir)
-                actions.push(
-                    Object.assign(config, {
-                        dir,
-                        type,
-                        name: config.name ?? dir,
-                        icon: config.icon,
-                        color: config.color
-                    })
-                )
+                actions.push(Object.assign(config, { type, dir }))
             }
         }
         // push 有顺序的 Action
@@ -321,7 +336,7 @@ class ActionsData {
         return actions
     }
 
-    getTypeName(type) {
+    getTypeTitle(type) {
         const typeUpperCase = type.toUpperCase()
         const l10n = $l10n(typeUpperCase)
         const name = l10n === typeUpperCase ? type : l10n
@@ -416,12 +431,8 @@ class ActionsData {
         this.setNeedReload()
     }
 
-    exists(info) {
-        const path = `${this.userActionPath}/${info.type}/${info.dir}`
-        if ($file.exists(path)) {
-            return true
-        }
-        return false
+    exists(name) {
+        return this.#allActions[name] !== undefined
     }
 }
 

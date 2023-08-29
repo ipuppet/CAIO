@@ -339,7 +339,7 @@ class Today extends Clips {
     getActionView() {
         let actions = this.todayActions.getActions()
         if (actions.length === 0) {
-            actions = this.todayActions.getAllActions()
+            actions = Object.values(this.kernel.actions.allActions)
         }
 
         return {

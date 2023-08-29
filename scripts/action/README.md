@@ -61,7 +61,7 @@ class MyAction extends Action {
 preview(): ActionData
 
 /**
- * 重写该防范返回 l10n 对象可注入 l10n
+ * 重写该方法返回 l10n 对象可注入 l10n
  * l10n() {
         return {
             "zh-Hans": {
@@ -90,11 +90,9 @@ pageSheet(args): void
 
 /**
  * 获取所有剪切板数据
- * @returns Array
+ * @returns {object}
  */
-getAllClipboard() {
-    return this.kernel.storage.all()
-}
+getAllClips(): { favorite, clips }
 
 /**
  * 更新当前文本，当用户侧滑返回时才会触发保存操作
@@ -137,11 +135,24 @@ class ActionEnv {
 ```js
 class ActionData {
     env
-    text
-    originalContent
+    args // 其他动作传递的参数
+    text // 自动获取文本，优先获取选中的文本
+    allText // 获取所有文本
+    section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
-    selectedRange
-    textBeforeInput
-    textAfterInput
+    selectedRange // 文本选中的范围
+    selectedText // 选中的文本
+    textBeforeInput // 键盘中输入光标之前的文本
+    textAfterInput // 键盘中输入光标之后的文本
+    editor // 编辑器
+}
+```
+
+其中 `editor` 如下：
+
+```js
+const editor = {
+    originalContent,
+    setContent: text => {}
 }
 ```

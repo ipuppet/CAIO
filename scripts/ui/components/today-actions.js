@@ -19,17 +19,11 @@ class TodayActions {
             cache = JSON.parse(cache)
             this.setActions(cache)
         }
-        const actions = {}
-        this.kernel.actions.getActionTypes().forEach(type => {
-            this.kernel.actions.getActions(type).forEach(action => {
-                actions[action.type + action.dir] = action
-            })
-        })
 
         const savedActions = []
         let needUpdate = false
         cache.forEach(action => {
-            const t = actions[action.type + action.dir]
+            const t = this.kernel.actions.allActions[action.name]
             if (t) {
                 savedActions.push(t)
             } else {
@@ -53,18 +47,10 @@ class TodayActions {
         $cache.set("today.actions", list)
     }
 
-    getAllActions() {
-        let actions = []
-        this.kernel.actions.getActionTypes().forEach(type => {
-            actions = actions.concat(this.kernel.actions.getActions(type))
-        })
-        return actions
-    }
-
     getUnsetActions() {
         const actions = this.getActions().map(action => action.name)
         const res = []
-        this.getAllActions().forEach(action => {
+        Object.values(this.kernel.actions.allActions).forEach(action => {
             const name = action.name
             if (actions.indexOf(name) === -1) {
                 res.push(action)

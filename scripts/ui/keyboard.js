@@ -602,7 +602,9 @@ class Keyboard extends Clips {
                         env: ActionEnv.keyboard,
                         textBeforeInput: $keyboard.textBeforeInput,
                         textAfterInput: $keyboard.textAfterInput,
-                        text: $keyboard.selectedText ?? (await $keyboard.getAllText())
+                        text: $keyboard.selectedText ?? (await $keyboard.getAllText()),
+                        allText: await $keyboard.getAllText(),
+                        selectedText: $keyboard.selectedText
                     })
                 })
             ],
