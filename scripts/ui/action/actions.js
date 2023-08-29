@@ -11,7 +11,6 @@ const ActionDelegates = require("./delegates")
  */
 
 class Actions extends ActionsData {
-    matrix
     collectionView
 
     placeholderReuseIdentifier = "UICollectionViewPlaceholderReuseIdentifier"
