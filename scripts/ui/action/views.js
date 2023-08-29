@@ -253,8 +253,8 @@ class ActionViews {
                     props: {
                         id: this.syncLabelId,
                         color: $color("secondaryText"),
-                        font: $font(12)
-                        //text: $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
+                        font: $font(12),
+                        text: $l10n("MODIFIED") + this.data.getLocalSyncDate().toLocaleString()
                     },
                     layout: (make, view) => {
                         make.size.equalTo(view.super)

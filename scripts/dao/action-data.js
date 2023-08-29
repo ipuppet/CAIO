@@ -184,9 +184,9 @@ class ActionsData {
         }
     }
 
-    getLocalSyncData() {
-        const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
-        return new Date(localSyncData.timestamp)
+    getLocalSyncDate() {
+        const localSyncDate = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
+        return new Date(localSyncDate.timestamp)
     }
 
     async sync() {

@@ -147,7 +147,7 @@ class Actions extends ActionsData {
 
     updateSyncLabel(message) {
         if (!message) {
-            message = $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
+            message = $l10n("MODIFIED") + this.getLocalSyncDate().toLocaleString()
         }
         if ($(this.views.syncLabelId)) {
             $(this.views.syncLabelId).text = message
