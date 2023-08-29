@@ -51,14 +51,14 @@ class Actions extends ActionsData {
                     this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success) {
                     try {
-                        // this.matrix.data = this.actionList
+                        this.applySnapshotAnimatingDifferences()
                     } catch (error) {
                         this.kernel.logger.error(error)
                         this.updateSyncLabel(error)
                     } finally {
                         this.updateSyncLabel()
                         this.updateNavButton(false)
-                        $(this.matrix.id)?.endRefreshing()
+                        this.collectionView.jsValue().endRefreshing()
                     }
                 }
             }
