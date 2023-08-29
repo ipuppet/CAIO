@@ -97,7 +97,8 @@ class Actions extends ActionsData {
                     this.editActionInfoPageSheet(null, async info => {
                         const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                         this.saveMainJs(info, MainJsTemplate)
-                        this.applySnapshotAnimatingDifferences()
+                        const section = this.getActionTypeSection(info.type)
+                        this.applySnapshotToSectionAnimatingDifferences(section)
                         await $wait(0.3)
                         this.editActionMainJs(MainJsTemplate, info)
                     })
@@ -253,7 +254,6 @@ class Actions extends ActionsData {
 
         this.collectionView.$dataSource().$applySnapshotUsingReloadData(snapshot)
     }
-
     applySnapshotAnimatingDifferences(animating = true) {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
         const actions = this.actions
@@ -267,6 +267,15 @@ class Actions extends ActionsData {
 
         this.collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, animating)
     }
+    applySnapshotToSectionAnimatingDifferences(section, animating = true) {
+        const snapshot = $objc("NSDiffableDataSourceSectionSnapshot").$alloc().$init()
+        const { items: actions, dir: sectionIdentifier } = this.actions[section]
+        snapshot.$appendItems(actions.map(i => i.dir))
+
+        this.collectionView
+            .$dataSource()
+            .$applySnapshot_toSection_animatingDifferences(snapshot, sectionIdentifier, animating)
+    }
 
     getMatrixView() {
         const events = {
@@ -276,6 +285,10 @@ class Actions extends ActionsData {
                 this.delegates.setDelegate()
                 this.initDataSource()
                 this.applySnapshotUsingReloadData()
+            },
+            pulled: sender => {
+                this.applySnapshotAnimatingDifferences()
+                sender.endRefreshing()
             }
         }
         if (this.kernel.setting.get("webdav.status")) {

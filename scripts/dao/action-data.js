@@ -50,18 +50,19 @@ class ActionsData {
     }
 
     #initActions() {
-        this.#allActions = {}
         this.#actions = this.getActionTypes().map(type => {
-            const items = this.getActions(type)
-            items.forEach(item => {
-                this.#allActions[item.name] = item
-            })
             return {
                 dir: type,
                 title: this.getTypeTitle(type),
-                items
+                items: this.getActions(type) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
             }
         })
+        this.#allActions = {}
+        this.#actions.map(type =>
+            type.items.forEach(item => {
+                this.#allActions[item.name] = item
+            })
+        )
         this.kernel.logger.info(`init actions`)
     }
 
@@ -75,24 +76,11 @@ class ActionsData {
     importExampleAction() {
         try {
             Object.keys(__ACTIONS__).forEach(type => {
-                const userActionTypePath = `${this.userActionPath}/${type}`
-                Object.keys(__ACTIONS__[type]).forEach(name => {
-                    if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
-                        $file.mkdir(userActionTypePath)
-                        $file.mkdir(`${userActionTypePath}/${name}`)
-
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["main.js"] }),
-                            path: `${userActionTypePath}/${name}/main.js`
-                        })
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["config.json"] }),
-                            path: `${userActionTypePath}/${name}/config.json`
-                        })
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["README.md"] }),
-                            path: `${userActionTypePath}/${name}/README.md`
-                        })
+                Object.keys(__ACTIONS__[type]).forEach(dir => {
+                    const action = __ACTIONS__[type][dir]
+                    const config = JSON.parse(action.config)
+                    if (!this.exists(config.name)) {
+                        this.importAction(action, type, false)
                     }
                 })
             })
@@ -101,12 +89,13 @@ class ActionsData {
                 const actionTypePath = `${this.actionPath}/${type}`
                 if ($file.isDirectory(actionTypePath)) {
                     const userActionTypePath = `${this.userActionPath}/${type}`
-                    $file.list(actionTypePath).forEach(name => {
-                        if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
+                    $file.list(actionTypePath).forEach(dir => {
+                        const config = JSON.parse($file.read(`${actionTypePath}/${dir}/config.json`).string)
+                        if (!this.exists(config.name)) {
                             $file.mkdir(userActionTypePath)
                             $file.copy({
-                                src: `${actionTypePath}/${name}`,
-                                dst: `${userActionTypePath}/${name}`
+                                src: `${actionTypePath}/${dir}`,
+                                dst: `${userActionTypePath}/${dir}`
                             })
                         }
                     })
@@ -142,9 +131,9 @@ class ActionsData {
         })
     }
 
-    importAction(data, type = "uncategorized") {
-        const loading = UIKit.loading()
-        loading.start()
+    importAction(data, type = "uncategorized", animate = true) {
+        const loading = animate ? UIKit.loading() : null
+        loading?.start()
 
         try {
             const { config, main, readme } = data
@@ -180,7 +169,7 @@ class ActionsData {
         } catch (error) {
             throw error
         } finally {
-            loading.end()
+            loading?.end()
         }
     }
 
@@ -226,6 +215,15 @@ class ActionsData {
                 return $file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0
             })
         )
+    }
+
+    getActionTypeSection(type) {
+        for (const i in this.actions) {
+            if (this.actions[i].dir === type) {
+                return i
+            }
+        }
+        return null
     }
 
     getActionOrder(type, must = false) {
@@ -280,7 +278,7 @@ class ActionsData {
     }
 
     getActionDirByName(name) {
-        return this.#allActions[name].dir
+        return this.allActions[name].dir
     }
 
     getAction(type, dir, data) {
@@ -432,7 +430,7 @@ class ActionsData {
     }
 
     exists(name) {
-        return this.#allActions[name] !== undefined
+        return this.allActions[name] !== undefined
     }
 }
 

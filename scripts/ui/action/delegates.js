@@ -43,7 +43,7 @@ class ActionDelegates {
                 symbol: "slider.horizontal.3",
                 handler: (collectionView, indexPath, info) => {
                     this.data.editActionInfoPageSheet(info, info => {
-                        this.data.applySnapshotAnimatingDifferences()
+                        this.data.applySnapshotToSectionAnimatingDifferences(indexPath.$section())
                     })
                 }
             },
@@ -105,7 +105,7 @@ class ActionDelegates {
                         handler: (collectionView, indexPath, info) => {
                             UIKit.deleteConfirm($l10n("DELETE_CONFIRM_MSG"), () => {
                                 this.data.delete(info)
-                                this.data.applySnapshotAnimatingDifferences()
+                                this.data.applySnapshotToSectionAnimatingDifferences(indexPath.$section())
                             })
                         }
                     }
@@ -409,7 +409,11 @@ class ActionDelegates {
         const destination = destinationIndexPath.jsValue()
 
         this.data.move(source, destination)
-        this.data.applySnapshotAnimatingDifferences()
+
+        this.data.applySnapshotToSectionAnimatingDifferences(source.section)
+        if (source.section !== destination.section) {
+            this.data.applySnapshotToSectionAnimatingDifferences(destination.section)
+        }
 
         coordinator.$dropItem_toItemAtIndexPath(item.$dragItem(), destinationIndexPath)
     }
@@ -460,7 +464,7 @@ class ActionDelegates {
                             this.data.move($indexPath(section, inserted), insertionIndexPath)
                         }
 
-                        this.data.applySnapshotAnimatingDifferences()
+                        this.data.applySnapshotToSectionAnimatingDifferences(section)
                     })
                 )
             }
