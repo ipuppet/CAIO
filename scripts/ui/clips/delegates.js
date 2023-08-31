@@ -503,7 +503,7 @@ class ClipsDelegates {
         const destinationIndexPath = coordinator.$destinationIndexPath()
         const destination = destinationIndexPath.jsValue().row
 
-        this.data.move(source, destination)
+        this.data.moveItem(source, destination)
         this.data.updateList()
 
         coordinator.$dropItem_toRowAtIndexPath(item.$dragItem(), destinationIndexPath)
@@ -542,7 +542,7 @@ class ClipsDelegates {
                         } else if (hasImage) {
                             this.data.add(data.jsValue().image, false)
                         }
-                        this.data.move(0, insertionIndexPath.jsValue().row)
+                        this.data.moveItem(0, insertionIndexPath.jsValue().row)
                         this.data.updateList()
                     })
                 )
