@@ -129,7 +129,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 7
+    version = 8
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -231,6 +231,12 @@ class VersionActions {
     ver7() {
         this.compatibility.rebuildUserActions({
             uncategorized: ["Replace"]
+        })
+    }
+
+    ver8() {
+        this.compatibility.rebuildUserActions({
+            uncategorized: ["SendToWin"]
         })
     }
 }
