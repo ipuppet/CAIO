@@ -10,6 +10,7 @@ const WebDavSyncAction = require("./webdav-sync-action")
 
 class ActionsData {
     #actions
+    #allActions
 
     /**
      * @param {AppKernel} kernel
@@ -29,17 +30,12 @@ class ActionsData {
     }
 
     get actions() {
-        if (!this.#actions) {
-            this.#actions = this.getActionTypes().map(type => {
-                return {
-                    dir: type,
-                    title: this.getTypeName(type),
-                    items: this.getActions(type)
-                }
-            })
-            this.kernel.logger.info(`init actions`)
-        }
+        if (!this.#actions) this.#initActions()
         return this.#actions
+    }
+    get allActions() {
+        if (!this.#allActions) this.#initActions()
+        return this.#allActions
     }
 
     get isNew() {
@@ -53,8 +49,26 @@ class ActionsData {
         return this.kernel.setting.get("webdav.status")
     }
 
+    #initActions() {
+        this.#actions = this.getActionTypes().map(type => {
+            return {
+                dir: type,
+                title: this.getTypeTitle(type),
+                items: this.getActions(type) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
+            }
+        })
+        this.#allActions = {}
+        this.#actions.map(type =>
+            type.items.forEach(item => {
+                this.#allActions[item.name] = item
+            })
+        )
+        this.kernel.logger.info(`init actions`)
+    }
+
     setNeedReload() {
         this.#actions = undefined
+        this.#allActions = undefined
         if (!this.isEnableWebDavSync) return
         this.webdavSync.needUpload()
     }
@@ -62,24 +76,11 @@ class ActionsData {
     importExampleAction() {
         try {
             Object.keys(__ACTIONS__).forEach(type => {
-                const userActionTypePath = `${this.userActionPath}/${type}`
-                Object.keys(__ACTIONS__[type]).forEach(name => {
-                    if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
-                        $file.mkdir(userActionTypePath)
-                        $file.mkdir(`${userActionTypePath}/${name}`)
-
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["main.js"] }),
-                            path: `${userActionTypePath}/${name}/main.js`
-                        })
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["config.json"] }),
-                            path: `${userActionTypePath}/${name}/config.json`
-                        })
-                        $file.write({
-                            data: $data({ string: __ACTIONS__[type][name]["README.md"] }),
-                            path: `${userActionTypePath}/${name}/README.md`
-                        })
+                Object.keys(__ACTIONS__[type]).forEach(dir => {
+                    const action = __ACTIONS__[type][dir]
+                    const config = JSON.parse(action.config)
+                    if (!this.exists(config.name)) {
+                        this.importAction(action, type, false)
                     }
                 })
             })
@@ -88,12 +89,13 @@ class ActionsData {
                 const actionTypePath = `${this.actionPath}/${type}`
                 if ($file.isDirectory(actionTypePath)) {
                     const userActionTypePath = `${this.userActionPath}/${type}`
-                    $file.list(actionTypePath).forEach(name => {
-                        if (!$file.exists(`${userActionTypePath}/${name}/main.js`)) {
+                    $file.list(actionTypePath).forEach(dir => {
+                        const config = JSON.parse($file.read(`${actionTypePath}/${dir}/config.json`).string)
+                        if (!this.exists(config.name)) {
                             $file.mkdir(userActionTypePath)
                             $file.copy({
-                                src: `${actionTypePath}/${name}`,
-                                dst: `${userActionTypePath}/${name}`
+                                src: `${actionTypePath}/${dir}`,
+                                dst: `${userActionTypePath}/${dir}`
                             })
                         }
                     })
@@ -129,19 +131,21 @@ class ActionsData {
         })
     }
 
-    importAction(data, type = "uncategorized") {
-        const loading = UIKit.loading()
-        loading.start()
+    importAction(data, type = "uncategorized", animate = true) {
+        const loading = animate ? UIKit.loading() : null
+        loading?.start()
 
         try {
-            const dirName = $text.uuid
-            const tmpPath = FileStorage.join(this.tempPath, dirName)
-            $file.mkdir(tmpPath)
-
             const { config, main, readme } = data
             if (!config || !main || !readme) {
                 throw new Error("Not an action")
             }
+            let name = JSON.parse(config)?.name?.trim()
+            if (!name || name === "") throw new Error("Not an action")
+
+            const dirName = this.initActionDirByName(name)
+            const tmpPath = FileStorage.join(this.tempPath, dirName)
+            $file.mkdir(tmpPath)
 
             $file.write({
                 data: $data({ string: config }),
@@ -165,13 +169,13 @@ class ActionsData {
         } catch (error) {
             throw error
         } finally {
-            loading.end()
+            loading?.end()
         }
     }
 
-    getLocalSyncData() {
-        const localSyncData = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
-        return new Date(localSyncData.timestamp)
+    getLocalSyncDate() {
+        const localSyncDate = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
+        return new Date(localSyncDate.timestamp)
     }
 
     async sync() {
@@ -211,6 +215,15 @@ class ActionsData {
                 return $file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0
             })
         )
+    }
+
+    getActionTypeSection(type) {
+        for (const i in this.actions) {
+            if (this.actions[i].dir === type) {
+                return i
+            }
+        }
+        return null
     }
 
     getActionOrder(type, must = false) {
@@ -260,9 +273,17 @@ class ActionsData {
         return $file.read(`${this.getActionPath(type, dir)}/README.md`).string
     }
 
+    initActionDirByName(name) {
+        return $text.MD5(name)
+    }
+
+    getActionDirByName(name) {
+        return this.allActions[name].dir
+    }
+
     getAction(type, dir, data) {
         if (!$file.exists(this.getActionPath(type, dir))) {
-            dir = $text.MD5(dir)
+            dir = this.initActionDirByName(dir)
         }
         try {
             const script = this.getActionMainJs(type, dir)
@@ -300,15 +321,7 @@ class ActionsData {
             const basePath = `${typePath}/${dir}/`
             if ($file.isDirectory(basePath)) {
                 const config = this.getActionConfig(type, dir)
-                actions.push(
-                    Object.assign(config, {
-                        dir,
-                        type,
-                        name: config.name ?? dir,
-                        icon: config.icon,
-                        color: config.color
-                    })
-                )
+                actions.push(Object.assign(config, { type, dir }))
             }
         }
         // push 有顺序的 Action
@@ -321,7 +334,7 @@ class ActionsData {
         return actions
     }
 
-    getTypeName(type) {
+    getTypeTitle(type) {
         const typeUpperCase = type.toUpperCase()
         const l10n = $l10n(typeUpperCase)
         const name = l10n === typeUpperCase ? type : l10n
@@ -416,12 +429,8 @@ class ActionsData {
         this.setNeedReload()
     }
 
-    exists(info) {
-        const path = `${this.userActionPath}/${info.type}/${info.dir}`
-        if ($file.exists(path)) {
-            return true
-        }
-        return false
+    exists(name) {
+        return this.allActions[name] !== undefined
     }
 }
 

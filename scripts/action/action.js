@@ -20,10 +20,11 @@ class ActionData {
     env
     args // 其他动作传递的参数
     text
-    originalContent
+    allText
     section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
     selectedRange
+    selectedText
     textBeforeInput
     textAfterInput
     editor
@@ -32,9 +33,11 @@ class ActionData {
         env,
         args,
         text,
+        allText = null,
         section = null,
         uuid = null,
         selectedRange = null,
+        selectedText = null,
         textBeforeInput = null,
         textAfterInput = null,
         editor = null
@@ -42,10 +45,11 @@ class ActionData {
         this.env = env
         this.args = args
         this.text = text
-        this.originalContent = text
+        this.allText = allText ?? text
         this.section = section
         this.uuid = uuid
         this.selectedRange = selectedRange
+        this.selectedText = selectedText
         this.textBeforeInput = textBeforeInput
         this.textAfterInput = textAfterInput
         this.editor = editor
@@ -131,7 +135,7 @@ class Action {
 
     /**
      * 获取所有剪切板数据
-     * @returns Array
+     * @returns {object}
      */
     getAllClips() {
         return {
@@ -171,14 +175,15 @@ class Action {
     }
 
     /**
-     *
+     * 获取动作对象
      * @param {string} type
-     * @param {string} dir
+     * @param {string} name
      * @param {ActionData} data
      * @returns
      */
     getAction(type, name, data) {
-        return this.#kernel.actions.getAction(type, name, data)
+        const dir = this.#kernel.actions.getActionDirByName(name)
+        return this.#kernel.actions.getAction(type, dir, data)
     }
 
     async runAction(type, name) {

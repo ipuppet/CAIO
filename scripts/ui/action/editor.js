@@ -154,8 +154,8 @@ class ActionEditor {
         const sheet = new Sheet()
         const sheetDone = async () => {
             if (this.isNew) {
-                this.editingActionInfo.dir = $text.MD5(this.editingActionInfo.name)
-                if (this.data.exists(this.editingActionInfo)) {
+                this.editingActionInfo.dir = this.data.initActionDirByName(this.editingActionInfo.name)
+                if (this.data.exists(this.editingActionInfo.name)) {
                     const resp = await $ui.alert({
                         title: $l10n("UNABLE_CREATE_ACTION"),
                         message: $l10n("ACTION_NAME_ALREADY_EXISTS").replaceAll("${name}", this.editingActionInfo.name)

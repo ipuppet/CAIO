@@ -11,7 +11,6 @@ const ActionDelegates = require("./delegates")
  */
 
 class Actions extends ActionsData {
-    matrix
     collectionView
 
     placeholderReuseIdentifier = "UICollectionViewPlaceholderReuseIdentifier"
@@ -51,14 +50,14 @@ class Actions extends ActionsData {
                     this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success) {
                     try {
-                        // this.matrix.data = this.actionList
+                        this.applySnapshotAnimatingDifferences()
                     } catch (error) {
                         this.kernel.logger.error(error)
                         this.updateSyncLabel(error)
                     } finally {
                         this.updateSyncLabel()
                         this.updateNavButton(false)
-                        $(this.matrix.id)?.endRefreshing()
+                        this.collectionView.jsValue().endRefreshing()
                     }
                 }
             }
@@ -97,7 +96,8 @@ class Actions extends ActionsData {
                     this.editActionInfoPageSheet(null, async info => {
                         const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                         this.saveMainJs(info, MainJsTemplate)
-                        this.applySnapshotAnimatingDifferences()
+                        const section = this.getActionTypeSection(info.type)
+                        this.applySnapshotToSectionAnimatingDifferences(section)
                         await $wait(0.3)
                         this.editActionMainJs(MainJsTemplate, info)
                     })
@@ -147,7 +147,7 @@ class Actions extends ActionsData {
 
     updateSyncLabel(message) {
         if (!message) {
-            message = $l10n("MODIFIED") + this.getLocalSyncData().toLocaleString()
+            message = $l10n("MODIFIED") + this.getLocalSyncDate().toLocaleString()
         }
         if ($(this.views.syncLabelId)) {
             $(this.views.syncLabelId).text = message
@@ -253,7 +253,6 @@ class Actions extends ActionsData {
 
         this.collectionView.$dataSource().$applySnapshotUsingReloadData(snapshot)
     }
-
     applySnapshotAnimatingDifferences(animating = true) {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
         const actions = this.actions
@@ -267,21 +266,27 @@ class Actions extends ActionsData {
 
         this.collectionView.$dataSource().$applySnapshot_animatingDifferences(snapshot, animating)
     }
+    applySnapshotToSectionAnimatingDifferences(section, animating = true) {
+        const snapshot = $objc("NSDiffableDataSourceSectionSnapshot").$alloc().$init()
+        const { items: actions, dir: sectionIdentifier } = this.actions[section]
+        snapshot.$appendItems(actions.map(i => i.dir))
+
+        this.collectionView
+            .$dataSource()
+            .$applySnapshot_toSection_animatingDifferences(snapshot, sectionIdentifier, animating)
+    }
 
     getMatrixView() {
-        const events = {
+        const matrix = this.views.getMatrixView({
             ready: collectionView => {
                 this.collectionView = collectionView.ocValue()
                 this.initReuseIdentifier()
                 this.delegates.setDelegate()
+                this.delegates.setRefreshControl()
                 this.initDataSource()
                 this.applySnapshotUsingReloadData()
             }
-        }
-        if (this.kernel.setting.get("webdav.status")) {
-            events.pulled = () => this.sync()
-        }
-        const matrix = this.views.getMatrixView({ events })
+        })
 
         this.actionSyncStatus()
 

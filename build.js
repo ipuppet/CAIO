@@ -67,9 +67,9 @@ function injectContent() {
                 }
                 const actionPath = path.join(baseActionPath, type, dir)
                 actions[type][dir] = {
-                    "config.json": fs.readFileSync(path.join(actionPath, "config.json"), "utf-8"),
-                    "main.js": fs.readFileSync(path.join(actionPath, "main.js"), "utf-8"),
-                    "README.md": fs.readFileSync(path.join(actionPath, "README.md"), "utf-8")
+                    config: fs.readFileSync(path.join(actionPath, "config.json"), "utf-8"),
+                    main: fs.readFileSync(path.join(actionPath, "main.js"), "utf-8"),
+                    readme: fs.readFileSync(path.join(actionPath, "README.md"), "utf-8")
                 }
             }
 
