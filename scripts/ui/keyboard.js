@@ -598,13 +598,15 @@ class Keyboard extends Clips {
             props: { id: this.actionsId, hidden: true },
             views: [
                 this.kernel.actions.views.getActionMiniView(async () => {
+                    let selectedText = $keyboard.selectedText
+                    if (selectedText === "") selectedText = null
                     return new ActionData({
                         env: ActionEnv.keyboard,
                         textBeforeInput: $keyboard.textBeforeInput,
                         textAfterInput: $keyboard.textAfterInput,
-                        text: $keyboard.selectedText ?? (await $keyboard.getAllText()),
+                        text: selectedText ?? (await $keyboard.getAllText()),
                         allText: await $keyboard.getAllText(),
-                        selectedText: $keyboard.selectedText
+                        selectedText: selectedText
                     })
                 })
             ],
