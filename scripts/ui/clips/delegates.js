@@ -537,17 +537,23 @@ class ClipsDelegates {
                     this.kernel.logger.error(error.jsValue())
                 }
 
-                placeholderContext.$commitInsertionWithDataSourceUpdates(
-                    $block("void, NSIndexPath *", insertionIndexPath => {
-                        if (hasText) {
-                            this.data.add(data.jsValue().string, false)
-                        } else if (hasImage) {
-                            this.data.add(data.jsValue().image, false)
-                        }
-                        this.data.moveItem(0, insertionIndexPath.jsValue().row)
-                        this.data.updateList()
-                    })
-                )
+                try {
+                    if (hasText) {
+                        this.data.addItem(data.jsValue().string, false)
+                    } else if (hasImage) {
+                        this.data.addItem(data.jsValue().image, false)
+                    }
+                    placeholderContext.$commitInsertionWithDataSourceUpdates(
+                        $block("void, NSIndexPath *", insertionIndexPath => {
+                            this.data.moveItem(0, insertionIndexPath.jsValue().row)
+                            this.data.updateList()
+                        })
+                    )
+                } catch (error) {
+                    placeholderContext.$deletePlaceholder()
+                    $ui.warning(error)
+                    return false
+                }
             }
 
             const progress = itemProvider.$loadDataRepresentationForTypeIdentifier_completionHandler(
