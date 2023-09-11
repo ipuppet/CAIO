@@ -248,7 +248,7 @@ class Clips extends ClipsData {
             })
             return data
         } catch (error) {
-            $ui.alert(error)
+            $ui.warning(error)
         }
     }
 
