@@ -439,6 +439,8 @@ class ActionDelegates {
 
     dropItems(coordinator) {
         const destinationIndexPath = coordinator.$destinationIndexPath()
+        if (!destinationIndexPath) return
+
         const items = coordinator.$items()
         const count = items.$count()
 

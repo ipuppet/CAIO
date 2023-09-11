@@ -510,7 +510,9 @@ class ClipsDelegates {
     }
 
     dropItems(coordinator) {
-        const destinationIndexPath = coordinator.$destinationIndexPath()
+        let destinationIndexPath = coordinator.$destinationIndexPath()
+        if (!destinationIndexPath) destinationIndexPath = $indexPath(0, 0)
+
         const items = coordinator.$items()
         const count = items.$count()
 
