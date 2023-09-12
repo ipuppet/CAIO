@@ -127,7 +127,11 @@ class Keyboard extends Clips {
             default:
                 labelName = "Return"
         }
+        $cache.set("keyboard.returnKeyLabel", labelName)
         return labelName
+    }
+    get returnKeyLabelCache() {
+        return $cache.get("keyboard.returnKeyLabel") ?? this.returnKeyLabel
     }
 
     get keyboardHeight() {
@@ -385,7 +389,7 @@ class Keyboard extends Clips {
         const leftButtons = []
         const rightButtons = []
         // 切换键盘
-        if (!$device.hasFaceID || $device.isIpadPro) {
+        if ($ui.controller.ocValue().$needsInputModeSwitchKey()) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
@@ -430,9 +434,27 @@ class Keyboard extends Clips {
         })
         rightButtons.push(
             {
-                title: "",
+                title: this.returnKeyLabelCache,
                 id: this.keyboardReturnButton,
-                tapped: this.keyboardTapped(() => $keyboard.send())
+                tapped: this.keyboardTapped(() => $keyboard.send()),
+                events: {
+                    ready: async () => {
+                        await $wait(0.2)
+                        const label = this.returnKeyLabel
+                        const layout = this.#bottomBarButtonView({ title: label }, UIKit.align.right).layout
+
+                        $ui.animate({
+                            duration: 0.2,
+                            animation: () => {
+                                $(this.keyboardReturnButton).super.updateLayout(layout)
+                                $(this.keyboardReturnButton).super.relayout()
+                            },
+                            completion: () => {
+                                $(this.keyboardReturnButton).title = label
+                            }
+                        })
+                    }
+                }
             },
             {
                 symbol: "delete.left",
@@ -500,21 +522,6 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
                 make.left.right.equalTo(view.super.safeArea)
                 make.height.equalTo(this.bottomBarHeight)
-            },
-            events: {
-                ready: async () => {
-                    await $wait(0.2)
-                    $ui.animate({
-                        duration: 0.2,
-                        animation: () => {
-                            const label = this.returnKeyLabel
-                            const layout = this.#bottomBarButtonView({ title: label }, UIKit.align.right).layout
-                            $(this.keyboardReturnButton).title = label
-                            $(this.keyboardReturnButton).super.updateLayout(layout)
-                            $(this.keyboardReturnButton).super.relayout()
-                        }
-                    })
-                }
             }
         }
     }
