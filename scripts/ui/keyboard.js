@@ -8,6 +8,23 @@ const KeyboardScripts = require("./components/keyboard-scripts")
  */
 
 class Keyboard extends Clips {
+    static ReturnKeyType = {
+        UIReturnKeyDefault: 0,
+        UIReturnKeyGo: 1,
+        UIReturnKeyGoogle: 2,
+        UIReturnKeyJoin: 3,
+        UIReturnKeyNext: 4,
+        UIReturnKeyRoute: 5,
+        UIReturnKeySearch: 6,
+        UIReturnKeySend: 7,
+        UIReturnKeyYahoo: 8,
+        UIReturnKeyDone: 9,
+        UIReturnKeyEmergencyCall: 10,
+        UIReturnKeyContinue: 11,
+        UIReturnKeyJoining: 12,
+        UIReturnKeyRouteContinue: 13
+    }
+
     #readClipboardTimer
 
     keyboardId = "keyboard.main"
@@ -58,6 +75,59 @@ class Keyboard extends Clips {
         this.views.tagHeight = this.views.verticalMargin + 3
 
         this.delegates.menuItemActionMaxCount = 3
+    }
+
+    get returnKeyLabel() {
+        let labelName
+        const returnKeyType = $ui.vc.ocValue().$textDocumentProxy().$returnKeyType()
+        switch (returnKeyType) {
+            case Keyboard.ReturnKeyType.UIReturnKeyDefault:
+                labelName = "Return"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyGo:
+                labelName = "Go"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyGoogle:
+                labelName = "Google"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyJoin:
+                labelName = "Join"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyNext:
+                labelName = "Next"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyRoute:
+                labelName = "Route"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeySearch:
+                labelName = "Search"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeySend:
+                labelName = "Send"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyYahoo:
+                labelName = "Yahoo"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyDone:
+                labelName = "Done"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyEmergencyCall:
+                labelName = "Emergency Call"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyContinue:
+                labelName = "Continue"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyJoining:
+                labelName = "Joining"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyRouteContinue:
+                labelName = "Route Continue"
+                break
+            default:
+                labelName = "Unknown"
+        }
+
+        return labelName
     }
 
     get keyboardHeight() {
@@ -145,23 +215,27 @@ class Keyboard extends Clips {
                         throw error
                     }
                 })
-            },
-            {
-                symbol: "doc.on.clipboard",
-                tapped: this.keyboardTapped(() => {
-                    $keyboard.insert($clipboard.text)
-                })
-            },
-            {
-                // Action
-                symbol: "bolt.circle",
-                tapped: this.keyboardTapped(() => {
-                    let flag = $(this.actionsId).hidden === true
-                    $(this.views.listId).hidden = flag
-                    $(this.actionsId).hidden = !flag
-                })
             }
         ]
+        if (!$device.isIpad && !$device.isIpadPro) {
+            buttons.push({
+                symbol: "doc.on.clipboard",
+                tapped: this.keyboardTapped(() => {
+                    const text = $clipboard.text
+                    if (!text || text === "") return
+                    $keyboard.insert(text)
+                })
+            })
+        }
+        buttons.push({
+            // Action
+            symbol: "bolt.circle",
+            tapped: this.keyboardTapped(() => {
+                let flag = $(this.actionsId).hidden === true
+                $(this.views.listId).hidden = flag
+                $(this.actionsId).hidden = !flag
+            })
+        })
 
         return {
             type: "view",
@@ -357,7 +431,7 @@ class Keyboard extends Clips {
         })
         rightButtons.push(
             {
-                title: $l10n("SEND"),
+                title: this.returnKeyLabel,
                 tapped: this.keyboardTapped(() => $keyboard.send())
             },
             {
