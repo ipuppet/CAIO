@@ -39,11 +39,41 @@ class Keyboard extends Clips {
     continuousDeleteDelay = 0.5
 
     // 剪贴板列个性化设置
-
     matrixBoxMargin = 10
     navHeight = 50
-    bottomBarHeight = 50
-    bottomButtonSize = $size(46, 40)
+
+    get isFullScreenIpad() {
+        if (!$device.isIpad) return false
+
+        this.isFullScreenIpadCacheTimer?.cancel()
+        this.isFullScreenIpadCacheTimer = $delay(0.1, () => {
+            if ($cache.get("keyboard.isFullScreenIpad") !== !UIKit.isSplitScreenMode) {
+                this.kernel.KeyboardRenderWithViewFunc(() => this.getView())
+            }
+            $cache.set("keyboard.isFullScreenIpad", !UIKit.isSplitScreenMode)
+        })
+        return $cache.get("keyboard.isFullScreenIpad") ?? !UIKit.isSplitScreenMode
+    }
+
+    get bottomBarHeight() {
+        return this.isFullScreenIpad ? 90 : 50
+    }
+
+    get bottomButtonSize() {
+        return this.isFullScreenIpad ? { width: 69, height: 66 } : { width: 46, height: 40 }
+    }
+
+    get bottomButtonFontSize() {
+        return this.isFullScreenIpad ? 20 : 16
+    }
+
+    get bottomButtonIconSize() {
+        return this.isFullScreenIpad ? 26 : 16
+    }
+
+    get bottomButtonEdges() {
+        return this.isFullScreenIpad ? 8 : 4
+    }
 
     itemBackground = $color("#FFFFFF", $rgba(0x97, 0x97, 0x97, 0.4))
     buttonBackground = $color($rgba(0, 0, 0, 0.15), $rgba(0x75, 0x75, 0x75, 0.4)) // 系统键盘按钮配色
@@ -127,7 +157,11 @@ class Keyboard extends Clips {
             default:
                 labelName = "Return"
         }
+        $cache.set("keyboard.returnKeyLabel", labelName)
         return labelName
+    }
+    get returnKeyLabelCache() {
+        return $cache.get("keyboard.returnKeyLabel") ?? this.returnKeyLabel
     }
 
     get keyboardHeight() {
@@ -217,7 +251,7 @@ class Keyboard extends Clips {
                 })
             }
         ]
-        if (!$device.isIpad && !$device.isIpadPro) {
+        if (!$device.isIpad) {
             buttons.push({
                 symbol: "doc.on.clipboard",
                 tapped: this.keyboardTapped(() => {
@@ -316,15 +350,18 @@ class Keyboard extends Clips {
      */
     #bottomBarButtonView(button, align) {
         const size = this.bottomButtonSize
-        const edges = this.views.containerMargin
+        const edges = this.bottomButtonEdges
         const layout = (make, view) => {
             if (button.title) {
                 const fontSize = $text.sizeThatFits({
                     text: button.title,
                     width: UIKit.windowSize.width,
-                    font: $font(16)
+                    font: $font(this.bottomButtonFontSize)
                 })
-                const width = Math.ceil(fontSize.width) + (edges + 12) * 2 // 文本按钮增加内边距
+                let width = Math.ceil(fontSize.width) + (edges + 12) * 2 // 文本按钮增加内边距
+                if (this.isFullScreenIpad) {
+                    width = Math.max(size.height * 1.5, width)
+                }
                 make.size.equalTo($size(width, size.height))
             } else {
                 make.size.equalTo(size)
@@ -345,17 +382,54 @@ class Keyboard extends Clips {
                 {
                     smoothCorners: false,
                     cornerRadius: 5,
-                    symbol: button.symbol,
-                    title: button.title,
                     id: button.id ?? $text.uuid,
-                    font: $font(16),
                     bgcolor: this.useBlur ? $color("clear") : this.buttonBackground,
-                    tintColor: UIKit.textColor,
-                    titleColor: UIKit.textColor,
                     info: { align }
                 },
                 button.menu ? { menu: button.menu } : {}
             ),
+            views: [
+                {
+                    type: "image",
+                    props: {
+                        symbol: button.symbol,
+                        tintColor: UIKit.textColor
+                    },
+                    layout: (make, view) => {
+                        make.size.greaterThanOrEqualTo(this.bottomButtonIconSize)
+                        if (this.isFullScreenIpad) {
+                            make.bottom.inset(5)
+                            if (align === UIKit.align.right) {
+                                make.right.inset(5)
+                            } else {
+                                make.left.inset(5)
+                            }
+                        } else {
+                            make.center.equalTo(view.super)
+                        }
+                    }
+                },
+                {
+                    type: "label",
+                    props: {
+                        text: button.title,
+                        font: $font(this.bottomButtonFontSize),
+                        color: UIKit.textColor
+                    },
+                    layout: (make, view) => {
+                        if (this.isFullScreenIpad) {
+                            make.bottom.inset(5)
+                            if (align === UIKit.align.right) {
+                                make.right.inset(5)
+                            } else {
+                                make.left.inset(5)
+                            }
+                        } else {
+                            make.center.equalTo(view.super)
+                        }
+                    }
+                }
+            ],
             events: Object.assign({}, button.tapped ? { tapped: button.tapped } : {}, button.events),
             layout: $layout.fill
         }
@@ -385,7 +459,7 @@ class Keyboard extends Clips {
         const leftButtons = []
         const rightButtons = []
         // 切换键盘
-        if (!$device.hasFaceID || $device.isIpadPro) {
+        if ($ui.controller.ocValue().$needsInputModeSwitchKey()) {
             leftButtons.push({
                 symbol: "globe",
                 tapped: this.keyboardTapped(() => $keyboard.next()),
@@ -430,9 +504,27 @@ class Keyboard extends Clips {
         })
         rightButtons.push(
             {
-                title: "",
+                title: this.returnKeyLabelCache,
                 id: this.keyboardReturnButton,
-                tapped: this.keyboardTapped(() => $keyboard.send())
+                tapped: this.keyboardTapped(() => $keyboard.send()),
+                events: {
+                    ready: async () => {
+                        await $wait(0.2)
+                        const label = this.returnKeyLabel
+                        const layout = this.#bottomBarButtonView({ title: label }, UIKit.align.right).layout
+
+                        $ui.animate({
+                            duration: 0.2,
+                            animation: () => {
+                                $(this.keyboardReturnButton).super.updateLayout(layout)
+                                $(this.keyboardReturnButton).super.relayout()
+                            },
+                            completion: () => {
+                                $(this.keyboardReturnButton).get("label").text = label
+                            }
+                        })
+                    }
+                }
             },
             {
                 symbol: "delete.left",
@@ -481,8 +573,8 @@ class Keyboard extends Clips {
                     lastLeft = lastLeft.prev
                 }
                 make.height.top.equalTo(view.prev)
-                make.left.equalTo(lastLeft.right).offset(this.views.containerMargin * 1.5)
-                make.right.equalTo(view.prev.left).offset(-this.views.containerMargin * 1.5) // 右侧按钮是倒序的
+                make.left.equalTo(lastLeft.right).offset(this.bottomButtonEdges * 1.5)
+                make.right.equalTo(view.prev.left).offset(-this.bottomButtonEdges * 1.5) // 右侧按钮是倒序的
             }
         }
         return [
@@ -500,21 +592,6 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
                 make.left.right.equalTo(view.super.safeArea)
                 make.height.equalTo(this.bottomBarHeight)
-            },
-            events: {
-                ready: async () => {
-                    await $wait(0.2)
-                    $ui.animate({
-                        duration: 0.2,
-                        animation: () => {
-                            const label = this.returnKeyLabel
-                            const layout = this.#bottomBarButtonView({ title: label }, UIKit.align.right).layout
-                            $(this.keyboardReturnButton).title = label
-                            $(this.keyboardReturnButton).super.updateLayout(layout)
-                            $(this.keyboardReturnButton).super.relayout()
-                        }
-                    })
-                }
             }
         }
     }

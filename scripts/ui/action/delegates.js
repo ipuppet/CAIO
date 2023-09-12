@@ -364,11 +364,11 @@ class ActionDelegates {
             },
             "collectionView:layout:sizeForItemAtIndexPath:": (collectionView, layout, indexPath) => {
                 const space = this.views.spacing * (this.views.columns + 1)
-                const width = (UIKit.windowSize.width - space) / this.views.columns
+                const width = (collectionView.$frame().width - space) / this.views.columns
                 return $size(width, this.views.itemHeight)
             },
             "collectionView:layout:referenceSizeForHeaderInSection:": (collectionView, layout, section) => {
-                const width = UIKit.windowSize.width - this.views.spacing * 2
+                const width = collectionView.$frame().width - this.views.spacing * 2
                 return $size(width, this.views.headerHeight)
             }
         }
