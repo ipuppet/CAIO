@@ -31,6 +31,7 @@ class Keyboard extends Clips {
     actionsId = "keyboard-list-actions"
     keyboardSwitchLockId = "keyboard-switch-lock"
     keyboardSwitchLockKey = "caio.keyboard.switch.lock"
+    keyboardReturnButton = "keyboard-return-button"
 
     deleteTimer = undefined
     continuousDeleteTimer = undefined
@@ -79,7 +80,7 @@ class Keyboard extends Clips {
 
     get returnKeyLabel() {
         let labelName
-        const returnKeyType = $ui.vc.ocValue().$textDocumentProxy().$returnKeyType()
+        const returnKeyType = $ui.controller.ocValue().$textDocumentProxy().$returnKeyType()
         switch (returnKeyType) {
             case Keyboard.ReturnKeyType.UIReturnKeyDefault:
                 labelName = "Return"
@@ -124,9 +125,8 @@ class Keyboard extends Clips {
                 labelName = "Route Continue"
                 break
             default:
-                labelName = "Unknown"
+                labelName = "Return"
         }
-
         return labelName
     }
 
@@ -195,7 +195,7 @@ class Keyboard extends Clips {
         }
     }
 
-    topButtonsView() {
+    getTopButtonsView() {
         const buttons = [
             {
                 // 关闭键盘
@@ -298,7 +298,7 @@ class Keyboard extends Clips {
                                 make.size.equalTo($size(28, 28))
                             }
                         }
-                    ].concat(super.getTabView(), this.topButtonsView())
+                    ].concat(super.getTabView(), this.getTopButtonsView())
                 }
             ],
             layout: (make, view) => {
@@ -381,10 +381,9 @@ class Keyboard extends Clips {
         }
     }
 
-    getBottomBarView() {
+    getBottomButtonsView() {
         const leftButtons = []
         const rightButtons = []
-
         // 切换键盘
         if (!$device.hasFaceID || $device.isIpadPro) {
             leftButtons.push({
@@ -431,7 +430,8 @@ class Keyboard extends Clips {
         })
         rightButtons.push(
             {
-                title: this.returnKeyLabel,
+                title: "",
+                id: this.keyboardReturnButton,
                 tapped: this.keyboardTapped(() => $keyboard.send())
             },
             {
@@ -485,18 +485,36 @@ class Keyboard extends Clips {
                 make.right.equalTo(view.prev.left).offset(-this.views.containerMargin * 1.5) // 右侧按钮是倒序的
             }
         }
+        return [
+            ...leftButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.left)),
+            ...rightButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.right)),
+            spaceButton
+        ]
+    }
 
+    getBottomBarView() {
         return {
             type: "view",
-            views: [
-                ...leftButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.right)),
-                spaceButton
-            ],
+            views: this.getBottomButtonsView(),
             layout: (make, view) => {
                 make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
                 make.left.right.equalTo(view.super.safeArea)
                 make.height.equalTo(this.bottomBarHeight)
+            },
+            events: {
+                ready: async () => {
+                    await $wait(0.2)
+                    $ui.animate({
+                        duration: 0.2,
+                        animation: () => {
+                            const label = this.returnKeyLabel
+                            const layout = this.#bottomBarButtonView({ title: label }, UIKit.align.right).layout
+                            $(this.keyboardReturnButton).title = label
+                            $(this.keyboardReturnButton).super.updateLayout(layout)
+                            $(this.keyboardReturnButton).super.relayout()
+                        }
+                    })
+                }
             }
         }
     }
