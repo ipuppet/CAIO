@@ -30,7 +30,7 @@ class AppUI {
         const Keyboard = require("./ui/keyboard")
         const keyboard = new Keyboard(this.kernel)
 
-        this.kernel.KeyboardRender(keyboard.getView())
+        this.kernel.KeyboardRenderWithViewFunc(async () => keyboard.getView())
     }
 
     static renderTodayUI() {

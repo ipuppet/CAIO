@@ -8,12 +8,30 @@ const KeyboardScripts = require("./components/keyboard-scripts")
  */
 
 class Keyboard extends Clips {
+    static ReturnKeyType = {
+        UIReturnKeyDefault: 0,
+        UIReturnKeyGo: 1,
+        UIReturnKeyGoogle: 2,
+        UIReturnKeyJoin: 3,
+        UIReturnKeyNext: 4,
+        UIReturnKeyRoute: 5,
+        UIReturnKeySearch: 6,
+        UIReturnKeySend: 7,
+        UIReturnKeyYahoo: 8,
+        UIReturnKeyDone: 9,
+        UIReturnKeyEmergencyCall: 10,
+        UIReturnKeyContinue: 11,
+        UIReturnKeyJoining: 12,
+        UIReturnKeyRouteContinue: 13
+    }
+
     #readClipboardTimer
 
     keyboardId = "keyboard.main"
     actionsId = "keyboard-list-actions"
     keyboardSwitchLockId = "keyboard-switch-lock"
     keyboardSwitchLockKey = "caio.keyboard.switch.lock"
+    keyboardReturnButton = "keyboard-return-button"
 
     deleteTimer = undefined
     continuousDeleteTimer = undefined
@@ -58,6 +76,58 @@ class Keyboard extends Clips {
         this.views.tagHeight = this.views.verticalMargin + 3
 
         this.delegates.menuItemActionMaxCount = 3
+    }
+
+    get returnKeyLabel() {
+        let labelName
+        const returnKeyType = $ui.controller.ocValue().$textDocumentProxy().$returnKeyType()
+        switch (returnKeyType) {
+            case Keyboard.ReturnKeyType.UIReturnKeyDefault:
+                labelName = "Return"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyGo:
+                labelName = "Go"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyGoogle:
+                labelName = "Google"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyJoin:
+                labelName = "Join"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyNext:
+                labelName = "Next"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyRoute:
+                labelName = "Route"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeySearch:
+                labelName = "Search"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeySend:
+                labelName = "Send"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyYahoo:
+                labelName = "Yahoo"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyDone:
+                labelName = "Done"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyEmergencyCall:
+                labelName = "Emergency Call"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyContinue:
+                labelName = "Continue"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyJoining:
+                labelName = "Joining"
+                break
+            case Keyboard.ReturnKeyType.UIReturnKeyRouteContinue:
+                labelName = "Route Continue"
+                break
+            default:
+                labelName = "Return"
+        }
+        return labelName
     }
 
     get keyboardHeight() {
@@ -125,7 +195,7 @@ class Keyboard extends Clips {
         }
     }
 
-    topButtonsView() {
+    getTopButtonsView() {
         const buttons = [
             {
                 // 关闭键盘
@@ -145,23 +215,27 @@ class Keyboard extends Clips {
                         throw error
                     }
                 })
-            },
-            {
-                symbol: "doc.on.clipboard",
-                tapped: this.keyboardTapped(() => {
-                    $keyboard.insert($clipboard.text)
-                })
-            },
-            {
-                // Action
-                symbol: "bolt.circle",
-                tapped: this.keyboardTapped(() => {
-                    let flag = $(this.actionsId).hidden === true
-                    $(this.views.listId).hidden = flag
-                    $(this.actionsId).hidden = !flag
-                })
             }
         ]
+        if (!$device.isIpad && !$device.isIpadPro) {
+            buttons.push({
+                symbol: "doc.on.clipboard",
+                tapped: this.keyboardTapped(() => {
+                    const text = $clipboard.text
+                    if (!text || text === "") return
+                    $keyboard.insert(text)
+                })
+            })
+        }
+        buttons.push({
+            // Action
+            symbol: "bolt.circle",
+            tapped: this.keyboardTapped(() => {
+                let flag = $(this.actionsId).hidden === true
+                $(this.views.listId).hidden = flag
+                $(this.actionsId).hidden = !flag
+            })
+        })
 
         return {
             type: "view",
@@ -224,7 +298,7 @@ class Keyboard extends Clips {
                                 make.size.equalTo($size(28, 28))
                             }
                         }
-                    ].concat(super.getTabView(), this.topButtonsView())
+                    ].concat(super.getTabView(), this.getTopButtonsView())
                 }
             ],
             layout: (make, view) => {
@@ -307,10 +381,9 @@ class Keyboard extends Clips {
         }
     }
 
-    getBottomBarView() {
+    getBottomButtonsView() {
         const leftButtons = []
         const rightButtons = []
-
         // 切换键盘
         if (!$device.hasFaceID || $device.isIpadPro) {
             leftButtons.push({
@@ -357,7 +430,8 @@ class Keyboard extends Clips {
         })
         rightButtons.push(
             {
-                title: $l10n("SEND"),
+                title: "",
+                id: this.keyboardReturnButton,
                 tapped: this.keyboardTapped(() => $keyboard.send())
             },
             {
@@ -411,18 +485,36 @@ class Keyboard extends Clips {
                 make.right.equalTo(view.prev.left).offset(-this.views.containerMargin * 1.5) // 右侧按钮是倒序的
             }
         }
+        return [
+            ...leftButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.left)),
+            ...rightButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.right)),
+            spaceButton
+        ]
+    }
 
+    getBottomBarView() {
         return {
             type: "view",
-            views: [
-                ...leftButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.left)),
-                ...rightButtons.map(btn => this.#bottomBarButtonView(btn, UIKit.align.right)),
-                spaceButton
-            ],
+            views: this.getBottomButtonsView(),
             layout: (make, view) => {
                 make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
                 make.left.right.equalTo(view.super.safeArea)
                 make.height.equalTo(this.bottomBarHeight)
+            },
+            events: {
+                ready: async () => {
+                    await $wait(0.2)
+                    $ui.animate({
+                        duration: 0.2,
+                        animation: () => {
+                            const label = this.returnKeyLabel
+                            const layout = this.#bottomBarButtonView({ title: label }, UIKit.align.right).layout
+                            $(this.keyboardReturnButton).title = label
+                            $(this.keyboardReturnButton).super.updateLayout(layout)
+                            $(this.keyboardReturnButton).super.relayout()
+                        }
+                    })
+                }
             }
         }
     }
