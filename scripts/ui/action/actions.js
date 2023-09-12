@@ -303,14 +303,6 @@ class Actions extends ActionsData {
     present() {
         const actionSheet = new Sheet()
         const rightButtons = this.getNavButtons()
-        if (this.kernel.setting.get("webdav.status")) {
-            rightButtons.push({
-                // 同步
-                id: this.views.syncButtonId,
-                symbol: "arrow.triangle.2.circlepath.circle",
-                tapped: () => this.sync()
-            })
-        }
         actionSheet
             .setView(this.getMatrixView())
             .addNavBar({
