@@ -192,7 +192,7 @@ class Keyboard extends Clips {
     switchKeyboardSwitchLock() {
         const lock = $cache.get(this.keyboardSwitchLockKey)
         $cache.set(this.keyboardSwitchLockKey, !lock)
-        $(this.keyboardSwitchLockId).symbol = !lock ? "lock" : "lock.open"
+        $(this.keyboardSwitchLockId).get("image").symbol = !lock ? "lock" : "lock.open"
     }
 
     listReady() {
