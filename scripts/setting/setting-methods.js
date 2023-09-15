@@ -274,7 +274,7 @@ function action() {
 function keyboard() {
     const Keyboard = require("../ui/keyboard")
     const keyboardMaxHeight = 400
-    const keyboardMinHeight = 200
+    const keyboardMinHeight = 220
 
     kernel.setting.method.previewKeyboard = () => {
         const keyboard = new Keyboard(kernel)
@@ -285,7 +285,7 @@ function keyboard() {
                 make.height.equalTo(keyboard.keyboardHeight)
             })
             if (keyboard.keyboardDisplayMode === 1) {
-                $(keyboard.keyboardId).get(keyboard.listId).reload()
+                $(keyboard.keyboardId).get(keyboard.views.listId).reload()
             }
         }
         const getPercentage = v => (v - keyboardMinHeight) / (keyboardMaxHeight - keyboardMinHeight)
