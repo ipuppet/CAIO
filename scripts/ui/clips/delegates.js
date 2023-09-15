@@ -11,7 +11,6 @@ class ClipsDelegates {
     #setEditingCallback
     menuItemActionMaxCount = 5
     placeholderReuseIdentifier = "UITableViewPlaceholderReuseIdentifier"
-    isCollectionView = false
 
     /**
      * @param {AppKernel} kernel
@@ -483,19 +482,6 @@ class ClipsDelegates {
         })
     }
 
-    collectionViewDragDelegate() {
-        const events = {
-            "collectionView:itemsForBeginningDragSession:atIndexPath:": (collectionView, session, indexPath) => {
-                return this.itemsForBeginningDragSession(session, indexPath)
-            }
-        }
-
-        return $delegate({
-            type: "UICollectionViewDragDelegate",
-            events
-        })
-    }
-
     reorder(coordinator) {
         // 排序只有一个可以拖拽
         const item = coordinator.$items().$firstObject()
@@ -603,15 +589,11 @@ class ClipsDelegates {
     setDelegate() {
         const view = $(this.views.listId).ocValue()
 
-        if (this.isCollectionView) {
-            view.$setDragDelegate(this.collectionViewDragDelegate())
-        } else {
-            this.initReuseIdentifier(view)
+        this.initReuseIdentifier(view)
 
-            view.$setDelegate(this.delegate())
-            view.$setDragDelegate(this.dragDelegate())
-            view.$setDropDelegate(this.dropDelegate())
-        }
+        view.$setDelegate(this.delegate())
+        view.$setDragDelegate(this.dragDelegate())
+        view.$setDropDelegate(this.dropDelegate())
     }
 }
 

@@ -196,7 +196,24 @@ class Keyboard extends Clips {
     }
 
     listReady() {
-        this.setDelegate()
+        if (this.keyboardDisplayMode === 0) {
+            this.setDelegate()
+        } else {
+            const delegate = $delegate({
+                type: "UICollectionViewDragDelegate",
+                events: {
+                    "collectionView:itemsForBeginningDragSession:atIndexPath:": (
+                        collectionView,
+                        session,
+                        indexPath
+                    ) => {
+                        return this.delegates.itemsForBeginningDragSession(session, indexPath)
+                    }
+                }
+            })
+            const view = $(this.views.listId).ocValue()
+            view.$setDragDelegate(delegate)
+        }
         this.updateList()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
@@ -710,10 +727,7 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
-                ready: () => {
-                    this.delegates.isCollectionView = true
-                    this.listReady()
-                },
+                ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
                     // 在键盘刚启动时从 sender.size.height 取值是错误的
