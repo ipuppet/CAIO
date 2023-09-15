@@ -42,6 +42,8 @@ class Keyboard extends Clips {
     matrixBoxMargin = 10
     navHeight = 50
 
+    keyboardFrameHeight = this.keyboardHeight
+
     get isFullScreenIpad() {
         if (!$device.isIpad) return false
 
@@ -712,10 +714,9 @@ class Keyboard extends Clips {
                 bgcolor: $color("clear"),
                 menu: this.delegates.menu,
                 direction: $scrollDirection.horizontal,
-                square: true,
                 alwaysBounceVertical: false,
-                showsHorizontalIndicator: false,
                 alwaysBounceHorizontal: true,
+                showsHorizontalIndicator: false,
                 columns: 1,
                 spacing: this.matrixBoxMargin,
                 template: this.matrixTemplate,
@@ -730,10 +731,18 @@ class Keyboard extends Clips {
                 ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
-                    // 在键盘刚启动时从 sender.size.height 取值是错误的
-                    let size = this.keyboardHeight - this.navHeight - this.bottomBarHeight
+                    let size = this.keyboardFrameHeight - this.navHeight - this.bottomBarHeight
                     size -= this.matrixBoxMargin * 2
                     return $size(size, size)
+                },
+                layoutSubviews: view => {
+                    const staticHeight = this.navHeight + this.bottomBarHeight + this.matrixBoxMargin
+                    const minHeight = staticHeight * 2 - this.matrixBoxMargin + 1
+                    const height = Math.max(view.frame.height, minHeight)
+                    if (this.keyboardFrameHeight !== height) {
+                        this.keyboardFrameHeight = height
+                        view.reload()
+                    }
                 }
             }
         }

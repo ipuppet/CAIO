@@ -274,7 +274,7 @@ function action() {
 function keyboard() {
     const Keyboard = require("../ui/keyboard")
     const keyboardMaxHeight = 400
-    const keyboardMinHeight = 220
+    const keyboardMinHeight = 200
 
     kernel.setting.method.previewKeyboard = () => {
         const keyboard = new Keyboard(kernel)
