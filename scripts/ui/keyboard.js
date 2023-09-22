@@ -481,19 +481,15 @@ class Keyboard extends Clips {
         if ($ui.controller.ocValue().$needsInputModeSwitchKey()) {
             leftButtons.push({
                 symbol: "globe",
-                tapped: this.keyboardTapped(() => $keyboard.next()),
-                menu: {
-                    pullDown: true,
-                    items: [
-                        {
-                            title: $l10n("SWITCH_KEYBOARD"),
-                            handler: this.keyboardTapped(() => $keyboard.next())
-                        },
-                        {
-                            title: $l10n("OPEN_IN_JSBOX"),
-                            handler: () => this.kernel.openInJsbox()
-                        }
-                    ]
+                events: {
+                    ready: sender => {
+                        const button = sender.ocValue()
+                        button.$addTarget_action_forControlEvents(
+                            $ui.controller.ocValue(),
+                            "handleInputModeListFromView:withEvent:",
+                            $UIEvent.allTouchEvents
+                        )
+                    }
                 }
             })
         }
