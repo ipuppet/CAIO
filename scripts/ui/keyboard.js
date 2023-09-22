@@ -42,6 +42,8 @@ class Keyboard extends Clips {
     matrixBoxMargin = 10
     navHeight = 50
 
+    keyboardFrameHeight = this.keyboardHeight
+
     get isFullScreenIpad() {
         if (!$device.isIpad) return false
 
@@ -60,7 +62,8 @@ class Keyboard extends Clips {
     }
 
     get bottomButtonSize() {
-        return this.isFullScreenIpad ? { width: 69, height: 66 } : { width: 46, height: 40 }
+        if (!$device.isIpad) return { width: 46, height: 40 }
+        return this.isFullScreenIpad ? { width: 69, height: 66 } : { width: 32, height: 40 }
     }
 
     get bottomButtonFontSize() {
@@ -192,11 +195,28 @@ class Keyboard extends Clips {
     switchKeyboardSwitchLock() {
         const lock = $cache.get(this.keyboardSwitchLockKey)
         $cache.set(this.keyboardSwitchLockKey, !lock)
-        $(this.keyboardSwitchLockId).symbol = !lock ? "lock" : "lock.open"
+        $(this.keyboardSwitchLockId).get("image").symbol = !lock ? "lock" : "lock.open"
     }
 
     listReady() {
-        this.setDelegate()
+        if (this.keyboardDisplayMode === 0) {
+            this.setDelegate()
+        } else {
+            const delegate = $delegate({
+                type: "UICollectionViewDragDelegate",
+                events: {
+                    "collectionView:itemsForBeginningDragSession:atIndexPath:": (
+                        collectionView,
+                        session,
+                        indexPath
+                    ) => {
+                        return this.delegates.itemsForBeginningDragSession(session, indexPath)
+                    }
+                }
+            })
+            const view = $(this.views.listId).ocValue()
+            view.$setDragDelegate(delegate)
+        }
         this.updateList()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
@@ -462,19 +482,15 @@ class Keyboard extends Clips {
         if ($ui.controller.ocValue().$needsInputModeSwitchKey()) {
             leftButtons.push({
                 symbol: "globe",
-                tapped: this.keyboardTapped(() => $keyboard.next()),
-                menu: {
-                    pullDown: true,
-                    items: [
-                        {
-                            title: $l10n("SWITCH_KEYBOARD"),
-                            handler: this.keyboardTapped(() => $keyboard.next())
-                        },
-                        {
-                            title: $l10n("OPEN_IN_JSBOX"),
-                            handler: () => this.kernel.openInJsbox()
-                        }
-                    ]
+                events: {
+                    ready: sender => {
+                        const button = sender.ocValue()
+                        button.$addTarget_action_forControlEvents(
+                            $ui.controller.ocValue(),
+                            "handleInputModeListFromView:withEvent:",
+                            $UIEvent.allTouchEvents
+                        )
+                    }
                 }
             })
         }
@@ -695,10 +711,9 @@ class Keyboard extends Clips {
                 bgcolor: $color("clear"),
                 menu: this.delegates.menu,
                 direction: $scrollDirection.horizontal,
-                square: true,
                 alwaysBounceVertical: false,
-                showsHorizontalIndicator: false,
                 alwaysBounceHorizontal: true,
+                showsHorizontalIndicator: false,
                 columns: 1,
                 spacing: this.matrixBoxMargin,
                 template: this.matrixTemplate,
@@ -710,16 +725,21 @@ class Keyboard extends Clips {
                 make.bottom.equalTo(view.super.safeAreaBottom).offset(-1 * (this.bottomBarHeight - this.navHeight))
             },
             events: {
-                ready: () => {
-                    this.delegates.isCollectionView = true
-                    this.listReady()
-                },
+                ready: () => this.listReady(),
                 didSelect: this.itemSelect,
                 itemSize: (sender, indexPath) => {
-                    // 在键盘刚启动时从 sender.size.height 取值是错误的
-                    let size = this.keyboardHeight - this.navHeight - this.bottomBarHeight
+                    let size = this.keyboardFrameHeight - this.navHeight - this.bottomBarHeight
                     size -= this.matrixBoxMargin * 2
                     return $size(size, size)
+                },
+                layoutSubviews: view => {
+                    const staticHeight = this.navHeight + this.bottomBarHeight + this.matrixBoxMargin
+                    const minHeight = staticHeight * 2 - this.matrixBoxMargin + 1
+                    const height = Math.max(view.frame.height, minHeight)
+                    if (this.keyboardFrameHeight !== height) {
+                        this.keyboardFrameHeight = height
+                        view.reload()
+                    }
                 }
             }
         }
