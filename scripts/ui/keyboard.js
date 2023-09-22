@@ -62,6 +62,7 @@ class Keyboard extends Clips {
     }
 
     get bottomButtonSize() {
+        if (!$device.isIpad) return { width: 46, height: 40 }
         return this.isFullScreenIpad ? { width: 69, height: 66 } : { width: 32, height: 40 }
     }
 
