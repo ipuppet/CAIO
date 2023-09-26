@@ -8,7 +8,7 @@ const Actions = require("./ui/action/actions")
  * @typedef {AppKernelBase} AppKernelBase
  */
 class AppKernelBase extends Kernel {
-    static fileStorage = new FileStorage()
+    static fileStorage = new FileStorage({ basePath: "shared://caio" })
 
     logPath = "logs"
     logFile = "caio.log"

@@ -129,7 +129,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 9
+    version = 10
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -235,11 +235,23 @@ class VersionActions {
     }
 
     ver8() {}
-
     ver9() {
         this.compatibility.rebuildUserActions({
             clipboard: ["SendToWin"]
         })
+    }
+
+    ver10() {
+        const basePath = this.kernel.fileStorage.basePath
+        $file.mkdir(basePath)
+        if ($file.exists("storage")) {
+            $file.move({
+                src: "storage",
+                dst: basePath
+            })
+        }
+
+        this.compatibility.deleteFiles(["storage"])
     }
 }
 
