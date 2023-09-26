@@ -452,7 +452,7 @@ function settingMethods(appKernel) {
     }
 
     kernel.setting.method.fileManager = () => {
-        kernel.fileManager.push("storage")
+        kernel.fileManager.push(kernel.fileStorage.basePath)
     }
 
     clips()
