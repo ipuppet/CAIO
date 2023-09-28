@@ -220,6 +220,7 @@ class Keyboard extends Clips {
         this.updateList()
         // readClipboard
         if (this.kernel.setting.get("clipboard.autoSave") && $app.env === $env.keyboard) {
+            this.readClipboard() // 防止延时
             this.#readClipboardTimer = $timer.schedule({
                 interval: 1,
                 handler: () => {
