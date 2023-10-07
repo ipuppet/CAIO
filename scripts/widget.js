@@ -2,7 +2,7 @@ const { Logger, Setting, FileStorage } = require("./libs/easy-jsbox")
 const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
 
-const fileStorage = new FileStorage()
+const fileStorage = new FileStorage({ basePath: "shared://caio" })
 
 class Widget {
     static widgetInstance(widget, ...data) {
