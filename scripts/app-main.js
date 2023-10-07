@@ -17,8 +17,7 @@ class AppKernel extends AppKernelBase {
 }
 
 class AppUI {
-    // 小组件模式下不初始化 AppKernel
-    static kernel = $app.env !== $env.widget ? new AppKernel() : undefined
+    static kernel = new AppKernel()
 
     static renderMainUI() {
         const buttons = {

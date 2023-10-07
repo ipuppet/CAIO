@@ -22,10 +22,7 @@ class Widget {
                 structure: SettingStructure
             }),
             fileStorage: AppKernelBase.fileStorage,
-            print: () => {},
-            error: msg => {
-                logger.error(msg)
-            }
+            logger
         }
         kernel.setting.setReadonly()
 
