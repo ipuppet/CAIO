@@ -4,7 +4,6 @@
  */
 class ClipboardWidget {
     /**
-     *
      * @param {Setting} setting
      * @param {Storage} storage
      */
