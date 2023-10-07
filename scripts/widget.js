@@ -44,11 +44,7 @@ class Widget {
     }
 
     static renderClipboard() {
-        const setting = new Setting()
-        setting.setReadonly()
-
         const widget = Widget.widgetInstance("Clipboard", Widget.kernel())
-
         widget.render()
     }
 
