@@ -1,8 +1,7 @@
-const { Logger, Setting, FileStorage } = require("./libs/easy-jsbox")
+const { Logger, Setting } = require("./libs/easy-jsbox")
 const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
-
-const fileStorage = new FileStorage({ basePath: "shared://caio" })
+const { AppKernelBase } = require("./app")
 
 class Widget {
     static widgetInstance(widget, ...data) {
@@ -16,13 +15,13 @@ class Widget {
 
     static kernel() {
         const logger = new Logger()
-        logger.printToFile(fileStorage, "logs/widget.log")
+        logger.printToFile(AppKernelBase.fileStorage, "logs/widget.log")
         const kernel = {
             setting: new Setting({
-                fileStorage,
+                fileStorage: AppKernelBase.fileStorage,
                 structure: SettingStructure
             }),
-            fileStorage,
+            fileStorage: AppKernelBase.fileStorage,
             print: () => {},
             error: msg => {
                 logger.error(msg)
