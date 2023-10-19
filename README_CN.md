@@ -4,6 +4,8 @@
 > 
 > A Clipboard tool based on JSBox.
 
+[查看我的博客](https://blog.ultagic.com/#/detail/42/)
+
 支持桌面小组件和通知中心小组件
 
 ## 构建 Taio 动作
