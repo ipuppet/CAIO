@@ -4,6 +4,8 @@
 > 
 > A Clipboard tool based on JSBox.
 
+[See My Blog](https://blog.ultagic.com/#/detail/42/)
+
 Support for home widget and notification center widgets.
 
 ## Build Taio Action
