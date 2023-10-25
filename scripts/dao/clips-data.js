@@ -25,7 +25,6 @@ class ClipsData {
 
     #allClips = []
     clipsUUIDMap = {}
-    clipsMD5Map = {} // 键为 md5，用来去重 boolean
 
     rememberTabIndex = true
     #tabIndex = 0 // use when rememberTabIndex = false
@@ -114,7 +113,6 @@ class ClipsData {
             const data = this.kernel.storage.all(table)
             const sorted = this.kernel.storage.sort(data, this.kernel.setting.get("clipboard.maxItemLength"))
             sorted.forEach((data, i) => {
-                this.clipsMD5Map[data.md5] = true
                 this.clipsUUIDMap[data.uuid] = { tab: table, index: i }
             })
             return this.#clipProxy(sorted)
@@ -198,17 +196,12 @@ class ClipsData {
     }
 
     exists(text) {
-        // 未知原因，在快捷指令中总是返回 false
-        // try {
-        //     const result = this.kernel.storage.getByMD5($text.MD5(text))
-        //     return result !== undefined
-        // } catch {
-        //     return false
-        // }
-        if (Object.keys(this.clipsMD5Map).length === 0) {
-            this.clips // 生成索引
+        try {
+            const result = this.kernel.storage.getByText(text)
+            return result !== undefined
+        } catch {
+            return false
         }
-        return Boolean(this.clipsMD5Map[$text.MD5(text)])
     }
 
     setClipboardText(text) {
@@ -225,7 +218,6 @@ class ClipsData {
         const clip = new Clip({
             uuid: $text.uuid,
             section: this.table,
-            md5: null,
             prev: null,
             next: this.clips[0] ? this.clips[0].uuid : null
         })
@@ -326,16 +318,11 @@ class ClipsData {
     }
 
     updateItem(text, uuid) {
-        const md5 = $text.MD5(text)
         const clip = this.getClip(uuid)
-
-        // 更新索引
-        delete this.clipsMD5Map[clip.md5]
-        this.clipsMD5Map[md5] = true
 
         // 更新内存数据
         const oldData = clip.text
-        Object.assign(clip, { text, md5 })
+        Object.assign(clip, { text })
 
         try {
             this.kernel.storage.updateText(this.table, clip.uuid, text)

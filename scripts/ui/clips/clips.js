@@ -221,7 +221,7 @@ class Clips extends ClipsData {
                 return
             }
             if (this.exists(text)) {
-                const res = this.kernel.storage.getByMD5($text.MD5(text))
+                const res = this.kernel.storage.getByText(text)
                 this.switchTab(this.tabItemsMap[res.section], true)
                 this.setCopied(res.uuid)
             } else {
@@ -414,7 +414,7 @@ class Clips extends ClipsData {
                             } else {
                                 sheet.dismiss()
                                 this.views.edit(clip.text, text => {
-                                    if (clip.md5 !== $text.MD5(text)) this.update(text, clip.uuid)
+                                    if (clip.text !== text) this.update(text, clip.uuid)
                                 })
                             }
                         },

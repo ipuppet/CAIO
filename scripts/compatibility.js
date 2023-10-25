@@ -129,7 +129,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 10
+    version = 11
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -252,6 +252,26 @@ class VersionActions {
         }
 
         this.compatibility.deleteFiles(["storage"])
+    }
+
+    ver11() {
+        const sqls = [
+            `create table temp as select uuid, text, prev, next from clips where 1=1;`,
+            `drop table clips;`,
+            `alter table temp rename to clips;`,
+            `create table temp as select uuid, text, prev, next from favorite where 1=1;`,
+            `drop table favorite;`,
+            `alter table temp rename to favorite;`
+        ]
+        this.kernel.storage.beginTransaction()
+        try {
+            sqls.forEach(sql => this.kernel.storage.sqlite.update(sql))
+            this.kernel.storage.commit()
+        } catch (error) {
+            this.kernel.storage.rollback()
+            this.kernel.logger.error(error)
+            throw error
+        }
     }
 }
 
