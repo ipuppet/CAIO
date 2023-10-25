@@ -199,7 +199,6 @@ class ActionDelegates {
             const selected = this.matrixSelected.sort((a, b) => {
                 return a.item < b.item
             })
-            console.log(selected)
             // 关闭编辑模式
             this.setEditing(false)
 

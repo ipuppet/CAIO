@@ -312,7 +312,7 @@ class ClipsDelegates {
         } else {
             this.views.edit(clip.text, text => {
                 tableView.$deselectRowAtIndexPath_animated(indexPath, true)
-                if (clip.md5 !== $text.MD5(text)) this.data.update(text, clip.uuid)
+                if (clip.text !== text) this.data.update(text, clip.uuid)
             })
         }
     }
