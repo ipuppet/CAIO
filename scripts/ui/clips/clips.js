@@ -423,15 +423,17 @@ class Clips extends ClipsData {
                             const tagHeight = clip?.hasTag ? this.views.tagHeight : this.views.verticalMargin
                             const itemHeight = clip.image
                                 ? this.views.imageContentHeight
-                                : this.getContentHeight(clip.text)
+                                : this.views.getContentHeight(clip.text)
                             return this.views.verticalMargin + itemHeight + tagHeight
                         }
                     }
                 )
                 return view
             }
+            const view = getView(obj)
+            view.props.bgcolor = UIKit.primaryViewBackgroundColor
             sheet
-                .setView(getView(obj))
+                .setView(view)
                 .addNavBar({
                     title: $l10n("SEARCH_RESULT"),
                     popButton: { title: $l10n("DONE"), tapped: () => search.dismiss() }

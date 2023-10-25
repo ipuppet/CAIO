@@ -161,6 +161,10 @@ class Storage {
             "CREATE TABLE IF NOT EXISTS favorite(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, prev TEXT, next TEXT)"
         )
         this.sqlite.update("CREATE TABLE IF NOT EXISTS tag(uuid TEXT PRIMARY KEY NOT NULL, tag TEXT)")
+        // this.sqlite.update("CREATE TABLE IF NOT EXISTS dir(uuid TEXT PRIMARY KEY NOT NULL, name TEXT)")
+        // this.sqlite.update(
+        //     "CREATE TABLE IF NOT EXISTS dir_link(id INTEGER PRIMARY KEY AUTOINCREMENT, dir_uuid TEXT, clip_uuid TEXT)"
+        // )
 
         this.kernel.logger.info("init database")
     }
@@ -330,6 +334,13 @@ class Storage {
         })
         return string
     }
+    replaceQuotation(string) {
+        const str = [`\\`, `"`, `'`]
+        str.forEach(s => {
+            string = string.replaceAll(s, `\\${s}`)
+        })
+        return string
+    }
 
     parse(execRes) {
         const result = execRes.result
@@ -388,28 +399,30 @@ class Storage {
     }
 
     getByUUID(uuid = "") {
+        uuid = this.replaceQuotation(uuid)
         const result = this.sqlite.query({
             sql: `
                 SELECT a.*, tag from
-                (SELECT *, 'clips' AS section FROM clips WHERE uuid = ?
+                (SELECT *, 'clips' AS section FROM clips WHERE uuid = "${uuid}"
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = ?) a
+                SELECT *, 'favorite' AS section FROM favorite WHERE uuid = "${uuid}") a
                 LEFT JOIN tag ON a.uuid = tag.uuid
-            `,
-            args: [uuid, uuid]
+            `
+            //args: [uuid, uuid]
         })
         return this.parse(result)[0]
     }
     getByText(text = "") {
+        text = this.replaceQuotation(text)
         const result = this.sqlite.query({
             sql: `
                 SELECT a.*, tag from
-                (SELECT *, 'clips' AS section FROM clips WHERE text = ?
+                (SELECT *, 'clips' AS section FROM clips WHERE text = "${text}"
                 UNION
-                SELECT *, 'favorite' AS section FROM favorite WHERE text = ?) a
+                SELECT *, 'favorite' AS section FROM favorite WHERE text = "${text}") a
                 LEFT JOIN tag ON a.uuid = tag.uuid
-            `,
-            args: [text, text]
+            `
+            //args: [text, text]
         })
         return this.parse(result)[0]
     }
@@ -417,7 +430,7 @@ class Storage {
     async search(kw) {
         const kwArr = (await $text.tokenize({ text: kw })).map(t => this.replaceString(t))
         const searchStr = `%${kwArr.join("%")}%`
-        // TODO: 占位符导致大概率查询无结果
+        // TODO: 占位符导致查询无结果
         const result = this.sqlite.query({
             sql: `
                 SELECT a.*, tag from
@@ -435,7 +448,6 @@ class Storage {
         if (tag.startsWith("#")) tag = tag.substring(1)
         const tagResult = this.sqlite.query({
             sql: `SELECT * FROM tag WHERE tag like "%${this.replaceString(tag)}%"`
-            //args: [`%${tag}%`]
         })
         const tags = this.parseTag(tagResult)
         const result = []
@@ -476,7 +488,7 @@ class Storage {
     }
     insert(clip) {
         const result = this.sqlite.update({
-            sql: `INSERT INTO ${clip.section} (uuid, text, prev, next) values (?, ?, ?, ?, ?)`,
+            sql: `INSERT INTO ${clip.section} (uuid, text, prev, next) values (?, ?, ?, ?)`,
             args: [clip.uuid, clip.text, clip.prev, clip.next]
         })
         if (!result.result) {
@@ -588,6 +600,38 @@ class Storage {
         if (!tagResult.result) {
             throw tagResult.error
         }
+        this.needUpload()
+    }
+
+    addDir(name) {
+        const result = this.sqlite.update({
+            sql: `INSERT INTO dir (uuid, name) values (?, ?)`,
+            args: [$text.uuid, name]
+        })
+        if (!result.result) {
+            throw result.error
+        }
+        this.needUpload()
+    }
+    deleteDir(uuid) {
+        this.beginTransaction()
+        const dirResult = this.sqlite.update({
+            sql: `DELETE FROM dir WHERE uuid = ?`,
+            args: [uuid]
+        })
+        if (!dirResult.result) {
+            this.rollback()
+            throw dirResult.error
+        }
+        const dirLinkResult = this.sqlite.update({
+            sql: `DELETE FROM dir_link WHERE dir_uuid = ?`,
+            args: [uuid]
+        })
+        if (!dirLinkResult.result) {
+            this.rollback()
+            throw dirLinkResult.error
+        }
+        this.commit()
         this.needUpload()
     }
 }
