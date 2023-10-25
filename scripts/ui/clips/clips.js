@@ -13,6 +13,8 @@ const WebDavSync = require("../../dao/webdav-sync")
 
 class Clips extends ClipsData {
     copied = $cache.get("clips.copied") ?? {}
+    itemSize = {}
+    scrollToOffsetDirectionX = false
 
     /**
      * @type {NavigationView}
@@ -131,16 +133,33 @@ class Clips extends ClipsData {
 
     updateCopied(copied = null) {
         const oldCopied = this.copied?.uuid
+        const listView = $(this.views.listId)
+        const hideOld = () => {
+            const oldCell = listView.cell($indexPath(0, this.getIndexByUUID(oldCopied)))
+            if (oldCell) {
+                oldCell.get("copied").hidden = true
+            }
+        }
         $delay(0.3, () => {
             try {
-                const listView = $(this.views.listId)
-                const oldCell = listView.cell($indexPath(0, this.getIndexByUUID(oldCopied)))
-                if (oldCell) {
-                    oldCell.get("copied").hidden = true
-                }
+                hideOld()
                 if (copied) {
-                    listView.cell($indexPath(0, this.getIndexByUUID(copied.uuid))).get("copied").hidden = false
+                    const index = this.getIndexByUUID(copied.uuid)
+                    let height = 0
+                    for (let i = 0; i < index; i++) {
+                        height += this.itemSize[i]
+                    }
+                    if (this.scrollToOffsetDirectionX) {
+                        listView.scrollToOffset($point(height, 0))
+                    } else {
+                        listView.scrollToOffset($point(0, height))
+                    }
+                    $delay(0.3, () => {
+                        listView.cell($indexPath(0, index)).get("copied").hidden = false
+                        hideOld()
+                    })
                 }
+                // 必须放在后面，否则不生效，原因未知
             } catch (error) {
                 this.kernel.logger.error("set copied error")
                 this.kernel.logger.error(error)
