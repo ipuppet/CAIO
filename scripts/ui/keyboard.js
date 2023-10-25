@@ -44,6 +44,8 @@ class Keyboard extends Clips {
 
     keyboardFrameHeight = this.keyboardHeight
 
+    scrollToOffsetDirectionX = true
+
     get isFullScreenIpad() {
         if (!$device.isIpad) return false
 
@@ -731,6 +733,7 @@ class Keyboard extends Clips {
                 itemSize: (sender, indexPath) => {
                     let size = this.keyboardFrameHeight - this.navHeight - this.bottomBarHeight
                     size -= this.matrixBoxMargin * 2
+                    this.itemSize[indexPath.item] = size
                     return $size(size, size)
                 },
                 layoutSubviews: view => {

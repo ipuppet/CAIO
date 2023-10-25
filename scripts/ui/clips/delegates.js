@@ -408,7 +408,8 @@ class ClipsDelegates {
         const clip = this.data.getByIndex(indexPath)
         const tagHeight = clip?.hasTag ? this.views.tagHeight : this.views.verticalMargin
         const itemHeight = clip?.image ? this.views.imageContentHeight : this.views.getContentHeight(clip?.text ?? "a")
-        return this.views.verticalMargin + itemHeight + tagHeight
+        this.data.itemSize[indexPath.row] = this.views.verticalMargin + itemHeight + tagHeight
+        return this.data.itemSize[indexPath.row]
     }
 
     delegate() {
