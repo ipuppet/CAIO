@@ -139,6 +139,8 @@
 "DATA_CONFLICT_MESSAGE" = "Select the data you want to keep";
 "WEBDAV_DATA" = "WebDAV data";
 "LOCAL_DATA" = "Local data";
+"ADD_TO_TAIO" = "Add to Taio";
+"SELECT_TAIO_APP" = "Please select Taio App from the Share menu.";
 
 "ACTION_SAFETY_WARNING" = "Action safety warning";
 "ACTION_PERMISSION_REQUEST" = "Action permission request";
