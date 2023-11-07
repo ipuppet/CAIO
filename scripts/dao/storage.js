@@ -510,7 +510,7 @@ class Storage {
     updateText(table, uuid, text) {
         if (typeof uuid !== "string") return
         const result = this.sqlite.update({
-            sql: `UPDATE ${table} SET text = ?, WHERE uuid = ?`,
+            sql: `UPDATE ${table} SET text = ? WHERE uuid = ?`,
             args: [text, uuid]
         })
         if (!result.result) {
