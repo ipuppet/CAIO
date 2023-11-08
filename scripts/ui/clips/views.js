@@ -127,7 +127,8 @@ class ClipsViews {
         const tag = { hidden: !clip?.hasTag }
 
         if (clip.image) {
-            image.src = clip.imagePath.preview
+            //image.src = clip.imagePath.preview
+            image.data = clip.imagePreview
             image.hidden = false
         } else {
             if (clip.textStyledText) {
