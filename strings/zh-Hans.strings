@@ -130,6 +130,7 @@
 "SYNCING" = "正在同步...";
 "LAST_SYNC_AT" = "最后同步：";
 "MODIFIED" = "最近修改：";
+"WEBDAV_ERROR_CLOSED" = "WebDAV 同步出错，暂时关闭。";
 
 "HOST" = "Host";
 "USER" = "User";

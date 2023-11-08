@@ -153,6 +153,14 @@ class Storage {
     init() {
         if (this.sqlite) this.sqlite.close()
         // 初始化表
+        const dbPath = this.kernel.fileStorage.filePath(this.localDb)
+        if (!$file.exists(dbPath)) {
+            $file.write({
+                data: $data({ string: "" }),
+                path: this.kernel.fileStorage.filePath(this.localDb)
+            })
+        }
+
         this.sqlite = $sqlite.open(this.kernel.fileStorage.filePath(this.localDb))
         this.sqlite.update(
             "CREATE TABLE IF NOT EXISTS clips(uuid TEXT PRIMARY KEY NOT NULL, text TEXT, prev TEXT, next TEXT)"
