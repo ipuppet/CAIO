@@ -1,4 +1,4 @@
-const { Kernel, Logger, FileStorage, Setting, FileManager } = require("./libs/easy-jsbox")
+const { UIKit, Kernel, Logger, FileStorage, Setting, FileManager } = require("./libs/easy-jsbox")
 const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
 const Clips = require("./ui/clips/clips")
@@ -8,7 +8,9 @@ const Actions = require("./ui/action/actions")
  * @typedef {AppKernelBase} AppKernelBase
  */
 class AppKernelBase extends Kernel {
-    static fileStorage = new FileStorage({ basePath: "shared://caio" })
+    static fileStorage = new FileStorage({
+        basePath: UIKit.isTaio ? FileStorage.join($file.rootPath, "caio") : "shared://caio"
+    })
 
     logPath = "logs"
     logFile = "caio.log"
@@ -18,6 +20,7 @@ class AppKernelBase extends Kernel {
 
     constructor() {
         super()
+        $file.list($file.rootPath)
         $app.listen({ exit: () => $objc_clean() })
         // FileStorage
         this.fileStorage = AppKernelBase.fileStorage

@@ -2,6 +2,8 @@
  * @typedef {import("./app-main").AppKernel} AppKernel
  */
 
+const isTaio = $app.info.bundleID.includes("taio")
+
 class Compatibility {
     files = []
     databases = []
@@ -129,7 +131,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 11
+    version = 12
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -271,6 +273,12 @@ class VersionActions {
             this.kernel.storage.rollback()
             this.kernel.logger.error(error)
             throw error
+        }
+    }
+
+    ver12() {
+        if (isTaio) {
+            this.compatibility.deleteFiles(["shared://caio", "storage"])
         }
     }
 }

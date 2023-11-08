@@ -130,6 +130,7 @@
 "SYNCING" = "Syncing...";
 "LAST_SYNC_AT" = "Last sync at: ";
 "MODIFIED" = "Modified: ";
+"WEBDAV_ERROR_CLOSED" = "WebDAV sync has an error and is temporarily closed.";
 
 "HOST" = "Host";
 "USER" = "User";

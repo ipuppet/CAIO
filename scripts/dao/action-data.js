@@ -20,7 +20,6 @@ class ActionsData {
         // path
         this.actionPath = "scripts/action"
         this.actionOrderFile = "order.json"
-        this.tempPath = `${this.kernel.fileStorage.basePath}/temp`
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
         this.localSyncFile = this.userActionPath + "/sync.json"
         // checkUserAction
@@ -70,7 +69,15 @@ class ActionsData {
         this.#actions = undefined
         this.#allActions = undefined
         if (!this.isEnableWebDavSync) return
-        this.webdavSync.needUpload()
+        try {
+            this.webdavSync.needUpload()
+        } catch (error) {
+            $ui.alert({
+                title: $l10n("ALERT"),
+                message: $l10n("WEBDAV_ERROR_CLOSED")
+            })
+            this.kernel.setting.set("webdav.status", false)
+        }
     }
 
     importExampleAction() {
@@ -144,24 +151,20 @@ class ActionsData {
             if (!name || name === "") throw new Error("Not an action")
 
             const dirName = this.initActionDirByName(name)
-            const tmpPath = FileStorage.join(this.tempPath, dirName)
-            $file.mkdir(tmpPath)
+            const actionPath = this.getActionPath(type, dirName)
+            $file.mkdir(actionPath)
 
             $file.write({
                 data: $data({ string: config }),
-                path: FileStorage.join(tmpPath, "config.json")
+                path: FileStorage.join(actionPath, "config.json")
             })
             $file.write({
                 data: $data({ string: main }),
-                path: FileStorage.join(tmpPath, "main.js")
+                path: FileStorage.join(actionPath, "main.js")
             })
             $file.write({
                 data: $data({ string: readme }),
-                path: FileStorage.join(tmpPath, "README.md")
-            })
-            $file.move({
-                src: tmpPath,
-                dst: this.getActionPath(type, dirName)
+                path: FileStorage.join(actionPath, "README.md")
             })
             this.setNeedReload()
 
