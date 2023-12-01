@@ -38,8 +38,6 @@ class Keyboard extends Clips {
     continuousDeleteTapticTimer = undefined
     continuousDeleteDelay = 0.5
 
-    // 剪贴板列个性化设置
-    matrixBoxMargin = 10
     navHeight = 50
 
     keyboardFrameHeight = this.keyboardHeight
@@ -106,11 +104,14 @@ class Keyboard extends Clips {
         this.views.horizontalMargin = 15 // 列表边距
         this.views.verticalMargin = 12 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
-        this.views.containerMargin = 4 // 容器边距，设置为 4 与系统键盘对齐
+        this.views.containerMargin = this.isFullScreenIpad ? 12 : 4
         this.views.fontSize = 14 // 字体大小
         this.views.tagHeight = this.views.verticalMargin + 3
 
         this.delegates.menuItemActionMaxCount = 3
+
+        this.matrixBoxMargin = this.isFullScreenIpad ? 12 : 8
+        this.cornerRadius = this.isFullScreenIpad ? 8 : 5
     }
 
     get returnKeyLabel() {
@@ -307,7 +308,7 @@ class Keyboard extends Clips {
             layout: (make, view) => {
                 const barButtonItem = new BarButtonItem()
                 make.height.equalTo(view.super)
-                make.right.inset(this.views.containerMargin - barButtonItem.edges)
+                make.right.inset(-barButtonItem.edges)
                 make.width.equalTo(barButtonItem.width * buttons.length + barButtonItem.edges)
             }
         }
@@ -351,7 +352,7 @@ class Keyboard extends Clips {
                             },
                             layout: (make, view) => {
                                 make.centerY.equalTo(view.super)
-                                make.left.inset(this.views.containerMargin)
+                                make.left.inset(-2) // 图片自身的白边
                                 make.size.equalTo($size(28, 28))
                             }
                         }
@@ -359,7 +360,9 @@ class Keyboard extends Clips {
                 }
             ],
             layout: (make, view) => {
-                make.top.width.equalTo(view.super)
+                make.top.equalTo(view.super)
+                make.left.equalTo(view.super.safeArea).offset(this.views.containerMargin)
+                make.right.equalTo(view.super.safeArea).offset(-this.views.containerMargin)
                 make.height.equalTo(this.navHeight)
             }
         }
@@ -374,6 +377,7 @@ class Keyboard extends Clips {
     #bottomBarButtonView(button, align) {
         const size = this.bottomButtonSize
         const edges = this.bottomButtonEdges
+        const margin = this.isFullScreenIpad ? 8 : 5 // 按钮图标边距
         const layout = (make, view) => {
             if (button.title) {
                 const fontSize = $text.sizeThatFits({
@@ -395,8 +399,8 @@ class Keyboard extends Clips {
                 if (align === UIKit.align.right) make.right.equalTo(view.prev.left).offset(-edges * 1.5)
                 else make.left.equalTo(view.prev.right).offset(edges * 1.5)
             } else {
-                if (align === UIKit.align.right) make.right.inset(edges)
-                else make.left.inset(edges)
+                if (align === UIKit.align.right) make.right.inset(0)
+                else make.left.inset(0)
             }
         }
         const buttonView = {
@@ -404,7 +408,7 @@ class Keyboard extends Clips {
             props: Object.assign(
                 {
                     smoothCorners: false,
-                    cornerRadius: 5,
+                    cornerRadius: this.cornerRadius,
                     id: button.id ?? $text.uuid,
                     bgcolor: this.useBlur ? $color("clear") : this.buttonBackground,
                     info: { align }
@@ -421,11 +425,11 @@ class Keyboard extends Clips {
                     layout: (make, view) => {
                         make.size.greaterThanOrEqualTo(this.bottomButtonIconSize)
                         if (this.isFullScreenIpad) {
-                            make.bottom.inset(5)
+                            make.bottom.inset(margin)
                             if (align === UIKit.align.right) {
-                                make.right.inset(5)
+                                make.right.inset(margin)
                             } else {
-                                make.left.inset(5)
+                                make.left.inset(margin)
                             }
                         } else {
                             make.center.equalTo(view.super)
@@ -441,11 +445,11 @@ class Keyboard extends Clips {
                     },
                     layout: (make, view) => {
                         if (this.isFullScreenIpad) {
-                            make.bottom.inset(5)
+                            make.bottom.inset(margin)
                             if (align === UIKit.align.right) {
-                                make.right.inset(5)
+                                make.right.inset(margin)
                             } else {
-                                make.left.inset(5)
+                                make.left.inset(margin)
                             }
                         } else {
                             make.center.equalTo(view.super)
@@ -463,7 +467,7 @@ class Keyboard extends Clips {
                     info: { align },
                     style: $blurStyle.ultraThinMaterial,
                     smoothCorners: false,
-                    cornerRadius: 5
+                    cornerRadius: this.cornerRadius
                 },
                 [buttonView],
                 layout
@@ -608,8 +612,9 @@ class Keyboard extends Clips {
             type: "view",
             views: this.getBottomButtonsView(),
             layout: (make, view) => {
-                make.bottom.equalTo(view.super.safeArea).offset(-2) // 与系统键盘底部按钮对齐
-                make.left.right.equalTo(view.super.safeArea)
+                make.bottom.equalTo(view.super.safeArea)
+                make.left.equalTo(view.super.safeArea).offset(this.views.containerMargin)
+                make.right.equalTo(view.super.safeArea).offset(-this.views.containerMargin)
                 make.height.equalTo(this.bottomBarHeight)
             }
         }
@@ -632,7 +637,7 @@ class Keyboard extends Clips {
         return {
             props: {
                 smoothCorners: true,
-                cornerRadius: this.views.containerMargin * 2
+                cornerRadius: 10
             },
             views: [
                 this.itemContainer([
