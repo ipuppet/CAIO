@@ -94,7 +94,7 @@ class ActionDelegates {
                         title: $l10n("SHARE"),
                         symbol: "square.and.arrow.up",
                         handler: (collectionView, indexPath, info) => {
-                            this.exportAction(info)
+                            this.data.exportAction(info)
                         }
                     },
                     {
