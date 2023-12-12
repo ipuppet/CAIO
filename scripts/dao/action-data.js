@@ -128,14 +128,12 @@ class ActionsData {
 
         const content = this.actionToString(type, dir)
         loading.end()
-        $share.sheet({
-            items: [
-                {
-                    name: name + ".json",
-                    data: $data({ string: content })
-                }
-            ]
-        })
+        $share.sheet([
+            {
+                name: name + ".json",
+                data: $data({ string: content })
+            }
+        ])
     }
 
     importAction(data, type = "uncategorized", animate = true) {
