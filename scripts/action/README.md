@@ -117,6 +117,12 @@ async runAction(category, name): any
  * 从 `this.text` 中匹配所有 url
  */
 getUrls(): []
+
+/**
+ * 运行其他 JSBox 脚本
+ * @param {string} name
+ */
+addinRun(name): void
 ```
 
 ### <span id="ActionEnv">ActionEnv</span>

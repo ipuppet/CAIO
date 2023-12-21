@@ -200,6 +200,10 @@ class Action {
         const text = this.text ?? ""
         return text.match(regex) ?? []
     }
+
+    addinRun(name) {
+        $addin.run(name)
+    }
 }
 
 module.exports = {
