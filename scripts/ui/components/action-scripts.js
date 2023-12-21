@@ -13,38 +13,6 @@ class ActionScripts {
         this.listId = "action-category-list"
     }
 
-    static getAddins() {
-        const addins = $cache.get("keyboard.addins")
-        if (!addins) {
-            return []
-        } else if ($cache.get("keyboard.addins.all")) {
-            const current = $addin.current.name
-            return $addin.list
-                ?.filter(addin => {
-                    return current !== addin.displayName
-                })
-                .map(i => i.displayName)
-        }
-        try {
-            return JSON.parse(addins)
-        } catch (error) {
-            return []
-        }
-    }
-
-    static setAddins(list = []) {
-        list.map((item, i) => {
-            if (item === null) {
-                list.splice(i, 1)
-            }
-        })
-        try {
-            $cache.set("keyboard.addins", JSON.stringify(list))
-        } catch (error) {
-            $cache.set("keyboard.addins", undefined)
-        }
-    }
-
     getNavButtons() {
         return [
             {
