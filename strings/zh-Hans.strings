@@ -57,8 +57,8 @@
 "INFORMATION" = "信息";
 "NAME" = "名称";
 "ICON" = "图标";
-"TYPE" = "分类";
 "CATEGORY" = "分类";
+"EDIT_CATEGORY" = "编辑分类";
 "delete.category" = "删除分类 ${category}";
 "delete.category.keep.actions" = "是否保留该分类中的动作？";
 "DESCRIPTION" = "描述";

@@ -66,7 +66,7 @@ class ActionScripts {
         const sheet = new Sheet()
         const actionScripts = new ActionScripts(kernel)
         sheet.setView(actionScripts.getListView()).addNavBar({
-            title: $l10n("QUICK_START_SCRIPTS"),
+            title: $l10n("EDIT_CATEGORY"),
             popButton: { title: $l10n("DONE") },
             rightButtons: actionScripts.getNavButtons()
         })

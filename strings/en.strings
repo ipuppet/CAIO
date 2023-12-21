@@ -57,8 +57,8 @@
 "INFORMATION" = "Information";
 "NAME" = "Name";
 "ICON" = "Icon";
-"TYPE" = "Category";
 "CATEGORY" = "Category";
+"EDIT_CATEGORY" = "Edit Category";
 "delete.category" = "Delete Category ${category}";
 "delete.category.keep.actions" = "Do you keep the actions in this category?";
 "DESCRIPTION" = "Description";
