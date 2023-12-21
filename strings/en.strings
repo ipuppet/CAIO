@@ -110,6 +110,7 @@
 "FONT_SIZE" = "Font Size";
 "LIST" = "List";
 "MATRIX" = "Matrix";
+"PIN_ACTION" = "Pin Action";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";

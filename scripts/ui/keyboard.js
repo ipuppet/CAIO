@@ -253,6 +253,25 @@ class Keyboard extends Clips {
         }
     }
 
+    async getKeyboardActionData() {
+        let selectedText = $keyboard.selectedText
+        if (selectedText === "") selectedText = null
+        const getallText = async () => {
+            let allText = await $keyboard.getAllText()
+            if (allText === "") allText = null
+            return allText
+        }
+
+        return new ActionData({
+            env: ActionEnv.keyboard,
+            textBeforeInput: $keyboard.textBeforeInput,
+            textAfterInput: $keyboard.textAfterInput,
+            text: selectedText ?? (await getallText()),
+            allText: await $keyboard.getAllText(),
+            selectedText: selectedText
+        })
+    }
+
     getTopButtonsView() {
         const buttons = [
             {
@@ -294,6 +313,19 @@ class Keyboard extends Clips {
                 $(this.actionsId).hidden = !flag
             })
         })
+
+        const pinAction = $cache.get("keyboard.pinAction")
+        if (pinAction) {
+            buttons.push({
+                symbol: pinAction.icon,
+                tapped: this.keyboardTapped(async () => {
+                    const actionData = await this.getKeyboardActionData()
+
+                    const handler = this.kernel.actions.getActionHandler(pinAction.category, pinAction.dir)
+                    handler(actionData)
+                })
+            })
+        }
 
         return {
             type: "view",
@@ -797,22 +829,7 @@ class Keyboard extends Clips {
             props: { id: this.actionsId, hidden: true },
             views: [
                 this.kernel.actions.views.getActionMiniView(async () => {
-                    let selectedText = $keyboard.selectedText
-                    if (selectedText === "") selectedText = null
-                    const getallText = async () => {
-                        let allText = await $keyboard.getAllText()
-                        if (allText === "") allText = null
-                        return allText
-                    }
-
-                    return new ActionData({
-                        env: ActionEnv.keyboard,
-                        textBeforeInput: $keyboard.textBeforeInput,
-                        textAfterInput: $keyboard.textAfterInput,
-                        text: selectedText ?? (await getallText()),
-                        allText: await $keyboard.getAllText(),
-                        selectedText: selectedText
-                    })
+                    return await this.getKeyboardActionData()
                 })
             ],
             layout: (make, view) => {

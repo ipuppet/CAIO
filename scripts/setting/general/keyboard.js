@@ -53,6 +53,14 @@ module.exports = new SettingChild({
         },
         {
             items: [
+                new SettingScript({
+                    icon: ["pin", "#FFCC33"],
+                    title: "PIN_ACTION"
+                }).with({ script: "this.method.keyboardPinAction" })
+            ]
+        },
+        {
+            items: [
                 new SettingSwitch({
                     icon: ["globe", "#1899c4"],
                     title: "SWITCH_AFTER_INSERT",

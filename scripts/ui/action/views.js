@@ -31,20 +31,24 @@ class ActionViews {
         this.data = data
     }
 
-    getActionListView(didSelect, props = {}, events = {}) {
+    getActionListView(didSelect, props = {}, events = {}, layout) {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
                 const info = data.info.info
-                const action = this.data.getActionHandler(info.category, info.dir)
-                didSelect(action)
+                const actionHandler = this.data.getActionHandler(info.category, info.dir)
+                didSelect(actionHandler, info)
             }
         }
 
         return {
             type: "list",
             layout: (make, view) => {
-                make.top.width.equalTo(view.super.safeArea)
-                make.bottom.inset(0)
+                if (typeof layout === "function") {
+                    layout(make, view)
+                } else {
+                    make.top.width.equalTo(view.super.safeArea)
+                    make.bottom.inset(0)
+                }
             },
             events: events,
             props: Object.assign(

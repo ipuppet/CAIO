@@ -110,6 +110,7 @@
 "FONT_SIZE" = "字体大小";
 "LIST" = "列表";
 "MATRIX" = "网格";
+"PIN_ACTION" = "置顶动作";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";

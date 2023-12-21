@@ -359,6 +359,8 @@ function keyboard() {
     }
 
     kernel.setting.method.setKeyboardQuickStart = () => KeyboardScripts.sheet()
+
+    kernel.setting.method.keyboardPinAction= () => KeyboardScripts.pin(kernel)
 }
 
 function todayWidget() {

@@ -1,5 +1,9 @@
 const { Sheet } = require("../../libs/easy-jsbox")
 
+/**
+ * @typedef {import("../../app-main").AppKernel} AppKernel
+ */
+
 class KeyboardScripts {
     constructor() {
         this.listId = "keyboard-script-list"
@@ -128,6 +132,38 @@ class KeyboardScripts {
                 popButton: { title: $l10n("DONE") },
                 rightButtons: keyboardScripts.getNavButtons()
             })
+
+            sheet.init().present()
+        }
+    }
+
+    /**
+     * @param {AppKernel} kernel
+     */
+    static async pin(kernel) {
+        const selected = await $ui.menu({
+            items: [$l10n("CLEAR"), $l10n("PIN_ACTION")]
+        })
+        if (selected.index === 0) {
+            $cache.remove("keyboard.pinAction")
+        } else {
+            const sheet = new Sheet()
+            sheet
+                .setView(
+                    kernel.actions.views.getActionListView(
+                        (_, action) => {
+                            $cache.set("keyboard.pinAction", action)
+                            sheet.dismiss()
+                        },
+                        { bgcolor: $color("primarySurface"), stickyHeader: false },
+                        {},
+                        $layout.fill
+                    )
+                )
+                .addNavBar({
+                    title: $l10n("PIN_ACTION"),
+                    popButton: { title: $l10n("DONE") }
+                })
 
             sheet.init().present()
         }
