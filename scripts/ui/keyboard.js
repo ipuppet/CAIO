@@ -304,25 +304,28 @@ class Keyboard extends Clips {
             })
         })
 
-        KeyboardPinActions.shared.getActions().forEach(action => {
-            const icon =
-                action?.icon?.slice(0, 5) === "icon_"
-                    ? $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff"))
-                    : $image(action?.icon)
-            buttons.push({
-                symbol: icon,
-                tapped: this.keyboardTapped(async () => {
-                    const actionData = await this.getKeyboardActionData()
+        KeyboardPinActions.shared
+            .getActions()
+            .filter(action => this.kernel.actions.exists(action.name))
+            .forEach(action => {
+                const icon =
+                    action?.icon?.slice(0, 5) === "icon_"
+                        ? $icon(action.icon.slice(5, action.icon.indexOf(".")), UIKit.textColor)
+                        : $image(action?.icon)
+                buttons.push({
+                    symbol: icon,
+                    tapped: this.keyboardTapped(async () => {
+                        const actionData = await this.getKeyboardActionData()
 
-                    const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
-                    handler(actionData)
+                        const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
+                        handler(actionData)
+                    })
                 })
             })
-        })
 
         return {
             type: "view",
-            views: buttons.map((button, i) => {
+            views: buttons.map(button => {
                 const barButtonItem = new BarButtonItem()
                 barButtonItem.buttonEdges = 0
                 return barButtonItem

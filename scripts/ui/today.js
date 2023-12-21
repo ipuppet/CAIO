@@ -28,7 +28,7 @@ class Today extends Clips {
 
         this.tabItems.push($l10n("ACTIONS"))
 
-        this.TodayPinActions = new TodayPinActions(this.kernel)
+        this.todayPinActions = new TodayPinActions(this.kernel)
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
@@ -337,7 +337,7 @@ class Today extends Clips {
     }
 
     getActionView() {
-        let actions = this.TodayPinActions.getActions()
+        let actions = this.todayPinActions.getActions()
         if (actions.length === 0) {
             actions = Object.values(this.kernel.actions.allActions)
         }

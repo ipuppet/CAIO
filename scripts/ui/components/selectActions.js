@@ -83,9 +83,11 @@ class SelectActions {
     }
 
     getListData(actions = this.getActions()) {
-        return actions.map(action => {
-            return this.kernel.actions.views.actionToData(action)
-        })
+        return actions
+            .filter(action => this.kernel.actions.exists(action.name))
+            .map(action => {
+                return this.kernel.actions.views.actionToData(action)
+            })
     }
 
     getListView() {
