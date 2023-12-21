@@ -103,7 +103,7 @@ class ClipsDelegates {
 
     get menu() {
         const action = action => {
-            const handler = this.kernel.actions.getActionHandler(action.type, action.dir)
+            const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
             action.handler = (tableView, indexPath) => {
                 const item = this.data.getByIndex(indexPath)
                 const actionData = new ActionData({

@@ -25,15 +25,15 @@ class Actions extends ActionsData {
     }
 
     get actionList() {
-        return super.actions.map(type => {
+        return super.actions.map(category => {
             const items = []
-            type.items.forEach(action => {
+            category.items.forEach(action => {
                 items.push(this.views.actionToData(action))
             })
 
             // 返回新对象
             return {
-                title: type.title,
+                title: category.title,
                 items: items
             }
         })
@@ -96,7 +96,7 @@ class Actions extends ActionsData {
                     this.editActionInfoPageSheet(null, async info => {
                         const MainJsTemplate = $file.read(`${this.actionPath}/template.js`).string
                         this.saveMainJs(info, MainJsTemplate)
-                        const section = this.getActionTypeSection(info.type)
+                        const section = this.getActionCategorySection(info.category)
                         this.applySnapshotToSectionAnimatingDifferences(section)
                         await $wait(0.3)
                         this.editActionMainJs(MainJsTemplate, info)
@@ -105,26 +105,7 @@ class Actions extends ActionsData {
             },
             {
                 title: $l10n("CREATE_NEW_TYPE"),
-                handler: () => {
-                    $input.text({
-                        text: "",
-                        placeholder: $l10n("CREATE_NEW_TYPE"),
-                        handler: text => {
-                            text = text.trim()
-                            if (text === "") {
-                                $ui.toast($l10n("INVALID_VALUE"))
-                                return
-                            }
-                            const path = `${this.userActionPath}/${text}`
-                            if ($file.isDirectory(path)) {
-                                $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
-                            } else {
-                                $file.mkdir(path)
-                                $ui.success($l10n("SUCCESS"))
-                            }
-                        }
-                    })
-                }
+                handler: () => this.addActionCategory()
             },
             {
                 inline: true,

@@ -12,7 +12,7 @@ class ClipsViews {
 
     editingToolBarId = this.listId + "-edit-mode-tool-bar"
 
-    // 剪贴板列个性化设置
+    // 剪贴板个性化设置
     #singleLine = false
     #singleLineContentHeight = 0
     tabLeftMargin = 20 // tab 左边距

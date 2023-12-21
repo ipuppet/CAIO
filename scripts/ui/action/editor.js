@@ -18,7 +18,7 @@ class ActionEditor {
         this.data = data
         this.info = info
 
-        this.actionTypes = this.data.getActionTypes()
+        this.actionCategories = this.data.getActionCategories()
 
         this.initEditingActionInfo()
         this.initSettingInstance()
@@ -28,7 +28,7 @@ class ActionEditor {
         this.isNew = !Boolean(this.info)
         if (this.isNew) {
             this.editingActionInfo = {
-                type: this.actionTypes[0],
+                category: this.actionCategories[0],
                 name: "MyAction",
                 color: "#CC00CC",
                 icon: "icon_062.png", // 默认星星图标
@@ -36,7 +36,7 @@ class ActionEditor {
             }
         } else {
             this.editingActionInfo = this.info
-            this.editingActionInfo.readme = this.data.getActionReadme(this.info.type, this.info.dir)
+            this.editingActionInfo.readme = this.data.getActionReadme(this.info.category, this.info.dir)
         }
     }
 
@@ -84,21 +84,21 @@ class ActionEditor {
                 bgcolor: this.data.views.getColor(this.editingActionInfo.color)
             })
             .create()
-        const typeMenu = this.settingInstance
+        const categoryMenu = this.settingInstance
             .loader({
                 setting: this.settingInstance,
                 type: "menu",
-                key: "type",
+                key: "category",
                 icon: ["tag.circle", "#33CC33"],
-                title: $l10n("TYPE"),
-                items: this.actionTypes,
-                values: this.actionTypes,
+                title: $l10n("CATEGORY"),
+                items: this.actionCategories,
+                values: this.actionCategories,
                 pullDown: true
             })
             .create()
 
         let result = [nameInput, createColor, iconInput]
-        if (this.isNew) result.push(typeMenu)
+        if (this.isNew) result.push(categoryMenu)
         return result
     }
 
@@ -163,9 +163,9 @@ class ActionEditor {
                     if (resp.index === 1) return
                 }
                 // reorder
-                const order = this.data.getActionOrder(this.editingActionInfo.type, true)
+                const order = this.data.getActionOrder(this.editingActionInfo.category, true)
                 order.unshift(this.editingActionInfo.dir)
-                this.data.saveOrder(this.editingActionInfo.type, order)
+                this.data.saveOrder(this.editingActionInfo.category, order)
             }
             sheet.dismiss()
             this.data.saveActionInfo(this.editingActionInfo)
@@ -214,7 +214,7 @@ class ActionEditor {
                     try {
                         this.data.saveMainJs(this.info, editor.text)
                         let actionRest = await this.data.getActionHandler(
-                            this.info.type,
+                            this.info.category,
                             this.info.dir
                         )(new ActionData({ env: ActionEnv.build }))
                         if (actionRest !== undefined) {

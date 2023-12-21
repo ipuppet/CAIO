@@ -176,18 +176,18 @@ class Action {
 
     /**
      * 获取动作对象
-     * @param {string} type
+     * @param {string} category
      * @param {string} name
      * @param {ActionData} data
      * @returns
      */
-    getAction(type, name, data) {
+    getAction(category, name, data) {
         const dir = this.#kernel.actions.getActionDirByName(name)
-        return this.#kernel.actions.getAction(type, dir, data)
+        return this.#kernel.actions.getAction(category, dir, data)
     }
 
-    async runAction(type, name) {
-        const action = this.getAction(type, name)
+    async runAction(category, name) {
+        const action = this.getAction(category, name)
         return await action.do()
     }
 

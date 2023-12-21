@@ -52,7 +52,7 @@ class ActionDelegates {
                 title: $l10n("EDIT_SCRIPT"),
                 symbol: "square.and.pencil",
                 handler: (collectionView, indexPath, info) => {
-                    const main = this.data.getActionMainJs(info.type, info.dir)
+                    const main = this.data.getActionMainJs(info.category, info.dir)
                     this.data.editActionMainJs(main, info)
                 }
             },
@@ -67,9 +67,9 @@ class ActionDelegates {
                             let content
 
                             try {
-                                content = __ACTIONS__[info.type][info.dir]["README.md"]
+                                content = __ACTIONS__[info.category][info.dir]["README.md"]
                             } catch {
-                                content = this.data.getActionReadme(info.type, info.dir)
+                                content = this.data.getActionReadme(info.category, info.dir)
                             }
                             const sheet = new Sheet()
                             sheet
@@ -252,9 +252,9 @@ class ActionDelegates {
         const info = this.getActionByIndexPath(indexPath)
         const actionData = new ActionData({
             env: ActionEnv.action,
-            text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
+            text: info.category === "clipboard" || info.category === "uncategorized" ? $clipboard.text : null
         })
-        this.data.getActionHandler(info.type, info.dir)(actionData)
+        this.data.getActionHandler(info.category, info.dir)(actionData)
     }
     didDeselectItemAtIndexPath(collectionView, indexPath) {
         if (collectionView.$isEditing()) {
@@ -386,7 +386,7 @@ class ActionDelegates {
             "public.text",
             0,
             $block("NSProgress *, block", completionHandler => {
-                const string = this.data.actionToString(info.type, info.dir)
+                const string = this.data.actionToString(info.category, info.dir)
                 const data = $data({ string }).ocValue()
                 completionHandler(data, null)
                 return null
@@ -467,9 +467,9 @@ class ActionDelegates {
                     $block("void, NSIndexPath *", insertionIndexPath => {
                         insertionIndexPath = insertionIndexPath.jsValue()
                         const section = insertionIndexPath.section
-                        const types = this.data.getActionTypes()
+                        const categories = this.data.getActionCategories()
                         const dataObj = JSON.parse(data.jsValue().string)
-                        const dir = this.data.importAction(dataObj, types[section])
+                        const dir = this.data.importAction(dataObj, categories[section])
                         // 查找动作保存位置
                         const actions = this.data.actions[section].items
                         let inserted

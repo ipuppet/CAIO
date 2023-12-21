@@ -349,7 +349,7 @@ class Today extends Clips {
                 this.kernel.actions.views.getActionMiniView(info => {
                     return new ActionData({
                         env: ActionEnv.today,
-                        text: info.type === "clipboard" || info.type === "uncategorized" ? $clipboard.text : null
+                        text: info.category === "clipboard" || info.category === "uncategorized" ? $clipboard.text : null
                     })
                 }, actions)
             ],

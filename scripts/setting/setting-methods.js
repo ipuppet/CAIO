@@ -1,6 +1,7 @@
 const { Kernel, UIKit } = require("../libs/easy-jsbox")
 
 const KeyboardScripts = require("../ui/components/keyboard-scripts")
+const ActionScripts = require("../ui/components/action-scripts")
 const TodayActions = require("../ui/components/today-actions")
 
 /**
@@ -269,6 +270,8 @@ function action() {
             ]
         })
     }
+
+    kernel.setting.method.editCategory = () => ActionScripts.sheet(kernel)
 }
 
 function keyboard() {

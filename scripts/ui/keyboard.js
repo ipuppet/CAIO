@@ -105,7 +105,7 @@ class Keyboard extends Clips {
         this.views.verticalMargin = 12 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
         this.views.containerMargin = this.isFullScreenIpad ? 12 : 4
-        this.views.fontSize = 14 // 字体大小
+        this.views.fontSize = this.kernel.setting.get("keyboard.fontSize") // 字体大小
         this.views.tagHeight = this.views.verticalMargin + 3
 
         this.delegates.menuItemActionMaxCount = 3
@@ -661,7 +661,7 @@ class Keyboard extends Clips {
                         props: {
                             id: "content",
                             lines: 0,
-                            font: $font(20)
+                            font: $font(this.views.fontSize)
                         },
                         layout: (make, view) => {
                             make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)

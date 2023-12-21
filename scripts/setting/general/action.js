@@ -35,6 +35,16 @@ module.exports = new SettingChild({
         {
             items: [
                 new SettingScript({
+                    icon: ["square.and.pencil", "blue"],
+                    title: "DEIT_CATEGORY"
+                }).with({
+                    script: "this.method.editCategory"
+                })
+            ]
+        },
+        {
+            items: [
+                new SettingScript({
                     icon: ["arrow.2.circlepath", "red"],
                     title: "REBUILD_ACTION_DATABASE"
                 }).with({

@@ -31,7 +31,13 @@ module.exports = new SettingChild({
                     title: "DISPLAY_MODE",
                     key: "keyboard.displayMode",
                     value: 0
-                }).with({ items: ["list", "matrix"] }),
+                }).with({ items: ["LIST", "MATRIX"] }),
+                new SettingNumber({
+                    icon: ["textformat.size"],
+                    title: "FONT_SIZE",
+                    key: "keyboard.fontSize",
+                    value: 16
+                }),
                 new SettingSwitch({
                     icon: ["checkerboard.rectangle", "#1899c4"],
                     title: "USE_BLUR",

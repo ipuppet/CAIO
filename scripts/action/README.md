@@ -101,17 +101,17 @@ setContent(text): void
 
 /**
  * 获取指定的 Action 类
- * @param {string} type
+ * @param {string} category
  * @param {string} name config.name
  * @param {ActionData} data new ActionData({ args: any })
  * @returns
  */
-getAction(type, name, data): any
+getAction(category, name, data): any
 
 /**
  * 运行指定的 Action 并返回该 Action do() 方法的返回值
  */
-async runAction(type, name): any
+async runAction(category, name): any
 
 /**
  * 从 `this.text` 中匹配所有 url

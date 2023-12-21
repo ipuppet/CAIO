@@ -58,6 +58,9 @@
 "NAME" = "Name";
 "ICON" = "Icon";
 "TYPE" = "Category";
+"CATEGORY" = "Category";
+"delete.category" = "Delete Category ${category}";
+"delete.category.keep.actions" = "Do you keep the actions in this category?";
 "DESCRIPTION" = "Description";
 "CODE" = "Code";
 "TEXT_INSETS" = "Text bottom margin";
@@ -85,6 +88,7 @@
 "UNABLE_CREATE_ACTION" = "Unable to create action";
 "ACTION_NAME_ALREADY_EXISTS" = "Action `${name}` already exists";
 "IMPORT_FROM_FILE" = "Import from Files";
+"DEIT_CATEGORY" = "Edit Category";
 
 "KEYBOARD" = "Keyboard";
 "KEYBOARD_HEIGHT" = "Keyboard Height";
@@ -103,6 +107,9 @@
 "SPACE" = "Space";
 "ALL_SCRIPTS" = "All Scripts";
 "SELECT_SCRIPTS" = "Select Scripts";
+"FONT_SIZE" = "Font Size";
+"LIST" = "List";
+"MATRIX" = "Matrix";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
