@@ -150,8 +150,7 @@ class KeyboardPinActions extends SelectActions {
         this.listId = "keyboard-pin-action-list"
     }
 
-    async sheet(kernel) {
-        this.kernel = kernel
+    async sheet() {
         const sheet = new Sheet()
         sheet.setView(this.getListView()).addNavBar({
             title: $l10n("PIN_ACTION"),

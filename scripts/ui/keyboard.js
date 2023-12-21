@@ -305,8 +305,8 @@ class Keyboard extends Clips {
         })
 
         KeyboardPinActions.shared
+            .setKernel(this.kernel)
             .getActions()
-            .filter(action => this.kernel.actions.exists(action.name))
             .forEach(action => {
                 const icon =
                     action?.icon?.slice(0, 5) === "icon_"

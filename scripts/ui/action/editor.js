@@ -17,6 +17,7 @@ class ActionEditor {
     constructor(data, info) {
         this.data = data
         this.info = info
+        this.raw = JSON.parse(JSON.stringify(info))
 
         this.actionCategories = this.data.getActionCategories()
 
@@ -97,8 +98,8 @@ class ActionEditor {
             })
             .create()
 
-        let result = [nameInput, createColor, iconInput]
-        if (this.isNew) result.push(categoryMenu)
+        let result = [nameInput, createColor, iconInput, categoryMenu]
+        //if (this.isNew) result.push(categoryMenu)
         return result
     }
 
@@ -168,7 +169,7 @@ class ActionEditor {
                 this.data.saveOrder(this.editingActionInfo.category, order)
             }
             sheet.dismiss()
-            this.data.saveActionInfo(this.editingActionInfo)
+            this.data.saveActionInfo(this.raw, this.editingActionInfo)
             await $wait(0.3) // 等待 sheet 关闭
             if (done) done(this.editingActionInfo)
         }

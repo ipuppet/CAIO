@@ -428,6 +428,7 @@ class ActionDelegates {
 
         this.data.move(source, destination)
 
+        this.data.applySnapshotAnimatingDifferences(false)
         this.data.applySnapshotToSectionAnimatingDifferences(source.section)
         if (source.section !== destination.section) {
             this.data.applySnapshotToSectionAnimatingDifferences(destination.section)

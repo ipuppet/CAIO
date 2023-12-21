@@ -15,13 +15,18 @@ class SelectActions {
         this.kernel = kernel
     }
 
+    setKernel(kernel) {
+        this.kernel = kernel
+        return this
+    }
+
     getActions() {
         const actions = $cache.get(this.cacheKey)
         if (!Array.isArray(actions)) {
             return []
         }
 
-        return actions
+        return actions.filter(action => this.kernel.actions.exists(action.name))
     }
 
     addAction(action) {
@@ -32,6 +37,17 @@ class SelectActions {
 
     setActions(actions = []) {
         $cache.set(this.cacheKey, actions)
+    }
+
+    updateAction(from, to) {
+        this.setActions(
+            this.getActions().map(action => {
+                if (action.category === from.category && action.dir === from.dir) {
+                    return to
+                }
+                return action
+            })
+        )
     }
 
     add() {
@@ -83,11 +99,9 @@ class SelectActions {
     }
 
     getListData(actions = this.getActions()) {
-        return actions
-            .filter(action => this.kernel.actions.exists(action.name))
-            .map(action => {
-                return this.kernel.actions.views.actionToData(action)
-            })
+        return actions.map(action => {
+            return this.kernel.actions.views.actionToData(action)
+        })
     }
 
     getListView() {

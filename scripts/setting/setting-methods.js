@@ -364,7 +364,7 @@ function keyboard() {
     }
 
     kernel.setting.method.keyboardPinAction = () => {
-        KeyboardPinActions.shared.sheet(kernel)
+        KeyboardPinActions.shared.setKernel(kernel).sheet()
     }
 }
 
@@ -378,7 +378,7 @@ function todayWidget() {
     }
 
     kernel.setting.method.setTodayWidgetActions = animate => {
-        TodayPinActions.shared.sheet(kernel)
+        TodayPinActions.shared.setKernel(kernel).sheet()
     }
 }
 

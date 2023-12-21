@@ -17,8 +17,7 @@ class TodayPinActions extends SelectActions {
         this.listId = "today-action-list"
     }
 
-    sheet(kernel) {
-        this.kernel = kernel
+    sheet() {
         const sheet = new Sheet()
         sheet.setView(this.getListView()).addNavBar({
             title: $l10n("ACTIONS"),

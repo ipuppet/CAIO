@@ -2,6 +2,8 @@ const { FileStorage, UIKit } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
 const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
+const { KeyboardPinActions } = require("../ui/components/keyboard-scripts")
+const { TodayPinActions } = require("../ui/components/today-actions")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
@@ -65,7 +67,15 @@ class ActionsData {
         this.kernel.logger.info(`init actions`)
     }
 
+    updatePinActions(from, to) {
+        KeyboardPinActions.shared.setKernel(this.kernel).updateAction(from, to)
+        TodayPinActions.shared.setKernel(this.kernel).updateAction(from, to)
+    }
+
     setNeedReload() {
+        if (this.#allActions !== undefined) {
+            this.applySnapshotAnimatingDifferences() // 通知更新 UI
+        }
         this.#actions = undefined
         this.#allActions = undefined
         if (!this.isEnableWebDavSync) return
@@ -449,18 +459,32 @@ class ActionsData {
         this.setNeedReload()
     }
 
-    saveActionInfo(info) {
+    changeCategory(from, to) {
+        $file.move({
+            src: `${this.userActionPath}/${from.category}/${from.dir}`,
+            dst: `${this.userActionPath}/${to.category}/${to.dir}`
+        })
+        this.setNeedReload()
+        this.updatePinActions(from, to)
+    }
+
+    saveActionInfo(from, to) {
+        if (from.category !== to.category) {
+            this.changeCategory(from, to) // 该操作会通知 SelectActions
+        } else {
+            this.updatePinActions(from, to)
+        }
         this.#saveFile(
             {
-                icon: info.icon,
-                color: info.color,
-                name: info.name
+                icon: to.icon,
+                color: to.color,
+                name: to.name
             },
-            info.category,
-            info.dir,
+            to.category,
+            to.dir,
             "config.json"
         )
-        this.#saveFile(info.readme, info.category, info.dir, "README.md")
+        this.#saveFile(to.readme, to.category, to.dir, "README.md")
     }
 
     saveMainJs(info, content) {
@@ -497,10 +521,10 @@ class ActionsData {
             toItems.splice(to.item, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from.item) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
-            $file.move({
-                src: `${this.userActionPath}/${fromCategory}/${toItems[to.item].dir}`,
-                dst: `${this.userActionPath}/${toCategory}/${toItems[to.item].dir}`
-            })
+            this.changeCategory(
+                toItems[to.item],
+                Object.assign(JSON.parse(JSON.stringify(toItems[to.item])), { category: toCategory })
+            )
             this.saveOrder(toCategory, getOrder(toItems))
             this.saveOrder(fromCategory, getOrder(fromItems))
         }

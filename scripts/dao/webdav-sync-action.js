@@ -78,22 +78,23 @@ class WebDavSyncAction extends WebDavSync {
                 const resp = await this.conflict($l10n("ACTIONS"))
                 if (resp === WebDavSyncAction.conflictKeep.webdav) {
                     isPull = true
+                } else {
+                    return
                 }
             } else {
                 this.notify({ status: WebDavSync.status.nochange })
                 return
             }
+            this.notify({
+                status: WebDavSync.status.success,
+                updateList: isPull
+            })
         } catch (error) {
             this.notify({
                 status: WebDavSync.status.fail,
                 error
             })
             throw error
-        } finally {
-            this.notify({
-                status: WebDavSync.status.success,
-                updateList: isPull
-            })
         }
     }
 

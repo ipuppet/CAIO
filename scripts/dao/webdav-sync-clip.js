@@ -146,11 +146,17 @@ class WebDavSyncClip extends WebDavSync {
                 const resp = await this.conflict($l10n("CLIPS"))
                 if (resp === WebDavSyncClip.conflictKeep.webdav) {
                     isPull = true
+                } else {
+                    return
                 }
             } else {
                 this.notify({ status: WebDavSync.status.nochange })
                 return
             }
+            this.notify({
+                status: WebDavSync.status.success,
+                updateList: isPull
+            })
         } catch (error) {
             this.notify({
                 status: WebDavSync.status.fail,
@@ -159,11 +165,6 @@ class WebDavSyncClip extends WebDavSync {
             this.kernel.logger.error("clip sync error")
             this.kernel.logger.error(error)
             throw error
-        } finally {
-            this.notify({
-                status: WebDavSync.status.success,
-                updateList: isPull
-            })
         }
     }
 

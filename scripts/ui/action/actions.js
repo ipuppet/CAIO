@@ -48,7 +48,7 @@ class Actions extends ActionsData {
                 if (args.status === WebDavSync.status.syncing && args.animate) {
                     this.updateNavButton(true)
                     this.updateSyncLabel($l10n("SYNCING"))
-                } else if (args.status === WebDavSync.status.success) {
+                } else if (args.status === WebDavSync.status.success || args.status === WebDavSync.status.nochange) {
                     try {
                         this.applySnapshotAnimatingDifferences()
                     } catch (error) {
@@ -237,11 +237,11 @@ class Actions extends ActionsData {
     applySnapshotAnimatingDifferences(animating = true) {
         const snapshot = $objc("NSDiffableDataSourceSnapshot").$alloc().$init()
         const actions = this.actions
-        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.dir))
+        snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.dir + i.items.length))
         for (const i in actions) {
             snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
-                actions[i].items.map(i => i.dir),
-                actions[i].dir
+                actions[i].items.map(i => i.category + i.dir + i.name + i.icon),
+                actions[i].dir + actions[i].items.length
             )
         }
 
@@ -249,8 +249,9 @@ class Actions extends ActionsData {
     }
     applySnapshotToSectionAnimatingDifferences(section, animating = true) {
         const snapshot = $objc("NSDiffableDataSourceSectionSnapshot").$alloc().$init()
-        const { items: actions, dir: sectionIdentifier } = this.actions[section]
-        snapshot.$appendItems(actions.map(i => i.dir))
+        let { items: actions, dir: sectionIdentifier } = this.actions[section]
+        sectionIdentifier = sectionIdentifier + actions.length
+        snapshot.$appendItems(actions.map(i => i.category + i.dir + i.name + i.icon))
 
         this.collectionView
             .$dataSource()
