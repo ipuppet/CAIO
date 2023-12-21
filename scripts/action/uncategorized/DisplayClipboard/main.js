@@ -10,11 +10,11 @@ class MyAction extends Action {
         } else {
             this.pageSheet({
                 view: {
-                    type: "label",
+                    type: "text",
                     props: {
-                        lines: 0,
+                        editable: false,
                         text: $clipboard.text,
-                        align: $align.center
+                        insets: $insets(10, 10, 10, 10)
                     },
                     layout: $layout.fill
                 }
