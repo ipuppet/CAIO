@@ -294,16 +294,6 @@ class Keyboard extends Clips {
                 })
             }
         ]
-        if (!$device.isIpad) {
-            buttons.push({
-                symbol: "doc.on.clipboard",
-                tapped: this.keyboardTapped(() => {
-                    const text = $clipboard.text
-                    if (!text || text === "") return
-                    $keyboard.insert(text)
-                })
-            })
-        }
         buttons.push({
             // Action
             symbol: "bolt.circle",
