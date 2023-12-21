@@ -1,7 +1,7 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { View, UIKit, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips/clips")
-const TodayActions = require("./components/today-actions")
+const { TodayPinActions } = require("./components/today-actions")
 
 /**
  * @typedef {import("../app-lite").AppKernel} AppKernel
@@ -28,7 +28,7 @@ class Today extends Clips {
 
         this.tabItems.push($l10n("ACTIONS"))
 
-        this.todayActions = new TodayActions(this.kernel)
+        this.TodayPinActions = new TodayPinActions(this.kernel)
 
         // 剪切板分页显示
         this.setClipboarPageSize($widget.mode)
@@ -337,7 +337,7 @@ class Today extends Clips {
     }
 
     getActionView() {
-        let actions = this.todayActions.getActions()
+        let actions = this.TodayPinActions.getActions()
         if (actions.length === 0) {
             actions = Object.values(this.kernel.actions.allActions)
         }
@@ -349,7 +349,8 @@ class Today extends Clips {
                 this.kernel.actions.views.getActionMiniView(info => {
                     return new ActionData({
                         env: ActionEnv.today,
-                        text: info.category === "clipboard" || info.category === "uncategorized" ? $clipboard.text : null
+                        text:
+                            info.category === "clipboard" || info.category === "uncategorized" ? $clipboard.text : null
                     })
                 }, actions)
             ],

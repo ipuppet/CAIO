@@ -1,10 +1,11 @@
 const { Sheet } = require("../../libs/easy-jsbox")
+const { SelectActions } = require("./selectActions")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
  */
 
-class KeyboardScripts {
+class KeyboardAddins {
     constructor() {
         this.listId = "keyboard-script-list"
     }
@@ -47,7 +48,7 @@ class KeyboardScripts {
 
     getUnsetAddins() {
         const current = $addin.current.name
-        const addins = KeyboardScripts.getAddins()
+        const addins = KeyboardAddins.getAddins()
         return $addin.list
             ?.filter(addin => {
                 return addins.indexOf(addin.displayName) === -1 && current !== addin.displayName
@@ -63,9 +64,9 @@ class KeyboardScripts {
             },
             events: {
                 didSelect: (sender, indexPath, data) => {
-                    const addins = KeyboardScripts.getAddins()
+                    const addins = KeyboardAddins.getAddins()
                     addins.unshift(data)
-                    KeyboardScripts.setAddins(addins)
+                    KeyboardAddins.setAddins(addins)
                     $(this.listId).insert({
                         indexPath: $indexPath(0, 0),
                         value: data
@@ -98,76 +99,71 @@ class KeyboardScripts {
             props: {
                 id: this.listId,
                 reorder: true,
-                data: KeyboardScripts.getAddins(),
+                data: KeyboardAddins.getAddins(),
                 actions: [
                     {
                         title: "delete",
                         handler: (sender, indexPath) => {
-                            KeyboardScripts.setAddins(sender.data)
+                            KeyboardAddins.setAddins(sender.data)
                         }
                     }
                 ]
             },
             events: {
                 reorderFinished: data => {
-                    KeyboardScripts.setAddins(data)
+                    KeyboardAddins.setAddins(data)
                 }
             },
             layout: $layout.fill
         }
     }
 
-    static async sheet() {
+    async sheet() {
         const selected = await $ui.menu({
             items: [$l10n("ALL_SCRIPTS"), $l10n("SELECT_SCRIPTS")]
         })
         if (selected.index === 0) {
-            KeyboardScripts.setAllAddins(true)
+            KeyboardAddins.setAllAddins(true)
         } else {
-            KeyboardScripts.setAllAddins(false)
+            KeyboardAddins.setAllAddins(false)
             const sheet = new Sheet()
-            const keyboardScripts = new KeyboardScripts()
-            sheet.setView(keyboardScripts.getListView()).addNavBar({
+            sheet.setView(this.getListView()).addNavBar({
                 title: $l10n("QUICK_START_SCRIPTS"),
                 popButton: { title: $l10n("DONE") },
-                rightButtons: keyboardScripts.getNavButtons()
+                rightButtons: this.getNavButtons()
             })
-
-            sheet.init().present()
-        }
-    }
-
-    /**
-     * @param {AppKernel} kernel
-     */
-    static async pin(kernel) {
-        const selected = await $ui.menu({
-            items: [$l10n("CLEAR"), $l10n("PIN_ACTION")]
-        })
-        if (selected.index === 0) {
-            $cache.remove("keyboard.pinAction")
-        } else {
-            const sheet = new Sheet()
-            sheet
-                .setView(
-                    kernel.actions.views.getActionListView(
-                        (_, action) => {
-                            $cache.set("keyboard.pinAction", action)
-                            sheet.dismiss()
-                        },
-                        { bgcolor: $color("primarySurface"), stickyHeader: false },
-                        {},
-                        $layout.fill
-                    )
-                )
-                .addNavBar({
-                    title: $l10n("PIN_ACTION"),
-                    popButton: { title: $l10n("DONE") }
-                })
 
             sheet.init().present()
         }
     }
 }
 
-module.exports = KeyboardScripts
+class KeyboardPinActions extends SelectActions {
+    static shared = new KeyboardPinActions()
+    cacheKey = "keyboard.pinAction"
+
+    /**
+     * @param {AppKernel} kernel
+     */
+    constructor(kernel) {
+        super(kernel)
+        this.listId = "keyboard-pin-action-list"
+    }
+
+    async sheet(kernel) {
+        this.kernel = kernel
+        const sheet = new Sheet()
+        sheet.setView(this.getListView()).addNavBar({
+            title: $l10n("PIN_ACTION"),
+            popButton: { title: $l10n("DONE") },
+            rightButtons: this.getNavButtons()
+        })
+
+        sheet.init().present()
+    }
+}
+
+module.exports = {
+    KeyboardAddins,
+    KeyboardPinActions
+}

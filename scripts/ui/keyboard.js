@@ -1,7 +1,7 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { UIKit, Sheet, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips/clips")
-const KeyboardScripts = require("./components/keyboard-scripts")
+const { KeyboardAddins, KeyboardPinActions } = require("./components/keyboard-scripts")
 
 /**
  * @typedef {import("../app-lite").AppKernel} AppKernel
@@ -314,18 +314,17 @@ class Keyboard extends Clips {
             })
         })
 
-        const pinAction = $cache.get("keyboard.pinAction")
-        if (pinAction) {
+        KeyboardPinActions.shared.getActions().forEach(action => {
             buttons.push({
-                symbol: pinAction.icon,
+                symbol: action.icon,
                 tapped: this.keyboardTapped(async () => {
                     const actionData = await this.getKeyboardActionData()
 
-                    const handler = this.kernel.actions.getActionHandler(pinAction.category, pinAction.dir)
+                    const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
                     handler(actionData)
                 })
             })
-        }
+        })
 
         return {
             type: "view",
@@ -548,7 +547,7 @@ class Keyboard extends Clips {
             menu: {
                 pullDown: true,
                 asPrimary: true,
-                items: KeyboardScripts.getAddins()
+                items: KeyboardAddins.getAddins()
                     .reverse()
                     .map(addin => {
                         return {

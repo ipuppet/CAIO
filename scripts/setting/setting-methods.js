@@ -1,8 +1,8 @@
 const { Kernel, UIKit } = require("../libs/easy-jsbox")
 
-const KeyboardScripts = require("../ui/components/keyboard-scripts")
+const { KeyboardAddins, KeyboardPinActions } = require("../ui/components/keyboard-scripts")
 const ActionScripts = require("../ui/components/action-scripts")
-const TodayActions = require("../ui/components/today-actions")
+const { TodayPinActions } = require("../ui/components/today-actions")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
@@ -358,9 +358,14 @@ function keyboard() {
         }
     }
 
-    kernel.setting.method.setKeyboardQuickStart = () => KeyboardScripts.sheet()
+    kernel.setting.method.setKeyboardQuickStart = () => {
+        const addins = new KeyboardAddins()
+        addins.sheet()
+    }
 
-    kernel.setting.method.keyboardPinAction= () => KeyboardScripts.pin(kernel)
+    kernel.setting.method.keyboardPinAction = () => {
+        KeyboardPinActions.shared.sheet(kernel)
+    }
 }
 
 function todayWidget() {
@@ -373,7 +378,7 @@ function todayWidget() {
     }
 
     kernel.setting.method.setTodayWidgetActions = animate => {
-        TodayActions.sheet(kernel)
+        TodayPinActions.shared.sheet(kernel)
     }
 }
 
