@@ -305,8 +305,12 @@ class Keyboard extends Clips {
         })
 
         KeyboardPinActions.shared.getActions().forEach(action => {
+            const icon =
+                action?.icon?.slice(0, 5) === "icon_"
+                    ? $icon(action.icon.slice(5, action.icon.indexOf(".")), $color("#ffffff"))
+                    : $image(action?.icon)
             buttons.push({
-                symbol: action.icon,
+                symbol: icon,
                 tapped: this.keyboardTapped(async () => {
                     const actionData = await this.getKeyboardActionData()
 
