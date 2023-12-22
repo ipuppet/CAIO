@@ -35,6 +35,7 @@ class ActionsData {
         return this.#actions
     }
     get allActions() {
+        // 无分类的单层数组
         if (!this.#allActions) this.#initActions()
         return this.#allActions
     }
@@ -53,6 +54,7 @@ class ActionsData {
     #initActions() {
         this.#actions = this.getActionCategories().map(category => {
             return {
+                category,
                 dir: category,
                 title: this.getCategoryTitle(category),
                 items: this.getActions(category) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
@@ -72,12 +74,13 @@ class ActionsData {
         TodayPinActions.shared.setKernel(this.kernel).updateAction(from, to)
     }
 
-    setNeedReload() {
-        if (this.#allActions !== undefined) {
-            this.applySnapshotAnimatingDifferences() // 通知更新 UI
-        }
+    setNeedReload(animate) {
         this.#actions = undefined
         this.#allActions = undefined
+
+        // 通知更新 UI
+        this.applySnapshotAnimatingDifferences(animate)
+
         if (!this.isEnableWebDavSync) return
         try {
             this.webdavSync.needUpload()
@@ -174,7 +177,7 @@ class ActionsData {
                 data: $data({ string: readme }),
                 path: FileStorage.join(actionPath, "README.md")
             })
-            this.setNeedReload()
+            this.setNeedReload(true)
 
             return dirName
         } catch (error) {
@@ -456,7 +459,6 @@ class ActionsData {
             data: $data({ string: data }),
             path: fullPath
         })
-        this.setNeedReload()
     }
 
     changeCategory(from, to) {
@@ -464,16 +466,16 @@ class ActionsData {
             src: `${this.userActionPath}/${from.category}/${from.dir}`,
             dst: `${this.userActionPath}/${to.category}/${to.dir}`
         })
-        this.setNeedReload()
-        this.updatePinActions(from, to)
     }
 
     saveActionInfo(from, to) {
-        if (from.category !== to.category) {
-            this.changeCategory(from, to) // 该操作会通知 SelectActions
-        } else {
+        if (from) {
+            if (from.category !== to.category) {
+                this.changeCategory(from, to)
+            }
             this.updatePinActions(from, to)
         }
+
         this.#saveFile(
             {
                 icon: to.icon,
@@ -485,14 +487,17 @@ class ActionsData {
             "config.json"
         )
         this.#saveFile(to.readme, to.category, to.dir, "README.md")
+        this.setNeedReload(true)
     }
 
     saveMainJs(info, content) {
         this.#saveFile(content, info.category, info.dir, "main.js")
+        this.setNeedReload()
     }
 
     saveOrder(category, order) {
         this.#saveFile(JSON.stringify(order), category, this.actionOrderFile)
+        this.setNeedReload()
     }
 
     move(from, to) {
@@ -521,18 +526,20 @@ class ActionsData {
             toItems.splice(to.item, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from.item) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
-            this.changeCategory(
-                toItems[to.item],
-                Object.assign(JSON.parse(JSON.stringify(toItems[to.item])), { category: toCategory })
-            )
+            const _fromItem = toItems[to.item]
+            const _toItem = Object.assign(JSON.parse(JSON.stringify(toItems[to.item])), { category: toCategory })
+            this.changeCategory(_fromItem, _toItem)
+            this.updatePinActions(_fromItem, _toItem)
+            // 代码顺序不能错
             this.saveOrder(toCategory, getOrder(toItems))
             this.saveOrder(fromCategory, getOrder(fromItems))
         }
+        this.setNeedReload()
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.category}/${info.dir}`)
-        this.setNeedReload()
+        this.setNeedReload(true)
     }
 
     exists(name) {

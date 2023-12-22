@@ -99,7 +99,6 @@ class ActionEditor {
             .create()
 
         let result = [nameInput, createColor, iconInput, categoryMenu]
-        //if (this.isNew) result.push(categoryMenu)
         return result
     }
 
@@ -163,10 +162,6 @@ class ActionEditor {
                     })
                     if (resp.index === 1) return
                 }
-                // reorder
-                const order = this.data.getActionOrder(this.editingActionInfo.category, true)
-                order.unshift(this.editingActionInfo.dir)
-                this.data.saveOrder(this.editingActionInfo.category, order)
             }
             sheet.dismiss()
             this.data.saveActionInfo(this.raw, this.editingActionInfo)
