@@ -196,9 +196,20 @@ class Action {
     }
 
     getUrls() {
-        const regex = /(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([:0-9])*([\/\w\#\.\-\?\=\&])*\s?/gi
         const text = this.text ?? ""
-        return text.match(regex) ?? []
+
+        const httpRegex = /https?:\/\/[\w-]+(\.[\w-]+)*([\p{Script=Han}\w.,@?^=%&:/~+#()\-]*[\w@?^=%&/~+#()\-])?/giu
+        // 正则表达式用于匹配iOS URL Scheme（假设scheme后面是://），包括中文字符和括号
+        const iosSchemeRegex = /\b\w+:\/\/[\w-]+(\.[\w-]+)*([\p{Script=Han}\w.,@?^=%&:/~+#()\-]*[\w@?^=%&/~+#()\-])?/giu
+
+        // 使用正则表达式查找匹配项
+        const httpUrls = text.match(httpRegex) || []
+        const iosUrls = text.match(iosSchemeRegex) || []
+
+        // 合并两个数组并去重
+        const allUrls = [...new Set([...httpUrls, ...iosUrls])]
+
+        return allUrls
     }
 
     addinRun(name) {
