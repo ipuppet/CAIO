@@ -31,20 +31,24 @@ class ActionViews {
         this.data = data
     }
 
-    getActionListView(didSelect, props = {}, events = {}) {
+    getActionListView(didSelect, props = {}, events = {}, layout) {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
                 const info = data.info.info
-                const action = this.data.getActionHandler(info.type, info.dir)
-                didSelect(action)
+                const actionHandler = this.data.getActionHandler(info.category, info.dir)
+                didSelect(actionHandler, info)
             }
         }
 
         return {
             type: "list",
             layout: (make, view) => {
-                make.top.width.equalTo(view.super.safeArea)
-                make.bottom.inset(0)
+                if (typeof layout === "function") {
+                    layout(make, view)
+                } else {
+                    make.top.width.equalTo(view.super.safeArea)
+                    make.bottom.inset(0)
+                }
             },
             events: events,
             props: Object.assign(
@@ -56,9 +60,9 @@ class ActionViews {
                     stickyHeader: true,
                     data: (() => {
                         const data = this.data.actionList
-                        data.map(type => {
-                            type.rows = type.items
-                            return type
+                        data.map(category => {
+                            category.rows = category.items
+                            return category
                         })
                         return data
                     })(),
@@ -187,7 +191,7 @@ class ActionViews {
                 didSelect: async (sender, indexPath, data) => {
                     const info = data.info.info
                     const actionData = await getActionData(info)
-                    this.data.getActionHandler(info.type, info.dir)(actionData)
+                    this.data.getActionHandler(info.category, info.dir)(actionData)
                 }
             }
         }
@@ -311,7 +315,7 @@ class ActionViews {
                     ],
                     events: {
                         tapped: sender => {
-                            const main = this.data.getActionMainJs(action.type, action.dir)
+                            const main = this.data.getActionMainJs(action.category, action.dir)
                             this.data.editActionMainJs(main, action)
                         }
                     },

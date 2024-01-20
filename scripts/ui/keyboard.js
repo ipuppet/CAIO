@@ -1,7 +1,7 @@
 const { ActionData, ActionEnv } = require("../action/action")
 const { UIKit, Sheet, BarButtonItem } = require("../libs/easy-jsbox")
 const Clips = require("./clips/clips")
-const KeyboardScripts = require("./components/keyboard-scripts")
+const { KeyboardAddins, KeyboardPinActions } = require("./components/keyboard-scripts")
 
 /**
  * @typedef {import("../app-lite").AppKernel} AppKernel
@@ -105,7 +105,7 @@ class Keyboard extends Clips {
         this.views.verticalMargin = 12 // 列表边距
         this.views.copiedIndicatorSize = 5 // 已复制指示器（小绿点）大小
         this.views.containerMargin = this.isFullScreenIpad ? 12 : 4
-        this.views.fontSize = 14 // 字体大小
+        this.views.fontSize = this.kernel.setting.get("keyboard.fontSize") // 字体大小
         this.views.tagHeight = this.views.verticalMargin + 3
 
         this.delegates.menuItemActionMaxCount = 3
@@ -253,6 +253,25 @@ class Keyboard extends Clips {
         }
     }
 
+    async getKeyboardActionData() {
+        let selectedText = $keyboard.selectedText
+        if (selectedText === "") selectedText = null
+        const getallText = async () => {
+            let allText = await $keyboard.getAllText()
+            if (allText === "") allText = null
+            return allText
+        }
+
+        return new ActionData({
+            env: ActionEnv.keyboard,
+            textBeforeInput: $keyboard.textBeforeInput,
+            textAfterInput: $keyboard.textAfterInput,
+            text: selectedText ?? (await getallText()),
+            allText: await $keyboard.getAllText(),
+            selectedText: selectedText
+        })
+    }
+
     getTopButtonsView() {
         const buttons = [
             {
@@ -275,16 +294,6 @@ class Keyboard extends Clips {
                 })
             }
         ]
-        if (!$device.isIpad) {
-            buttons.push({
-                symbol: "doc.on.clipboard",
-                tapped: this.keyboardTapped(() => {
-                    const text = $clipboard.text
-                    if (!text || text === "") return
-                    $keyboard.insert(text)
-                })
-            })
-        }
         buttons.push({
             // Action
             symbol: "bolt.circle",
@@ -295,9 +304,28 @@ class Keyboard extends Clips {
             })
         })
 
+        KeyboardPinActions.shared
+            .setKernel(this.kernel)
+            .getActions()
+            .forEach(action => {
+                const icon =
+                    action?.icon?.slice(0, 5) === "icon_"
+                        ? $icon(action.icon.slice(5, action.icon.indexOf(".")), UIKit.textColor)
+                        : $image(action?.icon)
+                buttons.push({
+                    symbol: icon,
+                    tapped: this.keyboardTapped(async () => {
+                        const actionData = await this.getKeyboardActionData()
+
+                        const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
+                        handler(actionData)
+                    })
+                })
+            })
+
         return {
             type: "view",
-            views: buttons.map((button, i) => {
+            views: buttons.map(button => {
                 const barButtonItem = new BarButtonItem()
                 barButtonItem.buttonEdges = 0
                 return barButtonItem
@@ -486,7 +514,8 @@ class Keyboard extends Clips {
         const leftButtons = []
         const rightButtons = []
         // 切换键盘
-        if ($ui.controller.ocValue().$needsInputModeSwitchKey()) {
+        const needsInputModeSwitchKey = $ui.controller.ocValue().$needsInputModeSwitchKey()
+        if (needsInputModeSwitchKey) {
             leftButtons.push({
                 symbol: "globe",
                 events: {
@@ -515,7 +544,7 @@ class Keyboard extends Clips {
             menu: {
                 pullDown: true,
                 asPrimary: true,
-                items: KeyboardScripts.getAddins()
+                items: KeyboardAddins.getAddins()
                     .reverse()
                     .map(addin => {
                         return {
@@ -660,7 +689,7 @@ class Keyboard extends Clips {
                         props: {
                             id: "content",
                             lines: 0,
-                            font: $font(20)
+                            font: $font(this.views.fontSize)
                         },
                         layout: (make, view) => {
                             make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
@@ -796,22 +825,7 @@ class Keyboard extends Clips {
             props: { id: this.actionsId, hidden: true },
             views: [
                 this.kernel.actions.views.getActionMiniView(async () => {
-                    let selectedText = $keyboard.selectedText
-                    if (selectedText === "") selectedText = null
-                    const getallText = async () => {
-                        let allText = await $keyboard.getAllText()
-                        if (allText === "") allText = null
-                        return allText
-                    }
-
-                    return new ActionData({
-                        env: ActionEnv.keyboard,
-                        textBeforeInput: $keyboard.textBeforeInput,
-                        textAfterInput: $keyboard.textAfterInput,
-                        text: selectedText ?? (await getallText()),
-                        allText: await $keyboard.getAllText(),
-                        selectedText: selectedText
-                    })
+                    return await this.getKeyboardActionData()
                 })
             ],
             layout: (make, view) => {

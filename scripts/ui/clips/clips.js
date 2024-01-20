@@ -53,7 +53,7 @@ class Clips extends ClipsData {
             },
             clipSyncStatus: args => {
                 const list = $(this.views.listId)
-                if (args.status === WebDavSync.status.success) {
+                if (args.status === WebDavSync.status.success || args.status === WebDavSync.status.nochange) {
                     if (args.updateList) {
                         this.updateList(true)
                     }

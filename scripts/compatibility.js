@@ -64,13 +64,13 @@ class Compatibility {
     }
 
     rebuildUserActions(actions = {}) {
-        for (let type of Object.keys(actions)) {
-            actions[type].forEach(action => {
-                if (!this.actions[type]) {
-                    this.actions[type] = []
+        for (let category of Object.keys(actions)) {
+            actions[category].forEach(action => {
+                if (!this.actions[category]) {
+                    this.actions[category] = []
                 }
-                if (!this.actions[type].includes(action)) {
-                    this.actions[type].push(action)
+                if (!this.actions[category].includes(action)) {
+                    this.actions[category].push(action)
                 }
             })
         }
@@ -82,12 +82,12 @@ class Compatibility {
         const userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
 
         const changeList = []
-        for (let type of Object.keys(this.actions)) {
-            this.actions[type].forEach(action => {
+        for (let category of Object.keys(this.actions)) {
+            this.actions[category].forEach(action => {
                 let config
-                const configPath = `${actionPath}/${type}/${action}/config.json`
+                const configPath = `${actionPath}/${category}/${action}/config.json`
                 if ($file.exists(configPath)) {
-                    config = JSON.parse($file.read(`${actionPath}/${type}/${action}/config.json`).string)
+                    config = JSON.parse($file.read(`${actionPath}/${category}/${action}/config.json`).string)
                 } else {
                     config = __INFO__
                 }
@@ -109,13 +109,13 @@ class Compatibility {
         }
 
         // 重建用户动作
-        for (let type of Object.keys(this.actions)) {
-            this.actions[type].forEach(action => {
-                if ($file.exists(`${userActionPath}/${type}/${action}`)) {
-                    this.kernel.logger.info(`rebuild user action: ${type}/${action}`)
+        for (let category of Object.keys(this.actions)) {
+            this.actions[category].forEach(action => {
+                if ($file.exists(`${userActionPath}/${category}/${action}`)) {
+                    this.kernel.logger.info(`rebuild user action: ${category}/${action}`)
                     $file.copy({
-                        src: `${actionPath}/${type}/${action}/main.js`,
-                        dst: `${userActionPath}/${type}/${action}/main.js`
+                        src: `${actionPath}/${category}/${action}/main.js`,
+                        dst: `${userActionPath}/${category}/${action}/main.js`
                     })
                 }
             })

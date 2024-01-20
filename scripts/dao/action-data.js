@@ -2,6 +2,8 @@ const { FileStorage, UIKit } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
 const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
+const { KeyboardPinActions } = require("../ui/components/keyboard-scripts")
+const { TodayPinActions } = require("../ui/components/today-actions")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
@@ -33,6 +35,7 @@ class ActionsData {
         return this.#actions
     }
     get allActions() {
+        // 无分类的单层数组
         if (!this.#allActions) this.#initActions()
         return this.#allActions
     }
@@ -49,25 +52,35 @@ class ActionsData {
     }
 
     #initActions() {
-        this.#actions = this.getActionTypes().map(type => {
+        this.#actions = this.getActionCategories().map(category => {
             return {
-                dir: type,
-                title: this.getTypeTitle(type),
-                items: this.getActions(type) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
+                category,
+                dir: category,
+                title: this.getCategoryTitle(category),
+                items: this.getActions(category) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
             }
         })
         this.#allActions = {}
-        this.#actions.map(type =>
-            type.items.forEach(item => {
+        this.#actions.map(category =>
+            category.items.forEach(item => {
                 this.#allActions[item.name] = item
             })
         )
         this.kernel.logger.info(`init actions`)
     }
 
-    setNeedReload() {
+    updatePinActions(from, to) {
+        KeyboardPinActions.shared.setKernel(this.kernel).updateAction(from, to)
+        TodayPinActions.shared.setKernel(this.kernel).updateAction(from, to)
+    }
+
+    setNeedReload(animate) {
         this.#actions = undefined
         this.#allActions = undefined
+
+        // 通知更新 UI
+        this.applySnapshotAnimatingDifferences(animate)
+
         if (!this.isEnableWebDavSync) return
         try {
             this.webdavSync.needUpload()
@@ -82,27 +95,27 @@ class ActionsData {
 
     importExampleAction() {
         try {
-            Object.keys(__ACTIONS__).forEach(type => {
-                Object.keys(__ACTIONS__[type]).forEach(dir => {
-                    const action = __ACTIONS__[type][dir]
+            Object.keys(__ACTIONS__).forEach(category => {
+                Object.keys(__ACTIONS__[category]).forEach(dir => {
+                    const action = __ACTIONS__[category][dir]
                     const config = JSON.parse(action.config)
                     if (!this.exists(config.name)) {
-                        this.importAction(action, type, false)
+                        this.importAction(action, category, false)
                     }
                 })
             })
         } catch {
-            $file.list(this.actionPath).forEach(type => {
-                const actionTypePath = `${this.actionPath}/${type}`
-                if ($file.isDirectory(actionTypePath)) {
-                    const userActionTypePath = `${this.userActionPath}/${type}`
-                    $file.list(actionTypePath).forEach(dir => {
-                        const config = JSON.parse($file.read(`${actionTypePath}/${dir}/config.json`).string)
+            $file.list(this.actionPath).forEach(category => {
+                const actionCategoryPath = `${this.actionPath}/${category}`
+                if ($file.isDirectory(actionCategoryPath)) {
+                    const userActionCategoryPath = `${this.userActionPath}/${category}`
+                    $file.list(actionCategoryPath).forEach(dir => {
+                        const config = JSON.parse($file.read(`${actionCategoryPath}/${dir}/config.json`).string)
                         if (!this.exists(config.name)) {
-                            $file.mkdir(userActionTypePath)
+                            $file.mkdir(userActionCategoryPath)
                             $file.copy({
-                                src: `${actionTypePath}/${dir}`,
-                                dst: `${userActionTypePath}/${dir}`
+                                src: `${actionCategoryPath}/${dir}`,
+                                dst: `${userActionCategoryPath}/${dir}`
                             })
                         }
                     })
@@ -112,11 +125,11 @@ class ActionsData {
         this.setNeedReload()
     }
 
-    actionToString(type, dir) {
+    actionToString(category, dir) {
         return JSON.stringify({
-            config: this.getActionConfigString(type, dir),
-            main: this.getActionMainJs(type, dir),
-            readme: this.getActionReadme(type, dir)
+            config: this.getActionConfigString(category, dir),
+            main: this.getActionMainJs(category, dir),
+            readme: this.getActionReadme(category, dir)
         })
     }
 
@@ -124,9 +137,9 @@ class ActionsData {
         const loading = UIKit.loading()
         loading.start()
 
-        const { type, dir, name } = action
+        const { category, dir, name } = action
 
-        const content = this.actionToString(type, dir)
+        const content = this.actionToString(category, dir)
         loading.end()
         $share.sheet([
             {
@@ -136,7 +149,7 @@ class ActionsData {
         ])
     }
 
-    importAction(data, type = "uncategorized", animate = true) {
+    importAction(data, category = "uncategorized", animate = true) {
         const loading = animate ? UIKit.loading() : null
         loading?.start()
 
@@ -149,7 +162,7 @@ class ActionsData {
             if (!name || name === "") throw new Error("Not an action")
 
             const dirName = this.initActionDirByName(name)
-            const actionPath = this.getActionPath(type, dirName)
+            const actionPath = this.getActionPath(category, dirName)
             $file.mkdir(actionPath)
 
             $file.write({
@@ -164,7 +177,7 @@ class ActionsData {
                 data: $data({ string: readme }),
                 path: FileStorage.join(actionPath, "README.md")
             })
-            this.setNeedReload()
+            this.setNeedReload(true)
 
             return dirName
         } catch (error) {
@@ -208,44 +221,125 @@ class ActionsData {
         }
     }
 
-    getActionTypes() {
-        const type = ["clipboard", "editor"] // 保证 "clipboard", "editor" 排在前面
-        return type.concat(
+    defaultCategories() {
+        return ["uncategorized", "clipboard", "editor"]
+    }
+
+    getActionCategories() {
+        const category = this.defaultCategories() // 保证 "uncategorized", "clipboard", "editor" 排在前面
+        return category.concat(
             $file.list(this.userActionPath).filter(dir => {
-                // 获取 type.indexOf(dir) < 0 的文件夹名
-                return $file.isDirectory(`${this.userActionPath}/${dir}`) && type.indexOf(dir) < 0
+                // 获取 category.indexOf(dir) < 0 的文件夹名
+                return $file.isDirectory(`${this.userActionPath}/${dir}`) && category.indexOf(dir) < 0
             })
         )
     }
 
-    getActionTypeSection(type) {
+    async deleteActionCategory(category) {
+        const path = `${this.userActionPath}/${category}`
+        const result = await $ui.alert({
+            title: $l10n("delete.category").replace("${category}", category),
+            message: $l10n("delete.category.keep.actions"),
+            actions: [
+                { title: $l10n("OK") },
+                {
+                    title: $l10n("DELETE"),
+                    style: $alertActionType.destructive
+                },
+                { title: $l10n("CANCEL") }
+            ]
+        })
+        if (result.index === 2) {
+            return false
+        }
+        if (result.index === 0) {
+            // move to other uncategorized
+            for (let action of $file.list(path)) {
+                $file.move({
+                    src: `${path}/${action}`,
+                    dst: `${this.userActionPath}/uncategorized/${action}`
+                })
+            }
+        }
+
+        $file.delete(path)
+        this.setNeedReload()
+
+        return true
+    }
+
+    addActionCategory() {
+        $input.text({
+            text: "",
+            placeholder: $l10n("CREATE_NEW_TYPE"),
+            handler: text => {
+                text = text.trim()
+                if (text === "") {
+                    $ui.toast($l10n("INVALID_VALUE"))
+                    return
+                }
+                const path = `${this.userActionPath}/${text}`
+                if ($file.isDirectory(path)) {
+                    $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
+                }
+                $file.mkdir(path)
+                $ui.success($l10n("SUCCESS"))
+                this.setNeedReload()
+            }
+        })
+    }
+
+    async renameActionCategory(category) {
+        let text = await $input.text({ text: category })
+        text = text.trim()
+        if (text === "") {
+            $ui.toast($l10n("INVALID_VALUE"))
+            return false
+        }
+        const oldPath = `${this.userActionPath}/${category}`
+        const path = `${this.userActionPath}/${text}`
+        if ($file.isDirectory(path)) {
+            $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
+            return false
+        }
+
+        $file.move({
+            src: oldPath,
+            dst: path
+        })
+        $ui.success($l10n("SUCCESS"))
+        this.setNeedReload()
+        return true
+    }
+
+    getActionCategorySection(category) {
         for (const i in this.actions) {
-            if (this.actions[i].dir === type) {
+            if (this.actions[i].dir === category) {
                 return i
             }
         }
         return null
     }
 
-    getActionOrder(type, must = false) {
-        const typePath = `${this.userActionPath}/${type}`
-        const orderPath = `${typePath}/${this.actionOrderFile}`
+    getActionOrder(category, must = false) {
+        const categoryPath = `${this.userActionPath}/${category}`
+        const orderPath = `${categoryPath}/${this.actionOrderFile}`
         if ($file.exists(orderPath)) {
             const order = JSON.parse($file.read(orderPath).string)
             const filtered = order.filter(action => {
-                if ($file.exists(`${typePath}/${action}`)) {
+                if ($file.exists(`${categoryPath}/${action}`)) {
                     return true
                 }
                 return false
             })
             if (filtered.length !== order.length) {
-                this.saveOrder(type, filtered)
+                this.saveOrder(category, filtered)
             }
             return filtered
         } else {
             if (must) {
                 const order = []
-                $file.list(typePath).forEach(item => {
+                $file.list(categoryPath).forEach(item => {
                     order.push(item)
                 })
                 return order
@@ -255,23 +349,23 @@ class ActionsData {
         }
     }
 
-    getActionPath(type, dir) {
-        return `${this.userActionPath}/${type}/${dir}`
+    getActionPath(category, dir) {
+        return `${this.userActionPath}/${category}/${dir}`
     }
 
-    getActionConfigString(type, dir) {
-        return $file.read(`${this.getActionPath(type, dir)}/config.json`).string
+    getActionConfigString(category, dir) {
+        return $file.read(`${this.getActionPath(category, dir)}/config.json`).string
     }
-    getActionConfig(type, dir) {
-        return JSON.parse(this.getActionConfigString(type, dir))
-    }
-
-    getActionMainJs(type, dir) {
-        return $file.read(`${this.getActionPath(type, dir)}/main.js`).string
+    getActionConfig(category, dir) {
+        return JSON.parse(this.getActionConfigString(category, dir))
     }
 
-    getActionReadme(type, dir) {
-        return $file.read(`${this.getActionPath(type, dir)}/README.md`).string
+    getActionMainJs(category, dir) {
+        return $file.read(`${this.getActionPath(category, dir)}/main.js`).string
+    }
+
+    getActionReadme(category, dir) {
+        return $file.read(`${this.getActionPath(category, dir)}/README.md`).string
     }
 
     initActionDirByName(name) {
@@ -282,19 +376,19 @@ class ActionsData {
         return this.allActions[name].dir
     }
 
-    getAction(type, dir, data) {
-        if (!$file.exists(this.getActionPath(type, dir))) {
+    getAction(category, dir, data) {
+        if (!$file.exists(this.getActionPath(category, dir))) {
             dir = this.initActionDirByName(dir)
         }
         try {
-            const script = this.getActionMainJs(type, dir)
+            const script = this.getActionMainJs(category, dir)
             const ss = new SecureScript(script)
             const MyAction = new Function("Action", "ActionEnv", "ActionData", `${ss.secure()}\n return MyAction`)(
                 Action,
                 ActionEnv,
                 ActionData
             )
-            const action = new MyAction(this.kernel, this.getActionConfig(type, dir), data)
+            const action = new MyAction(this.kernel, this.getActionConfig(category, dir), data)
             return action
         } catch (error) {
             this.kernel.logger.error(error)
@@ -302,10 +396,10 @@ class ActionsData {
         }
     }
 
-    getActionHandler(type, dir) {
+    getActionHandler(category, dir) {
         return async data => {
             try {
-                const action = this.getAction(type, dir, data)
+                const action = this.getAction(category, dir, data)
                 return await action.do()
             } catch (error) {
                 this.kernel.logger.error(error)
@@ -314,31 +408,31 @@ class ActionsData {
         }
     }
 
-    getActions(type) {
+    getActions(category) {
         const actions = []
-        const typePath = `${this.userActionPath}/${type}`
-        if (!$file.exists(typePath)) return []
+        const categoryPath = `${this.userActionPath}/${category}`
+        if (!$file.exists(categoryPath)) return []
         const pushAction = dir => {
-            const basePath = `${typePath}/${dir}/`
+            const basePath = `${categoryPath}/${dir}/`
             if ($file.isDirectory(basePath)) {
-                const config = this.getActionConfig(type, dir)
-                actions.push(Object.assign(config, { type, dir }))
+                const config = this.getActionConfig(category, dir)
+                actions.push(Object.assign(config, { category, dir }))
             }
         }
         // push 有顺序的 Action
-        const order = this.getActionOrder(type)
+        const order = this.getActionOrder(category)
         order.forEach(item => pushAction(item))
         // push 剩下的 Action
-        $file.list(typePath).forEach(item => {
+        $file.list(categoryPath).forEach(item => {
             if (order.indexOf(item) === -1) pushAction(item)
         })
         return actions
     }
 
-    getTypeTitle(type) {
-        const typeUpperCase = type.toUpperCase()
-        const l10n = $l10n(typeUpperCase)
-        const name = l10n === typeUpperCase ? type : l10n
+    getCategoryTitle(category) {
+        const categoryUpperCase = category.toUpperCase()
+        const l10n = $l10n(categoryUpperCase)
+        const name = l10n === categoryUpperCase ? category : l10n
         return name
     }
 
@@ -365,29 +459,45 @@ class ActionsData {
             data: $data({ string: data }),
             path: fullPath
         })
-        this.setNeedReload()
     }
 
-    saveActionInfo(info) {
+    changeCategory(from, to) {
+        $file.move({
+            src: `${this.userActionPath}/${from.category}/${from.dir}`,
+            dst: `${this.userActionPath}/${to.category}/${to.dir}`
+        })
+    }
+
+    saveActionInfo(from, to) {
+        if (from) {
+            if (from.category !== to.category) {
+                this.changeCategory(from, to)
+            }
+            this.updatePinActions(from, to)
+        }
+
         this.#saveFile(
             {
-                icon: info.icon,
-                color: info.color,
-                name: info.name
+                icon: to.icon,
+                color: to.color,
+                name: to.name
             },
-            info.type,
-            info.dir,
+            to.category,
+            to.dir,
             "config.json"
         )
-        this.#saveFile(info.readme, info.type, info.dir, "README.md")
+        this.#saveFile(to.readme, to.category, to.dir, "README.md")
+        this.setNeedReload(true)
     }
 
     saveMainJs(info, content) {
-        this.#saveFile(content, info.type, info.dir, "main.js")
+        this.#saveFile(content, info.category, info.dir, "main.js")
+        this.setNeedReload()
     }
 
-    saveOrder(type, order) {
-        this.#saveFile(JSON.stringify(order), type, this.actionOrderFile)
+    saveOrder(category, order) {
+        this.#saveFile(JSON.stringify(order), category, this.actionOrderFile)
+        this.setNeedReload()
     }
 
     move(from, to) {
@@ -395,7 +505,7 @@ class ActionsData {
 
         const fromSection = this.actions[from.section]
         let fromItems = fromSection.items
-        const fromType = fromSection.dir
+        const fromCategory = fromSection.dir
 
         const getOrder = items => {
             return items.map(item => item.dir)
@@ -407,27 +517,29 @@ class ActionsData {
             const from_i = from.item > to.item ? from.item + 1 : from.item
             fromItems.splice(to_i, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from_i)
-            this.saveOrder(fromType, getOrder(fromItems))
+            this.saveOrder(fromCategory, getOrder(fromItems))
         } else {
             const toSection = this.actions[to.section]
             const toItems = toSection.items
-            const toType = toSection.dir
+            const toCategory = toSection.dir
 
             toItems.splice(to.item, 0, fromItems[from.item]) // 在 to 位置插入元素
             fromItems = fromItems.filter((_, i) => i !== from.item) // 删除 from 位置元素
             // 跨 section 则同时移动 Action 目录
-            $file.move({
-                src: `${this.userActionPath}/${fromType}/${toItems[to.item].dir}`,
-                dst: `${this.userActionPath}/${toType}/${toItems[to.item].dir}`
-            })
-            this.saveOrder(toType, getOrder(toItems))
-            this.saveOrder(fromType, getOrder(fromItems))
+            const _fromItem = toItems[to.item]
+            const _toItem = Object.assign(JSON.parse(JSON.stringify(toItems[to.item])), { category: toCategory })
+            this.changeCategory(_fromItem, _toItem)
+            this.updatePinActions(_fromItem, _toItem)
+            // 代码顺序不能错
+            this.saveOrder(toCategory, getOrder(toItems))
+            this.saveOrder(fromCategory, getOrder(fromItems))
         }
+        this.setNeedReload()
     }
 
     delete(info) {
-        $file.delete(`${this.userActionPath}/${info.type}/${info.dir}`)
-        this.setNeedReload()
+        $file.delete(`${this.userActionPath}/${info.category}/${info.dir}`)
+        this.setNeedReload(true)
     }
 
     exists(name) {

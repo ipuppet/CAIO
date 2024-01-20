@@ -57,7 +57,10 @@
 "INFORMATION" = "信息";
 "NAME" = "名称";
 "ICON" = "图标";
-"TYPE" = "分类";
+"CATEGORY" = "分类";
+"EDIT_CATEGORY" = "编辑分类";
+"delete.category" = "删除分类 ${category}";
+"delete.category.keep.actions" = "是否保留该分类中的动作？";
 "DESCRIPTION" = "描述";
 "CODE" = "代码";
 "TEXT_INSETS" = "文本下边距";
@@ -85,6 +88,7 @@
 "UNABLE_CREATE_ACTION" = "无法创建动作";
 "ACTION_NAME_ALREADY_EXISTS" = "动作 `${name}` 已存在";
 "IMPORT_FROM_FILE" = "从文件导入";
+"DEIT_CATEGORY" = "编辑分类";
 
 "KEYBOARD" = "键盘";
 "KEYBOARD_HEIGHT" = "键盘高度";
@@ -103,6 +107,10 @@
 "SPACE" = "空格";
 "ALL_SCRIPTS" = "所有脚本";
 "SELECT_SCRIPTS" = "选择脚本";
+"FONT_SIZE" = "字体大小";
+"LIST" = "列表";
+"MATRIX" = "网格";
+"PIN_ACTION" = "置顶动作";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";
