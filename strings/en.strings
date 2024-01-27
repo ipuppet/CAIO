@@ -156,3 +156,18 @@
 
 "ACTION_RESET_NAME_WARNING" = "Action `${name}` is attempting to change its name to `${to_name}`, which may result in it gaining all permissions associated with `${to_name}`.";
 "ACTION_NETWORK_PERMISSION_MESSAGE" = "Would you like to grant Action `${name}` network permissions?";
+
+"Return" = "Return";
+"Go" = "Go";
+"Google" = "Google";
+"Join" = "Join";
+"Next" = "Next";
+"Route" = "Route";
+"Search" = "Search";
+"Send" = "Send";
+"Yahoo" = "Yahoo";
+"Done" = "Done";
+"Emergency Call" = "Emergency Call";
+"Continue" = "Continue";
+"Joining" = "Joining";
+"Route Continue" = "Route Continue";
