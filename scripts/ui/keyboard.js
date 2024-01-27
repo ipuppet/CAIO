@@ -163,7 +163,7 @@ class Keyboard extends Clips {
             default:
                 labelName = "Return"
         }
-        $cache.set("keyboard.returnKeyLabel", labelName)
+        $cache.set("keyboard.returnKeyLabel", $l10n(labelName))
         return labelName
     }
     get returnKeyLabelCache() {
