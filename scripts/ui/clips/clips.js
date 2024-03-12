@@ -149,7 +149,8 @@ class Clips extends ClipsData {
                     for (let i = 0; i < index; i++) {
                         height += this.itemSize[i]
                     }
-                    if (this.scrollToOffsetDirectionX) {
+                    height -= 5 // 防止完全对其
+                    if (this.views.scrollToOffsetDirectionX) {
                         listView.scrollToOffset($point(height, 0))
                     } else {
                         listView.scrollToOffset($point(0, height))

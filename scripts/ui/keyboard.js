@@ -42,8 +42,6 @@ class Keyboard extends Clips {
 
     keyboardFrameHeight = this.keyboardHeight
 
-    scrollToOffsetDirectionX = true
-
     get isFullScreenIpad() {
         if (!$device.isIpad) return false
 
@@ -100,6 +98,7 @@ class Keyboard extends Clips {
         }
 
         this.views.listId += "keyboard"
+        this.views.scrollToOffsetDirectionX = this.keyboardDisplayMode
         this.views.tabLeftMargin = 10
         this.views.horizontalMargin = 15 // 列表边距
         this.views.verticalMargin = 12 // 列表边距
