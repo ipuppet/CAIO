@@ -156,3 +156,18 @@
 
 "ACTION_RESET_NAME_WARNING" = "动作 `${name}` 正在尝试将名称改为 `${to_name}`，这可能导致其获取 `${to_name}` 的所有权限";
 "ACTION_NETWORK_PERMISSION_MESSAGE" = "是否允许动作 `${name}` 获取网络权限？";
+
+"Return" = "返回";
+"Go" = "前往";
+"Google" = "谷歌";
+"Join" = "加入";
+"Next" = "下一步";
+"Route" = "路线";
+"Search" = "搜索";
+"Send" = "发送";
+"Yahoo" = "雅虎";
+"Done" = "完成";
+"Emergency Call" = "紧急呼叫";
+"Continue" = "继续";
+"Joining" = "正在加入";
+"Route Continue" = "继续路线";

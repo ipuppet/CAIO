@@ -15,6 +15,7 @@ class ClipsViews {
     // 剪贴板个性化设置
     #singleLine = false
     #singleLineContentHeight = 0
+    scrollToOffsetDirectionX = false
     tabLeftMargin = 20 // tab 左边距
     horizontalMargin = 20 // 列表边距
     verticalMargin = 14 // 列表边距

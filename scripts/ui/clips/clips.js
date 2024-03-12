@@ -149,7 +149,8 @@ class Clips extends ClipsData {
                     for (let i = 0; i < index; i++) {
                         height += this.itemSize[i]
                     }
-                    if (this.scrollToOffsetDirectionX) {
+                    height -= 5 // 防止完全对其
+                    if (this.views.scrollToOffsetDirectionX) {
                         listView.scrollToOffset($point(height, 0))
                     } else {
                         listView.scrollToOffset($point(0, height))
@@ -202,7 +203,7 @@ class Clips extends ClipsData {
         if (oldCell) {
             oldCell.get("copied").hidden = true
         }
-        this.updateCopied(null)
+        this.updateCopied()
     }
 
     async readClipboard(manual = false) {
@@ -245,13 +246,13 @@ class Clips extends ClipsData {
                 this.setCopied(res.uuid)
             } else {
                 this.switchTab(1, true) // clips
-                const data = this.add(text)
+                const data = await this.add(text)
                 this.setCopied(data.uuid)
             }
         }
     }
 
-    add(item, updateUI = true) {
+    async add(item, updateUI = true) {
         try {
             const data = super.addItem(item)
 
@@ -259,6 +260,8 @@ class Clips extends ClipsData {
 
             // 先修改背景，让 list 显示出来
             this.updateListBackground()
+
+            await $wait(0.1) // 直接操作可能造成键盘 matrix 闪退
 
             // 在列表中插入行
             $(this.views.listId).insert({
@@ -276,7 +279,7 @@ class Clips extends ClipsData {
             super.deleteItem(uuid)
             // 删除剪切板信息
             if (this.copied.uuid === uuid) {
-                this.updateCopied(null)
+                this.updateCopied()
                 $clipboard.clear()
             }
 
