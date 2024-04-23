@@ -85,7 +85,7 @@ class AppUI {
         // render()
         // return
 
-        if (!UIKit.isTaio && this.kernel.setting.get("mainUIDisplayMode") === 0) {
+        if (UIKit.isTaio || this.kernel.setting.get("mainUIDisplayMode") === 0) {
             this.kernel.useJsboxNav()
             this.kernel.setting.useJsboxNav()
             this.kernel.setNavButtons([
