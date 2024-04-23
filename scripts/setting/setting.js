@@ -1,21 +1,28 @@
-const { SettingInfo, SettingScript, SettingTab } = require("../libs/easy-jsbox")
+const { UIKit, SettingInfo, SettingScript, SettingTab } = require("../libs/easy-jsbox")
 
 const generalSection = require("./general/general")
 const experimentalSection = require("./experimental/experimental")
 
 const displaySection = {
     items: [
-        new SettingTab({
-            icon: ["rectangle.topthird.inset.filled", "#A569BD"],
-            title: "DISPLAY_MODE",
-            key: "mainUIDisplayMode",
-            value: 0
-        }).with({ items: ["CLASSIC", "MODERN"] }),
         new SettingScript({
             icon: ["folder.fill", "#FF9900"],
             title: "FILE_MANAGEMENT"
         }).with({ script: "this.method.fileManager" })
-    ]
+    ].concat(
+        UIKit.isTaio
+            ? []
+            : [
+                  new SettingTab({
+                      icon: ["rectangle.topthird.inset.filled", "#A569BD"],
+                      title: "DISPLAY_MODE",
+                      key: "mainUIDisplayMode",
+                      value: 0
+                  })
+                      .with({ items: ["CLASSIC", "MODERN"] })
+                      .onSet(() => $delay(0.3, () => $addin.restart()))
+              ]
+    )
 }
 
 const aboutSection = {

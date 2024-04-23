@@ -25,11 +25,6 @@ class AppUI {
             actions: { icon: "command", title: $l10n("ACTIONS") },
             setting: { icon: "gear", title: $l10n("SETTING") }
         }
-        this.kernel.setting.setEvent("onSet", key => {
-            if (key === "mainUIDisplayMode") {
-                $delay(0.3, () => (UIKit.isTaio ? $actions.restart() : $addin.restart()))
-            }
-        })
 
         // this.kernel.useJsboxNav()
         // this.kernel.setting.useJsboxNav()
@@ -90,7 +85,7 @@ class AppUI {
         // render()
         // return
 
-        if (this.kernel.setting.get("mainUIDisplayMode") === 0) {
+        if (!UIKit.isTaio && this.kernel.setting.get("mainUIDisplayMode") === 0) {
             this.kernel.useJsboxNav()
             this.kernel.setting.useJsboxNav()
             this.kernel.setNavButtons([

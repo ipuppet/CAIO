@@ -132,38 +132,16 @@ class Clips extends ClipsData {
     }
 
     updateCopied(copied = null) {
-        const oldCopied = this.copied?.uuid
-        const listView = $(this.views.listId)
-        const hideOld = () => {
-            const oldCell = listView.cell($indexPath(0, this.getIndexByUUID(oldCopied)))
+        const oldUuid = this.copied?.uuid // 防止延迟执行导致的数据错误
+        $delay(0, () => {
+            const listView = $(this.views.listId)
+            const oldCell = listView.cell($indexPath(0, this.getIndexByUUID(oldUuid)))
             if (oldCell) {
                 oldCell.get("copied").hidden = true
             }
-        }
-        $delay(0.3, () => {
-            try {
-                hideOld()
-                if (copied) {
-                    const index = this.getIndexByUUID(copied.uuid)
-                    let height = 0
-                    for (let i = 0; i < index; i++) {
-                        height += this.itemSize[i]
-                    }
-                    height -= 5 // 防止完全对其
-                    if (this.views.scrollToOffsetDirectionX) {
-                        listView.scrollToOffset($point(height, 0))
-                    } else {
-                        listView.scrollToOffset($point(0, height))
-                    }
-                    $delay(0.3, () => {
-                        listView.cell($indexPath(0, index)).get("copied").hidden = false
-                        hideOld()
-                    })
-                }
-                // 必须放在后面，否则不生效，原因未知
-            } catch (error) {
-                this.kernel.logger.error("set copied error")
-                this.kernel.logger.error(error)
+            if (copied) {
+                const index = this.getIndexByUUID(copied.uuid)
+                listView.cell($indexPath(0, index)).get("copied").hidden = false
             }
         })
 
@@ -182,17 +160,29 @@ class Clips extends ClipsData {
      * @param {boolean} isUpdateIndicator
      * @returns
      */
-    setCopied(uuid) {
-        if (!uuid || (uuid === this.copied.uuid && this.tabIndex === this.copied?.tabIndex)) {
-            return
-        }
-
+    setCopied(uuid, animate = true) {
         let copied = {}
         if (this.copied.uuid !== uuid) {
             copied = this.getClip(uuid) ?? {}
         }
         copied.tabIndex = this.tabIndex
 
+        if (animate) {
+            $delay(0.3, () => {
+                const listView = $(this.views.listId)
+                const index = this.getIndexByUUID(copied.uuid)
+                let height = 0
+                for (let i = 0; i < index; i++) {
+                    height += this.itemSize[i]
+                }
+                height -= 5 // 防止完全对其
+                if (this.views.scrollToOffsetDirectionX) {
+                    listView.scrollToOffset($point(height, 0))
+                } else {
+                    listView.scrollToOffset($point(0, height))
+                }
+            })
+        }
         this.updateCopied(copied)
         this.setClipboardText(copied.text)
     }
@@ -214,6 +204,8 @@ class Clips extends ClipsData {
             if (!manual && !this.isPasteboardChanged) {
                 return
             }
+
+            this.clearCopied()
 
             // 仅手动模式下保存图片
             if ($clipboard.images?.length > 0) {
@@ -242,6 +234,9 @@ class Clips extends ClipsData {
             }
             if (this.exists(text)) {
                 const res = this.kernel.storage.getByText(text)
+                if (!res.uuid || (res.uuid === this.copied?.uuid && this.tabIndex === this.copied?.tabIndex)) {
+                    return
+                }
                 this.switchTab(this.tabItemsMap[res.section], true)
                 this.setCopied(res.uuid)
             } else {
@@ -336,7 +331,7 @@ class Clips extends ClipsData {
         if (clip.image) {
             $clipboard.image = clip.imageOriginal
         } else {
-            this.setCopied(uuid)
+            this.setCopied(uuid, false)
         }
         // 将被复制的行移动到最前端
         if (this.tabIndex !== 0) {
