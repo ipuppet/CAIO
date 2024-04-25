@@ -154,6 +154,23 @@ class Clips extends ClipsData {
         $cache.set("clips.copied", this.copied)
     }
 
+    focusAnimation(uuid) {
+        $delay(0.3, () => {
+            const listView = $(this.views.listId)
+            const index = this.getIndexByUUID(uuid)
+            let height = 0
+            for (let i = 0; i < index; i++) {
+                height += this.itemSize[i]
+            }
+            height -= 5 // 防止完全对其
+            if (this.views.scrollToOffsetDirectionX) {
+                listView.scrollToOffset($point(height, 0))
+            } else {
+                listView.scrollToOffset($point(0, height))
+            }
+        })
+    }
+
     /**
      * 将元素标记为 copied
      * @param {string} uuid
@@ -164,27 +181,16 @@ class Clips extends ClipsData {
         let copied = {}
         if (this.copied.uuid !== uuid) {
             copied = this.getClip(uuid) ?? {}
+            this.setClipboardText(copied.text)
+            this.isPasteboardChanged // 更新缓存
         }
         copied.tabIndex = this.tabIndex
 
-        if (animate) {
-            $delay(0.3, () => {
-                const listView = $(this.views.listId)
-                const index = this.getIndexByUUID(copied.uuid)
-                let height = 0
-                for (let i = 0; i < index; i++) {
-                    height += this.itemSize[i]
-                }
-                height -= 5 // 防止完全对其
-                if (this.views.scrollToOffsetDirectionX) {
-                    listView.scrollToOffset($point(height, 0))
-                } else {
-                    listView.scrollToOffset($point(0, height))
-                }
-            })
-        }
         this.updateCopied(copied)
-        this.setClipboardText(copied.text)
+
+        if (animate) {
+            this.focusAnimation(uuid)
+        }
     }
 
     clearCopied() {
@@ -202,10 +208,9 @@ class Clips extends ClipsData {
 
             // 剪切板没有变化则直接退出
             if (!manual && !this.isPasteboardChanged) {
+                this.kernel.logger.info("clipboard no change")
                 return
             }
-
-            this.clearCopied()
 
             // 仅手动模式下保存图片
             if ($clipboard.images?.length > 0) {
@@ -230,15 +235,14 @@ class Clips extends ClipsData {
                 if (manual) {
                     $ui.toast($l10n("CLIPBOARD_NO_CHANGE"))
                 }
+                this.switchTab(this.tabItemsMap[this.copied.section], true)
+                this.focusAnimation(this.copied.uuid)
                 return
             }
             if (this.exists(text)) {
-                const res = this.kernel.storage.getByText(text)
-                if (!res.uuid || (res.uuid === this.copied?.uuid && this.tabIndex === this.copied?.tabIndex)) {
-                    return
-                }
-                this.switchTab(this.tabItemsMap[res.section], true)
-                this.setCopied(res.uuid)
+                const clip = this.kernel.storage.getByText(text)
+                this.switchTab(this.tabItemsMap[clip.section], true)
+                this.setCopied(clip.uuid)
             } else {
                 this.switchTab(1, true) // clips
                 const data = await this.add(text)

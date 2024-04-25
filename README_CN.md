@@ -1,7 +1,7 @@
 # CAIO
 
 > Clipboard all in one.
-> 
+>
 > A Clipboard tool based on JSBox.
 
 [查看我的博客](https://blog.ultagic.com/#/detail/42/)
@@ -29,7 +29,6 @@ npm run build
 - 长按列表弹出的 `Action` 菜单处理的数据为被选中的内容
 - 编辑器中顶部 `Action` 按钮（闪电图形按钮）处理的数据为正在编辑的所有内容
 
-
 ## Today Widget
 
 > 点击复制，长按触发动作。
@@ -41,11 +40,10 @@ npm run build
 > 通过 WebDAV 同步数据
 
 示例配置:  
-Host: https://example.com/dav  
-User: guest  
-Password: password123  
-Bast Path: /path/to/save/appdata
-
+Host: `https://example.com/dav`  
+User: `guest`  
+Password: `password123`  
+Bast Path: `/path/to/save/appdata`
 
 ## 快捷指令
 
