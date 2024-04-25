@@ -85,13 +85,12 @@ class ClipsData {
 
     get isPasteboardChanged() {
         const changeCount = this.pasteboard.$changeCount()
-
         const cache = $cache.get("clipboard.changeCount")
-        $cache.set("clipboard.changeCount", changeCount)
-
         if (cache === changeCount) {
             return false
         }
+
+        $cache.set("clipboard.changeCount", changeCount)
 
         return true
     }

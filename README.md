@@ -1,7 +1,7 @@
 # CAIO
 
 > Clipboard all in one.
-> 
+>
 > A Clipboard tool based on JSBox.
 
 [See My Blog](https://blog.ultagic.com/#/detail/42/)
@@ -29,7 +29,6 @@ You can also use the packaged files directly [dist/CAIO-en.json](./dist/CAIO-en.
 - The data processed by the `Action` menu that pops up by long-pressing the list is the selected content.
 - The data processed by the `Action` button in the editor is whatever is being edited.
 
-
 ## Today Widget
 
 > Click to copy, long press to trigger the action.
@@ -41,16 +40,16 @@ Please try to avoid using the Today Widget when JSBox is running CAIO.
 > Sync data with WebDAV.
 
 Config Example:  
-Host: https://example.com/dav  
-User: guest  
-Password: password123  
-Bast Path: /path/to/save/appdata
+Host: `https://example.com/dav`  
+User: `guest`  
+Password: `password123`  
+Bast Path: `/path/to/save/appdata`
 
 ## Shortcuts
 
 Please add a new action called `Run JSBox script` and set the `Name` parameter to `CAIO`.
 
-Next, set the `Parameter Dictionary` to a `Dictionary`. 
+Next, set the `Parameter Dictionary` to a `Dictionary`.
 
 | Parameter | Type   |
 | --------- | ------ |
