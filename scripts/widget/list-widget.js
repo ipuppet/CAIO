@@ -2,15 +2,15 @@
  * @typedef {import("../dao/storage")} Storage
  * @typedef {import("../libs/easy-jsbox").Setting} Setting
  */
-class ClipboardWidget {
+class ListWidget {
     /**
      * @param {Setting} setting
      * @param {Storage} storage
      */
-    constructor({ setting, storage } = {}) {
+    constructor({ setting, storage, source, label } = {}) {
         this.setting = setting
         this.storage = storage
-        this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}&widget=${this.widget}`
+        this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}`
         this.urlScheme = {
             clips: this.baseUrlScheme,
             add: `${this.baseUrlScheme}&add=1`,
@@ -23,11 +23,14 @@ class ClipboardWidget {
             tipTextColor: "orange" // 2x2加号和计数大小
         }
         this.padding = 15
+        this.label = label
 
-        this.savedClipboard = this.storage.sort(this.storage.all("clips"))
+        this.rawData = this.storage.sort(this.storage.all(source))
+        this.rawDataLength = this.rawData.length
     }
 
     get maxLength() {
+        // require this.ctx, this.render()
         switch (this.ctx.family) {
             case 0:
                 return 1
@@ -36,6 +39,11 @@ class ClipboardWidget {
             case 2:
                 return 10
         }
+    }
+
+    get data() {
+        // require this.maxLength
+        return this.rawData.slice(0, this.maxLength)
     }
 
     view2x2() {
@@ -94,7 +102,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 font: $font("bold", this.viewStyle.topItemSize),
-                                text: String(this.savedClipboard.length)
+                                text: String(this.rawDataLength)
                             }
                         }
                     ]
@@ -119,7 +127,7 @@ class ClipboardWidget {
                         {
                             type: "text",
                             props: {
-                                text: this.savedClipboard[0] ? this.savedClipboard[0].text : "",
+                                text: this.data[0] ? this.data[0].text : "",
                                 font: $font(12)
                             }
                         }
@@ -162,7 +170,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 font: $font("bold", this.viewStyle.topItemSize),
-                                text: String(this.savedClipboard.length)
+                                text: String(this.rawDataLength)
                             }
                         },
                         {
@@ -170,7 +178,7 @@ class ClipboardWidget {
                             type: "text",
                             props: {
                                 color: $color(this.viewStyle.tipTextColor),
-                                text: $l10n("CLIPS"),
+                                text: this.label,
                                 font: $font("bold", 16)
                             }
                         }
@@ -178,7 +186,7 @@ class ClipboardWidget {
                 },
                 {
                     type: "spacer",
-                    props: { frame: { maxWidth: this.savedClipboard.length > 0 ? 25 : Infinity } }
+                    props: { frame: { maxWidth: this.data.length > 0 ? 25 : Infinity } }
                 },
                 {
                     // 右侧
@@ -194,8 +202,8 @@ class ClipboardWidget {
                     views: (() => {
                         const result = []
                         const height = (this.ctx.displaySize.height - this.padding) / this.maxLength
-                        this.savedClipboard.map((item, i) => {
-                            if (i !== 0 && i !== 5) {
+                        this.data.map((item, i) => {
+                            if (i !== 0 && i !== this.maxLength) {
                                 result.push({ type: "divider" })
                             }
                             result.push({
@@ -221,7 +229,7 @@ class ClipboardWidget {
     }
 
     view4x4() {
-        return this.view2x2()
+        return this.view2x4()
     }
 
     render() {
@@ -259,4 +267,4 @@ class ClipboardWidget {
     }
 }
 
-module.exports = { Widget: ClipboardWidget }
+module.exports = ListWidget

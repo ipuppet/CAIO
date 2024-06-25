@@ -1,6 +1,14 @@
 [
     {
-        "name": "剪切板",
-        "value": "Clipboard"
+        "name": "Clips",
+        "value": "Clips"
+    },
+    {
+        "name": "Favorite",
+        "value": "Favorite"
+    },
+    {
+        "name": "Actions",
+        "value": "Actions"
     }
 ]

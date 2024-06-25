@@ -1,9 +1,22 @@
-const { Logger, Setting } = require("./libs/easy-jsbox")
-const SettingStructure = require("./setting/setting")
-const { Storage } = require("./dao/storage")
+const { Logger } = require("./libs/easy-jsbox")
 const { AppKernelBase } = require("./app")
 
+/**
+ * @typedef {AppKernel} AppKernel
+ */
+class AppKernel extends AppKernelBase {
+    constructor() {
+        super()
+
+        this.logger = new Logger()
+        this.logger.printToFile(this.fileStorage, "logs/widget.log")
+        this.setting.setReadonly()
+    }
+}
+
 class Widget {
+    static kernel = new AppKernel()
+
     static widgetInstance(widget, ...data) {
         if ($file.exists(`/scripts/widget/${widget}.js`)) {
             const { Widget } = require(`./widget/${widget}.js`)
@@ -11,25 +24,6 @@ class Widget {
         } else {
             return false
         }
-    }
-
-    static kernel() {
-        const logger = new Logger()
-        logger.printToFile(AppKernelBase.fileStorage, "logs/widget.log")
-        const kernel = {
-            setting: new Setting({
-                fileStorage: AppKernelBase.fileStorage,
-                structure: SettingStructure
-            }),
-            fileStorage: AppKernelBase.fileStorage,
-            logger
-        }
-        kernel.setting.setReadonly()
-
-        const storage = new Storage(kernel)
-        kernel.storage = storage
-
-        return kernel
     }
 
     static renderError() {
@@ -43,17 +37,34 @@ class Widget {
         })
     }
 
-    static renderClipboard() {
-        const widget = Widget.widgetInstance("Clipboard", Widget.kernel())
+    static renderClips() {
+        const widget = Widget.widgetInstance("Clips", Widget.kernel)
         widget.render()
     }
 
-    static render(widgetName = $widget.inputValue) {
-        widgetName = widgetName ?? "Clipboard"
-        if (widgetName === "Clipboard") {
-            Widget.renderClipboard()
-        } else {
-            Widget.renderError()
+    static renderFavorite() {
+        const widget = Widget.widgetInstance("Favorite", Widget.kernel)
+        widget.render()
+    }
+
+    static renderActions() {
+        const widget = Widget.widgetInstance("Actions", Widget.kernel)
+        widget.render()
+    }
+
+    static render(widgetName = $widget.inputValue ?? "Actions") {
+        switch (widgetName) {
+            case "Clips":
+                Widget.renderClips()
+                break
+            case "Favorite":
+                Widget.renderFavorite()
+                break
+            case "Actions":
+                Widget.renderActions()
+                break
+            default:
+                Widget.renderError()
         }
     }
 }
