@@ -31,6 +31,7 @@ switch ($app.env) {
         break
 }
 
+// AppInstance = require("./scripts/widget")
 if (AppInstance) {
     AppInstance.run()
 }
