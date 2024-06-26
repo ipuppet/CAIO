@@ -40,7 +40,7 @@ const aboutSection = {
         new SettingInfo({
             icon: ["person.fill", "#FF9900"],
             title: "AUTHOR",
-            value: ["Blog", "https://blog.ultagic.com"]
+            value: ["ipuppet", "https://blog.ultagic.com"]
         }),
         new SettingScript({
             icon: "arrow.2.circlepath",
