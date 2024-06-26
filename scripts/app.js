@@ -48,7 +48,7 @@ class AppKernelBase extends Kernel {
     }
 
     get isWebdavEnabled() {
-        return this.kernel.setting.get("webdav.status")
+        return this.setting.get("webdav.status")
     }
 
     initComponents() {
