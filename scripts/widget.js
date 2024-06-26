@@ -10,6 +10,7 @@ class AppKernel extends AppKernelBase {
 
         this.logger = new Logger()
         this.logger.printToFile(this.fileStorage, "logs/widget.log")
+
         this.setting.setReadonly()
     }
 }
