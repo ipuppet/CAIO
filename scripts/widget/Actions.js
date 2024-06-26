@@ -39,6 +39,33 @@ class ActionsWidget {
         return this.baseUrlScheme + `&runAction=${$text.base64Encode(JSON.stringify(action))}`
     }
 
+    getIcon(action, size) {
+        const view = {
+            type: "image",
+            props: {
+                color: $color("#ffffff"),
+                frame: {
+                    width: size,
+                    height: size
+                }
+            }
+        }
+        if (action.icon.startsWith("icon_")) {
+            // TODO: 优化 icon_ 的处理
+            // view.props.image = $icon(
+            //     action.icon?.slice(5, action.icon.indexOf(".")),
+            //     $color("#ffffff"),
+            //     $size(size, size)
+            // )
+        } else if (action.icon.indexOf("/") > -1) {
+            view.props.image = $image(action.icon)
+        } else {
+            view.props.symbol = action.icon
+        }
+
+        return view
+    }
+
     view2x2() {
         const action = this.data[0]
         return {
@@ -162,18 +189,7 @@ class ActionsWidget {
                                     }
                                 }
                             ],
-                            views: [
-                                {
-                                    type: "image",
-                                    props: {
-                                        symbol: {
-                                            glyph: action.icon,
-                                            size: (itemHeight - 5) * 0.6
-                                        },
-                                        color: $color("#ffffff")
-                                    }
-                                }
-                            ]
+                            views: [this.getIcon(action, (itemHeight - 5) * 0.6)]
                         },
                         {
                             type: "spacer",
