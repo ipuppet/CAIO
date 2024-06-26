@@ -27,6 +27,7 @@ class ActionsData {
         // checkUserAction
         this.checkUserAction()
         // sync
+        this.initWebdavSync()
         this.sync()
     }
 
@@ -47,10 +48,6 @@ class ActionsData {
         $cache.get("caio.action.isNew", isNew)
     }
 
-    get isEnableWebDavSync() {
-        return this.kernel.setting.get("webdav.status")
-    }
-
     #initActions() {
         this.#actions = this.getActionCategories().map(category => {
             return {
@@ -67,30 +64,6 @@ class ActionsData {
             })
         )
         this.kernel.logger.info(`init actions`)
-    }
-
-    updatePinActions(from, to) {
-        KeyboardPinActions.shared.setKernel(this.kernel).updateAction(from, to)
-        TodayPinActions.shared.setKernel(this.kernel).updateAction(from, to)
-    }
-
-    setNeedReload(animate) {
-        this.#actions = undefined
-        this.#allActions = undefined
-
-        // 通知更新 UI
-        this.applySnapshotAnimatingDifferences(animate)
-
-        if (!this.isEnableWebDavSync) return
-        try {
-            this.webdavSync.needUpload()
-        } catch (error) {
-            $ui.alert({
-                title: $l10n("ALERT"),
-                message: $l10n("WEBDAV_ERROR_CLOSED")
-            })
-            this.kernel.setting.set("webdav.status", false)
-        }
     }
 
     importExampleAction() {
@@ -123,14 +96,6 @@ class ActionsData {
             })
         }
         this.setNeedReload()
-    }
-
-    actionToString(category, dir) {
-        return JSON.stringify({
-            config: this.getActionConfigString(category, dir),
-            main: this.getActionMainJs(category, dir),
-            readme: this.getActionReadme(category, dir)
-        })
     }
 
     exportAction(action) {
@@ -187,38 +152,72 @@ class ActionsData {
         }
     }
 
-    getLocalSyncDate() {
-        const localSyncDate = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
-        return new Date(localSyncDate.timestamp)
-    }
-
-    async sync() {
-        if (!this.isEnableWebDavSync) return
-        if (!this.webdavSync) {
-            try {
-                this.webdavSync = new WebDavSyncAction({
-                    kernel: this.kernel,
-                    host: this.kernel.setting.get("webdav.host"),
-                    user: this.kernel.setting.get("webdav.user"),
-                    password: this.kernel.setting.get("webdav.password"),
-                    basepath: this.kernel.setting.get("webdav.basepath")
-                })
-                await this.webdavSync.init()
-            } catch (error) {
-                this.kernel.logger.error(`${error}\n${error.stack}`)
-                throw error
-            }
-        } else {
-            this.webdavSync.sync()
-        }
-    }
-
     checkUserAction() {
         if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
             $file.mkdir(this.userActionPath)
             this.isNew = false
             this.importExampleAction()
         }
+    }
+
+    getLocalSyncDate() {
+        const localSyncDate = JSON.parse($file.read(this.localSyncFile)?.string ?? "{}")
+        return new Date(localSyncDate.timestamp)
+    }
+
+    async initWebdavSync() {
+        if (!this.kernel.isWebdavEnabled) return
+
+        try {
+            this.webdavSync = new WebDavSyncAction({
+                kernel: this.kernel,
+                host: this.kernel.setting.get("webdav.host"),
+                user: this.kernel.setting.get("webdav.user"),
+                password: this.kernel.setting.get("webdav.password"),
+                basepath: this.kernel.setting.get("webdav.basepath")
+            })
+            await this.webdavSync.init()
+        } catch (error) {
+            this.kernel.logger.error(`${error}\n${error.stack}`)
+            throw error
+        }
+    }
+
+    setNeedReload(animate) {
+        this.#actions = undefined
+        this.#allActions = undefined
+
+        // 通知更新 UI
+        this.applySnapshotAnimatingDifferences(animate)
+
+        if (!this.webdavSync) return
+        try {
+            this.webdavSync.needUpload()
+        } catch (error) {
+            $ui.alert({
+                title: $l10n("ALERT"),
+                message: $l10n("WEBDAV_ERROR_CLOSED")
+            })
+            this.kernel.setting.set("webdav.status", false)
+        }
+    }
+
+    async sync() {
+        if (!this.webdavSync) return
+        this.webdavSync.sync()
+    }
+
+    updatePinActions(from, to) {
+        KeyboardPinActions.shared.setKernel(this.kernel).updateAction(from, to)
+        TodayPinActions.shared.setKernel(this.kernel).updateAction(from, to)
+    }
+
+    actionToString(category, dir) {
+        return JSON.stringify({
+            config: this.getActionConfigString(category, dir),
+            main: this.getActionMainJs(category, dir),
+            readme: this.getActionReadme(category, dir)
+        })
     }
 
     defaultCategories() {

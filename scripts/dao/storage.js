@@ -123,7 +123,7 @@ class Storage {
     }
 
     async initWebdavSync() {
-        if (!this.kernel.setting.get("webdav.status")) return
+        if (!this.kernel.isWebdavEnabled) return
 
         try {
             this.webdavSync = new WebDavSyncClip({
