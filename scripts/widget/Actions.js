@@ -60,7 +60,10 @@ class ActionsWidget {
         } else if (action.icon.indexOf("/") > -1) {
             view.props.image = $image(action.icon)
         } else {
-            view.props.symbol = action.icon
+            view.props.symbol = {
+                glyph: action.icon,
+                size: size
+            }
         }
 
         return view
@@ -97,10 +100,7 @@ class ActionsWidget {
                                     }
                                 },
                                 {
-                                    cornerRadius: {
-                                        value: 10,
-                                        style: 1 // 0: circular, 1: continuous
-                                    }
+                                    cornerRadius: 10
                                 }
                             ],
                             views: [
@@ -109,7 +109,7 @@ class ActionsWidget {
                                     props: {
                                         symbol: {
                                             glyph: action.icon,
-                                            size: 32
+                                            size: 50 * 0.6
                                         },
                                         color: $color("#ffffff")
                                     }
@@ -183,10 +183,7 @@ class ActionsWidget {
                                     }
                                 },
                                 {
-                                    cornerRadius: {
-                                        value: 10,
-                                        style: 1 // 0: circular, 1: continuous
-                                    }
+                                    cornerRadius: 10
                                 }
                             ],
                             views: [this.getIcon(action, (itemHeight - 5) * 0.6)]

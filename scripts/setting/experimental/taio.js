@@ -9,14 +9,10 @@ module.exports = new SettingScript({
             title: $l10n("ADD_TO_TAIO"),
             message: $l10n("SELECT_TAIO_APP")
         })
-        let version = "en"
-        if ($device.info.language.includes("zh")) {
-            version = "zh-Hans"
-        }
         $share.sheet([
             {
-                name: `CAIO-${version}.json`,
-                data: $file.read(`dist/CAIO-${version}.json`)
+                name: `CAIO.json`,
+                data: $file.read(`dist/CAIO.json`)
             }
         ])
     }

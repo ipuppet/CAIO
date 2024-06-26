@@ -1,7 +1,7 @@
 # CAIO
 
 > Clipboard all in one.  
-> A Clipboard tool based on JSBox.
+> An iOS clipboard tool based on JSBox.
 
 [See My Blog](https://blog.ultagic.com/#/detail/42/)
 
@@ -16,7 +16,7 @@ npm i -g parcel
 npm run build
 ```
 
-You can also use the packaged files directly [dist/CAIO-en.json](./dist/CAIO-en.json).
+You can also use the packaged files directly [dist/CAIO.json](./dist/CAIO.json).
 
 ## Actions
 
@@ -42,7 +42,7 @@ Config Example:
 Host: `https://example.com/dav`  
 User: `guest`  
 Password: `password123`  
-Bast Path: `/path/to/save/appdata`
+Base Path: `/path/to/save`
 
 ## Shortcuts
 
