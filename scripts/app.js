@@ -48,10 +48,6 @@ class AppKernelBase extends Kernel {
     }
 
     get isWebdavEnabled() {
-        if ($app.env === $env.widget) {
-            // 在小组件中不启用 WebDAV
-            return false
-        }
         return this.kernel.setting.get("webdav.status")
     }
 

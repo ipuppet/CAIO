@@ -11,8 +11,12 @@ class AppKernel extends AppKernelBase {
         this.logger = new Logger()
         this.logger.printToFile(this.fileStorage, "logs/widget.log")
 
-        this.setting.set("webdav.status", false)
         this.setting.setReadonly()
+    }
+
+    get isWebdavEnabled() {
+        // 在小组件中不启用 WebDAV
+        return false
     }
 }
 

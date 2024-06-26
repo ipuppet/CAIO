@@ -1,7 +1,7 @@
 # CAIO
 
 > Clipboard all in one.  
-> A Clipboard tool based on JSBox.
+> An iOS clipboard tool based on JSBox.
 
 [查看我的博客](https://blog.ultagic.com/#/detail/42/)
 
@@ -16,7 +16,7 @@ npm i -g parcel
 npm run build
 ```
 
-您也可以直接使用已打包好的文件 [dist/CAIO-zh-Hans.json](./dist/CAIO-zh-Hans.json)
+您也可以直接使用已打包好的文件 [dist/CAIO.json](./dist/CAIO.json)
 
 ## Actions
 
@@ -42,7 +42,7 @@ npm run build
 Host: `https://example.com/dav`  
 User: `guest`  
 Password: `password123`  
-Bast Path: `/path/to/save/appdata`
+Base Path: `/path/to/save`
 
 ## 快捷指令
 

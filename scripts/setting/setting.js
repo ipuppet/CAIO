@@ -28,12 +28,12 @@ const displaySection = {
 const aboutSection = {
     items: [
         new SettingInfo({
-            icon: ["/assets/icon/github.com.jpeg", "white"],
+            icon: ["icon_177", "black"],
             title: "Github",
             value: ["ipuppet/CAIO", "https://github.com/ipuppet/CAIO"]
         }),
         new SettingInfo({
-            icon: ["/assets/icon/telegram.png", "white"],
+            icon: ["icon_172", "#1888bf"],
             title: "Telegram",
             value: ["JSBoxTG", "https://t.me/JSBoxTG"]
         }),

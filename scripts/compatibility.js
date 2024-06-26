@@ -131,7 +131,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 12
+    version = 13
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -280,6 +280,16 @@ class VersionActions {
         if (isTaio) {
             this.compatibility.deleteFiles(["shared://caio", "storage"])
         }
+    }
+
+    ver13() {
+        this.compatibility.deleteFiles([
+            "setting.json",
+            "dist/CAIO-en.json",
+            "dist/CAIO-zh-Hans.json",
+            "dist/CAIO.js",
+            "assets/icon"
+        ])
     }
 }
 
