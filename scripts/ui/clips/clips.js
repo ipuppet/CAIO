@@ -82,6 +82,18 @@ class Clips extends ClipsData {
     }
 
     async checkUrlScheme() {
+        // actions widget
+        if ($context.query["runAction"]) {
+            const data = JSON.parse($text.base64Decode($context.query["runAction"]))
+            const action = this.kernel.actions.getAction(
+                data.category,
+                data.dir,
+                new ActionData({ env: ActionEnv.widget })
+            )
+            action.do()
+            return
+        }
+        // clips widget
         if ($context.query["copy"]) {
             const uuid = $context.query["copy"]
             this.setCopied(uuid)
@@ -94,16 +106,6 @@ class Clips extends ClipsData {
             } else {
                 this.kernel.tabBarController.switchPageTo("actions")
             }
-        } else if ($context.query["runAction"]) {
-            $delay(0, () => {
-                const data = JSON.parse($text.base64Decode($context.query["runAction"]))
-                const action = this.kernel.actions.getAction(
-                    data.category,
-                    data.dir,
-                    new ActionData({ env: ActionEnv.widget })
-                )
-                action.do()
-            })
         }
     }
 
@@ -123,7 +125,7 @@ class Clips extends ClipsData {
         if (UIKit.isTaio) return
 
         // check url scheme
-        this.checkUrlScheme()
+        $delay(0, () => this.checkUrlScheme())
 
         this.appListen()
     }
