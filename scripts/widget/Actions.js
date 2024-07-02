@@ -215,7 +215,7 @@ class ActionsWidget {
                         },
                         {
                             type: "spacer",
-                            props: { frame: { maxWidth: 15 } }
+                            props: { frame: { maxWidth: innerPadding * 1.5 } }
                         },
                         {
                             type: "text",
