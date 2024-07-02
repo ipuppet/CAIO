@@ -168,12 +168,10 @@ class ActionsWidget {
                 const action = actions[i + j]
                 row.push({
                     type: "hstack",
-                    props: {
-                        spacing: 0,
-                        link: this.getUrlScheme(action)
-                    },
+                    props: { spacing: 0 },
                     modifiers: [
                         {
+                            link: this.getUrlScheme(action),
                             background: $color({
                                 light: $rgb(245, 245, 245),
                                 dark: $rgba(80, 80, 80, 0.3),
