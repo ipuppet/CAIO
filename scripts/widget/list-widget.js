@@ -50,6 +50,7 @@ class ListWidget {
         return {
             type: "vstack",
             props: {
+                background: $color("primarySurface"),
                 alignment: $widget.horizontalAlignment.leading,
                 spacing: 0,
                 padding: this.padding,
@@ -141,6 +142,7 @@ class ListWidget {
         return {
             type: "hstack",
             props: {
+                background: $color("primarySurface"),
                 spacing: 0,
                 padding: this.padding,
                 widgetURL: this.urlScheme.clips

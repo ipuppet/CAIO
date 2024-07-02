@@ -1,15 +1,13 @@
-const { Logger } = require("./libs/easy-jsbox")
 const { AppKernelBase } = require("./app")
 
 /**
  * @typedef {AppKernel} AppKernel
  */
 class AppKernel extends AppKernelBase {
+    logFile = "widget.log"
+
     constructor() {
         super()
-
-        this.logger = new Logger()
-        this.logger.printToFile(this.fileStorage, "logs/widget.log")
 
         this.setting.setReadonly()
     }

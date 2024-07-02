@@ -442,8 +442,7 @@ function settingMethods(appKernel) {
         animate.done()
     }
 
-    kernel.setting.method.previewWidget = animate => {
-        const { Widget } = require("../widget")
+    kernel.setting.method.previewWidget = () => {
         const widgets = {}
         try {
             JSON.parse($file.read("widget-options.json").string).forEach(item => {
@@ -456,6 +455,7 @@ function settingMethods(appKernel) {
         $ui.menu({
             items: Object.keys(widgets),
             handler: name => {
+                const { Widget } = require("../widget")
                 Widget.render(widgets[name])
             }
         })

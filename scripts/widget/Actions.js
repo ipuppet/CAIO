@@ -74,9 +74,10 @@ class ActionsWidget {
         return {
             type: "vstack",
             props: {
+                background: $color("primarySurface"),
                 alignment: $widget.horizontalAlignment.leading,
                 spacing: 0,
-                padding: 10,
+                padding: 20,
                 widgetURL: this.getUrlScheme(action)
             },
             views: [
@@ -100,7 +101,10 @@ class ActionsWidget {
                                     }
                                 },
                                 {
-                                    cornerRadius: 10
+                                    cornerRadius: {
+                                        value: 15,
+                                        style: 1
+                                    }
                                 }
                             ],
                             views: [
@@ -152,9 +156,12 @@ class ActionsWidget {
 
         const height = this.ctx.displaySize.height
         const width = this.ctx.displaySize.width
-        const padding = 28
-        const itemHeight = (height - padding * (this.maxLength / 2 + 1)) / (this.maxLength / 2)
-        const itemWidth = (width - padding * 3) / 2
+        const padding = 25
+        const innerPadding = 5
+        const itemHeight = (height - padding * (this.maxLength / 2 + 1)) / (this.maxLength / 2) - innerPadding * 2
+        const itemWidth = (width - padding * 3) / 2 - innerPadding * 2
+        const r_outer = 15
+        const r_inner = r_outer * ((itemHeight - 2 * innerPadding) / itemHeight)
         for (let i = 0; i < length; i += 2) {
             const row = []
             for (let j = 0; j < 2; j++) {
@@ -163,14 +170,29 @@ class ActionsWidget {
                     type: "hstack",
                     props: {
                         spacing: 0,
-                        padding: 0,
-                        link: this.getUrlScheme(action),
-                        frame: {
-                            maxWidth: itemWidth,
-                            maxHeight: itemHeight,
-                            alignment: $widget.alignment.leading
-                        }
+                        link: this.getUrlScheme(action)
                     },
+                    modifiers: [
+                        {
+                            background: $color({
+                                light: $rgb(245, 245, 245),
+                                dark: $rgba(80, 80, 80, 0.3),
+                                black: $rgba(70, 70, 70, 0.3)
+                            }),
+                            padding: innerPadding,
+                            frame: {
+                                maxWidth: itemWidth,
+                                maxHeight: itemHeight,
+                                alignment: $widget.alignment.leading
+                            }
+                        },
+                        {
+                            cornerRadius: {
+                                value: r_outer,
+                                style: 1
+                            }
+                        }
+                    ],
                     views: [
                         {
                             type: "hstack",
@@ -178,15 +200,18 @@ class ActionsWidget {
                                 {
                                     background: $color(action.color),
                                     frame: {
-                                        width: itemHeight - 5,
-                                        height: itemHeight - 5
+                                        width: itemHeight,
+                                        height: itemHeight
                                     }
                                 },
                                 {
-                                    cornerRadius: 10
+                                    cornerRadius: {
+                                        value: r_inner,
+                                        style: 1
+                                    }
                                 }
                             ],
-                            views: [this.getIcon(action, (itemHeight - 5) * 0.6)]
+                            views: [this.getIcon(action, itemHeight * 0.6)]
                         },
                         {
                             type: "spacer",
@@ -216,6 +241,7 @@ class ActionsWidget {
         return {
             type: "vstack",
             props: {
+                background: $color("primarySurface"),
                 spacing: padding,
                 padding: padding
             },

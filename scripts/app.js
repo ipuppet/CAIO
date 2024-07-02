@@ -20,7 +20,7 @@ class AppKernelBase extends Kernel {
 
     constructor() {
         super()
-        $file.list($file.rootPath)
+        // $file.list($file.rootPath)
         $app.listen({ exit: () => $objc_clean() })
         // FileStorage
         this.fileStorage = AppKernelBase.fileStorage

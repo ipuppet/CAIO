@@ -43,6 +43,8 @@ class Clips extends ClipsData {
         if (UIKit.isTaio) return
         $app.listen({
             resume: () => {
+                // 重载小组件
+                $widget.reloadTimeline()
                 // 在应用恢复响应后调用
                 if (!this.needReload && $(this.views.listId).ocValue().$isEditing()) {
                     return
@@ -79,6 +81,34 @@ class Clips extends ClipsData {
         this.delegates.setDelegate()
     }
 
+    async checkUrlScheme() {
+        // actions widget
+        if ($context.query["runAction"]) {
+            const data = JSON.parse($text.base64Decode($context.query["runAction"]))
+            const action = this.kernel.actions.getAction(
+                data.category,
+                data.dir,
+                new ActionData({ env: ActionEnv.widget })
+            )
+            action.do()
+            return
+        }
+        // clips widget
+        if ($context.query["copy"]) {
+            const uuid = $context.query["copy"]
+            this.setCopied(uuid)
+            $ui.success($l10n("COPIED"))
+        } else if ($context.query["add"]) {
+            this.getAddTextView()
+        } else if ($context.query["actions"]) {
+            if (this.kernel.isUseJsboxNav) {
+                this.kernel.actions.present()
+            } else {
+                this.kernel.tabBarController.switchPageTo("actions")
+            }
+        }
+    }
+
     /**
      * list view ready event
      */
@@ -95,31 +125,7 @@ class Clips extends ClipsData {
         if (UIKit.isTaio) return
 
         // check url scheme
-        $delay(0.5, () => {
-            if ($context.query["copy"]) {
-                const uuid = $context.query["copy"]
-                this.setCopied(uuid)
-                $ui.success($l10n("COPIED"))
-            } else if ($context.query["add"]) {
-                this.getAddTextView()
-            } else if ($context.query["actions"]) {
-                if (this.kernel.isUseJsboxNav) {
-                    this.kernel.actions.present()
-                } else {
-                    this.kernel.tabBarController.switchPageTo("actions")
-                }
-            } else if ($context.query["runAction"]) {
-                $delay(0, () => {
-                    const data = JSON.parse($text.base64Decode($context.query["runAction"]))
-                    const action = this.kernel.actions.getAction(
-                        data.category,
-                        data.dir,
-                        new ActionData({ env: ActionEnv.widget })
-                    )
-                    action.do()
-                })
-            }
-        })
+        $delay(0, () => this.checkUrlScheme())
 
         this.appListen()
     }
