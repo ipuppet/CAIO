@@ -47,16 +47,19 @@ class ActionsWidget {
                 frame: {
                     width: size,
                     height: size
-                }
+                },
+                resizable: true
             }
         }
         if (action.icon.startsWith("icon_")) {
-            // TODO: 优化 icon_ 的处理
-            // view.props.image = $icon(
-            //     action.icon?.slice(5, action.icon.indexOf(".")),
-            //     $color("#ffffff"),
-            //     $size(size, size)
-            // )
+            view.props.image = $icon(
+                action.icon?.slice(5, action.icon.indexOf(".")),
+                $color("#ffffff"),
+                $size(size, size)
+            )
+                .ocValue()
+                .$image()
+                .jsValue()
         } else if (action.icon.indexOf("/") > -1) {
             view.props.image = $image(action.icon)
         } else {
@@ -94,7 +97,7 @@ class ActionsWidget {
                             type: "hstack",
                             modifiers: [
                                 {
-                                    background: $color(action.color),
+                                    background: this.kernel.actions.views.getColor(action.color),
                                     frame: {
                                         width: 50,
                                         height: 50
@@ -107,18 +110,7 @@ class ActionsWidget {
                                     }
                                 }
                             ],
-                            views: [
-                                {
-                                    type: "image",
-                                    props: {
-                                        symbol: {
-                                            glyph: action.icon,
-                                            size: 50 * 0.6
-                                        },
-                                        color: $color("#ffffff")
-                                    }
-                                }
-                            ]
+                            views: [this.getIcon(action, 50 * 0.6)]
                         }
                     ]
                 },
@@ -196,7 +188,7 @@ class ActionsWidget {
                             type: "hstack",
                             modifiers: [
                                 {
-                                    background: $color(action.color),
+                                    background: this.kernel.actions.views.getColor(action.color),
                                     frame: {
                                         width: itemHeight,
                                         height: itemHeight
