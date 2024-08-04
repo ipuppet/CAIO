@@ -139,12 +139,12 @@ class Clips extends ClipsData {
     }
 
     updateListBackground() {
+        const view = $(this.views.listId)
+        if (!view) return
         if (this.clips.length > 0) {
-            $(this.views.listId).ocValue().$setBackgroundView(undefined)
+            view.ocValue().$setBackgroundView(undefined)
         } else {
-            $(this.views.listId)
-                .ocValue()
-                .$setBackgroundView($ui.create(this.views.getEmptyBackground(this.clips.length > 0)))
+            view.ocValue().$setBackgroundView($ui.create(this.views.getEmptyBackground(this.clips.length > 0)))
         }
     }
 
@@ -302,6 +302,7 @@ class Clips extends ClipsData {
             this.updateListBackground()
         } catch (error) {
             $ui.alert(error)
+            throw error
         }
     }
 

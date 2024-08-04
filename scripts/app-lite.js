@@ -64,6 +64,15 @@ class AppUI {
                 }
                 const clip = this.kernel.clips.getByIndex(getIdx)
                 $intents.finish(clip.text)
+            } else if ($context.query["delete"] !== undefined) {
+                let deleteIdx = $context.query["delete"]
+                if (typeof deleteIdx !== "number") {
+                    throw new Error("`delete` must be a number index")
+                }
+                const clip = this.kernel.clips.getByIndex(deleteIdx)
+                const text = clip.text
+                this.kernel.clips.delete(clip.uuid)
+                $intents.finish(text)
             } else {
                 $intents.finish("`get` or `set` is required")
             }
