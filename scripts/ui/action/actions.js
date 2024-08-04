@@ -50,7 +50,7 @@ class Actions extends ActionsData {
                     this.updateSyncLabel($l10n("SYNCING"))
                 } else if (args.status === WebDavSync.status.success || args.status === WebDavSync.status.nochange) {
                     try {
-                        this.applySnapshotAnimatingDifferences()
+                        this.setNeedReload(true)
                     } catch (error) {
                         this.kernel.logger.error(error)
                         this.updateSyncLabel(error)
@@ -130,9 +130,11 @@ class Actions extends ActionsData {
         if (!message) {
             message = $l10n("MODIFIED") + this.getLocalSyncDate().toLocaleString()
         }
-        if ($(this.views.syncLabelId)) {
-            $(this.views.syncLabelId).text = message
-        }
+        const refreshControl = this.collectionView?.$refreshControl()
+        if (!refreshControl) return
+        const syncDate = message
+        const attributedString = $objc("NSAttributedString").$alloc().$initWithString(syncDate)
+        refreshControl.$setAttributedTitle(attributedString)
     }
 
     updateNavButton(loading) {

@@ -261,7 +261,7 @@ function action() {
                     style: $alertActionType.destructive,
                     handler: () => {
                         $file.delete(kernel.actions.userActionPath)
-                        kernel.actions.setNeedReload()
+                        kernel.actions.needUpload()
                         animate.done()
                         $delay(0.8, () => $addin.restart())
                     }
