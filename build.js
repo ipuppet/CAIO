@@ -155,8 +155,10 @@ async function build() {
         }
     } finally {
         // 恢复文件内容
-        fs.unlinkSync(entryFilePath)
-        fs.unlinkSync(distEntryPath)
+        try {
+            fs.unlinkSync(entryFilePath)
+            fs.unlinkSync(distEntryPath)
+        } catch {}
         fs.writeFileSync(packageJsonPath, packageJsonContent)
     }
 }
