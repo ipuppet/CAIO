@@ -56,6 +56,6 @@ Base Path: `/path/to/save`
 | get   | Number |
 | table | Text   |
 
-- `set`：将把内容保存到CAIO中，除非已存在相同名称的项。
+- `set`：将把内容保存到CAIO中，除非已存在相同内容的项。
 - `get`：将返回指定索引（例如：0）处的项。
 - `table`：将指定要设置或获取项的表格，可选项为 `["favorite", "clips"]`。此项可省略，默认值为 `clips`。
