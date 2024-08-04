@@ -54,6 +54,7 @@ Next, set the `Parameter Dictionary` to a `Dictionary`.
 | --------- | ------ |
 | set       | Text   |
 | get       | Number |
+| delete    | Number |
 | table     | Text   |
 
 - `set`: The content will be saved to CAIO unless there is already an existing item with the same content.

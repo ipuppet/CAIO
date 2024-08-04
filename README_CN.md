@@ -50,11 +50,12 @@ Base Path: `/path/to/save`
 
 然后将 `参数词典` 设置为一个 `字典`。
 
-| 参数  | 类型   |
-| ----- | ------ |
-| set   | Text   |
-| get   | Number |
-| table | Text   |
+| 参数    | 类型   |
+| -----  | ------ |
+| set    | Text   |
+| get    | Number |
+| delete | Number |
+| table  | Text   |
 
 - `set`：将把内容保存到CAIO中，除非已存在相同内容的项。
 - `get`：将返回指定索引（例如：0）处的项。
