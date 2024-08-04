@@ -120,7 +120,7 @@ class Compatibility {
                 }
             })
         }
-        this.kernel.actions.setNeedReload()
+        this.kernel.actions.needUpload()
     }
 
     async do() {

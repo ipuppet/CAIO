@@ -95,7 +95,7 @@ class ActionsData {
                 }
             })
         }
-        this.setNeedReload()
+        this.needUpload()
     }
 
     exportAction(action) {
@@ -142,7 +142,7 @@ class ActionsData {
                 data: $data({ string: readme }),
                 path: FileStorage.join(actionPath, "README.md")
             })
-            this.setNeedReload(true)
+            this.needUpload(true)
 
             return dirName
         } catch (error) {
@@ -188,18 +188,15 @@ class ActionsData {
         this.#allActions = undefined
 
         // 通知更新 UI
-        this.applySnapshotAnimatingDifferences(animate)
-
-        if (!this.webdavSync) return
         try {
-            this.webdavSync.needUpload()
-        } catch (error) {
-            $ui.alert({
-                title: $l10n("ALERT"),
-                message: $l10n("WEBDAV_ERROR_CLOSED")
-            })
-            this.kernel.setting.set("webdav.status", false)
-        }
+            this.applySnapshotAnimatingDifferences(animate)
+        } catch {}
+    }
+
+    needUpload() {
+        this.setNeedReload()
+        if (!this.webdavSync) return
+        this.webdavSync.needUpload()
     }
 
     async sync() {
@@ -262,7 +259,7 @@ class ActionsData {
         }
 
         $file.delete(path)
-        this.setNeedReload()
+        this.needUpload()
 
         return true
     }
@@ -283,7 +280,7 @@ class ActionsData {
                 }
                 $file.mkdir(path)
                 $ui.success($l10n("SUCCESS"))
-                this.setNeedReload()
+                this.needUpload()
             }
         })
     }
@@ -307,7 +304,7 @@ class ActionsData {
             dst: path
         })
         $ui.success($l10n("SUCCESS"))
-        this.setNeedReload()
+        this.needUpload()
         return true
     }
 
@@ -486,17 +483,17 @@ class ActionsData {
             "config.json"
         )
         this.#saveFile(to.readme, to.category, to.dir, "README.md")
-        this.setNeedReload(true)
+        this.needUpload(true)
     }
 
     saveMainJs(info, content) {
         this.#saveFile(content, info.category, info.dir, "main.js")
-        this.setNeedReload()
+        this.needUpload()
     }
 
     saveOrder(category, order) {
         this.#saveFile(JSON.stringify(order), category, this.actionOrderFile)
-        this.setNeedReload()
+        this.needUpload()
     }
 
     move(from, to) {
@@ -533,12 +530,12 @@ class ActionsData {
             this.saveOrder(toCategory, getOrder(toItems))
             this.saveOrder(fromCategory, getOrder(fromItems))
         }
-        this.setNeedReload()
+        this.needUpload()
     }
 
     delete(info) {
         $file.delete(`${this.userActionPath}/${info.category}/${info.dir}`)
-        this.setNeedReload(true)
+        this.needUpload(true)
     }
 
     exists(name) {
