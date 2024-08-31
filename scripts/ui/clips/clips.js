@@ -88,7 +88,7 @@ class Clips extends ClipsData {
             const action = this.kernel.actions.getAction(
                 data.category,
                 data.dir,
-                new ActionData({ env: ActionEnv.widget })
+                new ActionData({ env: ActionEnv.widget, text: $clipboard.text })
             )
             action.do()
             return

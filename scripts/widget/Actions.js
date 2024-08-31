@@ -148,12 +148,12 @@ class ActionsWidget {
 
         const height = this.ctx.displaySize.height
         const width = this.ctx.displaySize.width
-        const padding = 25
-        const innerPadding = 5
+        const padding = 15
+        const innerPadding = 10
         const itemHeight = (height - padding * (this.maxLength / 2 + 1)) / (this.maxLength / 2) - innerPadding * 2
         const itemWidth = (width - padding * 3) / 2 - innerPadding * 2
         const r_outer = 15
-        const r_inner = r_outer * ((itemHeight - 2 * innerPadding) / itemHeight)
+        const r_inner = r_outer * ((itemHeight - innerPadding) / itemHeight)
         for (let i = 0; i < length; i += 2) {
             const row = []
             for (let j = 0; j < 2; j++) {
