@@ -89,7 +89,7 @@ module.exports = {
         //AppUI.renderKeyboardUI();return
         //AppUI.renderTodayUI();return
 
-        if ($app.env === $env.today) {
+        if ($app.env === $env.today || $app.env === $env.notification) {
             AppUI.renderTodayUI()
         } else if ($app.env === $env.keyboard) {
             AppUI.renderKeyboardUI()
