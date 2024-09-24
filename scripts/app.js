@@ -12,10 +12,6 @@ class AppKernelBase extends Kernel {
         basePath: UIKit.isTaio ? FileStorage.join($file.rootPath, "caio") : "shared://caio"
     })
 
-    logPath = "logs"
-    logFile = "caio.log"
-    logFilePath = FileStorage.join(this.logPath, this.logFile)
-
     #storage
 
     constructor() {
@@ -26,7 +22,8 @@ class AppKernelBase extends Kernel {
         this.fileStorage = AppKernelBase.fileStorage
         // Logger
         this.logger = new Logger()
-        this.logger.setWriter(this.fileStorage, this.logFilePath)
+        this.logger.printToFile([Logger.level.warn, Logger.level.error])
+        this.logger.setWriter(this.fileStorage, FileStorage.join("logs", this.logFile))
         // Setting
         this.setting = new Setting({
             logger: this.logger,
@@ -34,6 +31,10 @@ class AppKernelBase extends Kernel {
             structure: SettingStructure
         })
         this.initComponents()
+    }
+
+    get logFile() {
+        return "caio.log"
     }
 
     /**
