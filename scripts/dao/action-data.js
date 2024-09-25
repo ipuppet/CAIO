@@ -321,7 +321,14 @@ class ActionsData {
         const categoryPath = `${this.userActionPath}/${category}`
         const orderPath = `${categoryPath}/${this.actionOrderFile}`
         if ($file.exists(orderPath)) {
-            const order = JSON.parse($file.read(orderPath).string)
+            const orderJson = $file.read(orderPath)?.string
+            if (!orderJson) {
+                this.kernel.logger.error(`File read error: ${orderPath}`)
+                this.kernel.logger.error(`File content: ${$file.read(orderPath)}`)
+                this.kernel.logger.error(`File content: ${orderJson}`)
+                return []
+            }
+            const order = JSON.parse(orderJson)
             const filtered = order.filter(action => {
                 if ($file.exists(`${categoryPath}/${action}`)) {
                     return true
