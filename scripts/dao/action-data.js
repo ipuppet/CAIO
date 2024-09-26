@@ -394,6 +394,7 @@ class ActionsData {
             const action = new MyAction(this.kernel, this.getActionConfig(category, dir), data)
             return action
         } catch (error) {
+            this.kernel.logger.error(`Error during getAction: ${category}/${dir}`)
             this.kernel.logger.error(error)
             throw error
         }
