@@ -11,6 +11,8 @@ const { TodayPinActions } = require("../ui/components/today-actions")
  */
 
 class ActionsData {
+    allActionsCacheKey = "allActions"
+
     #actions
     #allActions
 
@@ -63,6 +65,7 @@ class ActionsData {
                 this.#allActions[item.name] = item
             })
         )
+        $cache.set(this.allActionsCacheKey, this.#allActions)
         this.kernel.logger.info(`init actions`)
     }
 
@@ -194,7 +197,9 @@ class ActionsData {
     }
 
     needUpload() {
-        this.setNeedReload()
+        this.setNeedReload() // Reload UI and data
+        // Update cache
+        $cache.set(this.allActionsCacheKey, this.allActions)
         if (!this.webdavSync) return
         this.webdavSync.needUpload()
     }

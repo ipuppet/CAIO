@@ -14,7 +14,12 @@ class ActionsWidget {
         this.todayPinActions = new TodayPinActions(this.kernel)
         this.actions = this.todayPinActions.getActions()
         if (this.actions.length === 0) {
-            this.actions = Object.values(this.kernel.actions.allActions)
+            this.actions = $cache.get(this.kernel.actions.allActionsCacheKey)
+            if (!Array.isArray(this.actions)) {
+                $cache.set(this.kernel.actions.allActionsCacheKey, this.kernel.actions.allActions)
+                this.actions = this.kernel.actions.allActions
+            }
+            this.actions = Object.values(this.actions)
         }
     }
 
