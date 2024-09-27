@@ -66,7 +66,6 @@ class ClipsData {
         this.tabItemsIndex.forEach((table, tabIndex) => {
             if (!this.#allClips[tabIndex]) {
                 this.#allClips[tabIndex] = this.#initData(table)
-                this.kernel.logger.info(`init clips: ${table}`)
             }
         })
         return this.#allClips
@@ -78,7 +77,6 @@ class ClipsData {
     get clips() {
         if (!this.#allClips[this.tabIndex]) {
             this.#allClips[this.tabIndex] = this.#initData(this.table)
-            this.kernel.logger.info(`init clips: ${this.table}`)
         }
         return this.#allClips[this.tabIndex]
     }
@@ -114,6 +112,7 @@ class ClipsData {
             sorted.forEach((data, i) => {
                 this.clipsUUIDMap[data.uuid] = { tab: table, index: i }
             })
+            this.kernel.logger.info(`init clip-data: ${this.table}`)
             return this.#clipProxy(sorted)
         } catch (error) {
             this.kernel.logger.error(error)

@@ -131,7 +131,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 13
+    version = 14
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -150,6 +150,7 @@ class VersionActions {
                 this.call(i)
             }
             this.compatibility.do().catch(e => this.kernel.logger.error(e))
+            this.kernel.logger.info(`compatibility: userVersion [${this.userVersion}] updated to [${this.version}]`)
         }
 
         // 修改版本
@@ -290,6 +291,10 @@ class VersionActions {
             "dist/CAIO.js",
             "assets/icon"
         ])
+    }
+
+    ver14() {
+        $cache.remove(this.kernel.actions.allActionsCacheKey)
     }
 }
 

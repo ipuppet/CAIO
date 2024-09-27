@@ -184,7 +184,7 @@ class Action {
      * @returns
      */
     getAction(category, name, data) {
-        const dir = this.#kernel.actions.getActionDirByName(name)
+        const dir = this.#kernel.actions.getActionDir(category, name)
         return this.#kernel.actions.getAction(category, dir, data)
     }
 

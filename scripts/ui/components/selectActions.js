@@ -5,7 +5,6 @@ const { Sheet } = require("../../libs/easy-jsbox")
  */
 
 class SelectActions {
-    static shared = new SelectActions()
     cacheKey
 
     /**
@@ -26,7 +25,7 @@ class SelectActions {
             return []
         }
 
-        return actions.filter(action => this.kernel.actions.exists(action.name))
+        return actions.filter(action => this.kernel.actions.exists(action.category, action.dir))
     }
 
     addAction(action) {

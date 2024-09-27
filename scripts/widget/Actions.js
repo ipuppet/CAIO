@@ -4,6 +4,8 @@ const { TodayPinActions } = require("../ui/components/today-actions")
  * @typedef {import("../app-main").AppKernel} AppKernel
  */
 class ActionsWidget {
+    actions = []
+
     /**
      * @param {AppKernel} kernel
      */
@@ -11,8 +13,7 @@ class ActionsWidget {
         this.kernel = kernel
         this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}`
 
-        this.todayPinActions = new TodayPinActions(this.kernel)
-        this.actions = this.todayPinActions.getActions()
+        this.actions = TodayPinActions.shared.setKernel(this.kernel).getActions()
         if (this.actions.length === 0) {
             this.actions = Object.values(this.kernel.actions.allActions)
         }

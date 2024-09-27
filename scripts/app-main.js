@@ -1,4 +1,4 @@
-const { UIKit, ViewController, TabBarController } = require("./libs/easy-jsbox")
+const { UIKit, ViewController, TabBarController, FileManager } = require("./libs/easy-jsbox")
 const { AppKernelBase } = require("./app")
 
 const compatibility = require("./compatibility")
@@ -13,6 +13,8 @@ class AppKernel extends AppKernelBase {
         this.query = $context.query
 
         settingMethods(this)
+
+        this.fileManager = new FileManager()
     }
 }
 

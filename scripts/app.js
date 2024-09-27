@@ -1,4 +1,4 @@
-const { UIKit, Kernel, Logger, FileStorage, Setting, FileManager } = require("./libs/easy-jsbox")
+const { UIKit, Kernel, Logger, FileStorage, Setting } = require("./libs/easy-jsbox")
 const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
 const Clips = require("./ui/clips/clips")
@@ -12,11 +12,9 @@ class AppKernelBase extends Kernel {
         basePath: UIKit.isTaio ? FileStorage.join($file.rootPath, "caio") : "shared://caio"
     })
 
-    logPath = "logs"
-    logFile = "caio.log"
-    logFilePath = FileStorage.join(this.logPath, this.logFile)
-
     #storage
+    #clips
+    #actions
 
     constructor() {
         super()
@@ -26,14 +24,22 @@ class AppKernelBase extends Kernel {
         this.fileStorage = AppKernelBase.fileStorage
         // Logger
         this.logger = new Logger()
-        this.logger.setWriter(this.fileStorage, this.logFilePath)
+        this.logger.printToFile([Logger.level.warn, Logger.level.error])
+        this.logger.setWriter(this.fileStorage, FileStorage.join("logs", this.logFile))
         // Setting
         this.setting = new Setting({
             logger: this.logger,
             fileStorage: this.fileStorage,
             structure: SettingStructure
         })
-        this.initComponents()
+    }
+
+    get logFile() {
+        return "caio.log"
+    }
+
+    get isWebdavEnabled() {
+        return this.setting.get("webdav.status")
     }
 
     /**
@@ -41,23 +47,29 @@ class AppKernelBase extends Kernel {
      */
     get storage() {
         if (!this.#storage) {
-            this.logger.info("init storage")
             this.#storage = new Storage(this)
         }
         return this.#storage
     }
 
-    get isWebdavEnabled() {
-        return this.setting.get("webdav.status")
+    /**
+     * @type {Clips}
+     */
+    get clips() {
+        if (!this.#clips) {
+            this.#clips = new Clips(this)
+        }
+        return this.#clips
     }
 
-    initComponents() {
-        // Clips
-        this.clips = new Clips(this)
-        // Actions
-        this.actions = new Actions(this)
-        // FileManager
-        this.fileManager = new FileManager()
+    /**
+     * @type {Actions}
+     */
+    get actions() {
+        if (!this.#actions) {
+            this.#actions = new Actions(this)
+        }
+        return this.#actions
     }
 }
 

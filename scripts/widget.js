@@ -4,12 +4,14 @@ const { AppKernelBase } = require("./app")
  * @typedef {AppKernel} AppKernel
  */
 class AppKernel extends AppKernelBase {
-    logFile = "widget.log"
-
     constructor() {
         super()
 
         this.setting.setReadonly()
+    }
+
+    get logFile() {
+        return "widget.log"
     }
 
     get isWebdavEnabled() {
@@ -23,9 +25,16 @@ class Widget {
 
     static widgetInstance(widget, ...data) {
         if ($file.exists(`/scripts/widget/${widget}.js`)) {
-            const { Widget } = require(`./widget/${widget}.js`)
-            return new Widget(...data)
+            try {
+                const { Widget } = require(`./widget/${widget}.js`)
+                this.kernel.logger.info(`Loading widget: ${widget}`)
+                return new Widget(...data)
+            } catch (error) {
+                this.kernel.logger.error(`Error loading widget: ${widget}`)
+                this.kernel.logger.error(error)
+            }
         } else {
+            this.kernel.logger.error(`Widget not found: ${widget}`)
             return false
         }
     }

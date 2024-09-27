@@ -11,8 +11,9 @@ const { TodayPinActions } = require("../ui/components/today-actions")
  */
 
 class ActionsData {
+    allActionsCacheKey = "allActions"
+
     #actions
-    #allActions
 
     /**
      * @param {AppKernel} kernel
@@ -36,9 +37,10 @@ class ActionsData {
         return this.#actions
     }
     get allActions() {
+        const allActions = $cache.get(this.allActionsCacheKey)
         // 无分类的单层数组
-        if (!this.#allActions) this.#initActions()
-        return this.#allActions
+        if (!allActions || typeof allActions !== "object") this.#initActions()
+        return allActions
     }
 
     get isNew() {
@@ -57,13 +59,14 @@ class ActionsData {
                 items: this.getActions(category) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
             }
         })
-        this.#allActions = {}
+        const allActions = {}
         this.#actions.map(category =>
             category.items.forEach(item => {
-                this.#allActions[item.name] = item
+                allActions[category.category + item.dir] = item
             })
         )
-        this.kernel.logger.info(`init actions`)
+        $cache.set(this.allActionsCacheKey, allActions)
+        this.kernel.logger.info(`init action-data`)
     }
 
     importExampleAction() {
@@ -71,8 +74,7 @@ class ActionsData {
             Object.keys(__ACTIONS__).forEach(category => {
                 Object.keys(__ACTIONS__[category]).forEach(dir => {
                     const action = __ACTIONS__[category][dir]
-                    const config = JSON.parse(action.config)
-                    if (!this.exists(config.name)) {
+                    if (!this.exists(category, dir)) {
                         this.importAction(action, category, false)
                     }
                 })
@@ -83,8 +85,7 @@ class ActionsData {
                 if ($file.isDirectory(actionCategoryPath)) {
                     const userActionCategoryPath = `${this.userActionPath}/${category}`
                     $file.list(actionCategoryPath).forEach(dir => {
-                        const config = JSON.parse($file.read(`${actionCategoryPath}/${dir}/config.json`).string)
-                        if (!this.exists(config.name)) {
+                        if (!this.exists(category, dir)) {
                             $file.mkdir(userActionCategoryPath)
                             $file.copy({
                                 src: `${actionCategoryPath}/${dir}`,
@@ -185,7 +186,7 @@ class ActionsData {
 
     setNeedReload(animate) {
         this.#actions = undefined
-        this.#allActions = undefined
+        $cache.remove(this.allActionsCacheKey)
 
         // 通知更新 UI
         try {
@@ -321,7 +322,14 @@ class ActionsData {
         const categoryPath = `${this.userActionPath}/${category}`
         const orderPath = `${categoryPath}/${this.actionOrderFile}`
         if ($file.exists(orderPath)) {
-            const order = JSON.parse($file.read(orderPath).string)
+            const orderJson = $file.read(orderPath)?.string
+            if (!orderJson) {
+                this.kernel.logger.error(`File read error: ${orderPath}`)
+                this.kernel.logger.error(`File content: ${$file.read(orderPath)}`)
+                this.kernel.logger.error(`File content: ${orderJson}`)
+                return []
+            }
+            const order = JSON.parse(orderJson)
             const filtered = order.filter(action => {
                 if ($file.exists(`${categoryPath}/${action}`)) {
                     return true
@@ -368,8 +376,18 @@ class ActionsData {
         return $text.MD5(name)
     }
 
-    getActionDirByName(name) {
-        return this.allActions[name].dir
+    getActionDir(category, name) {
+        const md5 = this.initActionDirByName(name)
+        if ($file.isDirectory(this.getActionPath(category, md5))) {
+            return md5
+        }
+        for (const action of this.actions[category].items) {
+            if (action.name === name) {
+                return action.dir
+            }
+        }
+
+        return null
     }
 
     getAction(category, dir, data) {
@@ -387,6 +405,7 @@ class ActionsData {
             const action = new MyAction(this.kernel, this.getActionConfig(category, dir), data)
             return action
         } catch (error) {
+            this.kernel.logger.error(`Error during getAction: ${category}/${dir}`)
             this.kernel.logger.error(error)
             throw error
         }
@@ -538,8 +557,8 @@ class ActionsData {
         this.needUpload(true)
     }
 
-    exists(name) {
-        return this.allActions[name] !== undefined
+    exists(category, dir) {
+        return this.allActions[category + dir] !== undefined
     }
 }
 
