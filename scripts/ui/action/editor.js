@@ -118,7 +118,7 @@ class ActionEditor {
                     layout: $layout.fill,
                     events: {
                         tapped: sender => {
-                            $("actionInfoPageSheetList").scrollToOffset($point(0, this.isNew ? 280 : 230)) // 新建有分类字段
+                            $("actionInfoPageSheetList").scrollToOffset($point(0, 220))
                             $delay(0.2, () => sender.focus())
                         },
                         didChange: sender => {
@@ -145,7 +145,7 @@ class ActionEditor {
             },
             layout: $layout.fill,
             events: {
-                rowHeight: (sender, indexPath) => (indexPath.section === 1 ? 120 : 50)
+                rowHeight: (sender, indexPath) => (indexPath.section === 1 ? 150 : 50)
             }
         }
     }
