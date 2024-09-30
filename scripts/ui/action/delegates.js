@@ -98,6 +98,15 @@ class ActionDelegates {
                         }
                     },
                     {
+                        // share
+                        title: "URL Scheme",
+                        symbol: "link",
+                        handler: (collectionView, indexPath, info) => {
+                            $clipboard.text = this.data.getActionURLScheme(info)
+                            $ui.success($l10n("COPIED"))
+                        }
+                    },
+                    {
                         // 删除
                         title: $l10n("DELETE"),
                         symbol: "trash",

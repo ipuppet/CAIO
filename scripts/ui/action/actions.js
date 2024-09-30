@@ -126,6 +126,15 @@ class Actions extends ActionsData {
         ]
     }
 
+    getActionURLScheme(action) {
+        const needed = {
+            dir: action.dir,
+            category: action.category
+        }
+        const encodedAction = $text.base64Encode(JSON.stringify(needed))
+        return `jsbox://run?name=${$addin.current.name}&runAction=${encodedAction}`
+    }
+
     updateSyncLabel(message) {
         if (!message) {
             message = $l10n("MODIFIED") + this.getLocalSyncDate().toLocaleString()

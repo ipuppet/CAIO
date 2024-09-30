@@ -11,7 +11,6 @@ class ActionsWidget {
      */
     constructor(kernel = {}) {
         this.kernel = kernel
-        this.baseUrlScheme = `jsbox://run?name=${$addin.current.name}`
 
         this.actions = TodayPinActions.shared.setKernel(this.kernel).getActions()
         if (this.actions.length === 0) {
@@ -34,10 +33,6 @@ class ActionsWidget {
     get data() {
         // require this.maxLength
         return this.actions.slice(0, this.maxLength)
-    }
-
-    getUrlScheme(action) {
-        return this.baseUrlScheme + `&runAction=${$text.base64Encode(JSON.stringify(action))}`
     }
 
     getIcon(action, size) {
@@ -82,7 +77,7 @@ class ActionsWidget {
                 alignment: $widget.horizontalAlignment.leading,
                 spacing: 0,
                 padding: 20,
-                widgetURL: this.getUrlScheme(action)
+                widgetURL: this.kernel.actions.getActionURLScheme(action)
             },
             views: [
                 {
@@ -164,7 +159,7 @@ class ActionsWidget {
                     props: { spacing: 0 },
                     modifiers: [
                         {
-                            link: this.getUrlScheme(action),
+                            link: this.kernel.actions.getActionURLScheme(action),
                             background: $color({
                                 light: $rgb(245, 245, 245),
                                 dark: $rgba(80, 80, 80, 0.3),
