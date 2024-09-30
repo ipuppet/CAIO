@@ -310,6 +310,9 @@ class Keyboard extends Clips {
                 const icon =
                     action?.icon?.slice(0, 5) === "icon_"
                         ? $icon(action.icon.slice(5, action.icon.indexOf(".")), UIKit.textColor)
+                              .ocValue()
+                              .$image()
+                              .jsValue()
                         : $image(action?.icon)
                 buttons.push({
                     symbol: icon,
