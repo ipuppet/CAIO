@@ -31,7 +31,7 @@ class ActionViews {
         this.data = data
     }
 
-    getActionListView(didSelect, props = {}, events = {}, layout) {
+    getActionListView(didSelect = undefined, props = {}, events = {}, layout = undefined) {
         if (didSelect) {
             events.didSelect = (sender, indexPath, data) => {
                 const info = data.info.info
@@ -60,11 +60,10 @@ class ActionViews {
                     stickyHeader: true,
                     data: (() => {
                         const data = this.data.actionList
-                        data.map(category => {
+                        return data.map(category => {
                             category.rows = category.items
                             return category
                         })
-                        return data
                     })(),
                     template: {
                         props: { bgcolor: $color("clear") },
@@ -190,7 +189,7 @@ class ActionViews {
             events: {
                 didSelect: async (sender, indexPath, data) => {
                     const info = data.info.info
-                    const actionData = await getActionData(info)
+                    const actionData = await getActionData()
                     this.data.getActionHandler(info.category, info.dir)(actionData)
                 }
             }

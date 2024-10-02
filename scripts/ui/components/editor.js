@@ -6,7 +6,7 @@ const { ActionEnv, ActionData } = require("../../action/action")
  */
 
 class Editor {
-    #text = ""
+    #text
     originalContent // 原始数据
 
     /**
@@ -30,7 +30,7 @@ class Editor {
     }
 
     get text() {
-        return this.#text
+        return this.#text ?? ""
     }
 
     getActionButton() {
@@ -46,8 +46,7 @@ class Editor {
                         originalContent: this.originalContent,
                         setContent: text => this.setContent(text)
                     },
-                    text: range.length > 0 ? this.text.slice(range.location, range.location + range.length) : this.text,
-                    allText: this.text,
+                    text: this.text,
                     selectedText: this.text.slice(range.location, range.location + range.length),
                     selectedRange: range
                 })
@@ -57,7 +56,7 @@ class Editor {
                     size: $size(200, 300),
                     views: [
                         this.kernel.actions.views.getActionListView(action => {
-                            popover.dismiss()
+                            //popover.dismiss()
                             $delay(0.5, () => action(actionData))
                         })
                     ]

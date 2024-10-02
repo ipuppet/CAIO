@@ -261,7 +261,7 @@ class ActionDelegates {
         const info = this.getActionByIndexPath(indexPath)
         const actionData = new ActionData({
             env: ActionEnv.action,
-            text: info.category === "clipboard" || info.category === "uncategorized" ? $clipboard.text : null
+            text: $clipboard.text
         })
         this.data.getActionHandler(info.category, info.dir)(actionData)
     }

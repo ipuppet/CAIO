@@ -256,17 +256,16 @@ class Keyboard extends Clips {
         let selectedText = $keyboard.selectedText
         if (selectedText === "") selectedText = null
         const getallText = async () => {
-            let allText = await $keyboard.getAllText()
-            if (allText === "") allText = null
-            return allText
+            let t = await $keyboard.getAllText()
+            if (t === "") t = null
+            return t
         }
 
         return new ActionData({
             env: ActionEnv.keyboard,
             textBeforeInput: $keyboard.textBeforeInput,
             textAfterInput: $keyboard.textAfterInput,
-            text: selectedText ?? (await getallText()),
-            allText: await $keyboard.getAllText(),
+            text: await getallText(),
             selectedText: selectedText
         })
     }

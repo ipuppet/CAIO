@@ -81,6 +81,7 @@ class Actions extends ActionsData {
                 handler: async () => {
                     const data = await $drive.open()
                     try {
+                        if (!data) return
                         this.importAction(JSON.parse(data.string))
                         this.applySnapshotAnimatingDifferences()
                     } catch (error) {

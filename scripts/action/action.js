@@ -22,7 +22,6 @@ class ActionData {
     env
     args // 其他动作传递的参数
     text
-    allText
     section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
     selectedRange
@@ -33,9 +32,8 @@ class ActionData {
 
     constructor({
         env,
-        args,
-        text,
-        allText = null,
+        args = null,
+        text = null,
         section = null,
         uuid = null,
         selectedRange = null,
@@ -47,7 +45,6 @@ class ActionData {
         this.env = env
         this.args = args
         this.text = text
-        this.allText = allText ?? text
         this.section = section
         this.uuid = uuid
         this.selectedRange = selectedRange
@@ -112,6 +109,7 @@ class Action {
             doneText: 左上角文本
             rightButtons: 右上角按钮
         }
+     * @returns {Sheet}
      */
     pageSheet({ view, title = "", done, doneText = $l10n("DONE"), rightButtons = [] }) {
         const sheet = new Sheet()
@@ -129,6 +127,35 @@ class Action {
             })
             .init()
             .present()
+        return sheet
+    }
+
+    showTextContent(text, title = "") {
+        return this.pageSheet({
+            view: {
+                type: "text",
+                props: { text },
+                layout: $layout.fill
+            },
+            title,
+            rightButtons: [
+                {
+                    title: $l10n("COPY"),
+                    tapped: () => ($clipboard.text = text)
+                }
+            ]
+        })
+    }
+
+    showMarkdownContent(markdown, title = "") {
+        return this.pageSheet({
+            view: {
+                type: "markdown",
+                props: { content: markdown },
+                layout: $layout.fill
+            },
+            title
+        })
     }
 
     quickLookImage(image) {
@@ -174,6 +201,20 @@ class Action {
             this.#kernel.storage.updateText(this.section, this.uuid, text)
             this.#kernel.clips.updateList(true)
         }
+    }
+
+    replaceKeyboardText(search, replacement) {
+        if (this.env !== ActionEnv.keyboard || !this.text) {
+            return
+        }
+        const replaced = this.text.replace(search, replacement)
+        if (this.textAfterInput && this.textAfterInput.length > 0) {
+            $keyboard.moveCursor(this.textAfterInput.length)
+        }
+        while ($keyboard.hasText) {
+            $keyboard.delete()
+        }
+        $keyboard.insert(replaced)
     }
 
     /**
