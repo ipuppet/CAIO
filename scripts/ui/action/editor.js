@@ -212,10 +212,12 @@ class ActionEditor {
                         let actionRest = await this.data.getActionHandler(
                             this.info.category,
                             this.info.dir
-                        )(new ActionData({ env: ActionEnv.build }))
+                        )({ env: ActionEnv.build })
                         if (actionRest !== undefined) {
                             if (typeof actionRest === "object") {
                                 actionRest = JSON.stringify(actionRest, null, 2)
+                            } else {
+                                actionRest = String(actionRest)
                             }
                             const sheet = new Sheet()
                             sheet

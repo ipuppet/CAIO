@@ -39,17 +39,19 @@ class Editor {
             tapped: (sender, senderMaybe) => {
                 // senderMaybe 处理 Sheet addNavBar 中的按钮
                 if (senderMaybe) sender = senderMaybe
-                const range = $(this.id).selectedRange
-                const actionData = new ActionData({
+                const actionData = {
                     env: ActionEnv.editor,
                     editor: {
                         originalContent: this.originalContent,
                         setContent: text => this.setContent(text)
                     },
-                    text: this.text,
-                    selectedText: this.text.slice(range.location, range.location + range.length),
-                    selectedRange: range
-                })
+                    text: () => this.text,
+                    selectedText: () => {
+                        const range = $(this.id).selectedRange
+                        this.text.slice(range.location, range.location + range.length)
+                    },
+                    selectedRange: () => $(this.id).selectedRange
+                }
                 const popover = $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,

@@ -347,10 +347,7 @@ class Today extends Clips {
             props: { id: this.actionsId, hidden: !this.isActionPage },
             views: [
                 this.kernel.actions.views.getActionMiniView(() => {
-                    return new ActionData({
-                        env: ActionEnv.today,
-                        text: $clipboard.text
-                    })
+                    return { env: ActionEnv.today }
                 }, actions)
             ],
             layout: (make, view) => {

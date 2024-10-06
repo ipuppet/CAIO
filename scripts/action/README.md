@@ -51,7 +51,7 @@ class MyAction extends Action {
 - `this.uuid`  
   首页剪切板项目 uuid
 - `this.text`  
-  当处于键盘中运行时为输入框内文本，处于编辑器时为编辑器内文本，其他情况为剪切板内文本。
+  当处于键盘中运行时为输入框内文本，处于编辑器时为编辑器内文本，其他情况为剪切板内文本。(仅可获取光标行)
 - `this.selectedText`  
   当前选中的文本
 - `this.selectedRange`  
@@ -160,6 +160,7 @@ class ActionData {
     env
     args // 其他动作传递的参数
     text // 自动获取文本，优先获取选中的文本
+    originalContent // 原始文本
     section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
     selectedRange // 文本选中的范围

@@ -19,43 +19,101 @@ class ActionEnv {
     static widget = 6
 }
 class ActionData {
+    #text
+    #originalContent
+    #textBeforeInput
+    #selectedText
+    #selectedRange
+    #textAfterInput
+
     env
     args // 其他动作传递的参数
-    text
     section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
-    selectedRange
-    selectedText
-    textBeforeInput
-    textAfterInput
     editor
 
-    constructor({
+    constructor(data = {}) {
+        if (data.env === ActionEnv.build) {
+            const _data = this.preview()
+            if (_data) {
+                data = _data
+                data.env = ActionEnv.build // 忽略 preview 返回的 env
+            }
+        }
+
+        this.init(data)
+    }
+
+    init({
         env,
         args = null,
         text = null,
         section = null,
         uuid = null,
         selectedRange = null,
-        selectedText = null,
         textBeforeInput = null,
+        selectedText = null,
         textAfterInput = null,
         editor = null
     } = {}) {
         this.env = env
         this.args = args
-        this.text = text
         this.section = section
         this.uuid = uuid
-        this.selectedRange = selectedRange
-        this.selectedText = selectedText
-        this.textBeforeInput = textBeforeInput
-        this.textAfterInput = textAfterInput
+        this.#text = text
+        this.#originalContent = text
+        this.#textBeforeInput = textBeforeInput
+        this.#selectedText = selectedText
+        this.#selectedRange = selectedRange
+        this.#textAfterInput = textAfterInput
         this.editor = editor
+    }
+
+    get text() {
+        if (typeof this.#text === "function") {
+            return this.#text()
+        }
+        return this.#text ?? $clipboard.text
+    }
+
+    get originalContent() {
+        return this.#originalContent
+    }
+
+    get textBeforeInput() {
+        if (typeof this.#textBeforeInput === "function") {
+            return this.#textBeforeInput()
+        }
+        return this.#textBeforeInput
+    }
+
+    get selectedText() {
+        if (typeof this.#selectedText === "function") {
+            return this.#selectedText()
+        }
+        return this.#selectedText
+    }
+
+    get selectedRange() {
+        if (typeof this.#selectedRange === "function") {
+            return this.#selectedRange()
+        }
+        return this.#selectedRange
+    }
+
+    get textAfterInput() {
+        if (typeof this.#textAfterInput === "function") {
+            return this.#textAfterInput()
+        }
+        return this.#textAfterInput
+    }
+
+    preview() {
+        return null
     }
 }
 
-class Action {
+class Action extends ActionData {
     /**
      * @type {AppKernel}
      */
@@ -69,17 +127,10 @@ class Action {
      * @param {ActionData} data
      */
     constructor(kernel, config, data) {
+        super(data)
         this.#kernel = kernel
         this.config = config
         this.secureFunction = new SecureFunction(this.#kernel, this.config)
-
-        if (data.env === ActionEnv.build) {
-            data = this.preview()
-            data.env = ActionEnv.build // 忽略 preview 返回的 env
-        }
-        Object.assign(this, data)
-
-        this.originalContent = String(this.text)
 
         const l10n = this.l10n()
         Object.keys(l10n).forEach(language => {
@@ -92,7 +143,7 @@ class Action {
      * @returns {ActionData}
      */
     preview() {
-        return new ActionData({ env: ActionEnv.build })
+        return { env: ActionEnv.build }
     }
 
     l10n() {
@@ -194,7 +245,6 @@ class Action {
     }
 
     setContent(text) {
-        this.text = text
         if (this.env === ActionEnv.editor) {
             this.editor.setContent(text)
         } else if (this.env === ActionEnv.clipboard) {
@@ -207,9 +257,15 @@ class Action {
         if (this.env !== ActionEnv.keyboard || !this.text) {
             return
         }
+        if (this.selectedText) {
+            $keyboard.insert(replacement)
+            return
+        }
+
         const replaced = this.text.replace(search, replacement)
-        if (this.textAfterInput && this.textAfterInput.length > 0) {
-            $keyboard.moveCursor(this.textAfterInput.length)
+        const textAfterInput = this.textAfterInput
+        if (textAfterInput && textAfterInput.length > 0) {
+            $keyboard.moveCursor(textAfterInput.length)
         }
         while ($keyboard.hasText) {
             $keyboard.delete()
@@ -239,7 +295,7 @@ class Action {
     }
 
     getUrls() {
-        const text = this.text ?? ""
+        const text = this.selectedText ?? this.text ?? ""
 
         const httpRegex = /https?:\/\/[\w-]+(\.[\w-]+)*([\p{Script=Han}\w.,@?^=%&:/~+#()\-]*[\w@?^=%&/~+#()\-])?/giu
         // 正则表达式用于匹配iOS URL Scheme（假设scheme后面是://），包括中文字符和括号

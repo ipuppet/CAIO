@@ -259,11 +259,7 @@ class ActionDelegates {
         }
 
         const info = this.getActionByIndexPath(indexPath)
-        const actionData = new ActionData({
-            env: ActionEnv.action,
-            text: $clipboard.text
-        })
-        this.data.getActionHandler(info.category, info.dir)(actionData)
+        this.data.getActionHandler(info.category, info.dir)({ env: ActionEnv.action })
     }
     didDeselectItemAtIndexPath(collectionView, indexPath) {
         if (collectionView.$isEditing()) {

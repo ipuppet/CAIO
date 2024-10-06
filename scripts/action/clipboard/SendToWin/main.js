@@ -26,7 +26,7 @@ class MyAction extends Action {
         $ui.toast("Loading...", 5)
         try {
             const resp = await this.request(address + "/api/clip", "POST", {
-                data: this.text ?? $clipboard.text
+                data: this.selectedText ?? this.text
             })
             if (resp.data.status) {
                 $ui.success("success")

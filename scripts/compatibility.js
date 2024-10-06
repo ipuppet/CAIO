@@ -131,7 +131,7 @@ class Compatibility {
 }
 
 class VersionActions {
-    version = 14
+    version = 15
     userVersion = $cache.get("compatibility.version") ?? 0
 
     /**
@@ -295,6 +295,12 @@ class VersionActions {
 
     ver14() {
         $cache.remove(this.kernel.actions.allActionsCacheKey)
+    }
+
+    ver15() {
+        this.compatibility.rebuildUserActions({
+            clipboard: ["SendToWin", "Tokenize"]
+        })
     }
 }
 
