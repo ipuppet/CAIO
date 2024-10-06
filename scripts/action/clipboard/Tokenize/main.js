@@ -64,7 +64,7 @@ class MyAction extends Action {
         this.selected = []
         this.results = []
         $text.tokenize({
-            text: this.text,
+            text: this.selectedText ?? this.text,
             handler: results => {
                 this.results = results
                 this.pageSheet({

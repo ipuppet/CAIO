@@ -9,14 +9,14 @@
   - `main.js` 入口文件
   - `README.md` 说明文件
 
-### `config.json` 配置项
+## `config.json` 配置项
 
 - `icon` 图标 可以是 [JSBox 内置图标](https://github.com/cyanzhong/xTeko/tree/master/extension-icons)、SF Symbols图标、base64图片数据和来自 url 的图片
 - `color` 颜色
 - `name` 名称
 - `description` 描述信息
 
-### `main.js` 入口文件
+## `main.js` 入口文件
 
 创建名为 `MyAction` 的类并继承 `Action` 类
 
@@ -38,21 +38,33 @@ class MyAction extends Action {
 }
 ```
 
-### 父类 `Action` 的属性：
+## 父类 `Action` 的属性
+
 - `this.env`  
   当前运行环境，参见 [ActionEnv](#ActionEnv)
 - `this.config`  
   当前 Action 配置文件内容
-- `this.originalContent`  
-  原始数据
+- `this.editor`  
+  参见 [ActionData](#ActionData)
+- `this.section`  
+  首页剪切板分类
+- `this.uuid`  
+  首页剪切板项目 uuid
 - `this.text`  
-  优先为选中的文本，若无则：当处于键盘中运行时为输入框内文本，处于编辑器时为编辑器内文本，其他情况为剪切板内文本
+  当处于键盘中运行时为输入框内文本，处于编辑器时为编辑器内文本，其他情况为剪切板内文本。(仅可获取光标行)
+- `this.selectedText`  
+  当前选中的文本
 - `this.selectedRange`  
   在编辑器中，当前选中的文本范围 `{location: Number, length: Number}`
+- `this.textBeforeInput`  
+  键盘中输入光标之前的文本
+- `this.textAfterInput`  
+  键盘中输入光标之后的文本
 
 更多参见 [ActionData](#ActionData)
 
-### 父类的方法：
+## 父类的方法
+
 ```js
 /**
  * 编辑动作状态下提供预览数据
@@ -85,8 +97,11 @@ l10n()
         doneText: args.doneText ?? $l10n("DONE") // 左上角文本
         rightButtons: [{ title:string, symbol:string, tapped:function }] // 右上角按钮
     }
+ * @returns {Sheet}
   */
-pageSheet(args): void
+pageSheet(args): Sheet
+showTextContent(text, title = ""): Sheet
+showMarkdownContent(markdown, title = ""): Sheet
 
 /**
  * 获取所有剪切板数据
@@ -125,7 +140,8 @@ getUrls(): []
 addinRun(name): void
 ```
 
-### <span id="ActionEnv">ActionEnv</span>
+## <span id="ActionEnv">ActionEnv</span>
+
 ```js
 class ActionEnv {
     static build = -1 // 动作编辑器
@@ -137,13 +153,14 @@ class ActionEnv {
 }
 ```
 
-### <span id="ActionData">ActionData</span>
+## <span id="ActionData">ActionData</span>
+
 ```js
 class ActionData {
     env
     args // 其他动作传递的参数
     text // 自动获取文本，优先获取选中的文本
-    allText // 获取所有文本
+    originalContent // 原始文本
     section // 首页剪切板分类
     uuid // 首页剪切板项目 uuid
     selectedRange // 文本选中的范围

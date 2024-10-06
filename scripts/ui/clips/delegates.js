@@ -106,13 +106,12 @@ class ClipsDelegates {
             const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
             action.handler = (tableView, indexPath) => {
                 const item = this.data.getByIndex(indexPath)
-                const actionData = new ActionData({
+                handler({
                     env: ActionEnv.clipboard,
                     text: item.text,
                     section: item.section,
                     uuid: item.uuid
                 })
-                handler(actionData)
             }
             action.title = action.name
             action.symbol = action.icon

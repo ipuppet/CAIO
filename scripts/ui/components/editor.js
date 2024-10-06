@@ -6,7 +6,7 @@ const { ActionEnv, ActionData } = require("../../action/action")
  */
 
 class Editor {
-    #text = ""
+    #text
     originalContent // 原始数据
 
     /**
@@ -30,7 +30,7 @@ class Editor {
     }
 
     get text() {
-        return this.#text
+        return this.#text ?? ""
     }
 
     getActionButton() {
@@ -39,25 +39,26 @@ class Editor {
             tapped: (sender, senderMaybe) => {
                 // senderMaybe 处理 Sheet addNavBar 中的按钮
                 if (senderMaybe) sender = senderMaybe
-                const range = $(this.id).selectedRange
-                const actionData = new ActionData({
+                const actionData = {
                     env: ActionEnv.editor,
                     editor: {
                         originalContent: this.originalContent,
                         setContent: text => this.setContent(text)
                     },
-                    text: range.length > 0 ? this.text.slice(range.location, range.location + range.length) : this.text,
-                    allText: this.text,
-                    selectedText: this.text.slice(range.location, range.location + range.length),
-                    selectedRange: range
-                })
+                    text: () => this.text,
+                    selectedText: () => {
+                        const range = $(this.id).selectedRange
+                        this.text.slice(range.location, range.location + range.length)
+                    },
+                    selectedRange: () => $(this.id).selectedRange
+                }
                 const popover = $ui.popover({
                     sourceView: sender,
                     directions: $popoverDirection.up,
                     size: $size(200, 300),
                     views: [
                         this.kernel.actions.views.getActionListView(action => {
-                            popover.dismiss()
+                            //popover.dismiss()
                             $delay(0.5, () => action(actionData))
                         })
                     ]

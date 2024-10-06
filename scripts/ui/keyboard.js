@@ -252,23 +252,19 @@ class Keyboard extends Clips {
         }
     }
 
-    async getKeyboardActionData() {
-        let selectedText = $keyboard.selectedText
-        if (selectedText === "") selectedText = null
-        const getallText = async () => {
-            let allText = await $keyboard.getAllText()
-            if (allText === "") allText = null
-            return allText
-        }
-
-        return new ActionData({
+    getKeyboardActionData() {
+        return {
             env: ActionEnv.keyboard,
-            textBeforeInput: $keyboard.textBeforeInput,
-            textAfterInput: $keyboard.textAfterInput,
-            text: selectedText ?? (await getallText()),
-            allText: await $keyboard.getAllText(),
-            selectedText: selectedText
-        })
+            text: () => {
+                let t = $keyboard.textBeforeInput ?? ""
+                t += $keyboard.selectedText ?? ""
+                t += $keyboard.textAfterInput ?? ""
+                return t
+            },
+            textBeforeInput: () => $keyboard.textBeforeInput,
+            selectedText: () => $keyboard.selectedText,
+            textAfterInput: () => $keyboard.textAfterInput
+        }
     }
 
     getTopButtonsView() {
@@ -317,10 +313,8 @@ class Keyboard extends Clips {
                 buttons.push({
                     symbol: icon,
                     tapped: this.keyboardTapped(async () => {
-                        const actionData = await this.getKeyboardActionData()
-
                         const handler = this.kernel.actions.getActionHandler(action.category, action.dir)
-                        handler(actionData)
+                        handler(this.getKeyboardActionData())
                     })
                 })
             })
@@ -825,11 +819,7 @@ class Keyboard extends Clips {
         return {
             type: "view",
             props: { id: this.actionsId, hidden: true },
-            views: [
-                this.kernel.actions.views.getActionMiniView(async () => {
-                    return await this.getKeyboardActionData()
-                })
-            ],
+            views: [this.kernel.actions.views.getActionMiniView(() => this.getKeyboardActionData())],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.left.equalTo(this.views.containerMargin)

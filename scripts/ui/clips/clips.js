@@ -85,11 +85,7 @@ class Clips extends ClipsData {
         // actions widget
         if ($context.query["runAction"]) {
             const data = JSON.parse($text.base64Decode($context.query["runAction"]))
-            const action = this.kernel.actions.getAction(
-                data.category,
-                data.dir,
-                new ActionData({ env: ActionEnv.widget, text: $clipboard.text })
-            )
+            const action = this.kernel.actions.getAction(data.category, data.dir, { env: ActionEnv.widget })
             action.do()
             return
         }

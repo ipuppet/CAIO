@@ -1,4 +1,4 @@
-const { FileStorage, UIKit } = require("../libs/easy-jsbox")
+const { FileStorage, UIKit, Sheet } = require("../libs/easy-jsbox")
 const { ActionEnv, ActionData, Action } = require("../action/action")
 const { SecureScript } = require("../action/secure")
 const WebDavSyncAction = require("./webdav-sync-action")
@@ -70,33 +70,121 @@ class ActionsData {
     }
 
     importExampleAction() {
-        try {
-            Object.keys(__ACTIONS__).forEach(category => {
-                Object.keys(__ACTIONS__[category]).forEach(dir => {
-                    const action = __ACTIONS__[category][dir]
-                    if (!this.exists(category, dir)) {
-                        this.importAction(action, category, false)
-                    }
-                })
-            })
-        } catch {
-            $file.list(this.actionPath).forEach(category => {
-                const actionCategoryPath = `${this.actionPath}/${category}`
-                if ($file.isDirectory(actionCategoryPath)) {
-                    const userActionCategoryPath = `${this.userActionPath}/${category}`
-                    $file.list(actionCategoryPath).forEach(dir => {
+        if (this.isNew) {
+            try {
+                Object.keys(__ACTIONS__).forEach(category => {
+                    Object.keys(__ACTIONS__[category]).forEach(dir => {
+                        const action = __ACTIONS__[category][dir]
                         if (!this.exists(category, dir)) {
-                            $file.mkdir(userActionCategoryPath)
-                            $file.copy({
-                                src: `${actionCategoryPath}/${dir}`,
-                                dst: `${userActionCategoryPath}/${dir}`
-                            })
+                            this.importAction(action, category, false)
                         }
                     })
-                }
-            })
+                })
+            } catch {
+                $file.list(this.actionPath).forEach(category => {
+                    const actionCategoryPath = `${this.actionPath}/${category}`
+                    if ($file.isDirectory(actionCategoryPath)) {
+                        const userActionCategoryPath = `${this.userActionPath}/${category}`
+                        $file.list(actionCategoryPath).forEach(dir => {
+                            if (!this.exists(category, dir)) {
+                                $file.mkdir(userActionCategoryPath)
+                                $file.copy({
+                                    src: `${actionCategoryPath}/${dir}`,
+                                    dst: `${userActionCategoryPath}/${dir}`
+                                })
+                            }
+                        })
+                    }
+                })
+            }
+            this.needUpload()
+            return
         }
-        this.needUpload()
+        const actionRaw = {}
+        const data = (() => {
+            const actionList = []
+            try {
+                Object.keys(__ACTIONS__).forEach(category => {
+                    const rows = []
+                    Object.keys(__ACTIONS__[category]).forEach(dir => {
+                        const action = __ACTIONS__[category][dir]
+                        const config = JSON.parse(action.config)
+                        Object.assign(config, { category, dir })
+                        rows.push(this.kernel.actions.views.actionToData(config))
+                        actionRaw[category + dir] = [action, category]
+                    })
+                    actionList.push({
+                        title: this.getCategoryTitle(category),
+                        rows: rows
+                    })
+                })
+            } catch {
+                $file.list(this.actionPath).forEach(category => {
+                    const actionCategoryPath = `${this.actionPath}/${category}`
+                    if ($file.isDirectory(actionCategoryPath)) {
+                        const rows = []
+                        $file.list(actionCategoryPath).forEach(dir => {
+                            try {
+                                const action = {
+                                    config: $file.read(`${actionCategoryPath}/${dir}/config.json`).string,
+                                    main: $file.read(`${actionCategoryPath}/${dir}/main.js`).string,
+                                    readme: $file.read(`${actionCategoryPath}/${dir}/README.md`).string
+                                }
+                                const config = JSON.parse(action.config)
+                                Object.assign(config, { category, dir })
+                                rows.push(this.kernel.actions.views.actionToData(config))
+                                actionRaw[category + dir] = [action, category]
+                            } catch (error) {
+                                this.kernel.logger.error(`Error during importExampleAction: ${category}/${dir}`)
+                            }
+                        })
+                        actionList.push({
+                            title: this.getCategoryTitle(category),
+                            rows: rows
+                        })
+                    }
+                })
+            }
+            return actionList
+        })()
+        const listView = this.kernel.actions.views.getActionListView(
+            (_, info) => {
+                $ui.alert({
+                    title: $l10n("IMPORT_EXAMPLE_ACTIONS"),
+                    message: `Category: ${info.category}\n${info.name}`,
+                    actions: [
+                        { title: $l10n("CANCEL") },
+                        {
+                            title: $l10n("OK"),
+                            handler: () => {
+                                try {
+                                    const action = actionRaw[info.category + info.dir]
+                                    this.importAction(action[0], action[1], false)
+                                    $ui.success($l10n("SUCCESS"))
+                                } catch (error) {
+                                    $ui.alert({
+                                        title: $l10n("ERROR"),
+                                        message: error.message
+                                    })
+                                }
+                            }
+                        }
+                    ]
+                })
+            },
+            {
+                id: "importExampleAction",
+                bgcolor: $color("primarySurface"),
+                data: data,
+                stickyHeader: false
+            }
+        )
+        const sheet = new Sheet()
+        sheet
+            .setView(listView)
+            .addNavBar({ title: $l10n("IMPORT_EXAMPLE_ACTIONS") })
+            .init()
+            .present()
     }
 
     exportAction(action) {
@@ -156,8 +244,8 @@ class ActionsData {
     checkUserAction() {
         if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
             $file.mkdir(this.userActionPath)
-            this.isNew = false
             this.importExampleAction()
+            this.isNew = false
         }
     }
 
