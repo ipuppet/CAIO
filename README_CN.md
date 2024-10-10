@@ -66,6 +66,8 @@ Base Path: `/path/to/save`
 
 ### 运行动作
 
+支持所有 `ActionData` 参数，如 `args`。
+
 | 参数      | 类型 |
 | --------- | ---- |
 | runAction | Text |

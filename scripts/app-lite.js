@@ -27,7 +27,20 @@ class Shortcuts {
     constructor(kernel) {
         this.kernel = kernel
 
-        $ui.render()
+        // to display action running result
+        $ui.render({
+            views: [
+                {
+                    type: "label",
+                    props: {
+                        id: "shortcuts-root-label",
+                        lines: 0,
+                        text: "CAIO"
+                    },
+                    layout: $layout.center
+                }
+            ]
+        })
         if (!this.kernel.runActionFlag) {
             this.checkQuery()
         }

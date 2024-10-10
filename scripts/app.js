@@ -39,34 +39,52 @@ class AppKernelBase extends Kernel {
         this.runAction($context.query)
     }
 
+    getQueries(query) {
+        const queries = {}
+        if (query.indexOf("?") !== -1) {
+            query = query.split("?")[1]
+        }
+        const pairs = query.split("&")
+        pairs.forEach(pair => {
+            const indexOfEquals = pair.indexOf("=")
+            if (indexOfEquals !== -1) {
+                const key = pair.slice(0, indexOfEquals)
+                const value = pair.slice(indexOfEquals + 1)
+                queries[key] = value
+            } else {
+                const key = pair
+                queries[key] = ""
+            }
+        })
+        return queries
+    }
+
     runAction(query) {
         if (!query.runAction) return
         this.runActionFlag = true
 
         if (query.runAction?.startsWith("jsbox://")) {
-            const pairs = query.runAction.split("?")[1]?.split("&")
-            pairs.forEach(pair => {
-                const indexOfEquals = pair.indexOf("=")
-                if (indexOfEquals !== -1) {
-                    const key = pair.slice(0, indexOfEquals)
-                    const value = pair.slice(indexOfEquals + 1)
-                    query[key] = value
-                } else {
-                    const key = pair
-                    query[key] = ""
-                }
-            })
+            query.runAction = this.getQueries(query.runAction).runAction
         }
+        const data = JSON.parse($text.base64Decode(query.runAction))
+        const env = $app.env === $env.siri ? ActionEnv.siri : ActionEnv.widget
 
         $delay(0.1, async () => {
             try {
-                const env = $app.env === $env.siri ? ActionEnv.siri : ActionEnv.widget
-                const data = JSON.parse($text.base64Decode(query.runAction))
-                const action = this.actions.getAction(data.category, data.dir, { env, text: query.text })
-                const result = await action.do()
-                $intents.finish(result)
+                const action = this.actions.getAction(data.category, data.dir, { env, ...query })
+                let result = await action.do()
+                if (env === ActionEnv.siri) {
+                    $intents.finish(result)
+                    if (typeof result === "object") {
+                        result = JSON.stringify(result, null, 2)
+                    }
+                    $("shortcuts-root-label").text = result ?? "CAIO"
+                }
             } catch (error) {
-                $intents.finish(error)
+                if (env === ActionEnv.siri) {
+                    $intents.finish(error)
+                }
+                this.logger.error(error)
             }
         })
     }

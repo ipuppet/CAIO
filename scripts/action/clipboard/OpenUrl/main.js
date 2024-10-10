@@ -16,6 +16,16 @@ class MyAction extends Action {
 
     do() {
         const url = this.getUrls()
+        if (this.env === ActionEnv.siri) {
+            // 快捷指令 Number 无法输入符号，所以使用字符串代替
+            const idx = Number(this.args)
+            if (idx === -1) {
+                // 返回对象方便快捷指令处理
+                return Object.fromEntries(url.map((v, i) => [i.toString(), v]))
+            }
+            this.openUrl(url[idx])
+            return url[idx]
+        }
         if (url.length > 1) {
             $ui.menu({
                 items: url,

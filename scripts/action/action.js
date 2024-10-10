@@ -278,7 +278,7 @@ class Action extends ActionData {
      * 获取动作对象
      * @param {string} category
      * @param {string} name
-     * @param {ActionData} data
+     * @param {ActionData|Object} data
      * @returns
      */
     getAction(category, name, data) {
@@ -286,8 +286,8 @@ class Action extends ActionData {
         return this.#kernel.actions.getAction(category, dir, data)
     }
 
-    async runAction(category, name) {
-        const action = this.getAction(category, name, new ActionData({ env: ActionEnv.recursion }))
+    async runAction(category, name, data = {}) {
+        const action = this.getAction(category, name, { env: ActionEnv.recursion, ...data })
         return await action.do()
     }
 

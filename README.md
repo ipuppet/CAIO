@@ -66,6 +66,8 @@ Next, set the `Parameter Dictionary` to a `Dictionary`.
 
 ### Run Action
 
+All `ActionData` parameters are supported, e.g. `args`.
+
 | Parameter | Type |
 | --------- | ---- |
 | runAction | Text |
