@@ -17,6 +17,7 @@ class ActionEnv {
     static keyboard = 4
     static recursion = 5
     static widget = 6
+    static siri = 7
 }
 class ActionData {
     #text

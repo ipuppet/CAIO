@@ -243,6 +243,7 @@ class ActionsData {
 
     checkUserAction() {
         if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
+            this.isNew = true
             $file.mkdir(this.userActionPath)
             this.importExampleAction()
             this.isNew = false

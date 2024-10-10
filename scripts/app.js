@@ -3,6 +3,7 @@ const SettingStructure = require("./setting/setting")
 const { Storage } = require("./dao/storage")
 const Clips = require("./ui/clips/clips")
 const Actions = require("./ui/action/actions")
+const { ActionEnv } = require("./action/action")
 
 /**
  * @typedef {AppKernelBase} AppKernelBase
@@ -15,6 +16,8 @@ class AppKernelBase extends Kernel {
     #storage
     #clips
     #actions
+
+    runActionFlag = false
 
     constructor() {
         super()
@@ -31,6 +34,40 @@ class AppKernelBase extends Kernel {
             logger: this.logger,
             fileStorage: this.fileStorage,
             structure: SettingStructure
+        })
+
+        this.runAction($context.query)
+    }
+
+    runAction(query) {
+        if (!query.runAction) return
+        this.runActionFlag = true
+
+        if (query.runAction?.startsWith("jsbox://")) {
+            const pairs = query.runAction.split("?")[1]?.split("&")
+            pairs.forEach(pair => {
+                const indexOfEquals = pair.indexOf("=")
+                if (indexOfEquals !== -1) {
+                    const key = pair.slice(0, indexOfEquals)
+                    const value = pair.slice(indexOfEquals + 1)
+                    query[key] = value
+                } else {
+                    const key = pair
+                    query[key] = ""
+                }
+            })
+        }
+
+        $delay(0.1, async () => {
+            try {
+                const env = $app.env === $env.siri ? ActionEnv.siri : ActionEnv.widget
+                const data = JSON.parse($text.base64Decode(query.runAction))
+                const action = this.actions.getAction(data.category, data.dir, { env, text: query.text })
+                const result = await action.do()
+                $intents.finish(result)
+            } catch (error) {
+                $intents.finish(error)
+            }
         })
     }
 

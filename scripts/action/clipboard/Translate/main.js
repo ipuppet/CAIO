@@ -3,8 +3,8 @@ class MyAction extends Action {
         const englishRegex = /[a-zA-Z]/g
         const chineseRegex = /[\u4e00-\u9fa5]/g
 
-        const englishMatches = text.match(englishRegex) || []
-        const chineseMatches = text.match(chineseRegex) || []
+        const englishMatches = text.match(englishRegex) ?? []
+        const chineseMatches = text.match(chineseRegex) ?? []
 
         const englishCount = englishMatches.length
         const chineseCount = chineseMatches.length
@@ -37,7 +37,7 @@ class MyAction extends Action {
             const data = resp.data
             return data[0][0][0]
         } catch (error) {
-            this.showTextContent(error.message, $l10n("ERROR"))
+            throw new Error(`Failed to translate: ${error.message}`)
         }
     }
 
@@ -47,6 +47,8 @@ class MyAction extends Action {
         if (!translated) return
         if (this.env === ActionEnv.keyboard) {
             this.replaceKeyboardText(text, translated)
+        } else if (this.env === ActionEnv.siri) {
+            return translated
         } else {
             this.showTextContent(translated)
         }

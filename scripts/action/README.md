@@ -148,8 +148,11 @@ class ActionEnv {
     static today = 0
     static editor = 1
     static clipboard = 2
-    static action = 3
+    static action = 3 // 主动作页面
     static keyboard = 4
+    static recursion = 5
+    static widget = 6
+    static siri = 7
 }
 ```
 
