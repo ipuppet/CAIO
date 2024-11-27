@@ -149,7 +149,9 @@ class Clips extends ClipsData {
             }
             if (copied) {
                 const index = this.getIndexByUUID(copied.uuid)
-                listView.cell($indexPath(0, index)).get("copied").hidden = false
+                if (listView.cell($indexPath(0, index))) {
+                    listView.cell($indexPath(0, index)).get("copied").hidden = false
+                }
             }
         })
 

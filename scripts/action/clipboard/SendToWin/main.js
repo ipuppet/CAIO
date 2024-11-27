@@ -2,31 +2,52 @@
  * @typedef {import("../../action").Action} Action
  */
 class MyAction extends Action {
-    async getIp(refresh = false) {
-        let address = $cache.get("caio.action.clipsync.address")
-        if (refresh || !address) {
-            address = await $input.text({
-                placeholder: "Address",
-                text: $cache.get("caio.action.clipsync.address")
-            })
+    key = $cache.get("caio.action.clipsync.key")
+    iv = $cache.get("caio.action.clipsync.iv")
+    address = $cache.get("caio.action.clipsync.address")
+
+    async getInfo(refresh = false) {
+        if (refresh || !this.address || !this.key || !this.iv) {
+            const result = await this.input([
+                {
+                    key: "key",
+                    value: this.key,
+                    placeholder: "key"
+                },
+                {
+                    key: "iv",
+                    value: this.iv,
+                    placeholder: "iv"
+                },
+                {
+                    key: "address",
+                    value: this.address,
+                    placeholder: "Address"
+                }
+            ])
+            this.key = result.key
+            this.iv = result.iv
+            this.address = result.address
+
+            $cache.set("caio.action.clipsync.key", this.key)
+            $cache.set("caio.action.clipsync.iv", this.iv)
+            $cache.set("caio.action.clipsync.address", this.address)
         }
 
-        $cache.set("caio.action.clipsync.address", address)
-
-        if (!address.startsWith("http")) {
-            address = "http://" + address
+        if (!this.address.startsWith("http")) {
+            this.address = "http://" + this.address
         }
-
-        return address
     }
 
     async do() {
-        let address = await this.getIp()
+        await this.getInfo()
 
         $ui.toast("Loading...", 5)
         try {
-            const resp = await this.request(address + "/api/clip", "POST", {
-                data: this.selectedText ?? this.text
+            const aes = this.aes(this.key, this.iv)
+            const data = this.selectedText ?? this.text ?? ""
+            const resp = await this.request(this.address + "/api/clip", "POST", {
+                data: aes.encrypt(data)
             })
             if (resp.data.status) {
                 $ui.success("success")
@@ -40,7 +61,7 @@ class MyAction extends Action {
                     { title: "OK" },
                     {
                         title: "Reset Adress",
-                        handler: () => this.getIp(true)
+                        handler: () => this.getInfo(true)
                     }
                 ]
             })
