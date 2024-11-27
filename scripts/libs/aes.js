@@ -1,5 +1,7 @@
 // @parcel/packager-js: External modules are not supported when building for browser
-eval('const CryptoJS = require("crypto-js")')
+if (typeof CryptoJS === undefined) {
+    $addin.eval('const CryptoJS = require("crypto-js")')
+}
 
 class AES {
     key
