@@ -1,4 +1,5 @@
-const CryptoJS = require("crypto-js")
+// @parcel/packager-js: External modules are not supported when building for browser
+$addin.eval('const CryptoJS = require("crypto-js")')
 
 class AES {
     key
