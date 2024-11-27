@@ -1,6 +1,6 @@
 const { Setting, Sheet } = require("../../libs/easy-jsbox")
 const Editor = require("../components/editor")
-const { ActionEnv, ActionData } = require("../../action/action")
+const { ActionEnv } = require("../../action/action")
 
 /**
  * @typedef {import("./actions").Actions} Actions
