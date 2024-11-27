@@ -4,7 +4,6 @@ const ClipsSearch = require("./search")
 const ClipsViews = require("./views")
 const ClipsDelegates = require("./delegates")
 const WebDavSync = require("../../dao/webdav-sync")
-const { ActionEnv, ActionData } = require("../../action/action")
 
 /**
  * @typedef {Clips} Clips
@@ -83,12 +82,8 @@ class Clips extends ClipsData {
 
     async checkUrlScheme() {
         // actions widget
-        if ($context.query["runAction"]) {
-            const data = JSON.parse($text.base64Decode($context.query["runAction"]))
-            const action = this.kernel.actions.getAction(data.category, data.dir, { env: ActionEnv.widget })
-            action.do()
-            return
-        }
+        // checked in kernel constructor
+        if (this.kernel.runActionFlag) return
         // clips widget
         if ($context.query["copy"]) {
             const uuid = $context.query["copy"]
@@ -154,7 +149,9 @@ class Clips extends ClipsData {
             }
             if (copied) {
                 const index = this.getIndexByUUID(copied.uuid)
-                listView.cell($indexPath(0, index)).get("copied").hidden = false
+                if (listView.cell($indexPath(0, index))) {
+                    listView.cell($indexPath(0, index)).get("copied").hidden = false
+                }
             }
         })
 

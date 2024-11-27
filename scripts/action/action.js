@@ -1,5 +1,6 @@
 const { L10n, Sheet } = require("../libs/easy-jsbox")
 const { SecureFunction } = require("./secure")
+const AES = require("../libs/aes")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
@@ -17,6 +18,7 @@ class ActionEnv {
     static keyboard = 4
     static recursion = 5
     static widget = 6
+    static siri = 7
 }
 class ActionData {
     #text
@@ -181,6 +183,74 @@ class Action extends ActionData {
         return sheet
     }
 
+    /**
+     *
+     * @param {Object} items
+     * item: {
+     * key: string,
+     * value: string,
+     * placeholder: string
+     * }
+     * @returns
+     */
+    input(items) {
+        const suffix = $text.uuid
+        const views = []
+        for (let item of items) {
+            views.push(
+                {
+                    type: "label",
+                    props: {
+                        color: $color("secondaryText"),
+                        text: item.placeholder
+                    },
+                    layout: (make, view) => {
+                        make.centerY.equalTo(view.super).offset(5)
+                        make.left.inset(15)
+                    }
+                },
+                {
+                    type: "view",
+                    props: { bgcolor: $color("clear") },
+                    views: [
+                        {
+                            type: "input",
+                            props: {
+                                id: item.key + suffix,
+                                text: item.value,
+                                placeholder: item.placeholder
+                            },
+                            layout: $layout.fill
+                        }
+                    ],
+                    layout: (make, view) => {
+                        make.centerY.height.equalTo(view.super)
+                        make.left.right.inset(15)
+                    }
+                }
+            )
+        }
+
+        return new Promise((resolve, reject) => {
+            this.pageSheet({
+                view: {
+                    type: "list",
+                    props: {
+                        separatorHidden: true,
+                        data: [{ rows: views }]
+                    }
+                },
+                done: () => {
+                    const result = {}
+                    for (let item of items) {
+                        result[item.key] = $(item.key + suffix).text
+                    }
+                    resolve(result)
+                }
+            })
+        })
+    }
+
     showTextContent(text, title = "") {
         return this.pageSheet({
             view: {
@@ -277,7 +347,7 @@ class Action extends ActionData {
      * 获取动作对象
      * @param {string} category
      * @param {string} name
-     * @param {ActionData} data
+     * @param {ActionData|Object} data
      * @returns
      */
     getAction(category, name, data) {
@@ -285,8 +355,8 @@ class Action extends ActionData {
         return this.#kernel.actions.getAction(category, dir, data)
     }
 
-    async runAction(category, name) {
-        const action = this.getAction(category, name, new ActionData({ env: ActionEnv.recursion }))
+    async runAction(category, name, data = {}) {
+        const action = this.getAction(category, name, { env: ActionEnv.recursion, ...data })
         return await action.do()
     }
 
@@ -309,6 +379,10 @@ class Action extends ActionData {
         const allUrls = [...new Set([...httpUrls, ...iosUrls])]
 
         return allUrls
+    }
+
+    aes(key, iv) {
+        return new AES(key, iv)
     }
 
     addinRun(name) {

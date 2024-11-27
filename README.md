@@ -50,6 +50,8 @@ Please add a new action called `Run JSBox script` and set the `Name` parameter t
 
 Next, set the `Parameter Dictionary` to a `Dictionary`.
 
+### Clips
+
 | Parameter | Type   |
 | --------- | ------ |
 | set       | Text   |
@@ -61,3 +63,15 @@ Next, set the `Parameter Dictionary` to a `Dictionary`.
 - `get`: The item at the specified index (e.g., 0) will be returned.
 - `delete`: The item at the specified index (e.g., 0) will be deleted, returning its content.
 - `table`: It will specify the table to either set or get the item from, with options being `["favorite", "clips"]`. This parameter is optional and has a default value of `clips`.
+
+### Run Action
+
+All `ActionData` parameters are supported, e.g. `args`.
+
+| Parameter | Type |
+| --------- | ---- |
+| runAction | Text |
+| text      | Text |
+
+- `runAction`: Long press the action on the JSBox action page to copy the URL Schema and fill it in here.
+- `text`: Optional parameter to pass content to the action. When running JSBox in a shortcut, the script cannot access clipboard content, so you need to pass it through this parameter (use the shortcut's `Get Clipboard` action).

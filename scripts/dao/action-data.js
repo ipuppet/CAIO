@@ -29,7 +29,6 @@ class ActionsData {
         this.checkUserAction()
         // sync
         this.initWebdavSync()
-        this.sync()
     }
 
     get actions() {
@@ -37,6 +36,7 @@ class ActionsData {
         return this.#actions
     }
     get allActions() {
+        if (this.isNew) return {}
         const allActions = $cache.get(this.allActionsCacheKey)
         // 无分类的单层数组
         if (!allActions || typeof allActions !== "object") this.#initActions()
@@ -47,7 +47,7 @@ class ActionsData {
         return $cache.get("caio.action.isNew") ?? false
     }
     set isNew(isNew) {
-        $cache.get("caio.action.isNew", isNew)
+        $cache.set("caio.action.isNew", isNew)
     }
 
     #initActions() {
@@ -242,10 +242,15 @@ class ActionsData {
     }
 
     checkUserAction() {
-        if (!$file.exists(this.userActionPath) || $file.list(this.userActionPath).length === 0) {
+        if (!$file.exists(this.userActionPath)) {
             $file.mkdir(this.userActionPath)
-            this.importExampleAction()
-            this.isNew = false
+        }
+        if ($file.list(this.userActionPath).length === 0) {
+            if (!this.webdavSync) {
+                this.isNew = true
+                this.importExampleAction()
+                this.isNew = false
+            }
         }
     }
 

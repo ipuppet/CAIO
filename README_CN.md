@@ -50,8 +50,10 @@ Base Path: `/path/to/save`
 
 然后将 `参数词典` 设置为一个 `字典`。
 
-| 参数    | 类型   |
-| -----  | ------ |
+### 剪切板相关
+
+| 参数   | 类型   |
+| ------ | ------ |
 | set    | Text   |
 | get    | Number |
 | delete | Number |
@@ -61,3 +63,15 @@ Base Path: `/path/to/save`
 - `get`：将返回指定索引（例如：0）处的项。
 - `delete`：将删除指定索引（例如：0）处的项，返回该项内容。
 - `table`：将指定要设置或获取项的表格，可选项为 `["favorite", "clips"]`。此项可省略，默认值为 `clips`。
+
+### 运行动作
+
+支持所有 `ActionData` 参数，如 `args`。
+
+| 参数      | 类型 |
+| --------- | ---- |
+| runAction | Text |
+| text      | Text |
+
+- `runAction`：在 JSBox 动作页面长按动作，复制 URL Schema，填写到此栏。
+- `text`：可选参数，传递给动作的内容。快捷指令中运行 JSBox 时脚本无法获取剪切板内容，需要通过此参数传递（使用快捷指令的 `获取剪切板` 动作）。
