@@ -510,7 +510,11 @@ class Keyboard extends Clips {
         const leftButtons = []
         const rightButtons = []
         // 切换键盘
-        const needsInputModeSwitchKey = $ui.controller.ocValue().$needsInputModeSwitchKey()
+        let needsInputModeSwitchKey = $cache.get("keyboard.needsInputModeSwitchKey")
+        if (needsInputModeSwitchKey === undefined) {
+            needsInputModeSwitchKey = $ui.controller.ocValue().$needsInputModeSwitchKey()
+            $cache.set("keyboard.needsInputModeSwitchKey", needsInputModeSwitchKey)
+        }
         if (needsInputModeSwitchKey) {
             leftButtons.push({
                 symbol: "globe",
