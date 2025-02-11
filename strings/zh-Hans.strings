@@ -112,6 +112,7 @@
 "LIST" = "列表";
 "MATRIX" = "网格";
 "PIN_ACTION" = "置顶动作";
+"keyboard.excludePin" = "列表中排除已置顶";
 
 "CHECK_UPDATE" = "检查更新";
 "UPDATE" = "更新";

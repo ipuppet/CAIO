@@ -56,7 +56,13 @@ module.exports = new SettingChild({
                 new SettingScript({
                     icon: ["pin", "#FFCC33"],
                     title: "PIN_ACTION"
-                }).with({ script: "this.method.keyboardPinAction" })
+                }).with({ script: "this.method.keyboardPinAction" }),
+                new SettingSwitch({
+                    icon: ["bolt.circle", "#FF6633"],
+                    title: "keyboard.excludePin",
+                    key: "keyboard.excludePin",
+                    value: false
+                })
             ]
         },
         {

@@ -112,6 +112,8 @@
 "LIST" = "List";
 "MATRIX" = "Matrix";
 "PIN_ACTION" = "Pin Action";
+"PIN_ACTION" = "Pin Action";
+"keyboard.excludePin" = "Exclude Pinned from List";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
