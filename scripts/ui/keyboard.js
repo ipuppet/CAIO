@@ -830,9 +830,13 @@ class Keyboard extends Clips {
                         let pined = KeyboardPinActions.shared.getActions().map(action => action.dir + action.category)
                         let actions = []
                         this.kernel.actions.actions.forEach(dir => {
-                            actions = actions.concat(
-                                dir.items.filter(item => !pined.includes(item.dir + item.category))
-                            )
+                            if (this.kernel.setting.get("keyboard.excludePin")) {
+                                actions = actions.concat(
+                                    dir.items.filter(item => !pined.includes(item.dir + item.category))
+                                )
+                            } else {
+                                actions = actions.concat(dir.items)
+                            }
                         })
                         return actions
                     })()
