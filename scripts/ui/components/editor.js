@@ -1,5 +1,5 @@
 const { UIKit, NavigationBar, NavigationView, Sheet } = require("../../libs/easy-jsbox")
-const { ActionEnv, ActionData } = require("../../action/action")
+const { ActionEnv } = require("../../action/action")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
