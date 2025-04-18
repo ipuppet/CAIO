@@ -823,7 +823,25 @@ class Keyboard extends Clips {
         return {
             type: "view",
             props: { id: this.actionsId, hidden: true },
-            views: [this.kernel.actions.views.getActionMiniView(() => this.getKeyboardActionData())],
+            views: [
+                this.kernel.actions.views.getActionMiniView(
+                    () => this.getKeyboardActionData(),
+                    (() => {
+                        let pined = KeyboardPinActions.shared.getActions().map(action => action.dir + action.category)
+                        let actions = []
+                        this.kernel.actions.actions.forEach(dir => {
+                            if (this.kernel.setting.get("keyboard.excludePin")) {
+                                actions = actions.concat(
+                                    dir.items.filter(item => !pined.includes(item.dir + item.category))
+                                )
+                            } else {
+                                actions = actions.concat(dir.items)
+                            }
+                        })
+                        return actions
+                    })()
+                )
+            ],
             layout: (make, view) => {
                 make.top.equalTo(this.navHeight)
                 make.left.equalTo(this.views.containerMargin)

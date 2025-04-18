@@ -1,5 +1,5 @@
 const { UIKit, NavigationBar, NavigationView, Sheet } = require("../../libs/easy-jsbox")
-const { ActionEnv, ActionData } = require("../../action/action")
+const { ActionEnv } = require("../../action/action")
 
 /**
  * @typedef {import("../../app-main").AppKernel} AppKernel
@@ -116,25 +116,25 @@ class Editor {
         sheet.present()
     }
 
-    getViewController(type, callback) {
-        $define({
-            type: "EditorViewController: UIViewController",
-            events: {
-                viewDidLoad: () => {
-                    self.$super().$viewDidLoad()
+    // getViewController(type, callback) {
+    //     $define({
+    //         type: "EditorViewController: UIViewController",
+    //         events: {
+    //             viewDidLoad: () => {
+    //                 self.$super().$viewDidLoad()
 
-                    self.$view().jsValue().add(this.getView(type))
+    //                 self.$view().jsValue().add(this.getView(type))
 
-                    const navigationItem = self.$navigationItem()
-                    navigationItem.$setLargeTitleDisplayMode(2)
-                },
-                "viewDidDisappear:": animated => {
-                    callback()
-                }
-            }
-        })
-        return $objc("EditorViewController").$new()
-    }
+    //                 const navigationItem = self.$navigationItem()
+    //                 navigationItem.$setLargeTitleDisplayMode(2)
+    //             },
+    //             "viewDidDisappear:": animated => {
+    //                 callback()
+    //             }
+    //         }
+    //     })
+    //     return $objc("EditorViewController").$new()
+    // }
 
     /**
      *
