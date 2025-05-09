@@ -269,6 +269,10 @@ class SecureFunction extends SecureFunctionBase {
     addin() {
         throw new Error(this.notAllowed)
     }
+
+    sheetDismiss() {
+        this.#sheet.dismiss()
+    }
 }
 
 class SecureScript {
@@ -301,6 +305,9 @@ class SecureScript {
     replaceFunction() {
         this.#replace(/\$ui\.render/gi, `${this.sf}.render`)
         this.#replace(/\$ui\.controller/gi, `${this.sf}.controller`)
+
+        this.#replace(/\$app\.close/gi, `${this.sf}.sheetDismiss`)
+        this.#replace(/\$keyboard\.dismiss/gi, `${this.sf}.sheetDismiss`)
 
         this.#replace(/\$addin\.*[a-zA-Z0-9\[\]'"`]+/gi, `${this.sf}.addin()`)
         this.#replace("eval", `${this.sf}.addin()`)

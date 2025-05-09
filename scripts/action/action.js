@@ -397,7 +397,7 @@ class Action extends ActionData {
         }
         const actionKey = "_" + $text.uuid.replace(/-/g, "")
         const ss = new SecureScript(script.data.string, actionKey)
-        new Function(actionKey, `${ss.secure()}`)(this)
+        new Function("CAIO_ACTION", actionKey, `${ss.secure()}`)(this.config.name, this)
     }
 }
 
