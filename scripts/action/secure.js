@@ -10,15 +10,17 @@ class SecureFunctionBase {
      */
     #kernel
     #config
+    action
 
     notAllowed = `"The parameter or method is not allowed in Action."`
 
-    constructor(kernel, config) {
+    constructor(kernel, action) {
         this.#kernel = kernel
-        this.#config = JSON.parse(JSON.stringify(config))
+        this.#config = JSON.parse(JSON.stringify(action.config))
         if (!this.#config?.name || this.#config?.name === "undefined") {
             throw new Error("Cannot get Action name.")
         }
+        this.action = action
     }
 
     get name() {
@@ -198,11 +200,70 @@ class SecureHttp extends SecureFunctionBase {
     }
 }
 
+class SecureCache extends SecureFunctionBase {
+    #cacheKey = "ActionCache"
+
+    #get() {
+        const cache = $cache.get(this.#cacheKey) ?? {}
+        if (!cache[this.name]) {
+            cache[this.name] = {}
+        }
+        return cache
+    }
+
+    get(key) {
+        return this.#get()[this.name][key]
+    }
+    async getAsync({ key, handler } = {}) {
+        handler(this.get(key))
+    }
+
+    set(key, value) {
+        const cache = this.#get()
+        cache[this.name][key] = value
+        return $cache.set(this.#cacheKey, cache)
+    }
+    async setAsync({ key, value, handler } = {}) {
+        handler(this.set(key, value))
+    }
+
+    remove(key) {
+        const cache = this.#get()
+        delete cache[this.name][key]
+        $cache.set(this.#cacheKey, cache)
+    }
+    async removeAsync({ key, handler } = {}) {
+        this.remove(key)
+        handler()
+    }
+
+    clear() {
+        const cache = this.#get()
+        delete cache[this.name]
+        $cache.set(this.#cacheKey, cache)
+    }
+    async clearAsync({ handler } = {}) {
+        this.clear()
+        handler()
+    }
+}
+
 class SecureFunction extends SecureFunctionBase {
+    #sheet
+
     constructor(...args) {
         super(...args)
         this.file = new SecureFile(...args)
         this.http = new SecureHttp(...args)
+        this.cache = new SecureCache(...args)
+    }
+
+    get controller() {
+        return this.#sheet.sheetVC.jsValue()
+    }
+
+    render(view) {
+        this.#sheet = this.action.pageSheet({ view })
     }
 
     addin() {
@@ -215,12 +276,16 @@ class SecureScript {
      * @typedef {string}
      */
     script
-    sf = "this.secureFunction"
+
+    sfPrefix = "this"
+    sf
 
     /**
      * @param {string} script
      */
-    constructor(script) {
+    constructor(script, sfPrefix = "this") {
+        this.sfPrefix = sfPrefix
+        this.sf = `${this.sfPrefix}.secureFunction`
         this.script = script
     }
 
@@ -233,7 +298,10 @@ class SecureScript {
         this.script = this.script.replaceAll(searchValue, replaceValue)
     }
 
-    replaceEval() {
+    replaceFunction() {
+        this.#replace(/\$ui\.render/gi, `${this.sf}.render`)
+        this.#replace(/\$ui\.controller/gi, `${this.sf}.controller`)
+
         this.#replace(/\$addin\.*[a-zA-Z0-9\[\]'"`]+/gi, `${this.sf}.addin()`)
         this.#replace("eval", `${this.sf}.addin()`)
     }
@@ -244,11 +312,15 @@ class SecureScript {
     replaceHttp() {
         this.#replace("$http", `${this.sf}.http`)
     }
+    replaceCache() {
+        this.#replace("$cache", `${this.sf}.cache`)
+    }
 
     secure() {
-        this.replaceEval()
+        this.replaceFunction()
         this.replaceFile()
         this.replaceHttp()
+        this.replaceCache()
         return this.script
     }
 }

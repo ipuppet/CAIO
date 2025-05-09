@@ -1,5 +1,5 @@
 const { L10n, Sheet } = require("../libs/easy-jsbox")
-const { SecureFunction } = require("./secure")
+const { SecureFunction, SecureScript } = require("./secure")
 const AES = require("../libs/aes")
 
 /**
@@ -132,7 +132,7 @@ class Action extends ActionData {
         super(data)
         this.#kernel = kernel
         this.config = config
-        this.secureFunction = new SecureFunction(this.#kernel, this.config)
+        this.secureFunction = new SecureFunction(this.#kernel, this)
 
         const l10n = this.l10n()
         Object.keys(l10n).forEach(language => {
@@ -166,20 +166,17 @@ class Action extends ActionData {
      */
     pageSheet({ view, title = "", done, doneText = $l10n("DONE"), rightButtons = [] }) {
         const sheet = new Sheet()
-        sheet
-            .setView(view)
-            .addNavBar({
-                title: title,
-                popButton: {
-                    title: doneText,
-                    tapped: () => {
-                        if (done) done()
-                    }
-                },
-                rightButtons
-            })
-            .init()
-            .present()
+        sheet.setView(view).addNavBar({
+            title: title,
+            popButton: {
+                title: doneText,
+                tapped: () => {
+                    if (done) done()
+                }
+            },
+            rightButtons
+        })
+        sheet.init().present()
         return sheet
     }
 
@@ -387,6 +384,20 @@ class Action extends ActionData {
 
     addinRun(name) {
         $addin.run(name)
+    }
+
+    runJSBoxScript(name) {
+        const list = $addin.list
+        let script = null
+        for (const s of list) {
+            if (s.name === name || s.displayName === name) {
+                script = s
+                break
+            }
+        }
+        const actionKey = "_" + $text.uuid.replace(/-/g, "")
+        const ss = new SecureScript(script.data.string, actionKey)
+        new Function(actionKey, `${ss.secure()}`)(this)
     }
 }
 
