@@ -1,7 +1,7 @@
 const { SettingSwitch, SettingScript, SettingNumber, SettingPush, SettingChild } = require("../../libs/easy-jsbox")
 
 module.exports = new SettingChild({
-    icon: ["doc.on.clipboard", "#FFCC66"],
+    icon: ["doc.on.clipboard.fill", "#FFCC66"],
     title: "CLIPS"
 }).with({
     children: [

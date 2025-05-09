@@ -23,7 +23,7 @@ class AppUI {
 
     static renderMainUI() {
         const buttons = {
-            clips: { icon: "doc.on.clipboard", title: $l10n("CLIPS") },
+            clips: { icon: "doc.on.clipboard.fill", title: $l10n("CLIPS") },
             actions: { icon: "command", title: $l10n("ACTIONS") },
             setting: { icon: "gear", title: $l10n("SETTING") }
         }
