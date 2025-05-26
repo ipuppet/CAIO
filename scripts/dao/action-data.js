@@ -50,6 +50,16 @@ class ActionsData {
         $cache.set("caio.action.isNew", isNew)
     }
 
+    get mock() {
+        return new Action(
+            this.kernel,
+            { name: "CAIO_MOCK" },
+            new ActionData({
+                env: ActionEnv.mock
+            })
+        )
+    }
+
     #initActions() {
         this.#actions = this.getActionCategories().map(category => {
             return {
@@ -209,11 +219,11 @@ class ActionsData {
 
         try {
             const { config, main, readme } = data
-            if (!config || !main || !readme) {
-                throw new Error("Not an action")
+            if (!config || !main) {
+                throw new Error("Action data must contain config and main")
             }
             let name = JSON.parse(config)?.name?.trim()
-            if (!name || name === "") throw new Error("Not an action")
+            if (!name || name === "") throw new Error("Action name cannot be empty")
 
             const dirName = this.initActionDirByName(name)
             const actionPath = this.getActionPath(category, dirName)
@@ -228,7 +238,7 @@ class ActionsData {
                 path: FileStorage.join(actionPath, "main.js")
             })
             $file.write({
-                data: $data({ string: readme }),
+                data: $data({ string: readme ?? "" }),
                 path: FileStorage.join(actionPath, "README.md")
             })
             this.needUpload(true)

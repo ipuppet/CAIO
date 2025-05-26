@@ -17,6 +17,8 @@ class AppKernelBase extends Kernel {
     #clips
     #actions
 
+    #addins = {}
+
     runActionFlag = false
 
     constructor() {
@@ -125,6 +127,21 @@ class AppKernelBase extends Kernel {
             this.#actions = new Actions(this)
         }
         return this.#actions
+    }
+
+    getAddin(name) {
+        if (this.#addins[name]) {
+            return this.#addins[name]
+        }
+        const list = $addin.list
+        for (const s of list) {
+            if (s.name === name || s.displayName === name) {
+                this.#addins[name] = s
+                return this.#addins[name]
+            }
+        }
+        this.logger.warn(`Addin ${name} not found`)
+        return null
     }
 }
 

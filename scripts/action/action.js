@@ -19,6 +19,7 @@ class ActionEnv {
     static recursion = 5
     static widget = 6
     static siri = 7
+    static mock = 8 // 虚拟 Action，用于快速访问方法
 }
 class ActionData {
     #text
@@ -383,18 +384,16 @@ class Action extends ActionData {
     }
 
     addinRun(name) {
-        $addin.run(name)
+        const script = this.#kernel.getAddin(name)
+        if (script.name === script.diskName) {
+            this.runJSBoxScript(name)
+        } else {
+            $addin.run(name)
+        }
     }
 
     runJSBoxScript(name) {
-        const list = $addin.list
-        let script = null
-        for (const s of list) {
-            if (s.name === name || s.displayName === name) {
-                script = s
-                break
-            }
-        }
+        const script = this.#kernel.getAddin(name) // 此方法不会重新搜索
         const actionKey = "_" + $text.uuid.replace(/-/g, "")
         const ss = new SecureScript(script.data.string, actionKey)
         new Function("CAIO_ACTION", actionKey, `${ss.secure()}`)(this.config.name, this)
