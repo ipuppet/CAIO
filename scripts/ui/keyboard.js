@@ -539,21 +539,28 @@ class Keyboard extends Clips {
             })
         }
 
-        leftButtons.push({
-            symbol: "paperplane",
-            menu: {
-                pullDown: true,
-                asPrimary: true,
-                items: KeyboardAddins.getAddins()
-                    .reverse()
-                    .map(addin => {
-                        return {
-                            title: addin,
-                            handler: this.keyboardTapped(() => $addin.run(addin))
-                        }
-                    })
+        const quickStarts = KeyboardAddins.getAddins().map(addin => ({
+            title: addin,
+            handler: this.keyboardTapped(() => this.kernel.actions.mock.addinRun(addin))
+        }))
+        if (quickStarts.length > 0) {
+            if (quickStarts.length === 1) {
+                leftButtons.push({
+                    symbol: "paperplane",
+                    tapped: quickStarts[0].handler
+                })
+            } else {
+                leftButtons.push({
+                    symbol: "paperplane",
+                    menu: {
+                        pullDown: true,
+                        asPrimary: true,
+                        items: quickStarts.reverse()
+                    }
+                })
             }
-        })
+        }
+
         rightButtons.push(
             {
                 title: this.returnKeyLabelCache,
