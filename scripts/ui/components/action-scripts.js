@@ -23,11 +23,7 @@ class ActionScripts {
     }
 
     getActionCategories() {
-        const defaultCategories = this.kernel.actions.defaultCategories()
-        return this.kernel.actions.getActionCategories().filter(category => {
-            if (defaultCategories.indexOf(category) < 0) return true
-            return false
-        })
+        return this.kernel.actions.getActionCategories()
     }
 
     getListView() {
@@ -35,7 +31,7 @@ class ActionScripts {
             type: "list",
             props: {
                 id: this.listId,
-                reorder: false,
+                reorder: true,
                 data: this.getActionCategories(),
                 actions: [
                     {
@@ -52,10 +48,20 @@ class ActionScripts {
             },
             events: {
                 didSelect: async (sender, indexPath, data) => {
-                    const result = await this.kernel.actions.renameActionCategory(data)
-                    if (result) {
-                        sender.data = this.getActionCategories()
+                    try {
+                        const result = await this.kernel.actions.renameActionCategory(data)
+                        if (result) {
+                            sender.data = this.getActionCategories()
+                        }
+                    } catch (error) {
+                        this.kernel.logger.error(`Failed to rename action category: ${error}`)
                     }
+                },
+                swipeEnabled: (sender, indexPath) => {
+                    return sender.data.length > 1 // 禁止删除最后一个分类
+                },
+                reorderFinished: data => {
+                    this.kernel.actions.saveActionCategoryOrder(data)
                 }
             },
             layout: $layout.fill

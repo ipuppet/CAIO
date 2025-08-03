@@ -61,7 +61,7 @@
 "CATEGORY" = "Category";
 "EDIT_CATEGORY" = "Edit Category";
 "delete.category" = "Delete Category ${category}";
-"delete.category.keep.actions" = "Do you keep the actions in this category?";
+"delete.category.keep.actions" = "Do you want to keep the actions in this category?";
 "DESCRIPTION" = "Description";
 "CODE" = "Code";
 "TEXT_INSETS" = "Text bottom margin";

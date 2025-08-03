@@ -337,10 +337,7 @@ class Today extends Clips {
     }
 
     getActionView() {
-        let actions = this.todayPinActions.getActions()
-        if (actions.length === 0) {
-            actions = Object.values(this.kernel.actions.allActions)
-        }
+        let actions = this.todayPinActions.getActions(true)
 
         return {
             type: "view",
