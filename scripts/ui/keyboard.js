@@ -646,57 +646,56 @@ class Keyboard extends Clips {
     }
 
     get matrixTemplate() {
+        const contentViews = [
+            {
+                type: "view",
+                props: {
+                    id: "copied",
+                    circular: this.views.copiedIndicatorSize,
+                    hidden: true,
+                    bgcolor: $color("green")
+                },
+                layout: (make, view) => {
+                    make.size.equalTo(this.views.copiedIndicatorSize)
+                    // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
+                    make.left.top.inset(this.matrixBoxMargin / 2)
+                }
+            },
+            {
+                type: "label",
+                props: {
+                    id: "content",
+                    lines: 0,
+                    font: $font(this.views.fontSize)
+                },
+                layout: (make, view) => {
+                    make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
+                    make.height.lessThanOrEqualTo(view.super).offset(-this.matrixBoxMargin * 2 - this.views.tagHeight)
+                }
+            },
+            {
+                type: "label",
+                props: {
+                    id: "tag",
+                    lines: 1,
+                    color: this.tagColor,
+                    autoFontSize: true,
+                    align: $align.leading
+                },
+                layout: (make, view) => {
+                    make.left.right.equalTo(view.prev)
+                    make.height.equalTo(this.views.tagHeight)
+                    make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
+                }
+            }
+        ]
         return {
             props: {
                 smoothCorners: true,
-                cornerRadius: 10
+                cornerRadius: this.cornerRadius
             },
             views: [
-                UIKit.blurBox({}, [
-                    {
-                        type: "view",
-                        props: {
-                            id: "copied",
-                            circular: this.views.copiedIndicatorSize,
-                            hidden: true,
-                            bgcolor: $color("green")
-                        },
-                        layout: (make, view) => {
-                            make.size.equalTo(this.views.copiedIndicatorSize)
-                            // 放在前面小缝隙的中间 `this.copyedIndicatorSize / 2` 指大小的一半
-                            make.left.top.inset(this.matrixBoxMargin / 2)
-                        }
-                    },
-                    {
-                        type: "label",
-                        props: {
-                            id: "content",
-                            lines: 0,
-                            font: $font(this.views.fontSize)
-                        },
-                        layout: (make, view) => {
-                            make.top.left.right.equalTo(view.super).inset(this.matrixBoxMargin)
-                            make.height
-                                .lessThanOrEqualTo(view.super)
-                                .offset(-this.matrixBoxMargin * 2 - this.views.tagHeight)
-                        }
-                    },
-                    {
-                        type: "label",
-                        props: {
-                            id: "tag",
-                            lines: 1,
-                            color: this.tagColor,
-                            autoFontSize: true,
-                            align: $align.leading
-                        },
-                        layout: (make, view) => {
-                            make.left.right.equalTo(view.prev)
-                            make.height.equalTo(this.views.tagHeight)
-                            make.bottom.equalTo(view.super).inset(this.matrixBoxMargin)
-                        }
-                    }
-                ]),
+                UIKit.blurBox({}, contentViews),
                 {
                     type: "image",
                     props: {
@@ -830,7 +829,7 @@ class Keyboard extends Clips {
         }
         if (this.useBlur) {
             return UIKit.blurBox(
-                { smoothCorners: false, cornerRadius: this.cornerRadius * 2 },
+                { style: $blurStyle.ultraThinMaterial, cornerRadius: this.cornerRadius * 2 },
                 [view],
                 (make, view) => {
                     make.top.equalTo(this.navHeight)
