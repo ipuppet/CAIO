@@ -19,13 +19,21 @@ class SelectActions {
         return this
     }
 
-    getActions() {
+    getRawActions() {
         const actions = $cache.get(this.cacheKey)
         if (!Array.isArray(actions)) {
             return []
         }
+        return actions
+    }
 
-        return actions.filter(action => this.kernel.actions.exists(action.category, action.dir))
+    getActions(defaultAll = false) {
+        const actions = this.getRawActions()
+        const existsAction = actions.filter(action => this.kernel.actions.exists(action.category, action.dir))
+        if (existsAction.length === 0 && defaultAll) {
+            return Object.values(this.kernel.actions.allActions)
+        }
+        return existsAction
     }
 
     addAction(action) {
@@ -40,8 +48,13 @@ class SelectActions {
 
     updateAction(from, to) {
         this.setActions(
-            this.getActions().map(action => {
+            // Using getRawActions to ensure not losing actions
+            // this.kernel.actions.exists will filter out actions that do not exist if using getActions
+            this.getRawActions().map(action => {
                 if (action.category === from.category && action.dir === from.dir) {
+                    this.kernel.logger.info(
+                        `Updating action from ${from.category}/${from.dir} to ${to.category}/${to.dir}`
+                    )
                     return to
                 }
                 return action

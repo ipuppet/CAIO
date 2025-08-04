@@ -88,7 +88,13 @@ module.exports = new SettingChild({
                 new SettingScript({
                     icon: "paperplane",
                     title: "QUICK_START_SCRIPTS"
-                }).with({ script: "this.method.setKeyboardQuickStart" })
+                }).with({ script: "this.method.setKeyboardQuickStart" }),
+                new SettingSwitch({
+                    icon: ["paperplane", "#1899c4"],
+                    title: "RUN_DIRECTLY",
+                    key: "keyboard.runDirectly",
+                    value: false
+                })
             ]
         },
         {

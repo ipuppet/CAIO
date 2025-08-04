@@ -24,6 +24,7 @@ class ActionsData {
         this.actionPath = "scripts/action"
         this.actionOrderFile = "order.json"
         this.userActionPath = `${this.kernel.fileStorage.basePath}/user_action`
+        this.categoryOrderFile = `${this.userActionPath}/order.json`
         this.localSyncFile = this.userActionPath + "/sync.json"
         // checkUserAction
         this.checkUserAction()
@@ -65,7 +66,7 @@ class ActionsData {
             return {
                 category,
                 dir: category,
-                title: this.getCategoryTitle(category),
+                title: category,
                 items: this.getActions(category) // 过程中可能调用 saveOrder 导致 this.#allActions 被置为 undefined
             }
         })
@@ -124,7 +125,7 @@ class ActionsData {
                         actionRaw[category + dir] = [action, category]
                     })
                     actionList.push({
-                        title: this.getCategoryTitle(category),
+                        title: category,
                         rows: rows
                     })
                 })
@@ -149,7 +150,7 @@ class ActionsData {
                             }
                         })
                         actionList.push({
-                            title: this.getCategoryTitle(category),
+                            title: category,
                             rows: rows
                         })
                     }
@@ -321,18 +322,55 @@ class ActionsData {
         })
     }
 
-    defaultCategories() {
-        return ["uncategorized", "clipboard", "editor"]
+    saveActionCategoryOrder(order) {
+        if (!Array.isArray(order)) {
+            throw new Error("Order must be an array")
+        }
+        for (const dir of order) {
+            if (!$file.isDirectory(`${this.userActionPath}/${dir}`)) {
+                throw new Error(`Directory ${dir} does not exist in user action path`)
+            }
+        }
+        $file.write({
+            data: $data({ string: JSON.stringify(order) }),
+            path: this.categoryOrderFile
+        })
+        this.needUpload()
     }
 
     getActionCategories() {
-        const category = this.defaultCategories() // 保证 "uncategorized", "clipboard", "editor" 排在前面
-        return category.concat(
+        let categories = []
+        if ($file.exists(this.categoryOrderFile)) {
+            try {
+                categories = JSON.parse($file.read(this.categoryOrderFile).string ?? "[]")
+            } catch (error) {
+                categories = []
+                this.kernel.logger.error(`Error reading action order: ${error.message}`)
+                this.kernel.logger.error(`File content: ${$file.read(this.categoryOrderFile)?.string}`)
+            }
+            const orderLength = categories.length
+            if (orderLength > 0) {
+                categories = categories.filter(dir => {
+                    return $file.isDirectory(`${this.userActionPath}/${dir}`)
+                })
+            }
+            // 如果 order 长度小于 orderLength，说明有删除的目录
+            // 需要更新 order.json
+            if (categories.length < orderLength) {
+                this.saveActionCategoryOrder(categories)
+            }
+        }
+        categories = categories.concat(
             $file.list(this.userActionPath).filter(dir => {
-                // 获取 category.indexOf(dir) < 0 的文件夹名
-                return $file.isDirectory(`${this.userActionPath}/${dir}`) && category.indexOf(dir) < 0
+                // 获取 order.indexOf(dir) < 0 的文件夹名
+                return $file.isDirectory(`${this.userActionPath}/${dir}`) && categories.indexOf(dir) < 0
             })
         )
+        if (categories.length === 0) {
+            categories = ["Uncategorized"]
+            $file.mkdir(`${this.userActionPath}/Uncategorized`)
+        }
+        return categories
     }
 
     async deleteActionCategory(category) {
@@ -354,12 +392,19 @@ class ActionsData {
         }
         if (result.index === 0) {
             // move to other uncategorized
+            const categories = this.getActionCategories().filter(c => c !== category)
+            const movePath = await $ui.menu({ items: categories })
             for (let action of $file.list(path)) {
                 $file.move({
                     src: `${path}/${action}`,
-                    dst: `${this.userActionPath}/uncategorized/${action}`
+                    dst: `${this.userActionPath}/${movePath.title}/${action}`
                 })
             }
+            this.actions[this.getActionCategorySection(category)].items.forEach(action => {
+                const copy = Object.assign({}, action)
+                copy.category = movePath.title
+                this.updatePinActions(action, copy)
+            })
         }
 
         $file.delete(path)
@@ -402,13 +447,24 @@ class ActionsData {
             $ui.warning($l10n("TYPE_ALREADY_EXISTS"))
             return false
         }
+        const actions = this.actions[this.getActionCategorySection(category)].items
+        actions.forEach(action => {
+            const copy = Object.assign({}, action)
+            copy.category = text
+            this.updatePinActions(action, copy)
+        })
 
+        this.kernel.logger.info(`Renaming action category from ${category} to ${text}`)
         $file.move({
             src: oldPath,
             dst: path
         })
-        $ui.success($l10n("SUCCESS"))
+        if ($file.exists(this.categoryOrderFile)) {
+            const order = $file.read(this.categoryOrderFile).string.replace(`"${category}"`, `"${text}"`)
+            this.saveActionCategoryOrder(JSON.parse(order))
+        }
         this.needUpload()
+        $ui.success($l10n("SUCCESS"))
         return true
     }
 
@@ -545,13 +601,6 @@ class ActionsData {
             if (order.indexOf(item) === -1) pushAction(item)
         })
         return actions
-    }
-
-    getCategoryTitle(category) {
-        const categoryUpperCase = category.toUpperCase()
-        const l10n = $l10n(categoryUpperCase)
-        const name = l10n === categoryUpperCase ? category : l10n
-        return name
     }
 
     #saveFile(data, ...args) {

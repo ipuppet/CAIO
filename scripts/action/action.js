@@ -383,7 +383,11 @@ class Action extends ActionData {
         return new AES(key, iv)
     }
 
-    addinRun(name) {
+    addinRun(name, runDirectly = false) {
+        if (runDirectly) {
+            $addin.run(name)
+            return
+        }
         const script = this.#kernel.getAddin(name)
         if (script.name === script.diskName) {
             this.runJSBoxScript(name)

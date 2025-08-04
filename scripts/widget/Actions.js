@@ -12,10 +12,7 @@ class ActionsWidget {
     constructor(kernel = {}) {
         this.kernel = kernel
 
-        this.actions = TodayPinActions.shared.setKernel(this.kernel).getActions()
-        if (this.actions.length === 0) {
-            this.actions = Object.values(this.kernel.actions.allActions)
-        }
+        this.actions = TodayPinActions.shared.setKernel(this.kernel).getActions(true)
     }
 
     get maxLength() {

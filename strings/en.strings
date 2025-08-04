@@ -61,7 +61,7 @@
 "CATEGORY" = "Category";
 "EDIT_CATEGORY" = "Edit Category";
 "delete.category" = "Delete Category ${category}";
-"delete.category.keep.actions" = "Do you keep the actions in this category?";
+"delete.category.keep.actions" = "Do you want to keep the actions in this category?";
 "DESCRIPTION" = "Description";
 "CODE" = "Code";
 "TEXT_INSETS" = "Text bottom margin";
@@ -114,6 +114,7 @@
 "PIN_ACTION" = "Pin Action";
 "PIN_ACTION" = "Pin Action";
 "keyboard.excludePin" = "Exclude Pinned from List";
+"RUN_DIRECTLY" = "Run Scripts Directly";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
