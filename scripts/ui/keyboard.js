@@ -530,7 +530,9 @@ class Keyboard extends Clips {
 
         const quickStarts = KeyboardAddins.getAddins().map(addin => ({
             title: addin,
-            handler: this.keyboardTapped(() => this.kernel.actions.mock.addinRun(addin))
+            handler: this.keyboardTapped(() =>
+                this.kernel.actions.mock.addinRun(addin, this.kernel.setting.get("keyboard.runDirectly"))
+            )
         }))
         if (quickStarts.length > 0) {
             if (quickStarts.length === 1) {

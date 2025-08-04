@@ -114,6 +114,7 @@
 "PIN_ACTION" = "Pin Action";
 "PIN_ACTION" = "Pin Action";
 "keyboard.excludePin" = "Exclude Pinned from List";
+"RUN_DIRECTLY" = "Run Scripts Directly";
 
 "CHECK_UPDATE" = "Check Update";
 "UPDATE" = "Update";
