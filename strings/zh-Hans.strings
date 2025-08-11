@@ -47,6 +47,7 @@
 "DELETE_TABLE" = "删除 `${table}` 的所有数据？";
 "SELECT_ALL" = "全选";
 "DESELECT_ALL" = "取消全选";
+"CLIP_ACTIONS" = "剪切板动作分类";
 
 "EDITOR" = "编辑器";
 "CREATE_NEW" = "新建";

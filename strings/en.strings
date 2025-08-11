@@ -47,6 +47,7 @@
 "DELETE_TABLE" = "Delete all data from `${table}`?";
 "SELECT_ALL" = "Select All";
 "DESELECT_ALL" = "Deselect All";
+"CLIP_ACTIONS" = "Clip Action Category";
 
 "EDITOR" = "Editor";
 "CREATE_NEW" = "Create New";

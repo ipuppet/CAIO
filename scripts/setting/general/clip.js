@@ -62,7 +62,11 @@ module.exports = kernel => {
                         title: "CLIP_ACTIONS",
                         key: "clipboard.actions.category",
                         value: kernel.actions.getActionCategories()[0]
-                    }).with({ pullDown: true, items: () => kernel.actions.getActionCategories() })
+                    }).with({
+                        pullDown: true,
+                        items: () => kernel.actions.getActionCategories(),
+                        values: () => kernel.actions.getActionCategories()
+                    })
                 ]
             },
             {
