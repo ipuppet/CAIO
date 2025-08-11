@@ -15,6 +15,11 @@ class AppKernel extends AppKernelBase {
         settingMethods(this)
 
         this.fileManager = new FileManager()
+
+        $delay(0.3, () => {
+            // Force initialization of actions
+            this.actions
+        })
     }
 }
 
