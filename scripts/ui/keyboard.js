@@ -258,6 +258,7 @@ class Keyboard extends Clips {
                 let t = $keyboard.textBeforeInput ?? ""
                 t += $keyboard.selectedText ?? ""
                 t += $keyboard.textAfterInput ?? ""
+                if (t === "") t = $clipboard.text
                 return t
             },
             textBeforeInput: () => $keyboard.textBeforeInput,

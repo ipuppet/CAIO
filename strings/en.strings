@@ -154,6 +154,10 @@
 "LOCAL_DATA" = "Local data";
 "ADD_TO_TAIO" = "Add to Taio";
 "SELECT_TAIO_APP" = "Please select Taio App from the Share menu.";
+"API_TYPE" = "API Type";
+"ENDPOINT" = "Endpoint";
+"API_KEY" = "API Key";
+"MODEL" = "Model";
 
 "ACTION_SAFETY_WARNING" = "Action safety warning";
 "ACTION_PERMISSION_REQUEST" = "Action permission request";

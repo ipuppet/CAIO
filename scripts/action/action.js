@@ -1,6 +1,5 @@
 const { L10n, Sheet } = require("../libs/easy-jsbox")
 const { SecureFunction, SecureScript } = require("./secure")
-const AES = require("../libs/aes")
 
 /**
  * @typedef {import("../app-main").AppKernel} AppKernel
@@ -318,6 +317,13 @@ class Action extends ActionData {
         } else if (this.env === ActionEnv.clipboard) {
             this.#kernel.storage.updateText(this.section, this.uuid, text)
             this.#kernel.clips.updateList(true)
+        } else if (this.env === ActionEnv.keyboard) {
+            const after = $keyboard.textAfterInput
+            $keyboard.moveCursor(after.length)
+            while ($keyboard.hasText) {
+                $keyboard.delete()
+            }
+            $keyboard.insert(text)
         }
     }
 
@@ -380,6 +386,7 @@ class Action extends ActionData {
     }
 
     aes(key, iv) {
+        const AES = require("../libs/aes")
         return new AES(key, iv)
     }
 
@@ -401,6 +408,19 @@ class Action extends ActionData {
         const actionKey = "_" + $text.uuid.replace(/-/g, "")
         const ss = new SecureScript(script.data.string, actionKey)
         new Function("CAIO_ACTION", actionKey, `${ss.secure()}`)(this.config.name, this)
+    }
+
+    getAIClient(type, apiKey, model, endpoint) {
+        type = type ?? this.#kernel.setting.get("ai.type")
+        apiKey = apiKey ?? this.#kernel.setting.get("ai.apiKey")
+        model = model ?? this.#kernel.setting.get("ai.model")
+        endpoint = endpoint ?? this.#kernel.setting.get("ai.endpoint")
+
+        if (!apiKey) {
+            throw new Error("API Key is required")
+        }
+
+        return require("../libs/ai")(type, apiKey, model, endpoint)
     }
 }
 

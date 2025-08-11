@@ -153,6 +153,10 @@
 "LOCAL_DATA" = "本地数据";
 "ADD_TO_TAIO" = "添加到 Taio";
 "SELECT_TAIO_APP" = "请在分享菜单中选择 Taio App";
+"API_TYPE" = "API 类型";
+"ENDPOINT" = "Endpoint";
+"API_KEY" = "API Key";
+"MODEL" = "模型";
 
 "ACTION_SAFETY_WARNING" = "动作安全警告";
 "ACTION_PERMISSION_REQUEST" = "动作权限申请";
