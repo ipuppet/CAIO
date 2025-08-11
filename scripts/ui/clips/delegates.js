@@ -117,7 +117,7 @@ class ClipsDelegates {
             action.symbol = action.icon
             return action
         }
-        const actions = this.kernel.actions.getActions("clipboard")
+        const actions = this.kernel.actions.getActions(this.kernel.setting.get("clipboard.actions.category"))
         const actionButtons = {
             inline: true,
             items: actions.slice(0, this.menuItemActionMaxCount).map(action)

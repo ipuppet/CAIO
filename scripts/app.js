@@ -35,7 +35,7 @@ class AppKernelBase extends Kernel {
         this.setting = new Setting({
             logger: this.logger,
             fileStorage: this.fileStorage,
-            structure: SettingStructure
+            structure: SettingStructure(this)
         })
 
         this.runAction($context.query)

@@ -7,6 +7,13 @@ const keyboard = require("./keyboard")
 const widget = require("./widget")
 const today = require("./today")
 
-module.exports = {
-    items: [clip, action, editor].concat(UIKit.isTaio ? [] : [keyboard, widget, today])
+/**
+ * @typedef {import("../../app-main").AppKernel} AppKernel
+ * @param {AppKernel} kernel
+ * @returns
+ */
+module.exports = kernel => {
+    return {
+        items: [clip(kernel), action, editor].concat(UIKit.isTaio ? [] : [keyboard, widget, today])
+    }
 }

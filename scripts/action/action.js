@@ -164,18 +164,29 @@ class Action extends ActionData {
         }
      * @returns {Sheet}
      */
-    pageSheet({ view, title = "", done, doneText = $l10n("DONE"), rightButtons = [] }) {
+    pageSheet({
+        view,
+        title = "",
+        done,
+        doneText = $l10n("DONE"),
+        rightButtons = [],
+        navbar = true,
+        fullScreen = false
+    }) {
         const sheet = new Sheet()
-        sheet.setView(view).addNavBar({
-            title: title,
-            popButton: {
-                title: doneText,
-                tapped: () => {
-                    if (done) done()
-                }
-            },
-            rightButtons
-        })
+        sheet.setView(view)
+        if (navbar)
+            sheet.addNavBar({
+                title: title,
+                popButton: {
+                    title: doneText,
+                    tapped: () => {
+                        if (done) done()
+                    }
+                },
+                rightButtons
+            })
+        if (fullScreen) sheet.setStyle(Sheet.UIModalPresentationStyle.FullScreen)
         sheet.init().present()
         return sheet
     }

@@ -53,4 +53,9 @@ const aboutSection = {
     ]
 }
 
-module.exports = [generalSection, displaySection, experimentalSection, aboutSection]
+/**
+ * @typedef {import("../../app-main").AppKernel} AppKernel
+ * @param {AppKernel} kernel
+ * @returns
+ */
+module.exports = kernel => [generalSection(kernel), displaySection, experimentalSection, aboutSection]
