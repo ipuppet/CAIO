@@ -668,6 +668,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
                 id: "GrammarlyWebView",
                 html,
                 script: script,
+                transparent: true,
                 toolbar: false,
                 canGoBack: false,
                 canGoForward: false,
