@@ -92,8 +92,8 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: #0b0f14;
+            color: #e5e7eb;
             line-height: 1.4;
             overflow: hidden;
             height: 100vh;
@@ -104,7 +104,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         .container {
             width: 100%;
             height: 100vh;
-            background: white;
+            background: #0f141a;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -113,12 +113,12 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         .close-btn {
             width: 32px;
             height: 32px;
-            border: 1px solid #e1e5e9;
-            background: #f8f9fa;
+            border: 1px solid #2a2f3a;
+            background: #111827;
             border-radius: 6px;
             cursor: pointer;
             font-size: 18px;
-            color: #666;
+            color: #cbd5e1;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -127,9 +127,9 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         }
         
         .close-btn:hover {
-            background: #e9ecef;
-            color: #333;
-            border-color: #ced4da;
+            background: #1f2937;
+            color: #e5e7eb;
+            border-color: #374151;
         }
         
         .diff-container {
@@ -183,7 +183,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         .change-indicator {
             text-align: left;
             font-size: 14px;
-            color: #666;
+            color: #9ca3af;
             font-weight: 500;
         }
         
@@ -201,12 +201,12 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         }
         
         .context-text {
-            color: #666;
+            color: #9ca3af;
         }
         
         .original-text {
-            background: #fff5f5;
-            color: #d63031;
+            background: rgba(220, 38, 38, 0.15);
+            color: #ef4444;
             text-decoration: line-through;
             padding: 2px 4px;
             border-radius: 3px;
@@ -214,8 +214,8 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         }
         
         .suggested-text {
-            background: #f0fff4;
-            color: #00b894;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
             font-weight: 500;
             padding: 2px 4px;
             border-radius: 3px;
@@ -223,8 +223,8 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         }
         
         .navigation {
-            background: white;
-            border-top: 1px solid #e1e5e9;
+            background: #0f141a;
+            border-top: 1px solid #2a2f3a;
             flex-shrink: 0;
             position: absolute;
             bottom: 0;
@@ -249,20 +249,20 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         }
         
         .nav-btn {
-            background: #f8f9fa;
-            border: 1px solid #e1e5e9;
+            background: #111827;
+            border: 1px solid #2a2f3a;
             border-radius: 6px;
             padding: 8px 12px;
             cursor: pointer;
             font-size: 13px;
-            color: #666;
+            color: #cbd5e1;
             transition: all 0.2s ease;
             touch-action: manipulation;
         }
         
         .nav-btn:hover:not(:disabled) {
-            background: #e9ecef;
-            border-color: #ced4da;
+            background: #1f2937;
+            border-color: #374151;
         }
         
         .nav-btn:disabled {
@@ -291,7 +291,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         }
         
         .accept-btn:hover {
-            background: linear-gradient(135deg, #138a68 0%, #0c8a5d 100%);
+            background: linear-gradient(135deg, #0fb37a 0%, #0a8f62 100%);
         }
         
         .accept-btn:active {
@@ -303,7 +303,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
             flex-direction: column;
             height: 100%;
             padding: 2vh 0 80px;
-            color: #666;
+            color: #9ca3af;
         }
         
         .no-changes .content-area {
@@ -353,7 +353,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
         <div id="loadingContent" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 40px 20px;">
             <div style="font-size: 24px; margin-bottom: 16px;">✨</div>
             <h3 style="font-size: 18px; margin-bottom: 8px;">Checking grammar...</h3>
-            <p style="color: #666; font-size: 14px;">Please wait while we analyze your text</p>
+            <p style="color: #9ca3af; font-size: 14px;">Please wait while we analyze your text</p>
         </div>
         
         <!-- Content will be initialized by JavaScript -->

@@ -239,7 +239,7 @@ class Actions extends ActionsData {
         snapshot.$appendSectionsWithIdentifiers(actions.map(i => i.dir))
         for (const i in actions) {
             snapshot.$appendItemsWithIdentifiers_intoSectionWithIdentifier(
-                actions[i].items.map(i => i.dir),
+                actions[i].items.map(i => i.category + i.dir + i.name + i.icon),
                 actions[i].dir
             )
         }
