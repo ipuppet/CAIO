@@ -136,8 +136,26 @@ getUrls(): []
 /**
  * 运行其他 JSBox 脚本
  * @param {string} name
+ * @param {boolean} runDirectly 直接运行脚本
  */
-addinRun(name): void
+addinRun(name, runDirectly = false): void
+
+/**
+ * 通过 CAIO 安全模块运行单文件脚本
+ * @param {string} name
+ */
+runJSBoxScript(name): void
+
+/**
+ * 获取 AI 客户端
+ * 不传递参数则默认使用 CAIO 设置中的参数
+ * @param {string} type openai | gemini
+ * @param {string} apiKey
+ * @param {string} model
+ * @param {string} endpoint
+ * @returns {AIClient}
+ */
+getAIClient(type, apiKey, model, endpoint): AIClient
 ```
 
 ## <span id="ActionEnv">ActionEnv</span>

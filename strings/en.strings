@@ -79,7 +79,7 @@
 "DELETE_SUCCESS" = "Delete success";
 "DELETE_ERROR" = "Delete failed";
 
-"IMPORT_EXAMPLE_ACTIONS" = "Import example actions";
+"IMPORT_EXAMPLE_ACTIONS" = "Import Example Actions";
 "REBUILD_ACTION_DATABASE" = "Rebuild Action Database";
 "REBUILD_ACTION_DATABASE_ALERT_TITLE" = "Are you sure you want to rebuild?";
 "REBUILD_ACTION_DATABASE_ALERT_MESSAGE" = "Rebuild also deletes the data saved in WebDAV Drive! (If enabled)";

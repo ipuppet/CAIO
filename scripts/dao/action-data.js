@@ -122,7 +122,7 @@ class ActionsData {
                         const config = JSON.parse(action.config)
                         Object.assign(config, { category, dir })
                         rows.push(this.kernel.actions.views.actionToData(config))
-                        actionRaw[category + dir] = [action, category]
+                        actionRaw[category + dir] = action
                     })
                     actionList.push({
                         title: category,
@@ -144,7 +144,7 @@ class ActionsData {
                                 const config = JSON.parse(action.config)
                                 Object.assign(config, { category, dir })
                                 rows.push(this.kernel.actions.views.actionToData(config))
-                                actionRaw[category + dir] = [action, category]
+                                actionRaw[category + dir] = action
                             } catch (error) {
                                 this.kernel.logger.error(`Error during importExampleAction: ${category}/${dir}`)
                             }
@@ -159,10 +159,12 @@ class ActionsData {
             return actionList
         })()
         const listView = this.kernel.actions.views.getActionListView(
-            (_, info) => {
+            async (_, info) => {
+                const categories = this.getActionCategories()
+                const category = await $ui.menu({ items: categories })
                 $ui.alert({
                     title: $l10n("IMPORT_EXAMPLE_ACTIONS"),
-                    message: `Category: ${info.category}\n${info.name}`,
+                    message: `Importing "${info.name}" to "${category.title}".\nThis will overwrite any existing actions in that category.`,
                     actions: [
                         { title: $l10n("CANCEL") },
                         {
@@ -170,7 +172,7 @@ class ActionsData {
                             handler: () => {
                                 try {
                                     const action = actionRaw[info.category + info.dir]
-                                    this.importAction(action[0], action[1], false)
+                                    this.importAction(action, category.title, false)
                                     $ui.success($l10n("SUCCESS"))
                                 } catch (error) {
                                     $ui.alert({

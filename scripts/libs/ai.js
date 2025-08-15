@@ -1,4 +1,4 @@
-class AIConfig {
+class AIClient {
     apiKey = ""
     model = ""
     endpoint = ""
@@ -105,7 +105,7 @@ class AIConfig {
     }
 }
 
-class OpenAI extends AIConfig {
+class OpenAI extends AIClient {
     constructor(apiKey, model, endpoint) {
         model = model ?? "gpt-5-nano"
         endpoint = endpoint ?? "https://api.openai.com/v1/chat/completions"
@@ -113,7 +113,7 @@ class OpenAI extends AIConfig {
     }
 }
 
-class Gemini extends AIConfig {
+class Gemini extends AIClient {
     constructor(apiKey, model, endpoint) {
         model = model ?? "gemini-2.0-flash"
         endpoint =

@@ -5,10 +5,7 @@ module.exports = new SettingScript({
     title: "ADD_TO_TAIO"
 }).with({
     script: () => {
-        $ui.alert({
-            title: $l10n("ADD_TO_TAIO"),
-            message: $l10n("SELECT_TAIO_APP")
-        })
+        $ui.toast($l10n("SELECT_TAIO_APP"))
         $share.sheet([
             {
                 name: `CAIO.json`,

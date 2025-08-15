@@ -5,8 +5,17 @@
 class MyAction extends Action {
     // 计算文本差异的函数
     calculateDifferences(oldText, newText) {
-        const oldWords = oldText.split(/(\s+)/)
-        const newWords = newText.split(/(\s+)/)
+        // 先去除首尾空白字符，避免因为结尾空白导致的误判
+        const trimmedOldText = oldText.trim()
+        const trimmedNewText = newText.trim()
+
+        // 如果去除空白后文本相同，则无差异
+        if (trimmedOldText === trimmedNewText) {
+            return []
+        }
+
+        const oldWords = trimmedOldText.split(/(\s+)/)
+        const newWords = trimmedNewText.split(/(\s+)/)
         const differences = []
         let oldIndex = 0,
             newIndex = 0,
@@ -16,17 +25,33 @@ class MyAction extends Action {
 
         const saveDifference = () => {
             if (hasChanges) {
-                differences.push({ oldText: currentOld.trim(), newText: currentNew.trim(), type: "change" })
+                const oldTrimmed = currentOld.trim()
+                const newTrimmed = currentNew.trim()
+                // 只有当修剪后的文本真正不同时才添加差异
+                if (oldTrimmed !== newTrimmed) {
+                    differences.push({ oldText: oldTrimmed, newText: newTrimmed, type: "change" })
+                }
                 currentOld = currentNew = ""
                 hasChanges = false
             }
+        }
+
+        // 辅助函数：比较两个词是否相等（忽略纯空白差异）
+        const wordsEqual = (word1, word2) => {
+            // 如果完全相等
+            if (word1 === word2) return true
+
+            // 如果都是空白字符，认为相等
+            if (/^\s*$/.test(word1) && /^\s*$/.test(word2)) return true
+
+            return false
         }
 
         while (oldIndex < oldWords.length || newIndex < newWords.length) {
             const oldWord = oldWords[oldIndex] || ""
             const newWord = newWords[newIndex] || ""
 
-            if (oldWord === newWord) {
+            if (wordsEqual(oldWord, newWord)) {
                 saveDifference()
                 oldIndex++
                 newIndex++
@@ -36,12 +61,12 @@ class MyAction extends Action {
 
                 // 查找下一个匹配点（删除或插入情况）
                 for (let i = 1; i <= 5 && !foundMatch; i++) {
-                    if (oldWords[oldIndex + i] === newWords[newIndex]) {
+                    if (wordsEqual(oldWords[oldIndex + i], newWords[newIndex])) {
                         // 删除情况
                         for (let j = 0; j < i; j++) currentOld += oldWords[oldIndex + j] || ""
                         oldIndex += i
                         foundMatch = true
-                    } else if (oldWords[oldIndex] === newWords[newIndex + i]) {
+                    } else if (wordsEqual(oldWords[oldIndex], newWords[newIndex + i])) {
                         // 插入情况
                         for (let j = 0; j < i; j++) currentNew += newWords[newIndex + j] || ""
                         newIndex += i
@@ -338,7 +363,7 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
     }
 
     renderHTML() {
-        let html = `
+        return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -362,7 +387,6 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
 </body>
 </html>
         `
-        return html
     }
 
     getWebView(html) {
@@ -708,7 +732,35 @@ I went to the store yesterday, and I saw a very pretty dog. Its fur was so soft.
             // 执行单个差异的替换
             this.replaceKeyboardText(oldText, newText)
         } else {
-            this.setContent(this.text.replace(oldText, newText))
+            // 使用更智能的替换方式，处理可能的空白字符问题
+            let newContent = this.text
+
+            // 首先尝试直接替换
+            if (newContent.includes(oldText)) {
+                newContent = newContent.replace(oldText, newText)
+            } else {
+                // 如果直接替换失败，尝试使用正则表达式进行更灵活的匹配
+                // 转义特殊字符并允许空白字符的灵活匹配
+                const escapedOldText = oldText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+                const flexiblePattern = escapedOldText.replace(/\s+/g, "\\s*")
+                const regex = new RegExp(flexiblePattern, "g")
+
+                if (regex.test(newContent)) {
+                    newContent = newContent.replace(regex, newText)
+                } else {
+                    // 如果仍然失败，使用最后的回退策略：查找相似内容
+                    const trimmedOldText = oldText.trim()
+                    const index = newContent.indexOf(trimmedOldText)
+                    if (index !== -1) {
+                        newContent =
+                            newContent.substring(0, index) +
+                            newText +
+                            newContent.substring(index + trimmedOldText.length)
+                    }
+                }
+            }
+
+            this.setContent(newContent)
         }
     }
 
